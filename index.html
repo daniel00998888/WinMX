@@ -10,10 +10,10 @@ header{background:#102c3c;padding:15px;font-size:24px}
 .container{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin-top:20px}
 .card{background:#16394f;padding:20px;border-radius:10px;width:260px}
 button{padding:10px;margin-top:10px;border:none;border-radius:5px;background:#00c896;color:white;cursor:pointer}
-input,select{padding:8px;margin-top:10px;width:80%}
+input{padding:8px;margin-top:10px;width:80%}
 </style>
-
 </head>
+
 <body>
 
 <header>🎰 Casino PRO</header>
@@ -23,9 +23,8 @@ input,select{padding:8px;margin-top:10px;width:80%}
 <input id="email" placeholder="Correo"><br>
 <input id="pass" type="password" placeholder="Contraseña"><br>
 
-<button onclick="login()">Entrar</button>
 <button onclick="register()">Registrar</button>
-<button onclick="entrarDirecto()">Entrar sin cuenta</button>
+<button onclick="login()">Entrar</button>
 </div>
 
 <div id="casino" style="display:none">
@@ -35,148 +34,84 @@ input,select{padding:8px;margin-top:10px;width:80%}
 
 <div class="card">
 <h3>🎰 Slot</h3>
-<input id="slotBet" type="number" placeholder="Apuesta">
+<input id="slotBet" type="number">
 <button onclick="slot()">Jugar</button>
 <p id="slotRes"></p>
 </div>
 
 <div class="card">
 <h3>🎲 Dado</h3>
-<input id="diceBet" type="number" placeholder="Apuesta">
-<button onclick="dice()">Lanzar</button>
+<input id="diceBet" type="number">
+<button onclick="dice()">Jugar</button>
 <p id="diceRes"></p>
 </div>
 
 <div class="card">
 <h3>🎡 Ruleta</h3>
-<input id="roulBet" type="number" placeholder="Apuesta">
+<input id="roulBet" type="number">
 <select id="color">
 <option value="rojo">Rojo</option>
 <option value="negro">Negro</option>
 </select>
-<button onclick="roulette()">Girar</button>
+<button onclick="roulette()">Jugar</button>
 <p id="roulRes"></p>
 </div>
 
-<div class="card">
-<h3>🃏 Blackjack</h3>
-<input id="bjBet" type="number" placeholder="Apuesta">
-<button onclick="blackjack()">Jugar</button>
-<p id="bjRes"></p>
-</div>
-
 </div>
 </div>
 
-<script type="module">
+<script>
+let saldo = 1000;
 
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+// ================= LOGIN LOCAL =================
 
-// 🔥 TUS DATOS (YA PUESTOS)
-const supabase = createClient(
-  "https://dakhnqriwbzihlzhtfcb.supabase.co",
-  "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs"
-);
+function register(){
+  let email = document.getElementById("email").value;
+  let pass = document.getElementById("pass").value;
 
-let saldo = 0;
-let user = null;
-
-// ================= LOGIN =================
-window.login = async function(){
-  const email = document.getElementById("email").value;
-  const pass = document.getElementById("pass").value;
-
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password: pass
-  });
-
-  if(error){
-    alert("Error: " + error.message);
+  if(!email || !pass){
+    alert("Llena todos los campos");
     return;
   }
 
-  user = data.user;
-  start();
+  localStorage.setItem("user", JSON.stringify({email, pass, saldo:1000}));
+
+  alert("Registrado correctamente");
 }
 
-// ================= REGISTRO =================
-window.register = async function(){
-  const email = document.getElementById("email").value;
-  const pass = document.getElementById("pass").value;
+function login(){
+  let email = document.getElementById("email").value;
+  let pass = document.getElementById("pass").value;
 
-  const { error } = await supabase.auth.signUp({
-    email,
-    password: pass
-  });
+  let user = JSON.parse(localStorage.getItem("user"));
 
-  if(error){
-    alert(error.message);
+  if(!user){
+    alert("No existe usuario");
     return;
   }
 
-  // 🔥 LOGIN AUTOMÁTICO
-  const res = await supabase.auth.signInWithPassword({
-    email,
-    password: pass
-  });
+  if(user.email === email && user.pass === pass){
+    saldo = user.saldo;
 
-  if(res.error){
-    alert("Registrado, ahora inicia sesión");
-    return;
-  }
+    document.getElementById("auth").style.display="none";
+    document.getElementById("casino").style.display="block";
 
-  user = res.data.user;
-  start();
-}
-
-// ================= ENTRAR SIN LOGIN =================
-window.entrarDirecto = function(){
-  user = { id: "demo" };
-  saldo = 1000;
-
-  document.getElementById("auth").style.display = "none";
-  document.getElementById("casino").style.display = "block";
-
-  update();
-}
-
-// ================= INICIAR =================
-async function start(){
-  document.getElementById("auth").style.display = "none";
-  document.getElementById("casino").style.display = "block";
-
-  let { data } = await supabase
-    .from("usuarios")
-    .select("*")
-    .eq("id", user.id);
-
-  if(data.length === 0){
-    await supabase.from("usuarios").insert([{ id: user.id, saldo: 1000 }]);
-    saldo = 1000;
+    update();
   } else {
-    saldo = data[0].saldo;
+    alert("Datos incorrectos");
   }
-
-  update();
-}
-
-// ================= GUARDAR =================
-async function save(){
-  if(user.id === "demo") return;
-
-  await supabase
-    .from("usuarios")
-    .update({ saldo })
-    .eq("id", user.id);
 }
 
 // ================= JUEGOS =================
+
 function update(){
   document.getElementById("saldo").innerText = saldo;
+  let user = JSON.parse(localStorage.getItem("user"));
+  user.saldo = saldo;
+  localStorage.setItem("user", JSON.stringify(user));
 }
 
-window.slot = function(){
+function slot(){
   let bet = +document.getElementById("slotBet").value;
   if(!bet || bet > saldo) return alert("Apuesta inválida");
 
@@ -184,10 +119,10 @@ window.slot = function(){
   saldo += win ? bet : -bet;
 
   document.getElementById("slotRes").innerText = win ? "Ganaste 🎉" : "Perdiste ❌";
-  update(); save();
+  update();
 }
 
-window.dice = function(){
+function dice(){
   let bet = +document.getElementById("diceBet").value;
   if(!bet || bet > saldo) return alert("Apuesta inválida");
 
@@ -197,41 +132,23 @@ window.dice = function(){
   saldo += win ? bet : -bet;
 
   document.getElementById("diceRes").innerText = "Dado: " + d;
-  update(); save();
+  update();
 }
 
-window.roulette = function(){
+function roulette(){
   let bet = +document.getElementById("roulBet").value;
   let c = document.getElementById("color").value;
 
   if(!bet || bet > saldo) return alert("Apuesta inválida");
 
-  let r = Math.random() < 0.5 ? "rojo" : "negro";
-  let win = r === c;
+  let r = Math.random()<0.5?"rojo":"negro";
+  let win = r===c;
 
   saldo += win ? bet : -bet;
 
   document.getElementById("roulRes").innerText = "Resultado: " + r;
-  update(); save();
+  update();
 }
-
-window.blackjack = function(){
-  let bet = +document.getElementById("bjBet").value;
-  if(!bet || bet > saldo) return alert("Apuesta inválida");
-
-  let player = Math.floor(Math.random()*11)+11;
-  let dealer = Math.floor(Math.random()*11)+11;
-
-  let win = (player > dealer && player <= 21) || dealer > 21;
-
-  saldo += win ? bet : -bet;
-
-  document.getElementById("bjRes").innerText =
-    `Tú: ${player} | Dealer: ${dealer}`;
-
-  update(); save();
-}
-
 </script>
 
 </body>
