@@ -32,16 +32,7 @@
         .reel.spinning { animation: spin 0.85s linear infinite; }
         @keyframes spin { 0% { transform: translateY(-400%); } 100% { transform: translateY(0); } }
 
-        .game-btn {
-            transition: all 0.2s;
-        }
-        .game-btn:hover {
-            transform: translateX(8px);
-            background-color: #1e3a5f !important;
-        }
-
         #confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
-        .chat-box { scrollbar-width: thin; scrollbar-color: #22d3ee #1e2937; }
     </style>
 </head>
 <body class="text-white min-h-screen">
@@ -93,7 +84,7 @@
                     <h2 class="text-2xl font-bold neon-text">Menú</h2>
                     <button onclick="toggleSidebar()" class="text-4xl">×</button>
                 </div>
-
+                
                 <h3 class="text-cyan-400 font-semibold mb-5 flex items-center gap-2 text-lg"><i class="fas fa-gamepad"></i> JUEGOS</h3>
                 
                 <div onclick="showGame('slot'); toggleSidebar()" class="game-btn flex items-center gap-4 p-5 hover:bg-zinc-900 rounded-3xl cursor-pointer mb-3 text-lg">
@@ -124,7 +115,7 @@
                 <div class="flex-1 p-6 md:p-10 overflow-auto">
                     <!-- SLOTS -->
                     <div id="slot" class="game">
-                        <h2 class="text-4xl font-bold mb-8 flex items-center gap-4"><span>🎰</span> Tragamonedas</h2>
+                        <h2 class="text-4xl font-bold mb-8 flex items-center gap-4"><span>🎰</span> Tragamonedas Premium</h2>
                         <div class="max-w-lg mx-auto">
                             <div class="flex justify-center gap-6 mb-12">
                                 <div class="reel" id="r1">🍒</div>
@@ -264,7 +255,7 @@
                     ctx.translate(p.x, p.y);
                     ctx.rotate(p.angle * Math.PI / 180);
                     ctx.fillStyle = p.color;
-                    ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size * 0.7);
+                    ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size*0.7);
                     ctx.restore();
                     if (p.y > canvas.height + 100) particles.splice(i, 1);
                 }
@@ -274,7 +265,7 @@
             animate();
         }
 
-        // Auth
+        // ====================== AUTH ======================
         async function register() {
             msg("Registrando...");
             const { error } = await sb.auth.signUp({ email: val("email"), password: val("pass") });
@@ -318,14 +309,23 @@
             document.getElementById(gameId).classList.remove('hidden');
         }
 
-        // ==================== JUEGOS ====================
+        // ====================== VALIDACIÓN DE APUESTA ======================
+        function validarApuesta(bet, juego) {
+            if (!bet || bet <= 0) {
+                alert("La apuesta debe ser mayor a 0");
+                return false;
+            }
+            if (bet > saldo) {
+                alert(`No tienes suficiente saldo. Tu saldo actual es $${formatSaldo(saldo)}`);
+                return false;
+            }
+            return true;
+        }
 
+        // ====================== JUEGOS ======================
         async function spinSlot() {
             let bet = parseInt(val("betSlot"));
-            if (!bet || bet <= 0 || bet > saldo) {
-                document.getElementById("slotRes").innerHTML = `<span class="text-red-400">Apuesta inválida</span>`;
-                return;
-            }
+            if (!validarApuesta(bet, "slot")) return;
 
             const reels = [document.getElementById('r1'), document.getElementById('r2'), document.getElementById('r3')];
             reels.forEach(r => r.classList.add('spinning'));
@@ -343,7 +343,7 @@
             saldo += win ? bet * 15 : -bet;
 
             document.getElementById("slotRes").innerHTML = win 
-                ? `<span class="text-yellow-400 text-3xl">¡JACKPOT! +$${bet*15}</span>` 
+                ? `<span class="text-yellow-400">¡JACKPOT! +$${bet*15}</span>` 
                 : `<span class="text-red-400">-$${bet}</span>`;
 
             if (win) launchConfetti();
@@ -355,7 +355,7 @@
 
         async function spinRoulette() {
             let bet = parseInt(val("betRou"));
-            if (!bet || bet <= 0 || bet > saldo) return alert("Apuesta inválida");
+            if (!validarApuesta(bet, "ruleta")) return;
 
             const color = val("color");
             const result = Math.random() < 0.5 ? "rojo" : "negro";
@@ -364,7 +364,7 @@
 
             document.getElementById("rouRes").innerHTML = `
                 Salió <span class="${result==='rojo' ? 'text-red-500' : 'text-white'} font-bold">${result.toUpperCase()}</span><br>
-                ${win ? '<span class="text-green-400 text-2xl">¡Ganaste 2x!</span>' : '<span class="text-red-400">Perdiste</span>'}
+                ${win ? '<span class="text-green-400">¡Ganaste 2x!</span>' : '<span class="text-red-400">Perdiste</span>'}
             `;
 
             updateSaldo();
@@ -374,7 +374,7 @@
 
         async function playDice() {
             let bet = parseInt(val("betDice"));
-            if (!bet || bet <= 0 || bet > saldo) return;
+            if (!validarApuesta(bet, "dados")) return;
 
             const roll = Math.floor(Math.random() * 6) + 1;
             const win = roll >= 4;
@@ -389,7 +389,7 @@
 
         async function playBJ() {
             let bet = parseInt(val("betBJ"));
-            if (!bet || bet <= 0 || bet > saldo) return;
+            if (!validarApuesta(bet, "blackjack")) return;
 
             const player = Math.floor(Math.random() * 10) + 12;
             const dealer = Math.floor(Math.random() * 10) + 12;
@@ -406,14 +406,14 @@
             loadRanking();
         }
 
-        // Chat y Ranking
+        // Chat y Ranking (sin cambios)
         function initChat() {
             if (chatChannel) return;
             chatChannel = sb.channel('chat-room');
             chatChannel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat' }, (payload) => {
                 const box = document.getElementById("chatBox");
                 if (box) {
-                    box.innerHTML += `<div class="bg-zinc-900 p-3 rounded-2xl"><span class="text-cyan-400">Usuario:</span> ${payload.new.mensaje}</div>`;
+                    box.innerHTML += `<div class="bg-zinc-900 p-3 rounded-2xl"><span class="text-cyan-400">Usuario:</span> ${payload.new.mensaje || ''}</div>`;
                     box.scrollTop = box.scrollHeight;
                 }
             }).subscribe();
