@@ -94,14 +94,23 @@ async function login(){
   const email = document.getElementById("email").value;
   const pass = document.getElementById("pass").value;
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+  console.log("Intentando login...");
 
-  if(error) return alert(error.message);
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email,
+    password: pass
+  });
+
+  console.log("RESPUESTA:", data, error);
+
+  if(error){
+    alert("Error: " + error.message);
+    return;
+  }
 
   user = data.user;
   start();
 }
-
 // INICIAR CASINO
 async function start(){
   document.getElementById("auth").style.display = "none";
