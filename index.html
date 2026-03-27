@@ -1,45 +1,132 @@
-<script type="module">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Casino PRO REAL</title>
 
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+<style>
+body{margin:0;font-family:Arial;background:#0b1d2a;color:white;text-align:center}
+header{background:#102c3c;padding:15px;font-size:24px}
 
-const supabase = createClient(
-  "https://dakhnqriwbzihlzhtfcb.supabase.co",
-  "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs"
-);
+#loader{
+position:fixed;width:100%;height:100%;
+background:black;display:flex;
+justify-content:center;align-items:center;
+font-size:30px;z-index:999;
+}
 
+.screen{display:none}
+.active{display:block}
+
+.container{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin-top:20px}
+
+.card{background:#16394f;padding:20px;border-radius:10px;width:260px}
+
+button{padding:10px;margin-top:10px;border:none;border-radius:5px;background:#00c896;color:white;cursor:pointer;width:80%}
+input{padding:8px;margin-top:10px;width:80%}
+
+.logout{position:absolute;top:10px;right:10px;background:red}
+</style>
+</head>
+
+<body>
+
+<div id="loader">Cargando casino...</div>
+
+<header>🎰 CASINO PRO</header>
+<button class="logout" onclick="logout()">Salir</button>
+
+<div id="auth" class="screen active">
+<h2>Login / Registro</h2>
+<input id="email" placeholder="Correo"><br>
+<input id="pass" type="password" placeholder="Contraseña"><br>
+<button onclick="register()">Registrar</button>
+<button onclick="login()">Entrar</button>
+</div>
+
+<div id="casino" class="screen">
+<h2>Saldo: $<span id="saldo">0</span></h2>
+
+<div class="container">
+<div class="card">
+<h3>🎰 Slot</h3>
+<input id="bet" type="number">
+<button onclick="slot()">Jugar</button>
+<p id="res"></p>
+</div>
+</div>
+</div>
+
+<!-- SUPABASE CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<script>
+
+// 🔥 CONFIG
+const SUPABASE_URL = "https://dakhnqriwbzihlzhtfcb.supabase.co";
+const SUPABASE_KEY = "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs";
+
+let supabase;
 let user;
 let saldo = 0;
 
-// ===== REGISTER =====
-window.register = async ()=>{
-  let email = emailInput();
-  let pass = passInput();
+// ===== INIT =====
+window.onload = async () => {
 
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password: pass
-  });
+  try{
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }catch(e){
+    console.log("Supabase no cargó, usando modo local");
+  }
+
+  document.getElementById("loader").style.display="none";
+
+  if(supabase){
+    const { data } = await supabase.auth.getSession();
+    if(data.session){
+      user = data.session.user;
+      start();
+      return;
+    }
+  }
+
+  show("auth");
+};
+
+// ===== UI =====
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+// ===== REGISTER =====
+async function register(){
+  if(!supabase) return localRegister();
+
+  const email = val("email");
+  const pass = val("pass");
+
+  const { error } = await supabase.auth.signUp({ email, password: pass });
 
   if(error) return alert(error.message);
 
-  alert("Revisa tu correo 📩");
-};
+  alert("Registro exitoso, ahora inicia sesión");
+}
 
 // ===== LOGIN =====
-window.login = async ()=>{
-  let email = emailInput();
-  let pass = passInput();
+async function login(){
+  if(!supabase) return localLogin();
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password: pass
-  });
+  const email = val("email");
+  const pass = val("pass");
+
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
 
   if(error) return alert(error.message);
 
   user = data.user;
   start();
-};
+}
 
 // ===== START =====
 async function start(){
@@ -50,10 +137,8 @@ async function start(){
     .select("*")
     .eq("id", user.id);
 
-  if(data.length === 0){
-    await supabase.from("usuarios").insert([
-      { id: user.id, email: user.email, saldo: 1000 }
-    ]);
+  if(!data || data.length === 0){
+    await supabase.from("usuarios").insert([{ id:user.id, saldo:1000 }]);
     saldo = 1000;
   } else {
     saldo = data[0].saldo;
@@ -64,37 +149,66 @@ async function start(){
 
 // ===== SAVE =====
 async function save(){
-  await supabase
-    .from("usuarios")
-    .update({ saldo })
-    .eq("id", user.id);
+  if(!supabase) return;
+
+  await supabase.from("usuarios").update({ saldo }).eq("id", user.id);
 }
 
 // ===== SLOT =====
-window.slot = ()=>{
+function slot(){
   let bet = +document.getElementById("bet").value;
-
   if(!bet || bet>saldo) return alert("Apuesta inválida");
 
   let win = Math.random()<0.3;
 
   saldo += win ? bet*3 : -bet;
 
+  document.getElementById("res").innerText = win ? "GANASTE 💰" : "PERDISTE ❌";
+
   update();
   save();
-};
+}
 
-// ===== HELPERS =====
+// ===== UPDATE =====
 function update(){
   document.getElementById("saldo").innerText = saldo;
 }
 
-function emailInput(){
-  return document.getElementById("email").value;
+// ===== LOGOUT =====
+async function logout(){
+  if(supabase){
+    await supabase.auth.signOut();
+  }
+  location.reload();
 }
 
-function passInput(){
-  return document.getElementById("pass").value;
+// ===== HELPERS =====
+function val(id){return document.getElementById(id).value}
+
+// ===== FALLBACK LOCAL =====
+function localRegister(){
+  localStorage.setItem("user", JSON.stringify({
+    email:val("email"),
+    pass:val("pass"),
+    saldo:1000
+  }));
+  alert("Registro local");
+}
+
+function localLogin(){
+  let u = JSON.parse(localStorage.getItem("user"));
+  if(!u) return alert("No existe usuario");
+
+  if(u.email===val("email") && u.pass===val("pass")){
+    saldo = u.saldo;
+    show("casino");
+    update();
+  }else{
+    alert("Datos incorrectos");
+  }
 }
 
 </script>
+
+</body>
+</html>
