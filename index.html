@@ -2,24 +2,80 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Casino PRO</title>
+<title>Casino Royale</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#0b1d2a;color:white;text-align:center}
-header{background:#102c3c;padding:15px;font-size:24px}
-.container{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin-top:20px}
-.card{background:#16394f;padding:20px;border-radius:10px;width:260px}
-button{padding:10px;margin-top:10px;border:none;border-radius:5px;background:#00c896;color:white;cursor:pointer}
-input{padding:8px;margin-top:10px;width:80%}
+body{
+  margin:0;
+  font-family:Arial;
+  background:linear-gradient(135deg,#0b1d2a,#09131c);
+  color:white;
+  text-align:center;
+}
+
+header{
+  background:#102c3c;
+  padding:15px;
+  font-size:26px;
+  font-weight:bold;
+}
+
+.container{
+  display:flex;
+  flex-wrap:wrap;
+  gap:20px;
+  justify-content:center;
+  margin-top:20px;
+}
+
+.card{
+  background:#16394f;
+  padding:20px;
+  border-radius:15px;
+  width:260px;
+  box-shadow:0 0 15px rgba(0,0,0,0.6);
+  transition:0.3s;
+}
+
+.card:hover{
+  transform:scale(1.05);
+}
+
+button{
+  padding:10px;
+  margin-top:10px;
+  border:none;
+  border-radius:5px;
+  background:#00c896;
+  color:white;
+  cursor:pointer;
+  width:80%;
+}
+
+input,select{
+  padding:8px;
+  margin-top:10px;
+  width:80%;
+}
+
+.logout{
+  position:absolute;
+  top:10px;
+  right:10px;
+  background:red;
+}
 </style>
 </head>
 
 <body>
 
-<header>🎰 Casino PRO</header>
+<header>🎰 CASINO ROYALE</header>
 
+<button class="logout" onclick="logout()">Cerrar sesión</button>
+
+<!-- LOGIN -->
 <div id="auth">
-<h3>Login / Registro</h3>
+<h2>Acceso</h2>
 <input id="email" placeholder="Correo"><br>
 <input id="pass" type="password" placeholder="Contraseña"><br>
 
@@ -27,6 +83,7 @@ input{padding:8px;margin-top:10px;width:80%}
 <button onclick="login()">Entrar</button>
 </div>
 
+<!-- CASINO -->
 <div id="casino" style="display:none">
 <h2>Saldo: $<span id="saldo">0</span></h2>
 
@@ -35,14 +92,14 @@ input{padding:8px;margin-top:10px;width:80%}
 <div class="card">
 <h3>🎰 Slot</h3>
 <input id="slotBet" type="number">
-<button onclick="slot()">Jugar</button>
+<button onclick="slot()">Girar</button>
 <p id="slotRes"></p>
 </div>
 
 <div class="card">
 <h3>🎲 Dado</h3>
 <input id="diceBet" type="number">
-<button onclick="dice()">Jugar</button>
+<button onclick="dice()">Lanzar</button>
 <p id="diceRes"></p>
 </div>
 
@@ -53,102 +110,166 @@ input{padding:8px;margin-top:10px;width:80%}
 <option value="rojo">Rojo</option>
 <option value="negro">Negro</option>
 </select>
-<button onclick="roulette()">Jugar</button>
+<button onclick="roulette()">Girar</button>
 <p id="roulRes"></p>
 </div>
 
+<div class="card">
+<h3>🃏 Blackjack</h3>
+<input id="bjBet" type="number">
+<button onclick="blackjack()">Jugar</button>
+<p id="bjRes"></p>
+</div>
+
 </div>
 </div>
 
-<script>
-let saldo = 1000;
+<script type="module">
 
-// ================= LOGIN LOCAL =================
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-function register(){
-  let email = document.getElementById("email").value;
-  let pass = document.getElementById("pass").value;
+const supabase = createClient(
+  "https://dakhnqriwbzihlzhtfcb.supabase.co",
+  "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs"
+);
 
-  if(!email || !pass){
-    alert("Llena todos los campos");
+let user = null;
+let saldo = 0;
+
+// ================= AUTO LOGIN =================
+async function checkSession(){
+  const { data } = await supabase.auth.getSession();
+
+  if(data.session){
+    user = data.session.user;
+    start();
+  }
+}
+checkSession();
+
+// ================= REGISTER =================
+window.register = async function(){
+  const email = document.getElementById("email").value;
+  const pass = document.getElementById("pass").value;
+
+  const { error } = await supabase.auth.signUp({ email, password: pass });
+
+  if(error){
+    alert(error.message);
     return;
   }
 
-  localStorage.setItem("user", JSON.stringify({email, pass, saldo:1000}));
-
-  alert("Registrado correctamente");
+  alert("Registro exitoso. Revisa tu correo 📩");
 }
 
-function login(){
-  let email = document.getElementById("email").value;
-  let pass = document.getElementById("pass").value;
+// ================= LOGIN =================
+window.login = async function(){
+  const email = document.getElementById("email").value;
+  const pass = document.getElementById("pass").value;
 
-  let user = JSON.parse(localStorage.getItem("user"));
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
 
-  if(!user){
-    alert("No existe usuario");
+  if(error){
+    alert(error.message);
     return;
   }
 
-  if(user.email === email && user.pass === pass){
-    saldo = user.saldo;
+  user = data.user;
+  start();
+}
 
-    document.getElementById("auth").style.display="none";
-    document.getElementById("casino").style.display="block";
+// ================= LOGOUT =================
+window.logout = async function(){
+  await supabase.auth.signOut();
+  location.reload();
+}
 
-    update();
-  } else {
-    alert("Datos incorrectos");
+// ================= START =================
+async function start(){
+
+  document.getElementById("auth").style.display="none";
+  document.getElementById("casino").style.display="block";
+
+  let { data } = await supabase
+    .from("usuarios")
+    .select("*")
+    .eq("id", user.id);
+
+  if(data.length === 0){
+    await supabase.from("usuarios").insert([{ id:user.id, saldo:1000 }]);
+    saldo = 1000;
+  }else{
+    saldo = data[0].saldo;
   }
+
+  update();
+}
+
+// ================= SAVE =================
+async function save(){
+  await supabase.from("usuarios").update({ saldo }).eq("id", user.id);
+}
+
+// ================= UI =================
+function update(){
+  document.getElementById("saldo").innerText = saldo;
 }
 
 // ================= JUEGOS =================
-
-function update(){
-  document.getElementById("saldo").innerText = saldo;
-  let user = JSON.parse(localStorage.getItem("user"));
-  user.saldo = saldo;
-  localStorage.setItem("user", JSON.stringify(user));
-}
-
-function slot(){
+window.slot = function(){
   let bet = +document.getElementById("slotBet").value;
-  if(!bet || bet > saldo) return alert("Apuesta inválida");
+  if(!bet || bet>saldo) return alert("Apuesta inválida");
 
-  let win = Math.random() < 0.3;
+  let win = Math.random()<0.3;
   saldo += win ? bet : -bet;
 
-  document.getElementById("slotRes").innerText = win ? "Ganaste 🎉" : "Perdiste ❌";
-  update();
+  document.getElementById("slotRes").innerText = win?"GANASTE 🎉":"PERDISTE ❌";
+  update(); save();
 }
 
-function dice(){
+window.dice = function(){
   let bet = +document.getElementById("diceBet").value;
-  if(!bet || bet > saldo) return alert("Apuesta inválida");
+  if(!bet || bet>saldo) return alert("Apuesta inválida");
 
   let d = Math.floor(Math.random()*6)+1;
-  let win = d >= 4;
+  let win = d>=4;
 
   saldo += win ? bet : -bet;
 
-  document.getElementById("diceRes").innerText = "Dado: " + d;
-  update();
+  document.getElementById("diceRes").innerText = "Resultado: "+d;
+  update(); save();
 }
 
-function roulette(){
+window.roulette = function(){
   let bet = +document.getElementById("roulBet").value;
   let c = document.getElementById("color").value;
 
-  if(!bet || bet > saldo) return alert("Apuesta inválida");
+  if(!bet || bet>saldo) return alert("Apuesta inválida");
 
   let r = Math.random()<0.5?"rojo":"negro";
   let win = r===c;
 
   saldo += win ? bet : -bet;
 
-  document.getElementById("roulRes").innerText = "Resultado: " + r;
-  update();
+  document.getElementById("roulRes").innerText = "Resultado: "+r;
+  update(); save();
 }
+
+window.blackjack = function(){
+  let bet = +document.getElementById("bjBet").value;
+  if(!bet || bet>saldo) return alert("Apuesta inválida");
+
+  let p = Math.floor(Math.random()*11)+11;
+  let d = Math.floor(Math.random()*11)+11;
+
+  let win = (p>d && p<=21)||d>21;
+
+  saldo += win ? bet : -bet;
+
+  document.getElementById("bjRes").innerText = `Tú:${p} Dealer:${d}`;
+  update(); save();
+}
+
 </script>
 
 </body>
