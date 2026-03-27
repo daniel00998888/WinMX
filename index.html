@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Casino PRO REAL</title>
+<title>Casino Royale ULTRA</title>
 
 <style>
 body{margin:0;font-family:Arial;background:#0b1d2a;color:white;text-align:center}
@@ -10,22 +10,27 @@ header{background:#102c3c;padding:15px;font-size:24px}
 
 #loader{
 position:fixed;width:100%;height:100%;
-background:black;display:flex;
-justify-content:center;align-items:center;
+background:black;display:flex;justify-content:center;align-items:center;
 font-size:30px;z-index:999;
 }
 
 .screen{display:none}
 .active{display:block}
 
-.container{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin-top:20px}
+.games{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin-top:20px}
 
-.card{background:#16394f;padding:20px;border-radius:10px;width:260px}
+.card{
+background:#16394f;padding:20px;border-radius:10px;width:220px;
+cursor:pointer;transition:.3s
+}
+.card:hover{transform:scale(1.05)}
 
 button{padding:10px;margin-top:10px;border:none;border-radius:5px;background:#00c896;color:white;cursor:pointer;width:80%}
-input{padding:8px;margin-top:10px;width:80%}
+input,select{padding:8px;margin-top:10px;width:80%}
 
 .logout{position:absolute;top:10px;right:10px;background:red}
+
+.slot{font-size:40px;margin:20px}
 </style>
 </head>
 
@@ -33,180 +38,243 @@ input{padding:8px;margin-top:10px;width:80%}
 
 <div id="loader">Cargando casino...</div>
 
-<header>🎰 CASINO PRO</header>
+<header>🎰 CASINO ULTRA PRO</header>
 <button class="logout" onclick="logout()">Salir</button>
 
+<!-- LOGIN -->
 <div id="auth" class="screen active">
-<h2>Login / Registro</h2>
+<h2>Acceso</h2>
 <input id="email" placeholder="Correo"><br>
 <input id="pass" type="password" placeholder="Contraseña"><br>
 <button onclick="register()">Registrar</button>
 <button onclick="login()">Entrar</button>
 </div>
 
-<div id="casino" class="screen">
-<h2>Saldo: $<span id="saldo">0</span></h2>
+<!-- LOBBY -->
+<div id="lobby" class="screen">
+<h2>Lobby</h2>
+<div id="saldo">Saldo: $0</div>
 
-<div class="container">
-<div class="card">
-<h3>🎰 Slot</h3>
-<input id="bet" type="number">
-<button onclick="slot()">Jugar</button>
-<p id="res"></p>
-</div>
+<div class="games">
+<div class="card" onclick="openGame('slot')">🎰 Slots</div>
+<div class="card" onclick="openGame('roulette')">🎡 Ruleta</div>
+<div class="card" onclick="openGame('dice')">🎲 Dado</div>
+<div class="card" onclick="openGame('blackjack')">🃏 Blackjack</div>
 </div>
 </div>
 
-<!-- SUPABASE CDN -->
+<!-- SLOT -->
+<div id="slot" class="screen">
+<h2>🎰 Slots</h2>
+<div class="slot" id="slotDisplay">🍒 🍒 🍒</div>
+<input id="betSlot" type="number">
+<button onclick="spinSlot()">Girar</button>
+<button onclick="back()">Volver</button>
+<p id="slotRes"></p>
+</div>
+
+<!-- RULETA -->
+<div id="roulette" class="screen">
+<h2>🎡 Ruleta</h2>
+<input id="betRou" type="number">
+<select id="color">
+<option value="rojo">Rojo</option>
+<option value="negro">Negro</option>
+</select>
+<button onclick="spinRoulette()">Girar</button>
+<button onclick="back()">Volver</button>
+<p id="rouRes"></p>
+</div>
+
+<!-- DADO -->
+<div id="dice" class="screen">
+<h2>🎲 Dado</h2>
+<input id="betDice" type="number">
+<button onclick="playDice()">Lanzar</button>
+<button onclick="back()">Volver</button>
+<p id="diceRes"></p>
+</div>
+
+<!-- BLACKJACK -->
+<div id="blackjack" class="screen">
+<h2>🃏 Blackjack</h2>
+<input id="betBJ" type="number">
+<button onclick="playBJ()">Jugar</button>
+<button onclick="back()">Volver</button>
+<p id="bjRes"></p>
+</div>
+
+<!-- SUPABASE -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
 <script>
 
-// 🔥 CONFIG
-const SUPABASE_URL = "https://dakhnqriwbzihlzhtfcb.supabase.co";
-const SUPABASE_KEY = "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs";
+// CONFIG
+const URL="https://dakhnqriwbzihlzhtfcb.supabase.co";
+const KEY="sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs";
 
 let supabase;
 let user;
-let saldo = 0;
+let saldo=0;
 
-// ===== INIT =====
-window.onload = async () => {
+// INIT
+window.onload=async()=>{
+try{ supabase=window.supabase.createClient(URL,KEY);}catch{}
 
-  try{
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  }catch(e){
-    console.log("Supabase no cargó, usando modo local");
-  }
+setTimeout(async()=>{
+document.getElementById("loader").style.display="none";
 
-  document.getElementById("loader").style.display="none";
+if(supabase){
+let {data}=await supabase.auth.getSession();
+if(data.session){
+user=data.session.user;
+start();
+return;
+}
+}
 
-  if(supabase){
-    const { data } = await supabase.auth.getSession();
-    if(data.session){
-      user = data.session.user;
-      start();
-      return;
-    }
-  }
+show("auth");
+},1000);
+}
 
-  show("auth");
-};
-
-// ===== UI =====
+// UI
 function show(id){
-  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
+document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+document.getElementById(id).classList.add("active");
 }
 
-// ===== REGISTER =====
+// AUTH
 async function register(){
-  if(!supabase) return localRegister();
+let email=val("email"),pass=val("pass");
+if(!supabase) return alert("Sin conexión backend");
 
-  const email = val("email");
-  const pass = val("pass");
+let {error}=await supabase.auth.signUp({email,password:pass});
+if(error) return alert(error.message);
 
-  const { error } = await supabase.auth.signUp({ email, password: pass });
-
-  if(error) return alert(error.message);
-
-  alert("Registro exitoso, ahora inicia sesión");
+alert("Revisa tu correo 📩");
 }
 
-// ===== LOGIN =====
 async function login(){
-  if(!supabase) return localLogin();
+let email=val("email"),pass=val("pass");
 
-  const email = val("email");
-  const pass = val("pass");
+if(!supabase) return alert("Sin backend");
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+let {data,error}=await supabase.auth.signInWithPassword({email,password:pass});
+if(error) return alert(error.message);
 
-  if(error) return alert(error.message);
-
-  user = data.user;
-  start();
+user=data.user;
+start();
 }
 
-// ===== START =====
+// START
 async function start(){
-  show("casino");
+show("lobby");
 
-  let { data } = await supabase
-    .from("usuarios")
-    .select("*")
-    .eq("id", user.id);
+let {data}=await supabase.from("usuarios").select("*").eq("id",user.id);
 
-  if(!data || data.length === 0){
-    await supabase.from("usuarios").insert([{ id:user.id, saldo:1000 }]);
-    saldo = 1000;
-  } else {
-    saldo = data[0].saldo;
-  }
+if(!data || data.length===0){
+await supabase.from("usuarios").insert([{id:user.id,saldo:1000}]);
+saldo=1000;
+}else saldo=data[0].saldo;
 
-  update();
+update();
 }
 
-// ===== SAVE =====
+// SAVE
 async function save(){
-  if(!supabase) return;
-
-  await supabase.from("usuarios").update({ saldo }).eq("id", user.id);
+await supabase.from("usuarios").update({saldo}).eq("id",user.id);
 }
 
-// ===== SLOT =====
-function slot(){
-  let bet = +document.getElementById("bet").value;
-  if(!bet || bet>saldo) return alert("Apuesta inválida");
-
-  let win = Math.random()<0.3;
-
-  saldo += win ? bet*3 : -bet;
-
-  document.getElementById("res").innerText = win ? "GANASTE 💰" : "PERDISTE ❌";
-
-  update();
-  save();
-}
-
-// ===== UPDATE =====
+// UPDATE
 function update(){
-  document.getElementById("saldo").innerText = saldo;
+document.getElementById("saldo").innerText="Saldo: $"+saldo;
 }
 
-// ===== LOGOUT =====
+// NAV
+function openGame(g){show(g)}
+function back(){show("lobby")}
+
+// SLOT
+function spinSlot(){
+let bet=+val("betSlot");
+if(!bet||bet>saldo) return alert("Apuesta inválida");
+
+let s=["🍒","💎","7️⃣","⭐"];
+let disp=document.getElementById("slotDisplay");
+
+let inter=setInterval(()=>{
+disp.innerText=s[r()]+ " "+s[r()]+ " "+s[r()];
+},100);
+
+setTimeout(()=>{
+clearInterval(inter);
+
+let a=s[r()],b=s[r()],c=s[r()];
+disp.innerText=`${a} ${b} ${c}`;
+
+let win=(a===b && b===c);
+saldo+=win?bet*3:-bet;
+
+document.getElementById("slotRes").innerText=win?"JACKPOT":"PERDISTE";
+update();save();
+},1500);
+}
+
+// RULETA
+function spinRoulette(){
+let bet=+val("betRou");
+let c=document.getElementById("color").value;
+
+if(!bet||bet>saldo) return alert("Apuesta inválida");
+
+let rlt=Math.random()<0.5?"rojo":"negro";
+let win=rlt===c;
+
+saldo+=win?bet:-bet;
+
+document.getElementById("rouRes").innerText=rlt;
+update();save();
+}
+
+// DADO
+function playDice(){
+let bet=+val("betDice");
+if(!bet||bet>saldo) return alert("Apuesta inválida");
+
+let d=Math.floor(Math.random()*6)+1;
+let win=d>=4;
+
+saldo+=win?bet:-bet;
+
+document.getElementById("diceRes").innerText="🎲 "+d;
+update();save();
+}
+
+// BLACKJACK
+function playBJ(){
+let bet=+val("betBJ");
+if(!bet||bet>saldo) return alert("Apuesta inválida");
+
+let p=Math.floor(Math.random()*10)+12;
+let d=Math.floor(Math.random()*10)+12;
+
+let win=(p>d && p<=21)||d>21;
+
+saldo+=win?bet:-bet;
+
+document.getElementById("bjRes").innerText=`${p} vs ${d}`;
+update();save();
+}
+
+// LOGOUT
 async function logout(){
-  if(supabase){
-    await supabase.auth.signOut();
-  }
-  location.reload();
+if(supabase) await supabase.auth.signOut();
+location.reload();
 }
 
-// ===== HELPERS =====
+// HELPERS
 function val(id){return document.getElementById(id).value}
-
-// ===== FALLBACK LOCAL =====
-function localRegister(){
-  localStorage.setItem("user", JSON.stringify({
-    email:val("email"),
-    pass:val("pass"),
-    saldo:1000
-  }));
-  alert("Registro local");
-}
-
-function localLogin(){
-  let u = JSON.parse(localStorage.getItem("user"));
-  if(!u) return alert("No existe usuario");
-
-  if(u.email===val("email") && u.pass===val("pass")){
-    saldo = u.saldo;
-    show("casino");
-    update();
-  }else{
-    alert("Datos incorrectos");
-  }
-}
+function r(){return Math.floor(Math.random()*4)}
 
 </script>
 
