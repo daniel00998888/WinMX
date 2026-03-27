@@ -8,7 +8,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        body { background: linear-gradient(135deg, #0a1625, #1a2a3f); font-family: system-ui, sans-serif; }
+        body {
+            background: linear-gradient(135deg, #0a1625, #1a2a3f);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
         .neon-text { text-shadow: 0 0 10px #22d3ee, 0 0 20px #22d3ee; }
         .reel {
             width: 78px; height: 78px; background: #0f1c2e; border: 3px solid #22d3ee;
@@ -21,6 +24,7 @@
         .reel.spinning { animation: spin 0.85s linear infinite; }
         @keyframes spin { 0% { transform: translateY(-400%); } 100% { transform: translateY(0); } }
         #confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
+        .chat-box { scrollbar-width: thin; scrollbar-color: #22d3ee #1e2937; }
     </style>
 </head>
 <body class="text-white min-h-screen">
@@ -37,7 +41,9 @@
                     <i class="fas fa-coins text-yellow-400"></i>
                     <span id="saldo" class="font-semibold text-yellow-300">$0</span>
                 </div>
-                <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-xl text-sm">Salir</button>
+                <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-xl text-sm flex items-center gap-1.5">
+                    <i class="fas fa-sign-out-alt"></i> <span class="hidden sm:inline">Salir</span>
+                </button>
             </div>
         </div>
     </header>
@@ -63,22 +69,85 @@
     <!-- CASINO -->
     <div id="casino" class="hidden min-h-screen">
         <div class="flex h-screen overflow-hidden">
-            <!-- Sidebar y Chat (responsive) se mantienen como antes -->
-            <!-- Por brevedad, aquí solo muestro el contenido principal y script completo -->
-            <div class="flex-1 p-8 overflow-auto">
-                <div id="slot" class="game">
-                    <h2 class="text-4xl font-bold mb-8">🎰 Slots</h2>
-                    <div class="max-w-md mx-auto">
-                        <div class="flex justify-center gap-6 mb-10">
-                            <div class="reel" id="r1">🍒</div>
-                            <div class="reel" id="r2">💎</div>
-                            <div class="reel" id="r3">7️⃣</div>
+
+            <!-- SIDEBAR -->
+            <div id="sidebar" class="w-72 bg-zinc-950 border-r border-zinc-800 p-5 flex flex-col fixed md:static inset-y-0 left-0 z-50 -translate-x-full md:translate-x-0 transition-transform duration-300">
+                <div class="md:hidden flex justify-between mb-6">
+                    <h2 class="text-xl font-bold">Menú</h2>
+                    <button onclick="toggleSidebar()" class="text-3xl leading-none">×</button>
+                </div>
+                
+                <h3 class="text-cyan-400 font-semibold mb-4 flex items-center gap-2"><i class="fas fa-gamepad"></i> JUEGOS</h3>
+                <div onclick="showGame('slot');toggleSidebar()" class="flex items-center gap-3 p-4 hover:bg-zinc-900 rounded-2xl cursor-pointer mb-2">
+                    <span class="text-3xl">🎰</span> <span>Slots</span>
+                </div>
+                <div onclick="showGame('roulette');toggleSidebar()" class="flex items-center gap-3 p-4 hover:bg-zinc-900 rounded-2xl cursor-pointer mb-2">
+                    <span class="text-3xl">🎡</span> <span>Ruleta</span>
+                </div>
+                <div onclick="showGame('dice');toggleSidebar()" class="flex items-center gap-3 p-4 hover:bg-zinc-900 rounded-2xl cursor-pointer mb-2">
+                    <span class="text-3xl">🎲</span> <span>Dados</span>
+                </div>
+                <div onclick="showGame('bj');toggleSidebar()" class="flex items-center gap-3 p-4 hover:bg-zinc-900 rounded-2xl cursor-pointer mb-8">
+                    <span class="text-3xl">🃏</span> <span>Blackjack</span>
+                </div>
+
+                <h3 class="text-cyan-400 font-semibold mb-4 flex items-center gap-2"><i class="fas fa-trophy"></i> TOP 5</h3>
+                <div id="rankingBox" class="flex-1 space-y-3 overflow-auto"></div>
+            </div>
+
+            <!-- CONTENIDO PRINCIPAL -->
+            <div class="flex-1 flex flex-col">
+                <div class="md:hidden bg-zinc-900 border-b border-zinc-800 p-3 flex items-center justify-between">
+                    <button onclick="toggleSidebar()" class="text-2xl px-2"><i class="fas fa-bars"></i></button>
+                    <span class="font-bold text-lg">Casino Real PRO</span>
+                    <button onclick="toggleChat()" class="text-2xl px-2"><i class="fas fa-comments"></i></button>
+                </div>
+
+                <div class="flex-1 p-4 md:p-8 overflow-auto">
+                    <!-- SLOTS -->
+                    <div id="slot" class="game">
+                        <h2 class="text-3xl md:text-4xl font-bold mb-8 flex items-center gap-3"><span>🎰</span> Tragamonedas Premium</h2>
+                        <div class="max-w-md mx-auto">
+                            <div class="flex justify-center gap-4 mb-10">
+                                <div class="reel" id="r1">🍒</div>
+                                <div class="reel" id="r2">💎</div>
+                                <div class="reel" id="r3">7️⃣</div>
+                            </div>
+                            <div class="flex gap-3">
+                                <input id="betSlot" type="number" placeholder="Apuesta" class="flex-1 bg-zinc-800 border border-zinc-700 rounded-2xl px-6 py-5 text-center text-xl focus:outline-none focus:border-cyan-400">
+                                <button onclick="spinSlot()" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 px-10 py-5 rounded-2xl font-bold">GIRAR</button>
+                            </div>
+                            <p id="slotRes" class="text-center mt-10 text-2xl font-bold min-h-[70px]"></p>
                         </div>
-                        <div class="flex gap-4">
-                            <input id="betSlot" type="number" placeholder="Apuesta" class="flex-1 bg-zinc-800 border border-zinc-700 rounded-2xl px-6 py-5 text-center text-xl">
-                            <button onclick="spinSlot()" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 px-10 py-5 rounded-2xl font-bold">GIRAR</button>
-                        </div>
-                        <p id="slotRes" class="text-center mt-10 text-3xl font-bold"></p>
+                    </div>
+
+                    <!-- Otros juegos (placeholder) -->
+                    <div id="roulette" class="game hidden">
+                        <h2 class="text-3xl md:text-4xl font-bold mb-8">🎡 Ruleta</h2>
+                        <p class="text-zinc-400 text-center">Próximamente...</p>
+                    </div>
+                    <div id="dice" class="game hidden">
+                        <h2 class="text-3xl md:text-4xl font-bold mb-8">🎲 Dados</h2>
+                        <p class="text-zinc-400 text-center">Próximamente...</p>
+                    </div>
+                    <div id="bj" class="game hidden">
+                        <h2 class="text-3xl md:text-4xl font-bold mb-8">🃏 Blackjack</h2>
+                        <p class="text-zinc-400 text-center">Próximamente...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHAT -->
+            <div id="chatPanel" class="w-80 bg-zinc-950 border-l border-zinc-800 flex flex-col fixed md:static inset-y-0 right-0 z-50 translate-x-full md:translate-x-0 transition-transform duration-300">
+                <div class="p-4 border-b border-zinc-800 bg-zinc-900 flex justify-between md:hidden">
+                    <h3 class="font-semibold">Chat en Vivo</h3>
+                    <button onclick="toggleChat()" class="text-2xl">×</button>
+                </div>
+                <div id="chatBox" class="chat-box flex-1 p-4 overflow-auto space-y-3 text-sm"></div>
+                <div class="p-4 border-t border-zinc-800 bg-zinc-900">
+                    <div class="flex gap-2">
+                        <input id="chatInput" placeholder="Escribe un mensaje..." class="flex-1 bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-3 focus:outline-none focus:border-cyan-400">
+                        <button onclick="sendMsg()" class="bg-cyan-500 text-black px-6 rounded-2xl font-semibold">Enviar</button>
                     </div>
                 </div>
             </div>
@@ -95,13 +164,16 @@
 
         let user = null;
         let saldo = 0;
+        let chatChannel = null;
 
         function msg(text, color = "text-white") {
-            document.getElementById("msg").innerHTML = `<span class="${color}">${text}</span>`;
+            const el = document.getElementById("msg");
+            if (el) el.innerHTML = `<span class="${color}">${text}</span>`;
         }
 
         function val(id) {
-            return document.getElementById(id).value.trim();
+            const el = document.getElementById(id);
+            return el ? el.value.trim() : "";
         }
 
         function formatSaldo(n) {
@@ -109,7 +181,16 @@
         }
 
         function updateSaldo() {
-            document.getElementById("saldo").textContent = "$" + formatSaldo(saldo);
+            const el = document.getElementById("saldo");
+            if (el) el.textContent = "$" + formatSaldo(saldo);
+        }
+
+        function toggleSidebar() {
+            document.getElementById("sidebar").classList.toggle("-translate-x-full");
+        }
+
+        function toggleChat() {
+            document.getElementById("chatPanel").classList.toggle("translate-x-full");
         }
 
         function launchConfetti() {
@@ -117,16 +198,51 @@
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             const ctx = canvas.getContext("2d");
-            // (confetti code simplificado)
-            console.log("¡Confetti lanzado!");
+            let particles = [];
+            const colors = ['#22d3ee', '#eab308', '#a855f7', '#ec4899'];
+
+            for (let i = 0; i < 180; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    size: Math.random() * 9 + 6,
+                    speed: Math.random() * 8 + 5,
+                    color: colors[Math.floor(Math.random()*colors.length)],
+                    angle: Math.random() * 360,
+                    rotationSpeed: Math.random() * 15 - 7
+                });
+            }
+
+            let frame = 0;
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.y += p.speed;
+                    p.angle += p.rotationSpeed;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.angle * Math.PI / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size*0.7);
+                    ctx.restore();
+                    if (p.y > canvas.height + 100) particles.splice(i, 1);
+                }
+                if (particles.length > 0 && frame < 100) requestAnimationFrame(animate);
+                frame++;
+            }
+            animate();
+        }
+
+        async function register() {
+            msg("Registrando...");
+            const { error } = await sb.auth.signUp({ email: val("email"), password: val("pass") });
+            msg(error ? error.message : "✅ Revisa tu correo para confirmar", error ? "text-red-400" : "text-green-400");
         }
 
         async function login() {
             msg("Iniciando sesión...");
-            const { data, error } = await sb.auth.signInWithPassword({
-                email: val("email"),
-                password: val("pass")
-            });
+            const { data, error } = await sb.auth.signInWithPassword({ email: val("email"), password: val("pass") });
             if (error) return msg(error.message, "text-red-400");
             user = data.user;
             startCasino();
@@ -140,34 +256,41 @@
             try {
                 let { data, error } = await sb.from("usuarios").select("*").eq("id", user.id).maybeSingle();
 
-                if (error) console.error(error);
-
                 if (!data) {
                     const { error: insertError } = await sb.from("usuarios").insert([{ id: user.id, saldo: 3000 }]);
-                    if (insertError) {
-                        console.error("Insert error:", insertError);
-                        msg("Error al crear perfil. Desactiva RLS en la tabla usuarios", "text-red-400");
-                        return;
-                    }
+                    if (insertError) console.error("Error insertando usuario:", insertError);
                     saldo = 3000;
                 } else {
                     saldo = data.saldo || 3000;
                 }
 
                 updateSaldo();
+                loadRanking();
+                initChat();
                 showGame('slot');
-                msg("¡Bienvenido al Casino!", "text-green-400");
+                msg("¡Bienvenido al Casino Real!", "text-green-400");
 
             } catch (err) {
                 console.error(err);
-                msg("Error de conexión", "text-red-400");
+                msg("Error al cargar el casino", "text-red-400");
             }
+        }
+
+        async function saveSaldo() {
+            if (!user) return;
+            await sb.from("usuarios").update({ saldo }).eq("id", user.id);
+        }
+
+        function showGame(gameId) {
+            document.querySelectorAll('.game').forEach(g => g.classList.add('hidden'));
+            const game = document.getElementById(gameId);
+            if (game) game.classList.remove('hidden');
         }
 
         async function spinSlot() {
             let bet = parseInt(val("betSlot"));
             if (!bet || bet <= 0 || bet > saldo) {
-                document.getElementById("slotRes").innerHTML = `<span class="text-red-400">Apuesta inválida</span>`;
+                document.getElementById("slotRes").innerHTML = `<span class="text-red-400">¡Apuesta inválida!</span>`;
                 return;
             }
 
@@ -181,25 +304,50 @@
             let b = symbols[Math.floor(Math.random()*symbols.length)];
             let c = symbols[Math.floor(Math.random()*symbols.length)];
 
-            reels[0].innerText = a; reels[1].innerText = b; reels[2].innerText = c;
+            reels[0].innerText = a;
+            reels[1].innerText = b;
+            reels[2].innerText = c;
 
             const win = (a === b && b === c);
             saldo += win ? bet * 15 : -bet;
 
             document.getElementById("slotRes").innerHTML = win 
-                ? `<span class="text-yellow-400">¡JACKPOT!</span>` 
+                ? `<span class="text-yellow-400">¡JACKPOT! +$${bet*15}</span>` 
                 : `<span class="text-red-400">-$${bet}</span>`;
 
             if (win) launchConfetti();
 
             updateSaldo();
-            await sb.from("usuarios").update({ saldo }).eq("id", user.id);
+            await saveSaldo();
+            loadRanking();
         }
 
-        function showGame(id) {
-            document.querySelectorAll('.game').forEach(g => g.classList.add('hidden'));
-            const game = document.getElementById(id);
-            if (game) game.classList.remove('hidden');
+        function initChat() {
+            if (chatChannel) return;
+            chatChannel = sb.channel('chat-room');
+            chatChannel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat' }, (payload) => {
+                const box = document.getElementById("chatBox");
+                if (box) {
+                    box.innerHTML += `<div class="bg-zinc-900 p-3 rounded-2xl"><span class="text-cyan-400">Usuario:</span> ${payload.new.mensaje || ''}</div>`;
+                    box.scrollTop = box.scrollHeight;
+                }
+            }).subscribe();
+        }
+
+        async function sendMsg() {
+            const text = val("chatInput");
+            if (!text || !user) return;
+            await sb.from("chat").insert([{ user_id: user.id, mensaje: text }]);
+            document.getElementById("chatInput").value = "";
+        }
+
+        async function loadRanking() {
+            const { data } = await sb.from("usuarios").select("saldo").order("saldo", { ascending: false }).limit(5);
+            let html = "";
+            (data || []).forEach((u, i) => {
+                html += `<div class="bg-zinc-900 p-4 rounded-2xl flex justify-between"><span class="text-cyan-300">#${i+1}</span><span class="text-yellow-300">$${formatSaldo(u.saldo)}</span></div>`;
+            });
+            document.getElementById("rankingBox").innerHTML = html || "<p class='text-zinc-500'>Sin jugadores aún</p>";
         }
 
         async function logout() {
@@ -207,6 +355,7 @@
             location.reload();
         }
 
+        // Inicialización
         window.onload = async () => {
             const { data: { session } } = await sb.auth.getSession();
             if (session) {
