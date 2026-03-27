@@ -2,35 +2,100 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Casino PRO</title>
+<title>Casino Real PRO</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#0b1d2a;color:white;text-align:center}
-header{background:#102c3c;padding:15px;font-size:24px}
-.screen{display:none}
+body{margin:0;font-family:Arial;background:#0b1d2a;color:white}
+
+/* HEADER */
+header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+background:#0f2a3d;
+padding:10px 20px;
+}
+
+.logo{font-size:22px;font-weight:bold}
+.balance{font-size:18px}
+.logout{background:red;border:none;color:white;padding:5px 10px;cursor:pointer}
+
+/* MAIN */
+.main{
+display:flex;
+height:calc(100vh - 60px);
+}
+
+/* SIDEBAR */
+.sidebar{
+width:250px;
+background:#132f44;
+padding:20px;
+}
+
+.sidebar h3{margin-top:0}
+.game-btn{
+background:#1d4b6a;
+padding:10px;
+margin:10px 0;
+cursor:pointer;
+border-radius:5px;
+text-align:center;
+}
+
+/* CONTENT */
+.content{
+flex:1;
+padding:20px;
+overflow:auto;
+}
+
+/* CHAT */
+.chat{
+width:300px;
+background:#000;
+display:flex;
+flex-direction:column;
+}
+
+.chat-box{
+flex:1;
+overflow:auto;
+padding:10px;
+}
+
+.chat input{
+border:none;
+padding:10px;
+width:100%;
+}
+
+/* LOGIN */
+#auth{text-align:center;margin-top:100px}
+input{padding:10px;margin:5px;width:200px}
+
+/* GAME BOX */
+.game{
+display:none;
+}
 .active{display:block}
-.games{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin-top:20px}
-.card{background:#16394f;padding:20px;border-radius:10px;width:200px;cursor:pointer}
-button{padding:10px;margin-top:10px;border:none;border-radius:5px;background:#00c896;color:white;cursor:pointer;width:80%}
-input,select{padding:8px;margin-top:10px;width:80%}
-.logout{position:absolute;top:10px;right:10px;background:red}
 
-.reels{display:flex;justify-content:center;gap:10px;margin:20px}
-.reel{width:80px;height:80px;background:#000;border:3px solid #00c896;font-size:40px;display:flex;align-items:center;justify-content:center;border-radius:10px}
-
-.wheel{width:200px;height:200px;border-radius:50%;background:conic-gradient(red 0 50%, black 50% 100%);margin:20px auto;transition:transform 1s}
-
-#chatBox{height:150px;overflow:auto;background:#000;padding:10px;margin-top:10px}
+/* SLOT */
+.reels{display:flex;gap:10px;justify-content:center}
+.reel{width:80px;height:80px;background:#000;font-size:40px;display:flex;align-items:center;justify-content:center}
 </style>
 </head>
 
 <body>
 
-<header>🎰 CASINO PRO</header>
+<header>
+<div class="logo">🎰 CASINO REAL</div>
+<div class="balance" id="saldo">$0</div>
 <button class="logout" onclick="logout()">Salir</button>
+</header>
 
 <!-- LOGIN -->
-<div id="auth" class="screen active">
+<div id="auth">
 <h2>Acceso</h2>
 <input id="email" placeholder="Correo"><br>
 <input id="pass" type="password" placeholder="Contraseña"><br>
@@ -39,62 +104,74 @@ input,select{padding:8px;margin-top:10px;width:80%}
 <p id="msg"></p>
 </div>
 
-<!-- LOBBY -->
-<div id="lobby" class="screen">
-<h2>Lobby</h2>
-<div id="saldo"></div>
+<!-- CASINO -->
+<div id="casino" style="display:none">
 
-<div class="games">
-<div class="card" onclick="openGame('slot')">🎰 Slots</div>
-<div class="card" onclick="openGame('roulette')">🎡 Ruleta</div>
-<div class="card" onclick="openGame('dice')">🎲 Dado</div>
-<div class="card" onclick="openGame('blackjack')">🃏 Blackjack</div>
-</div>
+<div class="main">
 
-<h3>💬 Chat</h3>
-<div id="chatBox"></div>
-<input id="chatInput">
-<button onclick="sendMsg()">Enviar</button>
+<!-- SIDEBAR -->
+<div class="sidebar">
+<h3>Juegos</h3>
+<div class="game-btn" onclick="showGame('slot')">🎰 Slots</div>
+<div class="game-btn" onclick="showGame('roulette')">🎡 Ruleta</div>
+<div class="game-btn" onclick="showGame('dice')">🎲 Dado</div>
+<div class="game-btn" onclick="showGame('bj')">🃏 Blackjack</div>
 
 <h3>🏆 Ranking</h3>
 <div id="rankingBox"></div>
 </div>
 
-<!-- JUEGOS -->
-<div id="slot" class="screen">
-<h2>🎰 Slot</h2>
+<!-- CONTENT -->
+<div class="content">
+
+<div id="slot" class="game">
+<h2>🎰 Slots</h2>
 <div class="reels">
 <div class="reel" id="r1"></div>
 <div class="reel" id="r2"></div>
 <div class="reel" id="r3"></div>
 </div>
-<input id="betSlot"><button onclick="spinSlot()">Girar</button>
-<button onclick="back()">Volver</button>
+<input id="betSlot">
+<button onclick="spinSlot()">Girar</button>
 <p id="slotRes"></p>
 </div>
 
-<div id="roulette" class="screen">
+<div id="roulette" class="game">
 <h2>🎡 Ruleta</h2>
-<div class="wheel" id="wheel"></div>
 <input id="betRou">
-<select id="color"><option value="rojo">Rojo</option><option value="negro">Negro</option></select>
+<select id="color">
+<option value="rojo">Rojo</option>
+<option value="negro">Negro</option>
+</select>
 <button onclick="spinRoulette()">Girar</button>
-<button onclick="back()">Volver</button>
 <p id="rouRes"></p>
 </div>
 
-<div id="dice" class="screen">
+<div id="dice" class="game">
 <h2>🎲 Dado</h2>
-<input id="betDice"><button onclick="playDice()">Lanzar</button>
-<button onclick="back()">Volver</button>
+<input id="betDice">
+<button onclick="playDice()">Lanzar</button>
 <p id="diceRes"></p>
 </div>
 
-<div id="blackjack" class="screen">
+<div id="bj" class="game">
 <h2>🃏 Blackjack</h2>
-<input id="betBJ"><button onclick="playBJ()">Jugar</button>
-<button onclick="back()">Volver</button>
+<input id="betBJ">
+<button onclick="playBJ()">Jugar</button>
 <p id="bjRes"></p>
+</div>
+
+</div>
+
+<!-- CHAT -->
+<div class="chat">
+<div class="chat-box" id="chatBox"></div>
+<input id="chatInput" placeholder="Escribe...">
+<button onclick="sendMsg()">Enviar</button>
+</div>
+
+</div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -107,87 +184,94 @@ const sb = window.supabase.createClient(
 
 let user,saldo=0;
 
+// INIT
 window.onload=async()=>{
 let {data}=await sb.auth.getSession();
-if(data.session){user=data.session.user;start();}else show("auth");
+if(data.session){user=data.session.user;start();}
 };
 
-function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.getElementById(id).classList.add("active")}
+// AUTH
 function msg(t){document.getElementById("msg").innerText=t}
 function val(id){return document.getElementById(id).value}
 
-// AUTH
-async function register(){msg("Registrando...");let {error}=await sb.auth.signUp({email:val("email"),password:val("pass")});msg(error?error.message:"📩 Revisa tu correo")}
-async function login(){msg("Entrando...");let {data,error}=await sb.auth.signInWithPassword({email:val("email"),password:val("pass")});
-if(error){msg(error.message);return;}user=data.user;start();}
+async function register(){
+msg("Registrando...");
+let {error}=await sb.auth.signUp({email:val("email"),password:val("pass")});
+msg(error?error.message:"Revisa tu correo");
+}
+
+async function login(){
+let {data,error}=await sb.auth.signInWithPassword({email:val("email"),password:val("pass")});
+if(error){msg(error.message);return;}
+user=data.user;start();
+}
 
 // START
 async function start(){
-show("lobby");
+document.getElementById("auth").style.display="none";
+document.getElementById("casino").style.display="block";
 
 let {data}=await sb.from("usuarios").select("*").eq("id",user.id);
 
-if(!data.length){await sb.from("usuarios").insert([{id:user.id,saldo:1000}]);saldo=1000;}
-else saldo=data[0].saldo;
+if(!data.length){
+await sb.from("usuarios").insert([{id:user.id,saldo:1000}]);
+saldo=1000;
+}else saldo=data[0].saldo;
 
 update();
 loadRanking();
-loadChat();
+initChat();
 }
-
-// SAVE
-async function save(){await sb.from("usuarios").update({saldo}).eq("id",user.id)}
 
 // UPDATE
-function update(){document.getElementById("saldo").innerText="Saldo: $"+saldo}
+function update(){document.getElementById("saldo").innerText="$"+saldo}
+async function save(){await sb.from("usuarios").update({saldo}).eq("id",user.id)}
 
 // NAV
-function openGame(g){show(g)}
-function back(){show("lobby")}
+function showGame(g){
+document.querySelectorAll(".game").forEach(x=>x.classList.remove("active"));
+document.getElementById(g).classList.add("active");
+}
 
-// SLOT
+// JUEGOS
 function spinSlot(){
-let bet=+val("betSlot");if(!bet||bet>saldo)return alert("Apuesta inválida");
+let b=+val("betSlot");if(!b||b>saldo)return;
 let s=["🍒","💎","7️⃣","⭐","🍀","🔔"];
-let r1=document.getElementById("r1"),r2=document.getElementById("r2"),r3=document.getElementById("r3");
-let inter=setInterval(()=>{r1.innerText=s[rand()];r2.innerText=s[rand()];r3.innerText=s[rand()];},100);
-setTimeout(()=>{clearInterval(inter);
-let a=s[rand()],b=s[rand()],c=s[rand()];
-r1.innerText=a;r2.innerText=b;r3.innerText=c;
-let win=(a===b&&b===c);saldo+=win?bet*5:-bet;
-document.getElementById("slotRes").innerText=win?"JACKPOT":"PERDISTE";
-update();save();},1500);
+let a=s[rand()],c=s[rand()],d=s[rand()];
+document.getElementById("r1").innerText=a;
+document.getElementById("r2").innerText=c;
+document.getElementById("r3").innerText=d;
+let win=(a===c&&c===d);
+saldo+=win?b*5:-b;
+update();save();
 }
 
-// RULETA
 function spinRoulette(){
-let bet=+val("betRou"),c=document.getElementById("color").value;
-if(!bet||bet>saldo)return alert("Apuesta inválida");
-let wheel=document.getElementById("wheel"),deg=Math.random()*360;
-wheel.style.transform=`rotate(${deg}deg)`;
-setTimeout(()=>{let r=(deg%360)<180?"rojo":"negro";saldo+=r===c?bet:-bet;
-document.getElementById("rouRes").innerText=r;update();save();},1000);
+let b=+val("betRou");let c=val("color");
+let r=Math.random()<0.5?"rojo":"negro";
+saldo+=r===c?b:-b;
+document.getElementById("rouRes").innerText=r;
+update();save();
 }
 
-// DADO
-function playDice(){let bet=+val("betDice");if(!bet||bet>saldo)return alert("Apuesta inválida");
-let d=Math.floor(Math.random()*6)+1;saldo+=d>=4?bet:-bet;
-document.getElementById("diceRes").innerText="🎲 "+d;update();save();}
+function playDice(){
+let b=+val("betDice");
+let d=Math.floor(Math.random()*6)+1;
+saldo+=d>=4?b:-b;
+document.getElementById("diceRes").innerText=d;
+update();save();
+}
 
-// BJ
-function playBJ(){let bet=+val("betBJ");if(!bet||bet>saldo)return alert("Apuesta inválida");
+function playBJ(){
+let b=+val("betBJ");
 let p=Math.floor(Math.random()*10)+12,d=Math.floor(Math.random()*10)+12;
-saldo+=((p>d&&p<=21)||d>21)?bet:-bet;
-document.getElementById("bjRes").innerText=`${p} vs ${d}`;update();save();}
+saldo+=((p>d&&p<=21)||d>21)?b:-b;
+document.getElementById("bjRes").innerText=`${p} vs ${d}`;
+update();save();
+}
 
 // CHAT
-async function sendMsg(){
-let t=val("chatInput");if(!t)return;
-await sb.from("chat").insert([{user_id:user.id,mensaje:t}]);
-document.getElementById("chatInput").value="";
-}
-
-function loadChat(){
+function initChat(){
 sb.channel("chat")
 .on("postgres_changes",{event:"INSERT",schema:"public",table:"chat"},p=>{
 let box=document.getElementById("chatBox");
@@ -196,10 +280,16 @@ box.scrollTop=box.scrollHeight;
 }).subscribe();
 }
 
+async function sendMsg(){
+let t=val("chatInput");
+await sb.from("chat").insert([{user_id:user.id,mensaje:t}]);
+}
+
 // RANKING
 async function loadRanking(){
 let {data}=await sb.from("usuarios").select("*").order("saldo",{ascending:false}).limit(5);
-let html="";data.forEach(u=>{html+=`<div>💰 ${u.saldo}</div>`});
+let html="";
+data.forEach(u=>html+=`<div>$${u.saldo}</div>`);
 document.getElementById("rankingBox").innerHTML=html;
 }
 
