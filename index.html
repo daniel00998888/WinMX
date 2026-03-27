@@ -2,17 +2,11 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Casino Royale ULTRA</title>
+<title>Casino Real PRO</title>
 
 <style>
 body{margin:0;font-family:Arial;background:#0b1d2a;color:white;text-align:center}
 header{background:#102c3c;padding:15px;font-size:24px}
-
-#loader{
-position:fixed;width:100%;height:100%;
-background:black;display:flex;justify-content:center;align-items:center;
-font-size:30px;z-index:999;
-}
 
 .screen{display:none}
 .active{display:block}
@@ -20,7 +14,7 @@ font-size:30px;z-index:999;
 .games{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin-top:20px}
 
 .card{
-background:#16394f;padding:20px;border-radius:10px;width:220px;
+background:#16394f;padding:20px;border-radius:10px;width:200px;
 cursor:pointer;transition:.3s
 }
 .card:hover{transform:scale(1.05)}
@@ -30,15 +24,28 @@ input,select{padding:8px;margin-top:10px;width:80%}
 
 .logout{position:absolute;top:10px;right:10px;background:red}
 
-.slot{font-size:40px;margin:20px}
+/* SLOT */
+.reels{display:flex;justify-content:center;gap:10px;margin:20px}
+.reel{
+width:80px;height:80px;background:#000;border:3px solid #00c896;
+font-size:40px;display:flex;align-items:center;justify-content:center;
+border-radius:10px;box-shadow:0 0 10px #00c896;
+}
+
+/* RULETA */
+.wheel{
+width:200px;height:200px;border-radius:50%;
+background:conic-gradient(red 0 50%, black 50% 100%);
+margin:20px auto;
+display:flex;align-items:center;justify-content:center;
+font-size:20px;
+}
 </style>
 </head>
 
 <body>
 
-<div id="loader">Cargando casino...</div>
-
-<header>🎰 CASINO ULTRA PRO</header>
+<header>🎰 CASINO REAL PRO</header>
 <button class="logout" onclick="logout()">Salir</button>
 
 <!-- LOGIN -->
@@ -65,24 +72,36 @@ input,select{padding:8px;margin-top:10px;width:80%}
 
 <!-- SLOT -->
 <div id="slot" class="screen">
-<h2>🎰 Slots</h2>
-<div class="slot" id="slotDisplay">🍒 🍒 🍒</div>
+<h2>🎰 Slot</h2>
+
+<div class="reels">
+<div class="reel" id="r1"></div>
+<div class="reel" id="r2"></div>
+<div class="reel" id="r3"></div>
+</div>
+
 <input id="betSlot" type="number">
 <button onclick="spinSlot()">Girar</button>
 <button onclick="back()">Volver</button>
+
 <p id="slotRes"></p>
 </div>
 
 <!-- RULETA -->
 <div id="roulette" class="screen">
 <h2>🎡 Ruleta</h2>
+
+<div class="wheel" id="wheel">🎡</div>
+
 <input id="betRou" type="number">
 <select id="color">
 <option value="rojo">Rojo</option>
 <option value="negro">Negro</option>
 </select>
+
 <button onclick="spinRoulette()">Girar</button>
 <button onclick="back()">Volver</button>
+
 <p id="rouRes"></p>
 </div>
 
@@ -104,7 +123,6 @@ input,select{padding:8px;margin-top:10px;width:80%}
 <p id="bjRes"></p>
 </div>
 
-<!-- SUPABASE -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
 <script>
@@ -113,28 +131,19 @@ input,select{padding:8px;margin-top:10px;width:80%}
 const URL="https://dakhnqriwbzihlzhtfcb.supabase.co";
 const KEY="sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs";
 
-let supabase;
+let supabase = window.supabase.createClient(URL,KEY);
 let user;
 let saldo=0;
 
 // INIT
 window.onload=async()=>{
-try{ supabase=window.supabase.createClient(URL,KEY);}catch{}
-
-setTimeout(async()=>{
-document.getElementById("loader").style.display="none";
-
-if(supabase){
 let {data}=await supabase.auth.getSession();
 if(data.session){
 user=data.session.user;
 start();
-return;
-}
-}
-
+}else{
 show("auth");
-},1000);
+}
 }
 
 // UI
@@ -146,22 +155,15 @@ document.getElementById(id).classList.add("active");
 // AUTH
 async function register(){
 let email=val("email"),pass=val("pass");
-if(!supabase) return alert("Sin conexión backend");
-
 let {error}=await supabase.auth.signUp({email,password:pass});
 if(error) return alert(error.message);
-
-alert("Revisa tu correo 📩");
+alert("Revisa tu correo");
 }
 
 async function login(){
 let email=val("email"),pass=val("pass");
-
-if(!supabase) return alert("Sin backend");
-
 let {data,error}=await supabase.auth.signInWithPassword({email,password:pass});
 if(error) return alert(error.message);
-
 user=data.user;
 start();
 }
@@ -199,23 +201,28 @@ function spinSlot(){
 let bet=+val("betSlot");
 if(!bet||bet>saldo) return alert("Apuesta inválida");
 
-let s=["🍒","💎","7️⃣","⭐"];
-let disp=document.getElementById("slotDisplay");
+let s=["🍒","💎","7️⃣","⭐","🍀","🔔"];
+let r1=document.getElementById("r1");
+let r2=document.getElementById("r2");
+let r3=document.getElementById("r3");
 
 let inter=setInterval(()=>{
-disp.innerText=s[r()]+ " "+s[r()]+ " "+s[r()];
+r1.innerText=s[rand()];
+r2.innerText=s[rand()];
+r3.innerText=s[rand()];
 },100);
 
 setTimeout(()=>{
 clearInterval(inter);
 
-let a=s[r()],b=s[r()],c=s[r()];
-disp.innerText=`${a} ${b} ${c}`;
+let a=s[rand()],b=s[rand()],c=s[rand()];
+r1.innerText=a;r2.innerText=b;r3.innerText=c;
 
 let win=(a===b && b===c);
-saldo+=win?bet*3:-bet;
+saldo+=win?bet*5:-bet;
 
 document.getElementById("slotRes").innerText=win?"JACKPOT":"PERDISTE";
+
 update();save();
 },1500);
 }
@@ -227,13 +234,21 @@ let c=document.getElementById("color").value;
 
 if(!bet||bet>saldo) return alert("Apuesta inválida");
 
-let rlt=Math.random()<0.5?"rojo":"negro";
-let win=rlt===c;
+let wheel=document.getElementById("wheel");
+let deg=Math.floor(Math.random()*360);
+
+wheel.style.transform=`rotate(${deg}deg)`;
+
+setTimeout(()=>{
+let r=(deg%360)<180?"rojo":"negro";
+let win=r===c;
 
 saldo+=win?bet:-bet;
 
-document.getElementById("rouRes").innerText=rlt;
+document.getElementById("rouRes").innerText=r;
+
 update();save();
+},1000);
 }
 
 // DADO
@@ -247,6 +262,7 @@ let win=d>=4;
 saldo+=win?bet:-bet;
 
 document.getElementById("diceRes").innerText="🎲 "+d;
+
 update();save();
 }
 
@@ -263,18 +279,19 @@ let win=(p>d && p<=21)||d>21;
 saldo+=win?bet:-bet;
 
 document.getElementById("bjRes").innerText=`${p} vs ${d}`;
+
 update();save();
 }
 
 // LOGOUT
 async function logout(){
-if(supabase) await supabase.auth.signOut();
+await supabase.auth.signOut();
 location.reload();
 }
 
 // HELPERS
 function val(id){return document.getElementById(id).value}
-function r(){return Math.floor(Math.random()*4)}
+function rand(){return Math.floor(Math.random()*6)}
 
 </script>
 
