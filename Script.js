@@ -1,7 +1,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
-const supabaseUrl = 'TU_URL';
-const supabaseKey = 'TU_KEY';
+const supabaseUrl = 'https://dakhnqriwbzihlzhtfcb.supabase.co';
+const supabaseKey = 'sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs';
 
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
