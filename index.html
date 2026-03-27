@@ -8,7 +8,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        body { background: linear-gradient(135deg, #0a1625, #1a2a3f); font-family: 'Segoe UI', sans-serif; }
+        body {
+            background: linear-gradient(135deg, #0a1625, #1a2a3f);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
         .neon-text { text-shadow: 0 0 10px #22d3ee, 0 0 20px #22d3ee; }
         .reel {
             width: 90px; height: 90px; background: #0f1c2e; border: 3px solid #22d3ee;
@@ -18,6 +21,7 @@
         .reel.spinning { animation: spin 0.9s linear infinite; }
         @keyframes spin { 0% { transform: translateY(-400%); } 100% { transform: translateY(0); } }
         #confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
+        .chat-box { scrollbar-width: thin; scrollbar-color: #22d3ee #1e2937; }
     </style>
 </head>
 <body class="text-white min-h-screen">
@@ -59,12 +63,100 @@
         </div>
     </div>
 
-    <!-- CASINO (mismo diseño anterior) -->
+    <!-- CASINO -->
     <div id="casino" class="hidden min-h-screen">
         <div class="flex h-screen">
-            <!-- Sidebar y contenido igual que antes - omitido por brevedad, usa el de la versión anterior -->
-            <!-- ... (mantén el sidebar, games y chat como en la versión anterior) ... -->
-            <!-- Para ahorrar espacio, asumo que copias el resto del HTML de la versión anterior -->
+            <!-- SIDEBAR -->
+            <div class="w-72 bg-zinc-950 border-r border-zinc-800 p-6 flex flex-col overflow-auto">
+                <h3 class="text-cyan-400 font-semibold text-lg mb-4 flex items-center gap-2">
+                    <i class="fas fa-gamepad"></i> JUEGOS
+                </h3>
+                <div onclick="showGame('slot')" class="cursor-pointer hover:bg-zinc-900 p-4 rounded-2xl mb-2 flex items-center gap-3 transition-all">
+                    <span class="text-3xl">🎰</span>
+                    <span class="font-medium text-lg">Slots</span>
+                </div>
+                <div onclick="showGame('roulette')" class="cursor-pointer hover:bg-zinc-900 p-4 rounded-2xl mb-2 flex items-center gap-3 transition-all">
+                    <span class="text-3xl">🎡</span>
+                    <span class="font-medium text-lg">Ruleta</span>
+                </div>
+                <div onclick="showGame('dice')" class="cursor-pointer hover:bg-zinc-900 p-4 rounded-2xl mb-2 flex items-center gap-3 transition-all">
+                    <span class="text-3xl">🎲</span>
+                    <span class="font-medium text-lg">Dados</span>
+                </div>
+                <div onclick="showGame('bj')" class="cursor-pointer hover:bg-zinc-900 p-4 rounded-2xl mb-8 flex items-center gap-3 transition-all">
+                    <span class="text-3xl">🃏</span>
+                    <span class="font-medium text-lg">Blackjack</span>
+                </div>
+
+                <h3 class="text-cyan-400 font-semibold text-lg mb-4 flex items-center gap-2">
+                    <i class="fas fa-trophy"></i> TOP 5
+                </h3>
+                <div id="rankingBox" class="flex-1 space-y-3"></div>
+            </div>
+
+            <!-- CONTENIDO -->
+            <div class="flex-1 p-8 overflow-auto">
+                <div id="slot" class="game">
+                    <h2 class="text-4xl font-bold mb-8 flex items-center gap-4"><span>🎰</span> Tragamonedas Premium</h2>
+                    <div class="max-w-lg mx-auto">
+                        <div class="flex justify-center gap-6 mb-10">
+                            <div class="reel" id="r1">🍒</div>
+                            <div class="reel" id="r2">💎</div>
+                            <div class="reel" id="r3">7️⃣</div>
+                        </div>
+                        <div class="flex gap-4 max-w-xs mx-auto">
+                            <input id="betSlot" type="number" placeholder="Monto de apuesta" class="flex-1 bg-zinc-800 border border-zinc-700 rounded-2xl px-6 py-5 text-center text-2xl focus:outline-none focus:border-cyan-400">
+                            <button onclick="spinSlot()" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 px-12 py-5 rounded-2xl font-bold text-xl transition">GIRAR</button>
+                        </div>
+                        <p id="slotRes" class="text-center mt-10 text-3xl font-bold min-h-[80px]"></p>
+                    </div>
+                </div>
+
+                <div id="roulette" class="game hidden">
+                    <h2 class="text-4xl font-bold mb-8">🎡 Ruleta</h2>
+                    <div class="game-card p-10 rounded-3xl max-w-md mx-auto text-center bg-zinc-900 border border-zinc-700">
+                        <input id="betRou" type="number" placeholder="Apuesta" class="bg-zinc-800 w-full py-5 rounded-2xl text-center text-2xl mb-6">
+                        <select id="color" class="bg-zinc-800 w-full py-5 rounded-2xl mb-8 text-lg">
+                            <option value="rojo">🔴 Rojo</option>
+                            <option value="negro">⚫ Negro</option>
+                        </select>
+                        <button onclick="spinRoulette()" class="w-full bg-red-600 hover:bg-red-700 py-6 rounded-2xl font-bold text-2xl transition">GIRAR RULETA</button>
+                        <p id="rouRes" class="mt-10 text-2xl font-semibold"></p>
+                    </div>
+                </div>
+
+                <div id="dice" class="game hidden">
+                    <h2 class="text-4xl font-bold mb-8">🎲 Dados</h2>
+                    <div class="game-card p-10 rounded-3xl max-w-md mx-auto text-center bg-zinc-900 border border-zinc-700">
+                        <input id="betDice" type="number" placeholder="Apuesta" class="bg-zinc-800 w-full py-5 rounded-2xl text-center text-2xl mb-8">
+                        <button onclick="playDice()" class="w-full bg-amber-600 hover:bg-amber-700 py-6 rounded-2xl font-bold text-2xl transition">LANZAR DADOS</button>
+                        <p id="diceRes" class="mt-12 text-4xl font-bold"></p>
+                    </div>
+                </div>
+
+                <div id="bj" class="game hidden">
+                    <h2 class="text-4xl font-bold mb-8">🃏 Blackjack</h2>
+                    <div class="game-card p-10 rounded-3xl max-w-md mx-auto text-center bg-zinc-900 border border-zinc-700">
+                        <input id="betBJ" type="number" placeholder="Apuesta" class="bg-zinc-800 w-full py-5 rounded-2xl text-center text-2xl mb-8">
+                        <button onclick="playBJ()" class="w-full bg-purple-600 hover:bg-purple-700 py-6 rounded-2xl font-bold text-2xl transition">REPARTIR MANO</button>
+                        <p id="bjRes" class="mt-10 text-2xl font-mono"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHAT -->
+            <div class="w-80 bg-zinc-950 border-l border-zinc-800 flex flex-col">
+                <div class="p-5 border-b border-zinc-800 bg-zinc-900">
+                    <h3 class="font-semibold flex items-center gap-2 text-lg"><i class="fas fa-comments text-cyan-400"></i> Chat en Vivo</h3>
+                </div>
+                <div id="chatBox" class="chat-box flex-1 p-5 overflow-auto space-y-4 text-sm"></div>
+                <div class="p-5 border-t border-zinc-800 bg-zinc-900">
+                    <div class="flex gap-3">
+                        <input id="chatInput" placeholder="Escribe un mensaje..." class="flex-1 bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-4 focus:outline-none focus:border-cyan-400">
+                        <button onclick="sendMsg()" class="bg-cyan-500 hover:bg-cyan-600 text-black px-8 rounded-2xl font-semibold transition">Enviar</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -81,27 +173,70 @@
         let chatChannel = null;
 
         function msg(text, color = "text-white") {
-            document.getElementById("msg").innerHTML = `<span class="${color}">${text}</span>`;
+            const el = document.getElementById("msg");
+            if (el) el.innerHTML = `<span class="${color}">${text}</span>`;
         }
 
-        function val(id) { return document.getElementById(id).value.trim(); }
+        function val(id) {
+            const el = document.getElementById(id);
+            return el ? el.value.trim() : "";
+        }
 
         function formatSaldo(n) {
-            return new Intl.NumberFormat('es-MX').format(Math.floor(n));
+            return new Intl.NumberFormat('es-MX').format(Math.floor(n || 0));
         }
 
         function updateSaldo() {
-            document.getElementById("saldo").textContent = "$" + formatSaldo(saldo);
+            const el = document.getElementById("saldo");
+            if (el) el.textContent = "$" + formatSaldo(saldo);
         }
 
-        function launchConfetti() { /* misma función de confetti anterior */ 
-            // (copia la función launchConfetti completa de la versión anterior)
+        function launchConfetti() {
+            const canvas = document.getElementById("confetti");
+            if (!canvas) return;
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const ctx = canvas.getContext("2d");
+            let particles = [];
+            const colors = ['#22d3ee', '#eab308', '#a855f7', '#ec4899'];
+
+            for (let i = 0; i < 180; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    size: Math.random() * 9 + 6,
+                    speed: Math.random() * 7 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    angle: Math.random() * 360,
+                    rotationSpeed: Math.random() * 12 - 6
+                });
+            }
+
+            let frame = 0;
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.y += p.speed;
+                    p.angle += p.rotationSpeed;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.angle * Math.PI / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size * 0.7);
+                    ctx.restore();
+                    if (p.y > canvas.height + 100) particles.splice(i, 1);
+                }
+                if (particles.length > 0 && frame < 110) requestAnimationFrame(animate);
+                frame++;
+            }
+            animate();
         }
 
         async function register() {
             msg("Registrando...");
             const { error } = await sb.auth.signUp({ email: val("email"), password: val("pass") });
-            msg(error ? error.message : "✅ Revisa tu correo", error ? "text-red-400" : "text-green-400");
+            msg(error ? error.message : "✅ Revisa tu correo para confirmar", error ? "text-red-400" : "text-green-400");
         }
 
         async function login() {
@@ -117,12 +252,12 @@
             document.getElementById("casino").classList.remove("hidden");
             document.getElementById("topbar").classList.remove("hidden");
 
-            // Cargar o crear usuario
+            // Crear o cargar usuario
             let { data, error } = await sb.from("usuarios").select("*").eq("id", user.id).single();
 
             if (error && error.code === 'PGRST116') { // No rows found
                 const { error: insertError } = await sb.from("usuarios").insert([{ id: user.id, saldo: 3000 }]);
-                if (insertError) console.error("Error creando usuario:", insertError);
+                if (insertError) console.error(insertError);
                 saldo = 3000;
             } else if (data) {
                 saldo = data.saldo || 3000;
@@ -133,7 +268,7 @@
             updateSaldo();
             loadRanking();
             initChat();
-            showGame('slot');
+            showGame('slot');   // Ahora sí existe el elemento
         }
 
         async function saveSaldo() {
@@ -143,42 +278,114 @@
 
         function showGame(gameId) {
             document.querySelectorAll('.game').forEach(g => g.classList.add('hidden'));
-            document.getElementById(gameId).classList.remove('hidden');
+            const game = document.getElementById(gameId);
+            if (game) game.classList.remove('hidden');
         }
 
-        // ==================== JUEGOS (mantén las funciones spinSlot, spinRoulette, playDice, playBJ de la versión anterior) ====================
+        // ==================== JUEGOS ====================
+        async function spinSlot() {
+            let bet = parseInt(val("betSlot"));
+            if (!bet || bet <= 0 || bet > saldo) {
+                document.getElementById("slotRes").innerHTML = `<span class="text-red-400">¡Apuesta inválida!</span>`;
+                return;
+            }
 
-        // CHAT
+            const reels = [document.getElementById('r1'), document.getElementById('r2'), document.getElementById('r3')];
+            reels.forEach(reel => reel.classList.add('spinning'));
+
+            await new Promise(r => setTimeout(r, 1700));
+            reels.forEach(reel => reel.classList.remove('spinning'));
+
+            const symbols = ["🍒","💎","7️⃣","⭐","🍀","🔔","🍉"];
+            let results = symbols.sort(() => 0.5 - Math.random()).slice(0,3);
+
+            reels[0].innerText = results[0];
+            reels[1].innerText = results[1];
+            reels[2].innerText = results[2];
+
+            const isWin = results[0] === results[1] && results[1] === results[2];
+            saldo += isWin ? bet * 15 : -bet;
+
+            const resEl = document.getElementById("slotRes");
+            if (isWin) {
+                resEl.innerHTML = `<span class="text-yellow-400">¡JACKPOT! +$${bet*15}</span>`;
+                launchConfetti();
+            } else {
+                resEl.innerHTML = `<span class="text-red-400">-$${bet}</span>`;
+            }
+
+            updateSaldo();
+            await saveSaldo();
+            loadRanking();
+        }
+
+        async function spinRoulette() { /* misma función anterior */ 
+            let bet = parseInt(val("betRou"));
+            if (!bet || bet <= 0 || bet > saldo) return alert("Apuesta inválida");
+            const color = val("color");
+            const result = Math.random() < 0.5 ? "rojo" : "negro";
+            const win = result === color;
+            saldo += win ? bet * 2 : -bet;
+            document.getElementById("rouRes").innerHTML = `Salió <span class="${result==='rojo' ? 'text-red-500' : 'text-zinc-100'} font-bold">${result.toUpperCase()}</span><br>${win ? '<span class="text-green-400">¡Ganaste 2x!</span>' : '<span class="text-red-400">Perdiste</span>'}`;
+            updateSaldo();
+            await saveSaldo();
+            loadRanking();
+        }
+
+        async function playDice() {
+            let bet = parseInt(val("betDice"));
+            if (!bet || bet <= 0 || bet > saldo) return;
+            const roll = Math.floor(Math.random() * 6) + 1;
+            const win = roll >= 4;
+            saldo += win ? bet : -bet;
+            document.getElementById("diceRes").innerHTML = `🎲 ${roll}<br><span class="${win ? 'text-green-400' : 'text-red-400'}">${win ? '¡Ganaste!' : 'Perdiste'}</span>`;
+            updateSaldo();
+            await saveSaldo();
+            loadRanking();
+        }
+
+        async function playBJ() {
+            let bet = parseInt(val("betBJ"));
+            if (!bet || bet <= 0 || bet > saldo) return;
+            const player = Math.floor(Math.random() * 10) + 12;
+            const dealer = Math.floor(Math.random() * 10) + 12;
+            const win = (player > dealer && player <= 21) || dealer > 21;
+            saldo += win ? bet : -bet;
+            document.getElementById("bjRes").innerHTML = `Tú: <strong>${player}</strong> — Dealer: <strong>${dealer}</strong><br><span class="${win ? 'text-green-400' : 'text-red-400'} text-2xl">${win ? '¡Ganaste!' : 'Perdiste'}</span>`;
+            updateSaldo();
+            await saveSaldo();
+            loadRanking();
+        }
+
+        // ==================== CHAT & RANKING ====================
         function initChat() {
             if (chatChannel) return;
             chatChannel = sb.channel('chat-room');
             chatChannel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat' }, (payload) => {
                 const box = document.getElementById("chatBox");
-                box.innerHTML += `<div class="bg-zinc-900 p-3 rounded-2xl"><span class="text-cyan-400">Usuario:</span> ${payload.new.mensaje || ''}</div>`;
-                box.scrollTop = box.scrollHeight;
+                if (box) {
+                    box.innerHTML += `<div class="bg-zinc-900 p-3 rounded-2xl"><span class="text-cyan-400">Usuario:</span> ${payload.new.mensaje || ''}</div>`;
+                    box.scrollTop = box.scrollHeight;
+                }
             }).subscribe();
         }
 
         async function sendMsg() {
             const text = val("chatInput");
             if (!text || !user) return;
-
             const { error } = await sb.from("chat").insert([{ user_id: user.id, mensaje: text }]);
-            if (error) {
-                console.error(error);
-                if (error.code === '42501') alert("Error 403: Activa RLS OFF en la tabla 'chat' o crea una política.");
-            } else {
-                document.getElementById("chatInput").value = "";
-            }
+            if (!error) document.getElementById("chatInput").value = "";
         }
 
         async function loadRanking() {
+            const rankingBox = document.getElementById("rankingBox");
+            if (!rankingBox) return;
             const { data } = await sb.from("usuarios").select("saldo").order("saldo", { ascending: false }).limit(5);
             let html = "";
             (data || []).forEach((u, i) => {
-                html += `<div class="flex justify-between bg-zinc-900 p-4 rounded-2xl"><span>#${i+1}</span><span class="text-yellow-300">$${formatSaldo(u.saldo)}</span></div>`;
+                html += `<div class="flex justify-between bg-zinc-900 p-4 rounded-2xl"><span class="text-cyan-300">#${i+1}</span><span class="text-yellow-300 font-semibold">$${formatSaldo(u.saldo)}</span></div>`;
             });
-            document.getElementById("rankingBox").innerHTML = html || "<p class='text-zinc-500'>Sin datos</p>";
+            rankingBox.innerHTML = html || "<p class='text-zinc-500 p-4'>Sin jugadores aún</p>";
         }
 
         async function logout() {
@@ -186,6 +393,7 @@
             location.reload();
         }
 
+        // INIT
         window.onload = async () => {
             const { data: { session } } = await sb.auth.getSession();
             if (session) {
