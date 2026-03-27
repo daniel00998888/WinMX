@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <title>Casino PRO</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<!-- SUPABASE CDN CORRECTO -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
 <style>
 body{margin:0;font-family:Arial;background:#0b1d2a;color:white;text-align:center}
 header{background:#102c3c;padding:15px;font-size:24px}
@@ -13,12 +16,13 @@ button{padding:10px;margin-top:10px;border:none;border-radius:5px;background:#00
 input,select{padding:8px;margin-top:10px;width:80%}
 </style>
 </head>
+
 <body>
 
 <header>🎰 Casino PRO</header>
 
 <div id="auth">
-<h3>Login</h3>
+<h3>Login / Registro</h3>
 <input id="email" placeholder="Correo"><br>
 <input id="pass" type="password" placeholder="Contraseña"><br>
 <button onclick="login()">Entrar</button>
@@ -46,17 +50,18 @@ input,select{padding:8px;margin-top:10px;width:80%}
 
 <div class="card">
 <h3>🎡 Ruleta</h3>
-<input id="roulBet" type="number">
+<input id="roulBet" type="number" placeholder="Apuesta">
 <select id="color">
-<option>rojo</option>
-<option>negro</option>
+<option value="rojo">Rojo</option>
+<option value="negro">Negro</option>
 </select>
 <button onclick="roulette()">Girar</button>
 <p id="roulRes"></p>
 </div>
 
 <div class="card">
-<h3>🃏 Blackjack Simple</h3>
+<h3>🃏 Blackjack</h3>
+<input id="bjBet" type="number" placeholder="Apuesta">
 <button onclick="blackjack()">Jugar</button>
 <p id="bjRes"></p>
 </div>
@@ -65,6 +70,7 @@ input,select{padding:8px;margin-top:10px;width:80%}
 </div>
 
 <script>
+// ⚠️ PON TUS DATOS DE SUPABASE AQUÍ
 const supabaseUrl = "https://dakhnqriwbzihlzhtfcb.supabase.co";
 const supabaseKey = "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs";
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -72,79 +78,130 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 let saldo = 0;
 let user = null;
 
+// REGISTRO
 async function register(){
-let email=document.getElementById("email").value;
-let pass=document.getElementById("pass").value;
-await supabase.auth.signUp({email,password:pass});
-alert("Registrado");
+  const email = document.getElementById("email").value;
+  const pass = document.getElementById("pass").value;
+
+  const { error } = await supabase.auth.signUp({ email, password: pass });
+
+  if(error) return alert(error.message);
+  alert("Registrado correctamente");
 }
 
+// LOGIN
 async function login(){
-let email=document.getElementById("email").value;
-let pass=document.getElementById("pass").value;
-let {data}=await supabase.auth.signInWithPassword({email,password:pass});
-user=data.user;
-start();
+  const email = document.getElementById("email").value;
+  const pass = document.getElementById("pass").value;
+
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+
+  if(error) return alert(error.message);
+
+  user = data.user;
+  start();
 }
 
+// INICIAR CASINO
 async function start(){
-document.getElementById("auth").style.display="none";
-document.getElementById("casino").style.display="block";
+  document.getElementById("auth").style.display = "none";
+  document.getElementById("casino").style.display = "block";
 
-let {data}=await supabase.from("usuarios").select("*").eq("id",user.id);
+  let { data, error } = await supabase
+    .from("usuarios")
+    .select("*")
+    .eq("id", user.id);
 
-if(data.length==0){
-await supabase.from("usuarios").insert([{id:user.id,saldo:1000}]);
-saldo=1000;
-}else{
-saldo=data[0].saldo;
+  if(error) return alert(error.message);
+
+  if(data.length === 0){
+    await supabase.from("usuarios").insert([{ id: user.id, saldo: 1000 }]);
+    saldo = 1000;
+  } else {
+    saldo = data[0].saldo;
+  }
+
+  update();
 }
-update();
+
+// ACTUALIZAR UI
+function update(){
+  document.getElementById("saldo").innerText = saldo;
 }
 
-function update(){document.getElementById("saldo").innerText=saldo}
-
+// GUARDAR EN DB
 async function save(){
-await supabase.from("usuarios").update({saldo}).eq("id",user.id);
+  await supabase
+    .from("usuarios")
+    .update({ saldo })
+    .eq("id", user.id);
 }
 
+// 🎰 SLOT
 function slot(){
-let bet=+document.getElementById("slotBet").value;
-if(bet>saldo||bet<=0)return;
-let win=Math.random()<0.3;
-saldo+=win?bet:-bet;
-document.getElementById("slotRes").innerText=win?"Ganaste":"Perdiste";
-update();save();
+  let bet = parseInt(document.getElementById("slotBet").value);
+
+  if(!bet || bet <= 0 || bet > saldo) return alert("Apuesta inválida");
+
+  let win = Math.random() < 0.3;
+
+  saldo += win ? bet : -bet;
+
+  document.getElementById("slotRes").innerText = win ? "Ganaste 🎉" : "Perdiste ❌";
+
+  update(); save();
 }
 
+// 🎲 DADO
 function dice(){
-let bet=+document.getElementById("diceBet").value;
-if(bet>saldo||bet<=0)return;
-let d=Math.floor(Math.random()*6)+1;
-let win=d>=4;
-saldo+=win?bet:-bet;
-document.getElementById("diceRes").innerText="Dado: "+d;
-update();save();
+  let bet = parseInt(document.getElementById("diceBet").value);
+
+  if(!bet || bet <= 0 || bet > saldo) return alert("Apuesta inválida");
+
+  let d = Math.floor(Math.random() * 6) + 1;
+  let win = d >= 4;
+
+  saldo += win ? bet : -bet;
+
+  document.getElementById("diceRes").innerText = "Salió: " + d;
+
+  update(); save();
 }
 
+// 🎡 RULETA
 function roulette(){
-let bet=+document.getElementById("roulBet").value;
-let c=document.getElementById("color").value;
-if(bet>saldo||bet<=0)return;
-let r=Math.random()<0.5?"rojo":"negro";
-let win=r==c;
-saldo+=win?bet:-bet;
-document.getElementById("roulRes").innerText=r;
-update();save();
+  let bet = parseInt(document.getElementById("roulBet").value);
+  let c = document.getElementById("color").value;
+
+  if(!bet || bet <= 0 || bet > saldo) return alert("Apuesta inválida");
+
+  let r = Math.random() < 0.5 ? "rojo" : "negro";
+  let win = r === c;
+
+  saldo += win ? bet : -bet;
+
+  document.getElementById("roulRes").innerText = "Resultado: " + r;
+
+  update(); save();
 }
 
+// 🃏 BLACKJACK
 function blackjack(){
-let player=Math.floor(Math.random()*11)+11;
-let dealer=Math.floor(Math.random()*11)+11;
-let win=player>dealer && player<=21 || dealer>21;
-saldo+=win?100:-100;
-document.getElementById("bjRes").innerText=`Tú:${player} Dealer:${dealer}`;
-update();save();
+  let bet = parseInt(document.getElementById("bjBet").value);
+
+  if(!bet || bet <= 0 || bet > saldo) return alert("Apuesta inválida");
+
+  let player = Math.floor(Math.random()*11)+11;
+  let dealer = Math.floor(Math.random()*11)+11;
+
+  let win = (player > dealer && player <= 21) || dealer > 21;
+
+  saldo += win ? bet : -bet;
+
+  document.getElementById("bjRes").innerText =
+    `Tú: ${player} | Dealer: ${dealer}`;
+
+  update(); save();
 }
 </script>
 
