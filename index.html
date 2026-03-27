@@ -42,6 +42,15 @@
             scrollbar-width: thin;
             scrollbar-color: #22d3ee #1e2937;
         }
+        #confetti {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
     </style>
 </head>
 <body class="text-white min-h-screen">
@@ -124,9 +133,8 @@
                 <div id="rankingBox" class="flex-1 space-y-3"></div>
             </div>
 
-            <!-- CONTENIDO PRINCIPAL -->
+            <!-- CONTENIDO -->
             <div class="flex-1 p-8 overflow-auto">
-                <!-- SLOTS -->
                 <div id="slot" class="game">
                     <h2 class="text-4xl font-bold mb-8 flex items-center gap-4">
                         <span>🎰</span> Tragamonedas Premium
@@ -149,7 +157,7 @@
                     </div>
                 </div>
 
-                <!-- RULETA -->
+                <!-- Ruleta, Dados y Blackjack (sin cambios mayores) -->
                 <div id="roulette" class="game hidden">
                     <h2 class="text-4xl font-bold mb-8">🎡 Ruleta</h2>
                     <div class="game-card p-10 rounded-3xl max-w-md mx-auto text-center">
@@ -167,7 +175,6 @@
                     </div>
                 </div>
 
-                <!-- DADOS -->
                 <div id="dice" class="game hidden">
                     <h2 class="text-4xl font-bold mb-8">🎲 Dados</h2>
                     <div class="game-card p-10 rounded-3xl max-w-md mx-auto text-center">
@@ -181,7 +188,6 @@
                     </div>
                 </div>
 
-                <!-- BLACKJACK -->
                 <div id="bj" class="game hidden">
                     <h2 class="text-4xl font-bold mb-8">🃏 Blackjack</h2>
                     <div class="game-card p-10 rounded-3xl max-w-md mx-auto text-center">
@@ -200,8 +206,7 @@
             <div class="w-80 bg-zinc-950 border-l border-zinc-800 flex flex-col">
                 <div class="p-5 border-b border-zinc-800 bg-zinc-900">
                     <h3 class="font-semibold flex items-center gap-2 text-lg">
-                        <i class="fas fa-comments text-cyan-400"></i> 
-                        Chat en Vivo
+                        <i class="fas fa-comments text-cyan-400"></i> Chat en Vivo
                     </h3>
                 </div>
                 <div id="chatBox" class="chat-box flex-1 p-5 overflow-auto space-y-4 text-sm"></div>
@@ -219,7 +224,8 @@
         </div>
     </div>
 
-    <canvas id="confetti" class="fixed inset-0 pointer-events-none z-50 hidden"></canvas>
+    <!-- Canvas de confetti (mejor posicionado) -->
+    <canvas id="confetti"></canvas>
 
     <script>
         const sb = window.supabase.createClient(
@@ -246,25 +252,24 @@
             document.getElementById("saldo").textContent = "$" + formatSaldo(saldo);
         }
 
-        // Confetti
+        // Confetti mejorado
         function launchConfetti() {
             const canvas = document.getElementById("confetti");
-            canvas.classList.remove("hidden");
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             const ctx = canvas.getContext("2d");
             let particles = [];
             const colors = ['#22d3ee', '#eab308', '#a855f7', '#ec4899', '#f43f5e'];
 
-            for (let i = 0; i < 200; i++) {
+            for (let i = 0; i < 180; i++) {
                 particles.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height - canvas.height,
-                    size: Math.random() * 10 + 6,
-                    speed: Math.random() * 8 + 5,
+                    size: Math.random() * 9 + 6,
+                    speed: Math.random() * 7 + 4,
                     color: colors[Math.floor(Math.random() * colors.length)],
                     angle: Math.random() * 360,
-                    rotationSpeed: Math.random() * 10 - 5
+                    rotationSpeed: Math.random() * 12 - 6
                 });
             }
 
@@ -281,12 +286,10 @@
                     ctx.fillStyle = p.color;
                     ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size * 0.7);
                     ctx.restore();
-                    if (p.y > canvas.height + 50) particles.splice(i, 1);
+                    if (p.y > canvas.height + 100) particles.splice(i, 1);
                 }
-                if (particles.length > 0 && frame < 100) {
+                if (particles.length > 0 && frame < 110) {
                     requestAnimationFrame(animate);
-                } else {
-                    canvas.classList.add("hidden");
                 }
                 frame++;
             }
@@ -295,20 +298,14 @@
 
         async function register() {
             msg("Registrando...");
-            const { error } = await sb.auth.signUp({
-                email: val("email"),
-                password: val("pass")
-            });
+            const { error } = await sb.auth.signUp({ email: val("email"), password: val("pass") });
             if (error) msg(error.message, "text-red-400");
-            else msg("✅ Revisa tu correo para confirmar la cuenta", "text-green-400");
+            else msg("✅ Revisa tu correo para confirmar", "text-green-400");
         }
 
         async function login() {
             msg("Iniciando sesión...");
-            const { data, error } = await sb.auth.signInWithPassword({
-                email: val("email"),
-                password: val("pass")
-            });
+            const { data, error } = await sb.auth.signInWithPassword({ email: val("email"), password: val("pass") });
             if (error) {
                 msg(error.message, "text-red-400");
                 return;
@@ -338,19 +335,15 @@
         }
 
         async function saveSaldo() {
-            if (user) {
-                await sb.from("usuarios").update({ saldo: saldo }).eq("id", user.id);
-            }
+            if (user) await sb.from("usuarios").update({ saldo }).eq("id", user.id);
         }
 
         function showGame(gameId) {
-            document.querySelectorAll('.game').forEach(game => {
-                game.classList.add('hidden');
-            });
+            document.querySelectorAll('.game').forEach(g => g.classList.add('hidden'));
             document.getElementById(gameId).classList.remove('hidden');
         }
 
-        // ==================== JUEGOS ====================
+        // ==================== SLOTS ====================
         async function spinSlot() {
             let bet = parseInt(val("betSlot"));
             if (!bet || bet <= 0 || bet > saldo) {
@@ -358,20 +351,16 @@
                 return;
             }
 
-            const reels = [
-                document.getElementById('r1'),
-                document.getElementById('r2'),
-                document.getElementById('r3')
-            ];
-
+            const reels = [document.getElementById('r1'), document.getElementById('r2'), document.getElementById('r3')];
             reels.forEach(reel => reel.classList.add('spinning'));
 
             await new Promise(r => setTimeout(r, 1700));
-
             reels.forEach(reel => reel.classList.remove('spinning'));
 
             const symbols = ["🍒","💎","7️⃣","⭐","🍀","🔔","🍉"];
-            let results = symbols.sort(() => Math.random() - 0.5).slice(0,3);
+            let results = [symbols[Math.floor(Math.random()*symbols.length)], 
+                           symbols[Math.floor(Math.random()*symbols.length)], 
+                           symbols[Math.floor(Math.random()*symbols.length)]];
 
             reels[0].innerText = results[0];
             reels[1].innerText = results[1];
@@ -393,6 +382,7 @@
             loadRanking();
         }
 
+        // ==================== OTROS JUEGOS (sin cambios) ====================
         async function spinRoulette() {
             let bet = parseInt(val("betRou"));
             if (!bet || bet <= 0 || bet > saldo) return alert("Apuesta inválida");
@@ -400,7 +390,6 @@
             const color = val("color");
             const result = Math.random() < 0.5 ? "rojo" : "negro";
             const win = result === color;
-
             saldo += win ? bet * 2 : -bet;
 
             document.getElementById("rouRes").innerHTML = `
@@ -421,10 +410,7 @@
             const win = roll >= 4;
             saldo += win ? bet : -bet;
 
-            document.getElementById("diceRes").innerHTML = `
-                🎲 ${roll}<br>
-                <span class="${win ? 'text-green-400' : 'text-red-400'}">${win ? '¡Ganaste!' : 'Perdiste'}</span>
-            `;
+            document.getElementById("diceRes").innerHTML = `🎲 ${roll}<br><span class="${win ? 'text-green-400' : 'text-red-400'}">${win ? '¡Ganaste!' : 'Perdiste'}</span>`;
 
             updateSaldo();
             await saveSaldo();
@@ -438,7 +424,6 @@
             const player = Math.floor(Math.random() * 10) + 12;
             const dealer = Math.floor(Math.random() * 10) + 12;
             const win = (player > dealer && player <= 21) || dealer > 21;
-
             saldo += win ? bet : -bet;
 
             document.getElementById("bjRes").innerHTML = `
@@ -451,9 +436,15 @@
             loadRanking();
         }
 
-        // ==================== CHAT ====================
+        // ==================== CHAT CORREGIDO ====================
+        let chatChannel = null;
+
         function initChat() {
-            sb.channel('chat-room')
+            if (chatChannel) return;
+
+            chatChannel = sb.channel('chat-room');
+
+            chatChannel
                 .on('postgres_changes', 
                     { 
                         event: 'INSERT', 
@@ -462,9 +453,10 @@
                     }, 
                     (payload) => {
                         const box = document.getElementById("chatBox");
+                        const message = payload.new.mensaje || "Mensaje vacío";
                         box.innerHTML += `
                             <div class="bg-zinc-900 p-3 rounded-2xl">
-                                <span class="text-cyan-400">Usuario:</span> ${payload.new.mensaje || ''}
+                                <span class="text-cyan-400">Usuario:</span> ${message}
                             </div>`;
                         box.scrollTop = box.scrollHeight;
                     }
@@ -476,33 +468,33 @@
             const text = val("chatInput");
             if (!text || !user) return;
 
-            await sb.from("chat").insert([{ 
+            const { error } = await sb.from("chat").insert([{ 
                 user_id: user.id, 
                 mensaje: text 
             }]);
 
-            document.getElementById("chatInput").value = "";
+            if (!error) {
+                document.getElementById("chatInput").value = "";
+            }
         }
 
         // ==================== RANKING ====================
         async function loadRanking() {
-            const { data, error } = await sb
+            const { data } = await sb
                 .from("usuarios")
                 .select("saldo")
                 .order("saldo", { ascending: false })
                 .limit(5);
 
-            if (error) return;
-
             let html = "";
-            data.forEach((u, i) => {
+            (data || []).forEach((u, i) => {
                 html += `
                     <div class="flex justify-between items-center bg-zinc-900 p-4 rounded-2xl">
                         <span class="text-cyan-300">#${i+1}</span>
                         <span class="text-yellow-300 font-semibold">$${formatSaldo(u.saldo)}</span>
                     </div>`;
             });
-            document.getElementById("rankingBox").innerHTML = html;
+            document.getElementById("rankingBox").innerHTML = html || "<p class='text-zinc-500'>Cargando ranking...</p>";
         }
 
         async function logout() {
