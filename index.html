@@ -1,326 +1,100 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<title>Casino Royale</title>
+<script type="module">
 
-<style>
-body{
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#0b1d2a;
-  color:white;
-  text-align:center;
-}
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-/* LOADER */
-#loader{
-  position:fixed;
-  width:100%;
-  height:100%;
-  background:black;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  font-size:30px;
-  z-index:999;
-}
+const supabase = createClient(
+  "https://dakhnqriwbzihlzhtfcb.supabase.co",
+  "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs"
+);
 
-/* HEADER */
-header{
-  background:#102c3c;
-  padding:15px;
-  font-size:24px;
-}
+let user;
+let saldo = 0;
 
-/* SCREENS */
-.screen{display:none;}
-.active{display:block}
+// ===== REGISTER =====
+window.register = async ()=>{
+  let email = emailInput();
+  let pass = passInput();
 
-/* LOBBY */
-.games{
-  display:flex;
-  flex-wrap:wrap;
-  gap:20px;
-  justify-content:center;
-  margin-top:20px;
-}
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password: pass
+  });
 
-.gameBtn{
-  background:#16394f;
-  padding:20px;
-  border-radius:15px;
-  width:200px;
-  cursor:pointer;
-  transition:.3s;
-}
+  if(error) return alert(error.message);
 
-.gameBtn:hover{
-  transform:scale(1.1);
-}
-
-/* SLOT */
-.slot{
-  font-size:40px;
-  letter-spacing:10px;
-  margin:20px;
-}
-
-/* BOTONES */
-button{
-  padding:10px;
-  margin-top:10px;
-  border:none;
-  border-radius:5px;
-  background:#00c896;
-  color:white;
-  cursor:pointer;
-}
-
-/* INPUTS */
-input{
-  padding:8px;
-  margin-top:10px;
-}
-
-/* SALDO */
-#saldo{
-  font-size:22px;
-  color:#00ffcc;
-}
-</style>
-</head>
-
-<body>
-
-<div id="loader">Cargando casino...</div>
-
-<header>🎰 CASINO ROYALE</header>
-
-<!-- LOGIN -->
-<div id="auth" class="screen active">
-<h2>Acceso</h2>
-<input id="email" placeholder="Correo"><br>
-<input id="pass" type="password" placeholder="Contraseña"><br>
-<button onclick="register()">Registrar</button>
-<button onclick="login()">Entrar</button>
-</div>
-
-<!-- LOBBY -->
-<div id="lobby" class="screen">
-<h2>Bienvenido</h2>
-<div id="saldo">Saldo: $0</div>
-
-<div class="games">
-<div class="gameBtn" onclick="openGame('slot')">🎰 Slots</div>
-<div class="gameBtn" onclick="openGame('roulette')">🎡 Ruleta</div>
-</div>
-
-<button onclick="logout()">Salir</button>
-</div>
-
-<!-- SLOT -->
-<div id="slot" class="screen">
-<h2>🎰 Slot Machine</h2>
-
-<div class="slot" id="slotDisplay">🍒 🍒 🍒</div>
-
-<input id="bet" type="number" placeholder="Apuesta"><br>
-<button onclick="spin()">Girar</button>
-<button onclick="back()">Volver</button>
-
-<p id="slotResult"></p>
-</div>
-
-<!-- RULETA -->
-<div id="roulette" class="screen">
-<h2>🎡 Ruleta</h2>
-
-<p id="rouletteResult">---</p>
-
-<input id="betR" type="number" placeholder="Apuesta"><br>
-<select id="color">
-<option value="rojo">Rojo</option>
-<option value="negro">Negro</option>
-</select>
-
-<button onclick="spinRoulette()">Girar</button>
-<button onclick="back()">Volver</button>
-</div>
-
-<script>
-
-// ===== LOADER =====
-window.onload = ()=>{
-  setTimeout(()=>{
-    document.getElementById("loader").style.display="none";
-
-    let current = localStorage.getItem("currentUser");
-    if(current){
-      cargar(JSON.parse(current));
-      show("lobby");
-    }else{
-      show("auth");
-    }
-
-  },1000);
+  alert("Revisa tu correo 📩");
 };
 
-// ===== USERS =====
-function getUsers(){
-  return JSON.parse(localStorage.getItem("users")) || [];
-}
+// ===== LOGIN =====
+window.login = async ()=>{
+  let email = emailInput();
+  let pass = passInput();
 
-function saveUsers(u){
-  localStorage.setItem("users", JSON.stringify(u));
-}
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password: pass
+  });
 
-// ===== AUTH =====
-function register(){
-  let email=emailInput();
-  let pass=passInput();
+  if(error) return alert(error.message);
 
-  let users=getUsers();
+  user = data.user;
+  start();
+};
 
-  if(users.find(u=>u.email===email)){
-    alert("Usuario ya existe");
-    return;
+// ===== START =====
+async function start(){
+  show("casino");
+
+  let { data } = await supabase
+    .from("usuarios")
+    .select("*")
+    .eq("id", user.id);
+
+  if(data.length === 0){
+    await supabase.from("usuarios").insert([
+      { id: user.id, email: user.email, saldo: 1000 }
+    ]);
+    saldo = 1000;
+  } else {
+    saldo = data[0].saldo;
   }
 
-  users.push({email,pass,saldo:1000});
-  saveUsers(users);
-
-  alert("Cuenta creada");
-}
-
-function login(){
-  let email=emailInput();
-  let pass=passInput();
-
-  let user=getUsers().find(u=>u.email===email && u.pass===pass);
-
-  if(!user) return alert("Datos incorrectos");
-
-  localStorage.setItem("currentUser",JSON.stringify(user));
-  cargar(user);
-  show("lobby");
-}
-
-function logout(){
-  localStorage.removeItem("currentUser");
-  location.reload();
-}
-
-// ===== HELPERS =====
-function emailInput(){return document.getElementById("email").value}
-function passInput(){return document.getElementById("pass").value}
-
-function show(id){
-  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-}
-
-// ===== USER =====
-let userActual;
-
-function cargar(user){
-  userActual=user;
   update();
 }
 
-function update(){
-  document.getElementById("saldo").innerText="Saldo: $"+userActual.saldo;
-}
-
 // ===== SAVE =====
-function save(){
-  let users=getUsers();
-
-  users=users.map(u=>{
-    if(u.email===userActual.email){
-      u.saldo=userActual.saldo;
-    }
-    return u;
-  });
-
-  saveUsers(users);
-  localStorage.setItem("currentUser",JSON.stringify(userActual));
+async function save(){
+  await supabase
+    .from("usuarios")
+    .update({ saldo })
+    .eq("id", user.id);
 }
 
-// ===== NAV =====
-function openGame(g){
-  show(g);
+// ===== SLOT =====
+window.slot = ()=>{
+  let bet = +document.getElementById("bet").value;
+
+  if(!bet || bet>saldo) return alert("Apuesta inválida");
+
+  let win = Math.random()<0.3;
+
+  saldo += win ? bet*3 : -bet;
+
+  update();
+  save();
+};
+
+// ===== HELPERS =====
+function update(){
+  document.getElementById("saldo").innerText = saldo;
 }
 
-function back(){
-  show("lobby");
+function emailInput(){
+  return document.getElementById("email").value;
 }
 
-// ===== SLOT REAL =====
-function spin(){
-  let bet=+document.getElementById("bet").value;
-  if(!bet || bet>userActual.saldo) return alert("Apuesta inválida");
-
-  let symbols=["🍒","💎","7️⃣","⭐"];
-  let display=document.getElementById("slotDisplay");
-
-  let interval=setInterval(()=>{
-    display.innerText=
-      symbols[rand()]+ " "+
-      symbols[rand()]+ " "+
-      symbols[rand()];
-  },100);
-
-  setTimeout(()=>{
-    clearInterval(interval);
-
-    let a=symbols[rand()];
-    let b=symbols[rand()];
-    let c=symbols[rand()];
-
-    display.innerText=`${a} ${b} ${c}`;
-
-    let win=(a===b && b===c);
-
-    userActual.saldo += win ? bet*3 : -bet;
-
-    document.getElementById("slotResult").innerText=
-      win?"JACKPOT 💰":"PERDISTE";
-
-    update();
-    save();
-
-  },1500);
-}
-
-// ===== RULETA =====
-function spinRoulette(){
-  let bet=+document.getElementById("betR").value;
-  let c=document.getElementById("color").value;
-
-  if(!bet || bet>userActual.saldo) return alert("Apuesta inválida");
-
-  let res=document.getElementById("rouletteResult");
-  res.innerText="Girando...";
-
-  setTimeout(()=>{
-    let r=Math.random()<0.5?"rojo":"negro";
-    let win=r===c;
-
-    userActual.saldo += win ? bet : -bet;
-
-    res.innerText=r.toUpperCase();
-
-    update();
-    save();
-  },1500);
-}
-
-function rand(){
-  return Math.floor(Math.random()*4);
+function passInput(){
+  return document.getElementById("pass").value;
 }
 
 </script>
-
-</body>
-</html>
