@@ -2,12 +2,12 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Casino PRO</title>
+<title>Casino Royale</title>
 
 <style>
 body{
   margin:0;
-  font-family:Arial;
+  font-family:'Segoe UI',sans-serif;
   background:#0b1d2a;
   color:white;
   text-align:center;
@@ -26,13 +26,19 @@ body{
   z-index:999;
 }
 
-/* UI */
-header{background:#102c3c;padding:15px;font-size:24px}
+/* HEADER */
+header{
+  background:#102c3c;
+  padding:15px;
+  font-size:24px;
+}
 
+/* SCREENS */
 .screen{display:none;}
-.active{display:block;}
+.active{display:block}
 
-.container{
+/* LOBBY */
+.games{
   display:flex;
   flex-wrap:wrap;
   gap:20px;
@@ -40,13 +46,27 @@ header{background:#102c3c;padding:15px;font-size:24px}
   margin-top:20px;
 }
 
-.card{
+.gameBtn{
   background:#16394f;
   padding:20px;
-  border-radius:10px;
-  width:260px;
+  border-radius:15px;
+  width:200px;
+  cursor:pointer;
+  transition:.3s;
 }
 
+.gameBtn:hover{
+  transform:scale(1.1);
+}
+
+/* SLOT */
+.slot{
+  font-size:40px;
+  letter-spacing:10px;
+  margin:20px;
+}
+
+/* BOTONES */
 button{
   padding:10px;
   margin-top:10px;
@@ -55,86 +75,90 @@ button{
   background:#00c896;
   color:white;
   cursor:pointer;
-  width:80%;
 }
 
-input,select{
+/* INPUTS */
+input{
   padding:8px;
   margin-top:10px;
-  width:80%;
 }
 
-.logout{
-  position:absolute;
-  top:10px;
-  right:10px;
-  background:red;
+/* SALDO */
+#saldo{
+  font-size:22px;
+  color:#00ffcc;
 }
 </style>
 </head>
 
 <body>
 
-<div id="loader">Cargando...</div>
+<div id="loader">Cargando casino...</div>
 
-<header>🎰 CASINO PRO</header>
-<button class="logout" onclick="logout()">Salir</button>
+<header>🎰 CASINO ROYALE</header>
 
 <!-- LOGIN -->
 <div id="auth" class="screen active">
-<h2>Login / Registro</h2>
+<h2>Acceso</h2>
 <input id="email" placeholder="Correo"><br>
 <input id="pass" type="password" placeholder="Contraseña"><br>
 <button onclick="register()">Registrar</button>
 <button onclick="login()">Entrar</button>
 </div>
 
-<!-- CASINO -->
-<div id="casino" class="screen">
-<h2>Saldo: $<span id="saldo">0</span></h2>
+<!-- LOBBY -->
+<div id="lobby" class="screen">
+<h2>Bienvenido</h2>
+<div id="saldo">Saldo: $0</div>
 
-<div class="container">
-
-<div class="card">
-<h3>🎰 Slot</h3>
-<input id="slotBet" type="number">
-<button onclick="slot()">Jugar</button>
-<p id="slotRes"></p>
+<div class="games">
+<div class="gameBtn" onclick="openGame('slot')">🎰 Slots</div>
+<div class="gameBtn" onclick="openGame('roulette')">🎡 Ruleta</div>
 </div>
 
-<div class="card">
-<h3>🎲 Dado</h3>
-<input id="diceBet" type="number">
-<button onclick="dice()">Jugar</button>
-<p id="diceRes"></p>
+<button onclick="logout()">Salir</button>
 </div>
 
-<div class="card">
-<h3>🎡 Ruleta</h3>
-<input id="roulBet" type="number">
+<!-- SLOT -->
+<div id="slot" class="screen">
+<h2>🎰 Slot Machine</h2>
+
+<div class="slot" id="slotDisplay">🍒 🍒 🍒</div>
+
+<input id="bet" type="number" placeholder="Apuesta"><br>
+<button onclick="spin()">Girar</button>
+<button onclick="back()">Volver</button>
+
+<p id="slotResult"></p>
+</div>
+
+<!-- RULETA -->
+<div id="roulette" class="screen">
+<h2>🎡 Ruleta</h2>
+
+<p id="rouletteResult">---</p>
+
+<input id="betR" type="number" placeholder="Apuesta"><br>
 <select id="color">
 <option value="rojo">Rojo</option>
 <option value="negro">Negro</option>
 </select>
-<button onclick="roulette()">Jugar</button>
-<p id="roulRes"></p>
-</div>
 
-</div>
+<button onclick="spinRoulette()">Girar</button>
+<button onclick="back()">Volver</button>
 </div>
 
 <script>
 
 // ===== LOADER =====
-window.onload = () => {
+window.onload = ()=>{
   setTimeout(()=>{
     document.getElementById("loader").style.display="none";
 
     let current = localStorage.getItem("currentUser");
-
     if(current){
-      cargarUsuario(JSON.parse(current));
-      show("casino");
+      cargar(JSON.parse(current));
+      show("lobby");
     }else{
       show("auth");
     }
@@ -142,148 +166,158 @@ window.onload = () => {
   },1000);
 };
 
-// ===== UI =====
-function show(screen){
-  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-  document.getElementById(screen).classList.add("active");
-}
-
-// ===== BASE DE DATOS LOCAL =====
+// ===== USERS =====
 function getUsers(){
   return JSON.parse(localStorage.getItem("users")) || [];
 }
 
-function saveUsers(users){
-  localStorage.setItem("users", JSON.stringify(users));
+function saveUsers(u){
+  localStorage.setItem("users", JSON.stringify(u));
 }
 
-// ===== REGISTRO =====
+// ===== AUTH =====
 function register(){
-  let email = document.getElementById("email").value;
-  let pass = document.getElementById("pass").value;
+  let email=emailInput();
+  let pass=passInput();
 
-  if(!email || !pass) return alert("Completa los campos");
+  let users=getUsers();
 
-  let users = getUsers();
-
-  if(users.find(u => u.email === email)){
-    alert("Este usuario ya existe");
+  if(users.find(u=>u.email===email)){
+    alert("Usuario ya existe");
     return;
   }
 
-  let newUser = { email, pass, saldo:1000 };
-
-  users.push(newUser);
+  users.push({email,pass,saldo:1000});
   saveUsers(users);
 
-  alert("Registrado correctamente 🎉");
+  alert("Cuenta creada");
 }
 
-// ===== LOGIN =====
 function login(){
-  let email = document.getElementById("email").value;
-  let pass = document.getElementById("pass").value;
+  let email=emailInput();
+  let pass=passInput();
 
-  let users = getUsers();
+  let user=getUsers().find(u=>u.email===email && u.pass===pass);
 
-  let user = users.find(u => u.email===email && u.pass===pass);
+  if(!user) return alert("Datos incorrectos");
 
-  if(!user){
-    alert("Datos incorrectos");
-    return;
-  }
-
-  localStorage.setItem("currentUser", JSON.stringify(user));
-
-  cargarUsuario(user);
-  show("casino");
+  localStorage.setItem("currentUser",JSON.stringify(user));
+  cargar(user);
+  show("lobby");
 }
 
-// ===== CARGAR USUARIO =====
-let saldo = 0;
-let usuarioActual = null;
-
-function cargarUsuario(user){
-  usuarioActual = user;
-  saldo = user.saldo;
-  update();
-}
-
-// ===== GUARDAR =====
-function save(){
-  let users = getUsers();
-
-  users = users.map(u=>{
-    if(u.email === usuarioActual.email){
-      u.saldo = saldo;
-    }
-    return u;
-  });
-
-  saveUsers(users);
-  localStorage.setItem("currentUser", JSON.stringify(usuarioActual));
-}
-
-// ===== LOGOUT =====
 function logout(){
   localStorage.removeItem("currentUser");
   location.reload();
 }
 
-// ===== UI =====
-function update(){
-  document.getElementById("saldo").innerText = saldo;
+// ===== HELPERS =====
+function emailInput(){return document.getElementById("email").value}
+function passInput(){return document.getElementById("pass").value}
+
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
 }
 
-// ===== JUEGOS =====
-function slot(){
-  let bet = +document.getElementById("slotBet").value;
-  if(!bet || bet > saldo) return alert("Apuesta inválida");
+// ===== USER =====
+let userActual;
 
-  let res = document.getElementById("slotRes");
-  res.innerText = "Girando... 🎰";
+function cargar(user){
+  userActual=user;
+  update();
+}
+
+function update(){
+  document.getElementById("saldo").innerText="Saldo: $"+userActual.saldo;
+}
+
+// ===== SAVE =====
+function save(){
+  let users=getUsers();
+
+  users=users.map(u=>{
+    if(u.email===userActual.email){
+      u.saldo=userActual.saldo;
+    }
+    return u;
+  });
+
+  saveUsers(users);
+  localStorage.setItem("currentUser",JSON.stringify(userActual));
+}
+
+// ===== NAV =====
+function openGame(g){
+  show(g);
+}
+
+function back(){
+  show("lobby");
+}
+
+// ===== SLOT REAL =====
+function spin(){
+  let bet=+document.getElementById("bet").value;
+  if(!bet || bet>userActual.saldo) return alert("Apuesta inválida");
+
+  let symbols=["🍒","💎","7️⃣","⭐"];
+  let display=document.getElementById("slotDisplay");
+
+  let interval=setInterval(()=>{
+    display.innerText=
+      symbols[rand()]+ " "+
+      symbols[rand()]+ " "+
+      symbols[rand()];
+  },100);
 
   setTimeout(()=>{
-    let s=["🍒","💎","7️⃣","⭐"];
-    let a=s[Math.floor(Math.random()*4)];
-    let b=s[Math.floor(Math.random()*4)];
-    let c=s[Math.floor(Math.random()*4)];
+    clearInterval(interval);
 
-    let win = (a===b && b===c);
+    let a=symbols[rand()];
+    let b=symbols[rand()];
+    let c=symbols[rand()];
 
-    saldo += win ? bet*3 : -bet;
+    display.innerText=`${a} ${b} ${c}`;
 
-    res.innerText = `${a} ${b} ${c} → ${win?"JACKPOT 💰":"PERDISTE ❌"}`;
-    update(); save();
-  },1000);
+    let win=(a===b && b===c);
+
+    userActual.saldo += win ? bet*3 : -bet;
+
+    document.getElementById("slotResult").innerText=
+      win?"JACKPOT 💰":"PERDISTE";
+
+    update();
+    save();
+
+  },1500);
 }
 
-function dice(){
-  let bet = +document.getElementById("diceBet").value;
-  if(!bet || bet > saldo) return alert("Apuesta inválida");
+// ===== RULETA =====
+function spinRoulette(){
+  let bet=+document.getElementById("betR").value;
+  let c=document.getElementById("color").value;
 
-  let d = Math.floor(Math.random()*6)+1;
-  let win = d>=4;
+  if(!bet || bet>userActual.saldo) return alert("Apuesta inválida");
 
-  saldo += win ? bet : -bet;
+  let res=document.getElementById("rouletteResult");
+  res.innerText="Girando...";
 
-  document.getElementById("diceRes").innerText = `🎲 ${d}`;
-  update(); save();
+  setTimeout(()=>{
+    let r=Math.random()<0.5?"rojo":"negro";
+    let win=r===c;
+
+    userActual.saldo += win ? bet : -bet;
+
+    res.innerText=r.toUpperCase();
+
+    update();
+    save();
+  },1500);
 }
 
-function roulette(){
-  let bet = +document.getElementById("roulBet").value;
-  let c = document.getElementById("color").value;
-
-  if(!bet || bet > saldo) return alert("Apuesta inválida");
-
-  let r = Math.random()<0.5?"rojo":"negro";
-  let win = r===c;
-
-  saldo += win ? bet : -bet;
-
-  document.getElementById("roulRes").innerText = r;
-  update(); save();
+function rand(){
+  return Math.floor(Math.random()*4);
 }
 
 </script>
