@@ -68,63 +68,70 @@ input,select{padding:8px;margin-top:10px;width:80%}
 </div>
 </div>
 
-<script>
-// ===============================
-// 🔥 CONFIGURA AQUÍ TU SUPABASE
-// ===============================
-const SUPABASE_URL = "https://dakhnqriwbzihlzhtfcb.supabase.co";
-const SUPABASE_KEY = "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs";
+<script type="module">
 
-// ===============================
-// ⚠️ NO TOCAR LO DE ABAJO
-// ===============================
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-let supabase = null;
+// 🔥 TUS DATOS (YA PUESTOS)
+const supabase = createClient(
+  "https://dakhnqriwbzihlzhtfcb.supabase.co",
+  "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs"
+);
+
 let saldo = 0;
 let user = null;
 
-// Cargar Supabase correctamente
-async function initSupabase() {
-  const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm");
-  supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-}
-initSupabase();
-
-// ===============================
-// 🔐 AUTH
-// ===============================
-
-async function register(){
-  if(!supabase) return alert("Cargando sistema...");
-
+// ================= LOGIN =================
+window.login = async function(){
   const email = document.getElementById("email").value;
   const pass = document.getElementById("pass").value;
 
-  const { error } = await supabase.auth.signUp({ email, password: pass });
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password: pass
+  });
 
-  if(error) return alert(error.message);
-
-  alert("Registrado correctamente");
-}
-
-async function login(){
-  if(!supabase) return alert("Cargando sistema...");
-
-  const email = document.getElementById("email").value;
-  const pass = document.getElementById("pass").value;
-
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
-
-  if(error) return alert(error.message);
+  if(error){
+    alert("Error: " + error.message);
+    return;
+  }
 
   user = data.user;
   start();
 }
 
-// ===============================
-// 🚀 ENTRAR SIN LOGIN (EMERGENCIA)
-// ===============================
-function entrarDirecto(){
+// ================= REGISTRO =================
+window.register = async function(){
+  const email = document.getElementById("email").value;
+  const pass = document.getElementById("pass").value;
+
+  const { error } = await supabase.auth.signUp({
+    email,
+    password: pass
+  });
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  // 🔥 LOGIN AUTOMÁTICO
+  const res = await supabase.auth.signInWithPassword({
+    email,
+    password: pass
+  });
+
+  if(res.error){
+    alert("Registrado, ahora inicia sesión");
+    return;
+  }
+
+  user = res.data.user;
+  start();
+}
+
+// ================= ENTRAR SIN LOGIN =================
+window.entrarDirecto = function(){
   user = { id: "demo" };
   saldo = 1000;
 
@@ -134,11 +141,8 @@ function entrarDirecto(){
   update();
 }
 
-// ===============================
-// 🎰 INICIAR CASINO
-// ===============================
+// ================= INICIAR =================
 async function start(){
-
   document.getElementById("auth").style.display = "none";
   document.getElementById("casino").style.display = "block";
 
@@ -157,9 +161,7 @@ async function start(){
   update();
 }
 
-// ===============================
-// 💾 GUARDAR
-// ===============================
+// ================= GUARDAR =================
 async function save(){
   if(user.id === "demo") return;
 
@@ -169,15 +171,12 @@ async function save(){
     .eq("id", user.id);
 }
 
-// ===============================
-// 🎮 JUEGOS
-// ===============================
-
+// ================= JUEGOS =================
 function update(){
   document.getElementById("saldo").innerText = saldo;
 }
 
-function slot(){
+window.slot = function(){
   let bet = +document.getElementById("slotBet").value;
   if(!bet || bet > saldo) return alert("Apuesta inválida");
 
@@ -188,7 +187,7 @@ function slot(){
   update(); save();
 }
 
-function dice(){
+window.dice = function(){
   let bet = +document.getElementById("diceBet").value;
   if(!bet || bet > saldo) return alert("Apuesta inválida");
 
@@ -201,7 +200,7 @@ function dice(){
   update(); save();
 }
 
-function roulette(){
+window.roulette = function(){
   let bet = +document.getElementById("roulBet").value;
   let c = document.getElementById("color").value;
 
@@ -216,7 +215,7 @@ function roulette(){
   update(); save();
 }
 
-function blackjack(){
+window.blackjack = function(){
   let bet = +document.getElementById("bjBet").value;
   if(!bet || bet > saldo) return alert("Apuesta inválida");
 
@@ -232,6 +231,7 @@ function blackjack(){
 
   update(); save();
 }
+
 </script>
 
 </body>
