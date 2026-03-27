@@ -1,283 +1,501 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Casino Real PRO</title>
-
-<style>
-body{margin:0;font-family:Arial;background:#0b1d2a;color:white}
-
-/* HEADER */
-header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-background:#0f2a3d;
-padding:10px 20px;
-}
-
-.logo{font-size:22px;font-weight:bold}
-.balance{font-size:18px}
-.logout{background:red;border:none;color:white;padding:5px 10px;cursor:pointer}
-
-/* MAIN */
-.main{display:flex;height:calc(100vh - 60px)}
-
-/* SIDEBAR */
-.sidebar{width:250px;background:#132f44;padding:20px}
-.game-btn{background:#1d4b6a;padding:10px;margin:10px 0;cursor:pointer;border-radius:5px;text-align:center}
-
-/* CONTENT */
-.content{flex:1;padding:20px;overflow:auto}
-
-/* CHAT */
-.chat{width:300px;background:#000;display:flex;flex-direction:column}
-.chat-box{flex:1;overflow:auto;padding:10px}
-
-/* LOGIN */
-#auth{text-align:center;margin-top:100px}
-input{padding:10px;margin:5px;width:200px}
-
-/* GAME */
-.game{display:none}
-.active{display:block}
-
-/* SLOT */
-.reels{display:flex;gap:10px;justify-content:center}
-.reel{width:80px;height:80px;background:#000;font-size:40px;display:flex;align-items:center;justify-content:center}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Casino Real PRO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0a1625, #1a2a3f);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        .neon-text {
+            text-shadow: 0 0 10px #22d3ee, 0 0 20px #22d3ee;
+        }
+        .reel {
+            width: 90px;
+            height: 90px;
+            background: #0f1c2e;
+            border: 3px solid #22d3ee;
+            border-radius: 12px;
+            font-size: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.5);
+            transition: all 0.3s ease;
+        }
+        .reel.spinning {
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: translateY(-300%); }
+            100% { transform: translateY(0); }
+        }
+        .game-card {
+            background: rgba(15, 28, 46, 0.95);
+            border: 1px solid #334155;
+        }
+        .chat-box {
+            scrollbar-width: thin;
+            scrollbar-color: #22d3ee #1e2937;
+        }
+    </style>
 </head>
+<body class="text-white min-h-screen">
+    <!-- HEADER -->
+    <header id="topbar" class="hidden bg-zinc-950 border-b border-cyan-500/30 py-4 px-6">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="text-3xl">🎰</span>
+                <h1 class="text-2xl font-bold tracking-wider neon-text">CASINO REAL</h1>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-2 bg-zinc-900 px-5 py-2 rounded-2xl border border-cyan-500/20">
+                    <i class="fas fa-coins text-yellow-400"></i>
+                    <span id="saldo" class="text-xl font-semibold text-yellow-300">$0</span>
+                </div>
+                <button onclick="logout()" 
+                        class="flex items-center gap-2 bg-red-600 hover:bg-red-700 px-5 py-2 rounded-xl transition-all">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Salir</span>
+                </button>
+            </div>
+        </div>
+    </header>
 
-<body>
+    <!-- LOGIN -->
+    <div id="auth" class="min-h-screen flex items-center justify-center">
+        <div class="bg-zinc-900 p-10 rounded-3xl shadow-2xl w-full max-w-md border border-cyan-500/30">
+            <div class="text-center mb-8">
+                <span class="text-6xl">🎰</span>
+                <h2 class="text-4xl font-bold mt-4 neon-text">CASINO REAL</h2>
+                <p class="text-zinc-400 mt-2">Accede a tu cuenta</p>
+            </div>
+            <input id="email" type="email" placeholder="Correo electrónico" 
+                   class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-4 mb-4 focus:outline-none focus:border-cyan-400">
+            <input id="pass" type="password" placeholder="Contraseña" 
+                   class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-4 mb-6 focus:outline-none focus:border-cyan-400">
+            <div class="flex gap-4">
+                <button onclick="register()" 
+                        class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-4 rounded-2xl font-semibold transition">
+                    Registrarse
+                </button>
+                <button onclick="login()" 
+                        class="flex-1 bg-cyan-500 hover:bg-cyan-600 text-black py-4 rounded-2xl font-semibold transition">
+                    Entrar
+                </button>
+            </div>
+            <p id="msg" class="text-center mt-6 text-sm min-h-[24px]"></p>
+        </div>
+    </div>
 
-<!-- 🔥 HEADER OCULTO -->
-<header id="topbar" style="display:none;">
-<div class="logo">🎰 CASINO REAL</div>
-<div class="balance" id="saldo">$0</div>
-<button class="logout" onclick="logout()">Salir</button>
-</header>
+    <!-- CASINO MAIN -->
+    <div id="casino" class="hidden min-h-screen">
+        <div class="flex h-screen">
+            <!-- SIDEBAR -->
+            <div class="w-72 bg-zinc-950 border-r border-zinc-800 p-6 flex flex-col">
+                <h3 class="text-cyan-400 font-semibold text-lg mb-4 flex items-center gap-2">
+                    <i class="fas fa-gamepad"></i> JUEGOS
+                </h3>
+                <div onclick="showGame('slot')" class="game-btn cursor-pointer hover:bg-zinc-900 p-4 rounded-2xl mb-2 flex items-center gap-3 transition">
+                    <span class="text-2xl">🎰</span>
+                    <span class="font-medium">Slots</span>
+                </div>
+                <div onclick="showGame('roulette')" class="game-btn cursor-pointer hover:bg-zinc-900 p-4 rounded-2xl mb-2 flex items-center gap-3 transition">
+                    <span class="text-2xl">🎡</span>
+                    <span class="font-medium">Ruleta</span>
+                </div>
+                <div onclick="showGame('dice')" class="game-btn cursor-pointer hover:bg-zinc-900 p-4 rounded-2xl mb-2 flex items-center gap-3 transition">
+                    <span class="text-2xl">🎲</span>
+                    <span class="font-medium">Dados</span>
+                </div>
+                <div onclick="showGame('bj')" class="game-btn cursor-pointer hover:bg-zinc-900 p-4 rounded-2xl mb-8 flex items-center gap-3 transition">
+                    <span class="text-2xl">🃏</span>
+                    <span class="font-medium">Blackjack</span>
+                </div>
 
-<!-- LOGIN -->
-<div id="auth">
-<h2>Acceso</h2>
-<input id="email" placeholder="Correo"><br>
-<input id="pass" type="password" placeholder="Contraseña"><br>
-<button id="btnRegister">Registrar</button>
-<button id="btnLogin">Entrar</button>
-<p id="msg"></p>
-</div>
+                <h3 class="text-cyan-400 font-semibold text-lg mb-4 flex items-center gap-2">
+                    <i class="fas fa-trophy"></i> TOP JUGADORES
+                </h3>
+                <div id="rankingBox" class="flex-1 space-y-3"></div>
+            </div>
 
-<!-- CASINO -->
-<div id="casino" style="display:none">
+            <!-- CONTENT -->
+            <div class="flex-1 p-8 overflow-auto">
+                <!-- SLOTS -->
+                <div id="slot" class="game hidden">
+                    <h2 class="text-3xl font-bold mb-8 flex items-center gap-3">
+                        <span>🎰</span> Máquina Tragamonedas
+                    </h2>
+                    <div class="max-w-md mx-auto">
+                        <div class="reels flex justify-center gap-4 mb-8">
+                            <div class="reel" id="r1">🍒</div>
+                            <div class="reel" id="r2">💎</div>
+                            <div class="reel" id="r3">7️⃣</div>
+                        </div>
+                        <div class="flex gap-4 max-w-xs mx-auto">
+                            <input id="betSlot" type="number" placeholder="Apuesta" 
+                                   class="flex-1 bg-zinc-800 border border-zinc-700 rounded-2xl px-6 py-4 text-center text-xl focus:outline-none focus:border-cyan-400">
+                            <button onclick="spinSlot()" 
+                                    class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 px-10 py-4 rounded-2xl font-bold text-lg transition">
+                                GIRAR
+                            </button>
+                        </div>
+                        <p id="slotRes" class="text-center mt-6 text-2xl font-semibold min-h-[60px]"></p>
+                    </div>
+                </div>
 
-<div class="main">
+                <!-- Otros juegos (mantengo simples pero con mejor estilo) -->
+                <div id="roulette" class="game hidden">
+                    <h2 class="text-3xl font-bold mb-6">🎡 Ruleta</h2>
+                    <div class="game-card p-8 rounded-3xl max-w-md mx-auto text-center">
+                        <input id="betRou" type="number" placeholder="Apuesta" class="bg-zinc-800 w-full py-4 rounded-2xl text-center mb-4">
+                        <select id="color" class="bg-zinc-800 w-full py-4 rounded-2xl mb-6">
+                            <option value="rojo">🔴 Rojo</option>
+                            <option value="negro">⚫ Negro</option>
+                        </select>
+                        <button onclick="spinRoulette()" class="w-full bg-red-600 hover:bg-red-700 py-5 rounded-2xl font-bold text-xl">Girar Ruleta</button>
+                        <p id="rouRes" class="mt-6 text-xl"></p>
+                    </div>
+                </div>
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-<h3>Juegos</h3>
-<div class="game-btn" onclick="showGame('slot')">🎰 Slots</div>
-<div class="game-btn" onclick="showGame('roulette')">🎡 Ruleta</div>
-<div class="game-btn" onclick="showGame('dice')">🎲 Dado</div>
-<div class="game-btn" onclick="showGame('bj')">🃏 Blackjack</div>
+                <div id="dice" class="game hidden">
+                    <h2 class="text-3xl font-bold mb-6">🎲 Dados</h2>
+                    <div class="game-card p-8 rounded-3xl max-w-md mx-auto text-center">
+                        <input id="betDice" type="number" placeholder="Apuesta" class="bg-zinc-800 w-full py-4 rounded-2xl text-center mb-6">
+                        <button onclick="playDice()" class="w-full bg-amber-600 hover:bg-amber-700 py-5 rounded-2xl font-bold text-xl">Lanzar Dados</button>
+                        <p id="diceRes" class="mt-8 text-3xl"></p>
+                    </div>
+                </div>
 
-<h3>🏆 Ranking</h3>
-<div id="rankingBox"></div>
-</div>
+                <div id="bj" class="game hidden">
+                    <h2 class="text-3xl font-bold mb-6">🃏 Blackjack</h2>
+                    <div class="game-card p-8 rounded-3xl max-w-md mx-auto text-center">
+                        <input id="betBJ" type="number" placeholder="Apuesta" class="bg-zinc-800 w-full py-4 rounded-2xl text-center mb-6">
+                        <button onclick="playBJ()" class="w-full bg-purple-600 hover:bg-purple-700 py-5 rounded-2xl font-bold text-xl">Jugar Mano</button>
+                        <p id="bjRes" class="mt-8 text-xl font-mono"></p>
+                    </div>
+                </div>
+            </div>
 
-<!-- CONTENT -->
-<div class="content">
+            <!-- CHAT -->
+            <div class="w-80 bg-zinc-950 border-l border-zinc-800 flex flex-col">
+                <div class="p-4 border-b border-zinc-800 bg-zinc-900">
+                    <h3 class="font-semibold flex items-center gap-2"><i class="fas fa-comments text-cyan-400"></i> Chat en Vivo</h3>
+                </div>
+                <div id="chatBox" class="chat-box flex-1 p-4 overflow-auto text-sm space-y-3"></div>
+                <div class="p-4 border-t border-zinc-800 bg-zinc-900">
+                    <div class="flex gap-2">
+                        <input id="chatInput" placeholder="Mensaje..." 
+                               class="flex-1 bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-cyan-400">
+                        <button onclick="sendMsg()" 
+                                class="bg-cyan-500 text-black px-6 rounded-2xl font-semibold">Enviar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<div id="slot" class="game">
-<h2>🎰 Slots</h2>
-<div class="reels">
-<div class="reel" id="r1"></div>
-<div class="reel" id="r2"></div>
-<div class="reel" id="r3"></div>
-</div>
-<input id="betSlot">
-<button onclick="spinSlot()">Girar</button>
-<p id="slotRes"></p>
-</div>
+    <canvas id="confetti" class="fixed inset-0 pointer-events-none z-50 hidden"></canvas>
 
-<div id="roulette" class="game">
-<h2>🎡 Ruleta</h2>
-<input id="betRou">
-<select id="color">
-<option value="rojo">Rojo</option>
-<option value="negro">Negro</option>
-</select>
-<button onclick="spinRoulette()">Girar</button>
-<p id="rouRes"></p>
-</div>
+    <script>
+        // === SUPABASE ===
+        const sb = window.supabase.createClient(
+            "https://dakhnqriwbzihlzhtfcb.supabase.co",
+            "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs"
+        );
 
-<div id="dice" class="game">
-<h2>🎲 Dado</h2>
-<input id="betDice">
-<button onclick="playDice()">Lanzar</button>
-<p id="diceRes"></p>
-</div>
+        let user = null;
+        let saldo = 0;
 
-<div id="bj" class="game">
-<h2>🃏 Blackjack</h2>
-<input id="betBJ">
-<button onclick="playBJ()">Jugar</button>
-<p id="bjRes"></p>
-</div>
+        // === HELPERS ===
+        function msg(text, color = "text-white") {
+            const el = document.getElementById("msg");
+            el.innerHTML = `<span class="${color}">${text}</span>`;
+        }
 
-</div>
+        function val(id) {
+            return document.getElementById(id).value.trim();
+        }
 
-<!-- CHAT -->
-<div class="chat">
-<div class="chat-box" id="chatBox"></div>
-<input id="chatInput" placeholder="Escribe...">
-<button onclick="sendMsg()">Enviar</button>
-</div>
+        function formatSaldo(n) {
+            return new Intl.NumberFormat('es-MX').format(n);
+        }
 
-</div>
+        function updateSaldo() {
+            document.getElementById("saldo").innerText = "$" + formatSaldo(saldo);
+        }
 
-</div>
+        // Confetti
+        function launchConfetti() {
+            const canvas = document.getElementById("confetti");
+            canvas.classList.remove("hidden");
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const ctx = canvas.getContext("2d");
+            let particles = [];
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+            for (let i = 0; i < 150; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    size: Math.random() * 8 + 5,
+                    speed: Math.random() * 6 + 4,
+                    color: ['#22d3ee', '#eab308', '#a855f7', '#ec4899'][Math.floor(Math.random()*4)],
+                    angle: Math.random() * 360
+                });
+            }
 
-<script>
-const sb = window.supabase.createClient(
-"https://dakhnqriwbzihlzhtfcb.supabase.co",
-"sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs"
-);
+            let frame = 0;
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach((p, i) => {
+                    p.y += p.speed;
+                    p.angle += 5;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.angle * Math.PI / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size * 0.6);
+                    ctx.restore();
 
-let user,saldo=0;
+                    if (p.y > canvas.height) particles.splice(i, 1);
+                });
 
-// INIT
-window.onload=async()=>{
-let {data}=await sb.auth.getSession();
-if(data.session){user=data.session.user;start();}
-};
+                if (particles.length > 0 && frame < 120) {
+                    requestAnimationFrame(animate);
+                } else {
+                    canvas.classList.add("hidden");
+                }
+                frame++;
+            }
+            animate();
+        }
 
-// HELPERS
-function msg(t){document.getElementById("msg").innerText=t}
-function val(id){return document.getElementById(id).value}
+        // === AUTH ===
+        async function register() {
+            msg("Registrando...");
+            const { error } = await sb.auth.signUp({
+                email: val("email"),
+                password: val("pass")
+            });
+            msg(error ? error.message : "✅ Revisa tu correo para confirmar", error ? "text-red-400" : "text-green-400");
+        }
 
-// AUTH
-async function register(){
-msg("Registrando...");
-let {error}=await sb.auth.signUp({email:val("email"),password:val("pass")});
-msg(error?error.message:"📩 Revisa tu correo");
-}
+        async function login() {
+            msg("Iniciando sesión...");
+            const { data, error } = await sb.auth.signInWithPassword({
+                email: val("email"),
+                password: val("pass")
+            });
+            if (error) {
+                msg(error.message, "text-red-400");
+                return;
+            }
+            user = data.user;
+            startCasino();
+        }
 
-async function login(){
-let {data,error}=await sb.auth.signInWithPassword({email:val("email"),password:val("pass")});
-if(error){msg(error.message);return;}
-user=data.user;
-start();
-}
+        // === INICIO DEL CASINO ===
+        async function startCasino() {
+            document.getElementById("auth").classList.add("hidden");
+            document.getElementById("casino").classList.remove("hidden");
+            document.getElementById("topbar").classList.remove("hidden");
 
-// START
-async function start(){
-document.getElementById("auth").style.display="none";
-document.getElementById("casino").style.display="block";
-document.getElementById("topbar").style.display="flex"; // 🔥 FIX
+            const { data } = await sb.from("usuarios").select("*").eq("id", user.id).single();
+            
+            if (!data) {
+                await sb.from("usuarios").insert([{ id: user.id, saldo: 2000 }]);
+                saldo = 2000;
+            } else {
+                saldo = data.saldo;
+            }
 
-let {data}=await sb.from("usuarios").select("*").eq("id",user.id);
+            updateSaldo();
+            loadRanking();
+            initChat();
+            showGame('slot'); // Abre Slots por defecto
+        }
 
-if(!data.length){
-await sb.from("usuarios").insert([{id:user.id,saldo:1000}]);
-saldo=1000;
-}else saldo=data[0].saldo;
+        async function saveSaldo() {
+            if (!user) return;
+            await sb.from("usuarios").update({ saldo }).eq("id", user.id);
+        }
 
-update();
-loadRanking();
-initChat();
-}
+        // === NAVEGACIÓN ===
+        function showGame(gameId) {
+            document.querySelectorAll('.game').forEach(g => g.classList.add('hidden'));
+            document.getElementById(gameId).classList.remove('hidden');
+        }
 
-// UPDATE
-function update(){
-document.getElementById("saldo").innerText="💰 $"+saldo;
-}
+        // === JUEGOS ===
+        async function spinSlot() {
+            let bet = parseInt(val("betSlot"));
+            if (!bet || bet <= 0 || bet > saldo) {
+                document.getElementById("slotRes").innerHTML = `<span class="text-red-400">Apuesta inválida</span>`;
+                return;
+            }
 
-// SAVE
-async function save(){
-await sb.from("usuarios").update({saldo}).eq("id",user.id);
-}
+            const r1 = document.getElementById('r1');
+            const r2 = document.getElementById('r2');
+            const r3 = document.getElementById('r3');
 
-// NAV
-function showGame(g){
-document.querySelectorAll(".game").forEach(x=>x.classList.remove("active"));
-document.getElementById(g).classList.add("active");
-}
+            // Animación de giro
+            r1.classList.add('spinning');
+            r2.classList.add('spinning');
+            r3.classList.add('spinning');
 
-// JUEGOS
-function spinSlot(){
-let b=+val("betSlot");if(!b||b>saldo)return;
-let s=["🍒","💎","7️⃣","⭐","🍀","🔔"];
-let a=s[rand()],c=s[rand()],d=s[rand()];
-r1.innerText=a;r2.innerText=c;r3.innerText=d;
-let win=(a===c&&c===d);
-saldo+=win?b*5:-b;
-update();save();
-}
+            await new Promise(r => setTimeout(r, 1600));
 
-function spinRoulette(){
-let b=+val("betRou"),c=val("color");
-let r=Math.random()<0.5?"rojo":"negro";
-saldo+=r===c?b:-b;
-document.getElementById("rouRes").innerText=r;
-update();save();
-}
+            r1.classList.remove('spinning');
+            r2.classList.remove('spinning');
+            r3.classList.remove('spinning');
 
-function playDice(){
-let b=+val("betDice");
-let d=Math.floor(Math.random()*6)+1;
-saldo+=d>=4?b:-b;
-document.getElementById("diceRes").innerText=d;
-update();save();
-}
+            const symbols = ["🍒", "💎", "7️⃣", "⭐", "🍀", "🔔", "🍉"];
+            let a = symbols[Math.floor(Math.random() * symbols.length)];
+            let b = symbols[Math.floor(Math.random() * symbols.length)];
+            let c = symbols[Math.floor(Math.random() * symbols.length)];
 
-function playBJ(){
-let b=+val("betBJ");
-let p=Math.floor(Math.random()*10)+12,d=Math.floor(Math.random()*10)+12;
-saldo+=((p>d&&p<=21)||d>21)?b:-b;
-document.getElementById("bjRes").innerText=`${p} vs ${d}`;
-update();save();
-}
+            r1.innerText = a;
+            r2.innerText = b;
+            r3.innerText = c;
 
-// CHAT
-function initChat(){
-sb.channel("chat")
-.on("postgres_changes",{event:"INSERT",schema:"public",table:"chat"},p=>{
-let box=document.getElementById("chatBox");
-box.innerHTML+=`<div>${p.new.mensaje}</div>`;
-box.scrollTop=box.scrollHeight;
-}).subscribe();
-}
+            const win = (a === b && b === c);
+            const multiplier = win ? 12 : -1;
+            saldo += bet * multiplier;
 
-async function sendMsg(){
-let t=val("chatInput");
-if(!t)return;
-await sb.from("chat").insert([{user_id:user.id,mensaje:t}]);
-document.getElementById("chatInput").value="";
-}
+            const resEl = document.getElementById("slotRes");
+            if (win) {
+                resEl.innerHTML = `<span class="text-yellow-400 text-3xl">¡GRAN GANADOR! +$${bet * 12}</span>`;
+                launchConfetti();
+            } else {
+                resEl.innerHTML = `<span class="text-red-400">-$${bet}</span>`;
+            }
 
-// RANKING
-async function loadRanking(){
-let {data}=await sb.from("usuarios").select("*").order("saldo",{ascending:false}).limit(5);
-let html="";
-data.forEach(u=>html+=`<div>💰 $${u.saldo}</div>`);
-document.getElementById("rankingBox").innerHTML=html;
-}
+            updateSaldo();
+            await saveSaldo();
+            loadRanking();
+        }
 
-// LOGOUT
-async function logout(){
-await sb.auth.signOut();
-location.reload();
-}
+        async function spinRoulette() {
+            let bet = parseInt(val("betRou"));
+            if (!bet || bet > saldo || bet <= 0) return alert("Apuesta inválida");
 
-function rand(){return Math.floor(Math.random()*6)}
+            const chosen = val("color");
+            const result = Math.random() < 0.5 ? "rojo" : "negro";
+            const win = result === chosen;
 
-// BOTONES
-document.getElementById("btnRegister").onclick=register;
-document.getElementById("btnLogin").onclick=login;
+            saldo += win ? bet : -bet;
 
-</script>
+            document.getElementById("rouRes").innerHTML = `
+                Salió <span class="${result === 'rojo' ? 'text-red-500' : 'text-zinc-300'} font-bold">${result.toUpperCase()}</span>
+                ${win ? ' → ¡Ganaste!' : ' → Perdiste'}
+            `;
 
+            updateSaldo();
+            await saveSaldo();
+            loadRanking();
+        }
+
+        async function playDice() {
+            let bet = parseInt(val("betDice"));
+            if (!bet || bet > saldo || bet <= 0) return;
+
+            const roll = Math.floor(Math.random() * 6) + 1;
+            const win = roll >= 4;
+            saldo += win ? bet : -bet;
+
+            document.getElementById("diceRes").innerHTML = `
+                Salió <span class="text-4xl">${roll}</span><br>
+                ${win ? '<span class="text-green-400">¡Ganaste!</span>' : '<span class="text-red-400">Perdiste</span>'}
+            `;
+
+            updateSaldo();
+            await saveSaldo();
+            loadRanking();
+        }
+
+        async function playBJ() {
+            let bet = parseInt(val("betBJ"));
+            if (!bet || bet > saldo || bet <= 0) return;
+
+            const player = Math.floor(Math.random() * 10) + 12;
+            const dealer = Math.floor(Math.random() * 10) + 12;
+
+            const win = (player > dealer && player <= 21) || dealer > 21;
+            saldo += win ? bet : -bet;
+
+            document.getElementById("bjRes").innerHTML = `
+                Tú: <span class="font-bold">${player}</span> | Dealer: <span class="font-bold">${dealer}</span><br>
+                <span class="${win ? 'text-green-400' : 'text-red-400'}">${win ? '¡Ganaste!' : 'Perdiste'}</span>
+            `;
+
+            updateSaldo();
+            await saveSaldo();
+            loadRanking();
+        }
+
+        // === CHAT ===
+        function initChat() {
+            const channel = sb.channel('chat-room');
+
+            channel.on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'chat'
+            }, (payload) => {
+                const box = document.getElementById("chatBox");
+                box.innerHTML += `<div class="bg-zinc-900 p-3 rounded-2xl"><strong class="text-cyan-400">Usuario:</strong> ${payload.new.mensaje}</div>`;
+                box.scrollTop = box.scrollHeight;
+            }).subscribe();
+        }
+
+        async function sendMsg() {
+            const text = val("chatInput");
+            if (!text) return;
+
+            await sb.from("chat").insert([{ user_id: user.id, mensaje: text }]);
+            document.getElementById("chatInput").value = "";
+        }
+
+        // === RANKING ===
+        async function loadRanking() {
+            const { data } = await sb.from("usuarios")
+                .select("saldo")
+                .order("saldo", { ascending: false })
+                .limit(5);
+
+            let html = "";
+            data.forEach((u, i) => {
+                html += `<div class="flex justify-between bg-zinc-900 p-3 rounded-2xl">
+                    <span>#${i+1}</span>
+                    <span class="text-yellow-300">$${formatSaldo(u.saldo)}</span>
+                </div>`;
+            });
+            document.getElementById("rankingBox").innerHTML = html;
+        }
+
+        // === LOGOUT ===
+        async function logout() {
+            await sb.auth.signOut();
+            location.reload();
+        }
+
+        // === INIT ===
+        window.onload = async () => {
+            const { data: { session } } = await sb.auth.getSession();
+            if (session) {
+                user = session.user;
+                startCasino();
+            }
+        };
+
+        // Botones de auth
+        // (se usan onclick en HTML)
+    </script>
 </body>
 </html>
