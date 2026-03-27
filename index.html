@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Casino PRO REAL</title>
+<title>Casino Real PRO</title>
 
 <style>
 body{margin:0;font-family:Arial;background:#0b1d2a;color:white;text-align:center}
@@ -28,13 +28,14 @@ input,select{padding:8px;margin-top:10px;width:80%}
 width:200px;height:200px;border-radius:50%;
 background:conic-gradient(red 0 50%, black 50% 100%);
 margin:20px auto;
+transition:transform 1s;
 }
 </style>
 </head>
 
 <body>
 
-<header>🎰 CASINO REAL</header>
+<header>🎰 CASINO REAL PRO</header>
 <button class="logout" onclick="logout()">Salir</button>
 
 <!-- LOGIN -->
@@ -135,24 +136,21 @@ document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
 document.getElementById(id).classList.add("active");
 }
 
-// MENSAJES
-function msg(t){
-document.getElementById("msg").innerText=t;
-}
+function msg(t){document.getElementById("msg").innerText=t}
 
 // REGISTER
 async function register(){
 let email=val("email");
 let pass=val("pass");
 
-if(!email||!pass) return msg("Completa los datos");
+if(!email||!pass) return msg("Completa los campos");
 
 let {error}=await supabase.auth.signUp({email,password:pass});
 
 if(error){
-msg(error.message);
+msg("❌ "+error.message);
 }else{
-msg("Registro OK 📩 revisa tu correo o intenta login");
+msg("📩 Revisa tu correo y confirma tu cuenta");
 }
 }
 
@@ -164,7 +162,11 @@ let pass=val("pass");
 let {data,error}=await supabase.auth.signInWithPassword({email,password:pass});
 
 if(error){
-msg(error.message);
+if(error.message.includes("Email not confirmed")){
+msg("⚠️ Confirma tu correo antes de entrar");
+}else{
+msg("❌ "+error.message);
+}
 return;
 }
 
@@ -225,7 +227,7 @@ r1.innerText=a;r2.innerText=b;r3.innerText=c;
 let win=(a===b && b===c);
 saldo+=win?bet*5:-bet;
 
-document.getElementById("slotRes").innerText=win?"JACKPOT":"PERDISTE";
+document.getElementById("slotRes").innerText=win?"🎉 JACKPOT":"❌ PERDISTE";
 
 update();save();
 },1500);
@@ -240,7 +242,6 @@ if(!bet||bet>saldo) return alert("Apuesta inválida");
 
 let wheel=document.getElementById("wheel");
 let deg=Math.random()*360;
-
 wheel.style.transform=`rotate(${deg}deg)`;
 
 setTimeout(()=>{
