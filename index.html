@@ -1,163 +1,150 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Casino Simulado</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0b1d2a;
-      color: white;
-      text-align: center;
-    }
-
-    header {
-      background: #102c3c;
-      padding: 15px;
-      font-size: 24px;
-      font-weight: bold;
-    }
-
-    .saldo {
-      margin: 10px;
-      font-size: 20px;
-      color: #00ffcc;
-    }
-
-    .container {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      flex-wrap: wrap;
-      margin-top: 20px;
-    }
-
-    .card {
-      background: #16394f;
-      padding: 20px;
-      border-radius: 10px;
-      width: 250px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    }
-
-    button {
-      margin-top: 10px;
-      padding: 10px;
-      border: none;
-      border-radius: 5px;
-      background: #00c896;
-      color: white;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #00a87d;
-    }
-
-    input {
-      padding: 8px;
-      width: 80%;
-      margin-top: 10px;
-    }
-
-    .resultado {
-      margin-top: 10px;
-      font-weight: bold;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Casino PRO</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<style>
+body{margin:0;font-family:Arial;background:#0b1d2a;color:white;text-align:center}
+header{background:#102c3c;padding:15px;font-size:24px}
+.container{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin-top:20px}
+.card{background:#16394f;padding:20px;border-radius:10px;width:260px}
+button{padding:10px;margin-top:10px;border:none;border-radius:5px;background:#00c896;color:white;cursor:pointer}
+input,select{padding:8px;margin-top:10px;width:80%}
+</style>
 </head>
 <body>
 
-<header>🎰 Casino Simulado</header>
-<div class="saldo">Saldo: $<span id="saldo">1000</span></div>
+<header>🎰 Casino PRO</header>
+
+<div id="auth">
+<h3>Login</h3>
+<input id="email" placeholder="Correo"><br>
+<input id="pass" type="password" placeholder="Contraseña"><br>
+<button onclick="login()">Entrar</button>
+<button onclick="register()">Registrar</button>
+</div>
+
+<div id="casino" style="display:none">
+<h2>Saldo: $<span id="saldo">0</span></h2>
 
 <div class="container">
 
-  <!-- SLOT -->
-  <div class="card">
-    <h3>🎰 Slot</h3>
-    <input type="number" id="apuestaSlot" placeholder="Apuesta">
-    <button onclick="jugarSlot()">Girar</button>
-    <div class="resultado" id="resSlot"></div>
-  </div>
+<div class="card">
+<h3>🎰 Slot</h3>
+<input id="slotBet" type="number" placeholder="Apuesta">
+<button onclick="slot()">Jugar</button>
+<p id="slotRes"></p>
+</div>
 
-  <!-- DADO -->
-  <div class="card">
-    <h3>🎲 Dado (1-6)</h3>
-    <input type="number" id="apuestaDado" placeholder="Apuesta">
-    <button onclick="jugarDado()">Lanzar</button>
-    <div class="resultado" id="resDado"></div>
-  </div>
+<div class="card">
+<h3>🎲 Dado</h3>
+<input id="diceBet" type="number" placeholder="Apuesta">
+<button onclick="dice()">Lanzar</button>
+<p id="diceRes"></p>
+</div>
 
-  <!-- RULETA SIMPLE -->
-  <div class="card">
-    <h3>🎡 Ruleta (Rojo/Negro)</h3>
-    <input type="number" id="apuestaRuleta" placeholder="Apuesta">
-    <select id="color">
-      <option value="rojo">Rojo</option>
-      <option value="negro">Negro</option>
-    </select>
-    <button onclick="jugarRuleta()">Girar</button>
-    <div class="resultado" id="resRuleta"></div>
-  </div>
+<div class="card">
+<h3>🎡 Ruleta</h3>
+<input id="roulBet" type="number">
+<select id="color">
+<option>rojo</option>
+<option>negro</option>
+</select>
+<button onclick="roulette()">Girar</button>
+<p id="roulRes"></p>
+</div>
 
+<div class="card">
+<h3>🃏 Blackjack Simple</h3>
+<button onclick="blackjack()">Jugar</button>
+<p id="bjRes"></p>
+</div>
+
+</div>
 </div>
 
 <script>
-let saldo = 1000;
+const supabaseUrl = "https://dakhnqriwbzihlzhtfcb.supabase.co";
+const supabaseKey = "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs";
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-function actualizarSaldo() {
-  document.getElementById("saldo").innerText = saldo;
+let saldo = 0;
+let user = null;
+
+async function register(){
+let email=document.getElementById("email").value;
+let pass=document.getElementById("pass").value;
+await supabase.auth.signUp({email,password:pass});
+alert("Registrado");
 }
 
-function jugarSlot() {
-  let apuesta = parseInt(document.getElementById("apuestaSlot").value);
-  if (!apuesta || apuesta > saldo) return;
-
-  let r = Math.random();
-  if (r < 0.3) {
-    saldo += apuesta;
-    document.getElementById("resSlot").innerText = "Ganaste!";
-  } else {
-    saldo -= apuesta;
-    document.getElementById("resSlot").innerText = "Perdiste";
-  }
-  actualizarSaldo();
+async function login(){
+let email=document.getElementById("email").value;
+let pass=document.getElementById("pass").value;
+let {data}=await supabase.auth.signInWithPassword({email,password:pass});
+user=data.user;
+start();
 }
 
-function jugarDado() {
-  let apuesta = parseInt(document.getElementById("apuestaDado").value);
-  if (!apuesta || apuesta > saldo) return;
+async function start(){
+document.getElementById("auth").style.display="none";
+document.getElementById("casino").style.display="block";
 
-  let dado = Math.floor(Math.random() * 6) + 1;
+let {data}=await supabase.from("usuarios").select("*").eq("id",user.id);
 
-  if (dado >= 4) {
-    saldo += apuesta;
-    document.getElementById("resDado").innerText = "Salió " + dado + " → Ganaste";
-  } else {
-    saldo -= apuesta;
-    document.getElementById("resDado").innerText = "Salió " + dado + " → Perdiste";
-  }
-  actualizarSaldo();
+if(data.length==0){
+await supabase.from("usuarios").insert([{id:user.id,saldo:1000}]);
+saldo=1000;
+}else{
+saldo=data[0].saldo;
+}
+update();
 }
 
-function jugarRuleta() {
-  let apuesta = parseInt(document.getElementById("apuestaRuleta").value);
-  let color = document.getElementById("color").value;
+function update(){document.getElementById("saldo").innerText=saldo}
 
-  if (!apuesta || apuesta > saldo) return;
+async function save(){
+await supabase.from("usuarios").update({saldo}).eq("id",user.id);
+}
 
-  let resultado = Math.random() < 0.5 ? "rojo" : "negro";
+function slot(){
+let bet=+document.getElementById("slotBet").value;
+if(bet>saldo||bet<=0)return;
+let win=Math.random()<0.3;
+saldo+=win?bet:-bet;
+document.getElementById("slotRes").innerText=win?"Ganaste":"Perdiste";
+update();save();
+}
 
-  if (resultado === color) {
-    saldo += apuesta;
-    document.getElementById("resRuleta").innerText = "Salió " + resultado + " → Ganaste";
-  } else {
-    saldo -= apuesta;
-    document.getElementById("resRuleta").innerText = "Salió " + resultado + " → Perdiste";
-  }
-  actualizarSaldo();
+function dice(){
+let bet=+document.getElementById("diceBet").value;
+if(bet>saldo||bet<=0)return;
+let d=Math.floor(Math.random()*6)+1;
+let win=d>=4;
+saldo+=win?bet:-bet;
+document.getElementById("diceRes").innerText="Dado: "+d;
+update();save();
+}
+
+function roulette(){
+let bet=+document.getElementById("roulBet").value;
+let c=document.getElementById("color").value;
+if(bet>saldo||bet<=0)return;
+let r=Math.random()<0.5?"rojo":"negro";
+let win=r==c;
+saldo+=win?bet:-bet;
+document.getElementById("roulRes").innerText=r;
+update();save();
+}
+
+function blackjack(){
+let player=Math.floor(Math.random()*11)+11;
+let dealer=Math.floor(Math.random()*11)+11;
+let win=player>dealer && player<=21 || dealer>21;
+saldo+=win?100:-100;
+document.getElementById("bjRes").innerText=`Tú:${player} Dealer:${dealer}`;
+update();save();
 }
 </script>
 
