@@ -7,33 +7,21 @@
 <style>
 body{
   margin:0;
-  font-family: 'Segoe UI', sans-serif;
+  font-family:'Segoe UI',sans-serif;
   background: radial-gradient(circle,#0b1d2a,#050d14);
   color:white;
-  overflow-x:hidden;
+  text-align:center;
 }
 
 header{
   background:#0f2a3a;
   padding:15px;
-  text-align:center;
-  font-size:24px;
+  font-size:26px;
   font-weight:bold;
 }
 
-.screen{
-  display:none;
-  animation:fade 0.5s;
-}
-
-.active{
-  display:block;
-}
-
-@keyframes fade{
-  from{opacity:0;transform:translateY(10px)}
-  to{opacity:1;transform:translateY(0)}
-}
+.screen{display:none;}
+.active{display:block;}
 
 .container{
   display:flex;
@@ -52,9 +40,7 @@ header{
   transition:0.3s;
 }
 
-.card:hover{
-  transform:scale(1.05);
-}
+.card:hover{transform:scale(1.05);}
 
 input,select{
   width:80%;
@@ -74,9 +60,7 @@ button{
   font-weight:bold;
 }
 
-button:hover{
-  background:#00a87d;
-}
+button:hover{background:#00a87d;}
 
 #saldoBox{
   font-size:22px;
@@ -95,14 +79,13 @@ button:hover{
   position:fixed;
   width:100%;
   height:100%;
-  background:#000;
+  background:black;
   display:flex;
   justify-content:center;
   align-items:center;
   z-index:100;
 }
 </style>
-
 </head>
 
 <body>
@@ -115,18 +98,16 @@ button:hover{
 
 <!-- LOGIN -->
 <div id="auth" class="screen active">
-<h2 style="text-align:center">Acceso</h2>
-<center>
+<h2>Acceso</h2>
 <input id="email" placeholder="Correo"><br>
 <input id="pass" type="password" placeholder="Contraseña"><br>
 <button onclick="register()">Registrar</button>
 <button onclick="login()">Entrar</button>
-</center>
 </div>
 
 <!-- CASINO -->
 <div id="casino" class="screen">
-<div id="saldoBox">Saldo: $<span id="saldo">0</span></div>
+<div id="saldoBox">Fichas: $<span id="saldo">0</span></div>
 
 <div class="container">
 
@@ -166,9 +147,11 @@ button:hover{
 </div>
 
 <script>
+
+// ================= VARIABLES =================
 let saldo = 1000;
 
-// ===== UI =====
+// ================= UI =================
 function show(screen){
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
   document.getElementById(screen).classList.add("active");
@@ -179,7 +162,7 @@ function update(){
   localStorage.setItem("saldo", saldo);
 }
 
-// ===== LOGIN LOCAL PRO =====
+// ================= LOGIN =================
 function register(){
   let email = document.getElementById("email").value;
   let pass = document.getElementById("pass").value;
@@ -209,7 +192,7 @@ function login(){
   }
 }
 
-// ===== AUTO LOGIN =====
+// ================= AUTO LOGIN =================
 window.onload = ()=>{
   setTimeout(()=>{
     document.getElementById("loader").style.display="none";
@@ -222,65 +205,94 @@ window.onload = ()=>{
   },1000);
 }
 
-// ===== LOGOUT =====
+// ================= LOGOUT =================
 function logout(){
   location.reload();
 }
 
-// ===== JUEGOS =====
+// ================= JUEGOS =================
+
+// 🎰 SLOT
 function slot(){
-  let bet=+document.getElementById("slotBet").value;
-  if(!bet || bet>saldo) return alert("Apuesta inválida");
+  let bet = +document.getElementById("slotBet").value;
+  if(!bet || bet > saldo) return alert("Apuesta inválida");
 
-  let win=Math.random()<0.35;
-  saldo+=win?bet:-bet;
+  const res = document.getElementById("slotRes");
+  res.innerText = "Girando... 🎰";
 
-  document.getElementById("slotRes").innerText=win?"🎉 JACKPOT":"❌ Perdiste";
-  update();
+  setTimeout(() => {
+    let symbols = ["🍒","💎","7️⃣","⭐"];
+    let s1 = symbols[Math.floor(Math.random()*symbols.length)];
+    let s2 = symbols[Math.floor(Math.random()*symbols.length)];
+    let s3 = symbols[Math.floor(Math.random()*symbols.length)];
+
+    let win = (s1===s2 && s2===s3);
+
+    saldo += win ? bet*3 : -bet;
+
+    res.innerText = `${s1} ${s2} ${s3} → ${win ? "JACKPOT 💰" : "Perdiste ❌"}`;
+    update();
+  },1000);
 }
 
+// 🎲 DADO
 function dice(){
-  let bet=+document.getElementById("diceBet").value;
-  if(!bet || bet>saldo) return alert("Apuesta inválida");
+  let bet = +document.getElementById("diceBet").value;
+  if(!bet || bet > saldo) return alert("Apuesta inválida");
 
-  let d=Math.floor(Math.random()*6)+1;
-  let win=d>=4;
+  const res = document.getElementById("diceRes");
+  res.innerText = "Lanzando... 🎲";
 
-  saldo+=win?bet:-bet;
+  setTimeout(()=>{
+    let d = Math.floor(Math.random()*6)+1;
+    let win = d >= 4;
 
-  document.getElementById("diceRes").innerText="Resultado: "+d;
-  update();
+    saldo += win ? bet : -bet;
+
+    res.innerText = `🎲 ${d} → ${win?"GANASTE":"PERDISTE"}`;
+    update();
+  },800);
 }
 
+// 🎡 RULETA
 function roulette(){
-  let bet=+document.getElementById("roulBet").value;
-  let c=document.getElementById("color").value;
+  let bet = +document.getElementById("roulBet").value;
+  let c = document.getElementById("color").value;
 
-  if(!bet || bet>saldo) return alert("Apuesta inválida");
+  if(!bet || bet > saldo) return alert("Apuesta inválida");
 
-  let r=Math.random()<0.5?"rojo":"negro";
-  let win=r===c;
+  const res = document.getElementById("roulRes");
+  res.innerText = "Girando ruleta... 🎡";
 
-  saldo+=win?bet:-bet;
+  setTimeout(()=>{
+    let r = Math.random()<0.5?"rojo":"negro";
+    let win = r===c;
 
-  document.getElementById("roulRes").innerText="Resultado: "+r;
-  update();
+    saldo += win ? bet : -bet;
+
+    res.innerText = `Salió ${r} → ${win?"GANASTE 💰":"PERDISTE ❌"}`;
+    update();
+  },1200);
 }
 
+// 🃏 BLACKJACK
 function blackjack(){
-  let bet=+document.getElementById("bjBet").value;
-  if(!bet || bet>saldo) return alert("Apuesta inválida");
+  let bet = +document.getElementById("bjBet").value;
+  if(!bet || bet > saldo) return alert("Apuesta inválida");
 
-  let p=Math.floor(Math.random()*11)+11;
-  let d=Math.floor(Math.random()*11)+11;
+  let p = Math.floor(Math.random()*10)+12;
+  let d = Math.floor(Math.random()*10)+12;
 
-  let win=(p>d && p<=21)||d>21;
+  let win = (p>d && p<=21)||d>21;
 
-  saldo+=win?bet:-bet;
+  saldo += win ? bet : -bet;
 
-  document.getElementById("bjRes").innerText=`Tú:${p} Dealer:${d}`;
+  document.getElementById("bjRes").innerText =
+    `🃏 Tú:${p} | Dealer:${d} → ${win?"GANASTE":"PERDISTE"}`;
+
   update();
 }
+
 </script>
 
 </body>
