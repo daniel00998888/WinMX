@@ -15,23 +15,18 @@ button{padding:10px;margin-top:10px;border:none;border-radius:5px;background:#00
 input,select{padding:8px;margin-top:10px;width:80%}
 .logout{position:absolute;top:10px;right:10px;background:red}
 
-/* SLOT */
 .reels{display:flex;justify-content:center;gap:10px;margin:20px}
 .reel{width:80px;height:80px;background:#000;border:3px solid #00c896;font-size:40px;display:flex;align-items:center;justify-content:center;border-radius:10px}
 
-/* RULETA */
-.wheel{
-width:200px;height:200px;border-radius:50%;
-background:conic-gradient(red 0 50%, black 50% 100%);
-margin:20px auto;
-transition:transform 1s;
-}
+.wheel{width:200px;height:200px;border-radius:50%;background:conic-gradient(red 0 50%, black 50% 100%);margin:20px auto;transition:transform 1s}
+
+#chatBox{height:150px;overflow:auto;background:#000;padding:10px;margin-top:10px}
 </style>
 </head>
 
 <body>
 
-<header>🎰 CASINO REAL PRO</header>
+<header>🎰 CASINO PRO</header>
 <button class="logout" onclick="logout()">Salir</button>
 
 <!-- LOGIN -->
@@ -47,7 +42,7 @@ transition:transform 1s;
 <!-- LOBBY -->
 <div id="lobby" class="screen">
 <h2>Lobby</h2>
-<div id="saldo">Saldo: $0</div>
+<div id="saldo"></div>
 
 <div class="games">
 <div class="card" onclick="openGame('slot')">🎰 Slots</div>
@@ -55,9 +50,17 @@ transition:transform 1s;
 <div class="card" onclick="openGame('dice')">🎲 Dado</div>
 <div class="card" onclick="openGame('blackjack')">🃏 Blackjack</div>
 </div>
+
+<h3>💬 Chat</h3>
+<div id="chatBox"></div>
+<input id="chatInput">
+<button onclick="sendMsg()">Enviar</button>
+
+<h3>🏆 Ranking</h3>
+<div id="rankingBox"></div>
 </div>
 
-<!-- SLOT -->
+<!-- JUEGOS -->
 <div id="slot" class="screen">
 <h2>🎰 Slot</h2>
 <div class="reels">
@@ -65,40 +68,31 @@ transition:transform 1s;
 <div class="reel" id="r2"></div>
 <div class="reel" id="r3"></div>
 </div>
-<input id="betSlot" type="number">
-<button onclick="spinSlot()">Girar</button>
+<input id="betSlot"><button onclick="spinSlot()">Girar</button>
 <button onclick="back()">Volver</button>
 <p id="slotRes"></p>
 </div>
 
-<!-- RULETA -->
 <div id="roulette" class="screen">
 <h2>🎡 Ruleta</h2>
 <div class="wheel" id="wheel"></div>
-<input id="betRou" type="number">
-<select id="color">
-<option value="rojo">Rojo</option>
-<option value="negro">Negro</option>
-</select>
+<input id="betRou">
+<select id="color"><option value="rojo">Rojo</option><option value="negro">Negro</option></select>
 <button onclick="spinRoulette()">Girar</button>
 <button onclick="back()">Volver</button>
 <p id="rouRes"></p>
 </div>
 
-<!-- DADO -->
 <div id="dice" class="screen">
 <h2>🎲 Dado</h2>
-<input id="betDice" type="number">
-<button onclick="playDice()">Lanzar</button>
+<input id="betDice"><button onclick="playDice()">Lanzar</button>
 <button onclick="back()">Volver</button>
 <p id="diceRes"></p>
 </div>
 
-<!-- BLACKJACK -->
 <div id="blackjack" class="screen">
 <h2>🃏 Blackjack</h2>
-<input id="betBJ" type="number">
-<button onclick="playBJ()">Jugar</button>
+<input id="betBJ"><button onclick="playBJ()">Jugar</button>
 <button onclick="back()">Volver</button>
 <p id="bjRes"></p>
 </div>
@@ -106,59 +100,26 @@ transition:transform 1s;
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-
-// 🔥 CLIENTE
 const sb = window.supabase.createClient(
-  "https://dakhnqriwbzihlzhtfcb.supabase.co",
-  "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs"
+"https://dakhnqriwbzihlzhtfcb.supabase.co",
+"sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs"
 );
 
-let user;
-let saldo=0;
+let user,saldo=0;
 
-// INIT
 window.onload=async()=>{
 let {data}=await sb.auth.getSession();
-if(data.session){
-user=data.session.user;
-start();
-}else{
-show("auth");
-}
+if(data.session){user=data.session.user;start();}else show("auth");
 };
 
-// UI
-function show(id){
-document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-document.getElementById(id).classList.add("active");
-}
-
+function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.getElementById(id).classList.add("active")}
 function msg(t){document.getElementById("msg").innerText=t}
 function val(id){return document.getElementById(id).value}
 
 // AUTH
-async function register(){
-msg("Registrando...");
-let {error}=await sb.auth.signUp({email:val("email"),password:val("pass")});
-msg(error?error.message:"📩 Revisa tu correo");
-}
-
-async function login(){
-msg("Entrando...");
-let {data,error}=await sb.auth.signInWithPassword({email:val("email"),password:val("pass")});
-
-if(error){
-if(error.message.includes("Email not confirmed")){
-msg("⚠️ Confirma tu correo");
-}else{
-msg(error.message);
-}
-return;
-}
-
-user=data.user;
-start();
-}
+async function register(){msg("Registrando...");let {error}=await sb.auth.signUp({email:val("email"),password:val("pass")});msg(error?error.message:"📩 Revisa tu correo")}
+async function login(){msg("Entrando...");let {data,error}=await sb.auth.signInWithPassword({email:val("email"),password:val("pass")});
+if(error){msg(error.message);return;}user=data.user;start();}
 
 // START
 async function start(){
@@ -166,23 +127,19 @@ show("lobby");
 
 let {data}=await sb.from("usuarios").select("*").eq("id",user.id);
 
-if(!data || data.length===0){
-await sb.from("usuarios").insert([{id:user.id,saldo:1000}]);
-saldo=1000;
-}else saldo=data[0].saldo;
+if(!data.length){await sb.from("usuarios").insert([{id:user.id,saldo:1000}]);saldo=1000;}
+else saldo=data[0].saldo;
 
 update();
+loadRanking();
+loadChat();
 }
 
 // SAVE
-async function save(){
-await sb.from("usuarios").update({saldo}).eq("id",user.id);
-}
+async function save(){await sb.from("usuarios").update({saldo}).eq("id",user.id)}
 
 // UPDATE
-function update(){
-document.getElementById("saldo").innerText="Saldo: $"+saldo;
-}
+function update(){document.getElementById("saldo").innerText="Saldo: $"+saldo}
 
 // NAV
 function openGame(g){show(g)}
@@ -190,102 +147,69 @@ function back(){show("lobby")}
 
 // SLOT
 function spinSlot(){
-let bet=+val("betSlot");
-if(!bet||bet>saldo) return alert("Apuesta inválida");
-
+let bet=+val("betSlot");if(!bet||bet>saldo)return alert("Apuesta inválida");
 let s=["🍒","💎","7️⃣","⭐","🍀","🔔"];
-let r1=document.getElementById("r1");
-let r2=document.getElementById("r2");
-let r3=document.getElementById("r3");
-
-let inter=setInterval(()=>{
-r1.innerText=s[rand()];
-r2.innerText=s[rand()];
-r3.innerText=s[rand()];
-},100);
-
-setTimeout(()=>{
-clearInterval(inter);
-
+let r1=document.getElementById("r1"),r2=document.getElementById("r2"),r3=document.getElementById("r3");
+let inter=setInterval(()=>{r1.innerText=s[rand()];r2.innerText=s[rand()];r3.innerText=s[rand()];},100);
+setTimeout(()=>{clearInterval(inter);
 let a=s[rand()],b=s[rand()],c=s[rand()];
 r1.innerText=a;r2.innerText=b;r3.innerText=c;
-
-let win=(a===b && b===c);
-saldo+=win?bet*5:-bet;
-
-document.getElementById("slotRes").innerText=win?"🎉 JACKPOT":"❌ PERDISTE";
-
-update();save();
-},1500);
+let win=(a===b&&b===c);saldo+=win?bet*5:-bet;
+document.getElementById("slotRes").innerText=win?"JACKPOT":"PERDISTE";
+update();save();},1500);
 }
 
 // RULETA
 function spinRoulette(){
-let bet=+val("betRou");
-let c=document.getElementById("color").value;
-
-if(!bet||bet>saldo) return alert("Apuesta inválida");
-
-let wheel=document.getElementById("wheel");
-let deg=Math.random()*360;
+let bet=+val("betRou"),c=document.getElementById("color").value;
+if(!bet||bet>saldo)return alert("Apuesta inválida");
+let wheel=document.getElementById("wheel"),deg=Math.random()*360;
 wheel.style.transform=`rotate(${deg}deg)`;
-
-setTimeout(()=>{
-let r=(deg%360)<180?"rojo":"negro";
-let win=r===c;
-
-saldo+=win?bet:-bet;
-
-document.getElementById("rouRes").innerText=r;
-
-update();save();
-},1000);
+setTimeout(()=>{let r=(deg%360)<180?"rojo":"negro";saldo+=r===c?bet:-bet;
+document.getElementById("rouRes").innerText=r;update();save();},1000);
 }
 
 // DADO
-function playDice(){
-let bet=+val("betDice");
-if(!bet||bet>saldo) return alert("Apuesta inválida");
+function playDice(){let bet=+val("betDice");if(!bet||bet>saldo)return alert("Apuesta inválida");
+let d=Math.floor(Math.random()*6)+1;saldo+=d>=4?bet:-bet;
+document.getElementById("diceRes").innerText="🎲 "+d;update();save();}
 
-let d=Math.floor(Math.random()*6)+1;
-let win=d>=4;
+// BJ
+function playBJ(){let bet=+val("betBJ");if(!bet||bet>saldo)return alert("Apuesta inválida");
+let p=Math.floor(Math.random()*10)+12,d=Math.floor(Math.random()*10)+12;
+saldo+=((p>d&&p<=21)||d>21)?bet:-bet;
+document.getElementById("bjRes").innerText=`${p} vs ${d}`;update();save();}
 
-saldo+=win?bet:-bet;
-
-document.getElementById("diceRes").innerText="🎲 "+d;
-
-update();save();
+// CHAT
+async function sendMsg(){
+let t=val("chatInput");if(!t)return;
+await sb.from("chat").insert([{user_id:user.id,mensaje:t}]);
+document.getElementById("chatInput").value="";
 }
 
-// BLACKJACK
-function playBJ(){
-let bet=+val("betBJ");
-if(!bet||bet>saldo) return alert("Apuesta inválida");
+function loadChat(){
+sb.channel("chat")
+.on("postgres_changes",{event:"INSERT",schema:"public",table:"chat"},p=>{
+let box=document.getElementById("chatBox");
+box.innerHTML+=`<div>${p.new.mensaje}</div>`;
+box.scrollTop=box.scrollHeight;
+}).subscribe();
+}
 
-let p=Math.floor(Math.random()*10)+12;
-let d=Math.floor(Math.random()*10)+12;
-
-let win=(p>d && p<=21)||d>21;
-
-saldo+=win?bet:-bet;
-
-document.getElementById("bjRes").innerText=`${p} vs ${d}`;
-
-update();save();
+// RANKING
+async function loadRanking(){
+let {data}=await sb.from("usuarios").select("*").order("saldo",{ascending:false}).limit(5);
+let html="";data.forEach(u=>{html+=`<div>💰 ${u.saldo}</div>`});
+document.getElementById("rankingBox").innerHTML=html;
 }
 
 // LOGOUT
-async function logout(){
-await sb.auth.signOut();
-location.reload();
-}
+async function logout(){await sb.auth.signOut();location.reload()}
 
 function rand(){return Math.floor(Math.random()*6)}
 
-// BOTONES
-document.getElementById("btnRegister").onclick = register;
-document.getElementById("btnLogin").onclick = login;
-
+document.getElementById("btnRegister").onclick=register;
+document.getElementById("btnLogin").onclick=login;
 </script>
 
 </body>
