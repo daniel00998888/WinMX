@@ -1,8 +1,10 @@
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
-const supabaseUrl = 'https://dakhnqriwbzihlzhtfcb.supabase.co';
-const supabaseKey = 'sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs';
-
+const supabase = window.supabase.createClient(
+  "https://dakhnqriwbzihlzhtfcb.supabase.co",
+  "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs"
+);
+</script>
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 // Insertar usuario
