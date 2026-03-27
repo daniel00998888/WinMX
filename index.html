@@ -21,63 +21,25 @@ padding:10px 20px;
 .logout{background:red;border:none;color:white;padding:5px 10px;cursor:pointer}
 
 /* MAIN */
-.main{
-display:flex;
-height:calc(100vh - 60px);
-}
+.main{display:flex;height:calc(100vh - 60px)}
 
 /* SIDEBAR */
-.sidebar{
-width:250px;
-background:#132f44;
-padding:20px;
-}
-
-.sidebar h3{margin-top:0}
-.game-btn{
-background:#1d4b6a;
-padding:10px;
-margin:10px 0;
-cursor:pointer;
-border-radius:5px;
-text-align:center;
-}
+.sidebar{width:250px;background:#132f44;padding:20px}
+.game-btn{background:#1d4b6a;padding:10px;margin:10px 0;cursor:pointer;border-radius:5px;text-align:center}
 
 /* CONTENT */
-.content{
-flex:1;
-padding:20px;
-overflow:auto;
-}
+.content{flex:1;padding:20px;overflow:auto}
 
 /* CHAT */
-.chat{
-width:300px;
-background:#000;
-display:flex;
-flex-direction:column;
-}
-
-.chat-box{
-flex:1;
-overflow:auto;
-padding:10px;
-}
-
-.chat input{
-border:none;
-padding:10px;
-width:100%;
-}
+.chat{width:300px;background:#000;display:flex;flex-direction:column}
+.chat-box{flex:1;overflow:auto;padding:10px}
 
 /* LOGIN */
 #auth{text-align:center;margin-top:100px}
 input{padding:10px;margin:5px;width:200px}
 
-/* GAME BOX */
-.game{
-display:none;
-}
+/* GAME */
+.game{display:none}
 .active{display:block}
 
 /* SLOT */
@@ -88,7 +50,8 @@ display:none;
 
 <body>
 
-<header>
+<!-- 🔥 HEADER OCULTO -->
+<header id="topbar" style="display:none;">
 <div class="logo">🎰 CASINO REAL</div>
 <div class="balance" id="saldo">$0</div>
 <button class="logout" onclick="logout()">Salir</button>
@@ -190,26 +153,29 @@ let {data}=await sb.auth.getSession();
 if(data.session){user=data.session.user;start();}
 };
 
-// AUTH
+// HELPERS
 function msg(t){document.getElementById("msg").innerText=t}
 function val(id){return document.getElementById(id).value}
 
+// AUTH
 async function register(){
 msg("Registrando...");
 let {error}=await sb.auth.signUp({email:val("email"),password:val("pass")});
-msg(error?error.message:"Revisa tu correo");
+msg(error?error.message:"📩 Revisa tu correo");
 }
 
 async function login(){
 let {data,error}=await sb.auth.signInWithPassword({email:val("email"),password:val("pass")});
 if(error){msg(error.message);return;}
-user=data.user;start();
+user=data.user;
+start();
 }
 
 // START
 async function start(){
 document.getElementById("auth").style.display="none";
 document.getElementById("casino").style.display="block";
+document.getElementById("topbar").style.display="flex"; // 🔥 FIX
 
 let {data}=await sb.from("usuarios").select("*").eq("id",user.id);
 
@@ -224,8 +190,14 @@ initChat();
 }
 
 // UPDATE
-function update(){document.getElementById("saldo").innerText="$"+saldo}
-async function save(){await sb.from("usuarios").update({saldo}).eq("id",user.id)}
+function update(){
+document.getElementById("saldo").innerText="💰 $"+saldo;
+}
+
+// SAVE
+async function save(){
+await sb.from("usuarios").update({saldo}).eq("id",user.id);
+}
 
 // NAV
 function showGame(g){
@@ -238,16 +210,14 @@ function spinSlot(){
 let b=+val("betSlot");if(!b||b>saldo)return;
 let s=["🍒","💎","7️⃣","⭐","🍀","🔔"];
 let a=s[rand()],c=s[rand()],d=s[rand()];
-document.getElementById("r1").innerText=a;
-document.getElementById("r2").innerText=c;
-document.getElementById("r3").innerText=d;
+r1.innerText=a;r2.innerText=c;r3.innerText=d;
 let win=(a===c&&c===d);
 saldo+=win?b*5:-b;
 update();save();
 }
 
 function spinRoulette(){
-let b=+val("betRou");let c=val("color");
+let b=+val("betRou"),c=val("color");
 let r=Math.random()<0.5?"rojo":"negro";
 saldo+=r===c?b:-b;
 document.getElementById("rouRes").innerText=r;
@@ -282,24 +252,31 @@ box.scrollTop=box.scrollHeight;
 
 async function sendMsg(){
 let t=val("chatInput");
+if(!t)return;
 await sb.from("chat").insert([{user_id:user.id,mensaje:t}]);
+document.getElementById("chatInput").value="";
 }
 
 // RANKING
 async function loadRanking(){
 let {data}=await sb.from("usuarios").select("*").order("saldo",{ascending:false}).limit(5);
 let html="";
-data.forEach(u=>html+=`<div>$${u.saldo}</div>`);
+data.forEach(u=>html+=`<div>💰 $${u.saldo}</div>`);
 document.getElementById("rankingBox").innerHTML=html;
 }
 
 // LOGOUT
-async function logout(){await sb.auth.signOut();location.reload()}
+async function logout(){
+await sb.auth.signOut();
+location.reload();
+}
 
 function rand(){return Math.floor(Math.random()*6)}
 
+// BOTONES
 document.getElementById("btnRegister").onclick=register;
 document.getElementById("btnLogin").onclick=login;
+
 </script>
 
 </body>
