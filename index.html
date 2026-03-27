@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Casino Real PRO</title>
+<title>Casino PRO REAL</title>
 
 <style>
 body{margin:0;font-family:Arial;background:#0b1d2a;color:white;text-align:center}
@@ -13,12 +13,7 @@ header{background:#102c3c;padding:15px;font-size:24px}
 
 .games{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin-top:20px}
 
-.card{
-background:#16394f;padding:20px;border-radius:10px;width:200px;
-cursor:pointer;transition:.3s
-}
-.card:hover{transform:scale(1.05)}
-
+.card{background:#16394f;padding:20px;border-radius:10px;width:200px;cursor:pointer}
 button{padding:10px;margin-top:10px;border:none;border-radius:5px;background:#00c896;color:white;cursor:pointer;width:80%}
 input,select{padding:8px;margin-top:10px;width:80%}
 
@@ -26,26 +21,20 @@ input,select{padding:8px;margin-top:10px;width:80%}
 
 /* SLOT */
 .reels{display:flex;justify-content:center;gap:10px;margin:20px}
-.reel{
-width:80px;height:80px;background:#000;border:3px solid #00c896;
-font-size:40px;display:flex;align-items:center;justify-content:center;
-border-radius:10px;box-shadow:0 0 10px #00c896;
-}
+.reel{width:80px;height:80px;background:#000;border:3px solid #00c896;font-size:40px;display:flex;align-items:center;justify-content:center;border-radius:10px}
 
 /* RULETA */
 .wheel{
 width:200px;height:200px;border-radius:50%;
 background:conic-gradient(red 0 50%, black 50% 100%);
 margin:20px auto;
-display:flex;align-items:center;justify-content:center;
-font-size:20px;
 }
 </style>
 </head>
 
 <body>
 
-<header>🎰 CASINO REAL PRO</header>
+<header>🎰 CASINO REAL</header>
 <button class="logout" onclick="logout()">Salir</button>
 
 <!-- LOGIN -->
@@ -55,6 +44,7 @@ font-size:20px;
 <input id="pass" type="password" placeholder="Contraseña"><br>
 <button onclick="register()">Registrar</button>
 <button onclick="login()">Entrar</button>
+<p id="msg"></p>
 </div>
 
 <!-- LOBBY -->
@@ -73,35 +63,28 @@ font-size:20px;
 <!-- SLOT -->
 <div id="slot" class="screen">
 <h2>🎰 Slot</h2>
-
 <div class="reels">
 <div class="reel" id="r1"></div>
 <div class="reel" id="r2"></div>
 <div class="reel" id="r3"></div>
 </div>
-
 <input id="betSlot" type="number">
 <button onclick="spinSlot()">Girar</button>
 <button onclick="back()">Volver</button>
-
 <p id="slotRes"></p>
 </div>
 
 <!-- RULETA -->
 <div id="roulette" class="screen">
 <h2>🎡 Ruleta</h2>
-
-<div class="wheel" id="wheel">🎡</div>
-
+<div class="wheel" id="wheel"></div>
 <input id="betRou" type="number">
 <select id="color">
 <option value="rojo">Rojo</option>
 <option value="negro">Negro</option>
 </select>
-
 <button onclick="spinRoulette()">Girar</button>
 <button onclick="back()">Volver</button>
-
 <p id="rouRes"></p>
 </div>
 
@@ -127,11 +110,11 @@ font-size:20px;
 
 <script>
 
-// CONFIG
 const URL="https://dakhnqriwbzihlzhtfcb.supabase.co";
 const KEY="sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs";
 
-let supabase = window.supabase.createClient(URL,KEY);
+const supabase = window.supabase.createClient(URL,KEY);
+
 let user;
 let saldo=0;
 
@@ -144,7 +127,7 @@ start();
 }else{
 show("auth");
 }
-}
+};
 
 // UI
 function show(id){
@@ -152,18 +135,39 @@ document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
 document.getElementById(id).classList.add("active");
 }
 
-// AUTH
-async function register(){
-let email=val("email"),pass=val("pass");
-let {error}=await supabase.auth.signUp({email,password:pass});
-if(error) return alert(error.message);
-alert("Revisa tu correo");
+// MENSAJES
+function msg(t){
+document.getElementById("msg").innerText=t;
 }
 
+// REGISTER
+async function register(){
+let email=val("email");
+let pass=val("pass");
+
+if(!email||!pass) return msg("Completa los datos");
+
+let {error}=await supabase.auth.signUp({email,password:pass});
+
+if(error){
+msg(error.message);
+}else{
+msg("Registro OK 📩 revisa tu correo o intenta login");
+}
+}
+
+// LOGIN
 async function login(){
-let email=val("email"),pass=val("pass");
+let email=val("email");
+let pass=val("pass");
+
 let {data,error}=await supabase.auth.signInWithPassword({email,password:pass});
-if(error) return alert(error.message);
+
+if(error){
+msg(error.message);
+return;
+}
+
 user=data.user;
 start();
 }
@@ -235,7 +239,7 @@ let c=document.getElementById("color").value;
 if(!bet||bet>saldo) return alert("Apuesta inválida");
 
 let wheel=document.getElementById("wheel");
-let deg=Math.floor(Math.random()*360);
+let deg=Math.random()*360;
 
 wheel.style.transform=`rotate(${deg}deg)`;
 
