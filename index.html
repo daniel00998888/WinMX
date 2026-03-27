@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Login Casino</title>
+<title>Casino Login</title>
 </head>
 
 <body style="background:#0b1d2a;color:white;text-align:center;font-family:Arial;">
@@ -12,20 +12,23 @@
 <input id="email" placeholder="Correo"><br><br>
 <input id="pass" type="password" placeholder="Contraseña"><br><br>
 
-<button onclick="register()">Registrar</button>
-<button onclick="login()">Entrar</button>
+<button id="btnRegister">Registrar</button>
+<button id="btnLogin">Entrar</button>
 
 <p id="msg"></p>
 
-<!-- SUPABASE -->
+<!-- SUPABASE SOLO UNA VEZ -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-const supabase = window.supabase.createClient(
+
+// 🔥 IMPORTANTE: solo una vez
+const client = window.supabase.createClient(
   "https://dakhnqriwbzihlzhtfcb.supabase.co",
   "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs"
 );
 
+// helpers
 function msg(t){
   document.getElementById("msg").innerText = t;
 }
@@ -46,17 +49,15 @@ async function register(){
     return;
   }
 
-  const { data, error } = await supabase.auth.signUp({
+  const { error } = await client.auth.signUp({
     email: email,
     password: pass
   });
 
-  console.log("REGISTER:", data, error);
-
   if(error){
     msg("❌ " + error.message);
   } else {
-    msg("📩 Registro exitoso. Revisa tu correo y confirma.");
+    msg("📩 Revisa tu correo y confirma tu cuenta");
   }
 }
 
@@ -67,16 +68,14 @@ async function login(){
   const email = val("email");
   const pass = val("pass");
 
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await client.auth.signInWithPassword({
     email: email,
     password: pass
   });
 
-  console.log("LOGIN:", data, error);
-
   if(error){
     if(error.message.includes("Email not confirmed")){
-      msg("⚠️ Confirma tu correo antes de entrar");
+      msg("⚠️ Debes confirmar tu correo");
     } else {
       msg("❌ " + error.message);
     }
@@ -85,6 +84,11 @@ async function login(){
 
   msg("✅ LOGIN EXITOSO");
 }
+
+// 🔥 BOTONES (IMPORTANTE)
+document.getElementById("btnRegister").onclick = register;
+document.getElementById("btnLogin").onclick = login;
+
 </script>
 
 </body>
