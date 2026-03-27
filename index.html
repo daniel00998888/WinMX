@@ -2,22 +2,32 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Casino Royale PRO</title>
+<title>Casino PRO</title>
 
 <style>
 body{
   margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background: radial-gradient(circle,#0b1d2a,#050d14);
+  font-family:Arial;
+  background:#0b1d2a;
   color:white;
   text-align:center;
 }
 
-header{
-  background:#0f2a3a;
-  padding:15px;
-  font-size:26px;
+/* LOADER */
+#loader{
+  position:fixed;
+  width:100%;
+  height:100%;
+  background:black;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:30px;
+  z-index:999;
 }
+
+/* UI */
+header{background:#102c3c;padding:15px;font-size:24px}
 
 .screen{display:none;}
 .active{display:block;}
@@ -25,62 +35,54 @@ header{
 .container{
   display:flex;
   flex-wrap:wrap;
-  justify-content:center;
   gap:20px;
+  justify-content:center;
   margin-top:20px;
 }
 
 .card{
-  background:#132f42;
+  background:#16394f;
   padding:20px;
-  border-radius:15px;
+  border-radius:10px;
   width:260px;
-  box-shadow:0 0 20px rgba(0,0,0,0.6);
 }
 
 button{
-  width:80%;
   padding:10px;
   margin-top:10px;
   border:none;
-  border-radius:6px;
+  border-radius:5px;
   background:#00c896;
   color:white;
   cursor:pointer;
+  width:80%;
 }
 
 input,select{
-  width:80%;
   padding:8px;
   margin-top:10px;
+  width:80%;
 }
 
 .logout{
   position:absolute;
+  top:10px;
   right:10px;
-  top:10px;
   background:red;
-}
-
-.reset{
-  position:absolute;
-  left:10px;
-  top:10px;
-  background:orange;
 }
 </style>
 </head>
 
 <body>
 
-<header>🎰 CASINO PRO</header>
+<div id="loader">Cargando...</div>
 
+<header>🎰 CASINO PRO</header>
 <button class="logout" onclick="logout()">Salir</button>
-<button class="reset" onclick="resetUser()">Reset</button>
 
 <!-- LOGIN -->
 <div id="auth" class="screen active">
-<h2>Acceso</h2>
+<h2>Login / Registro</h2>
 <input id="email" placeholder="Correo"><br>
 <input id="pass" type="password" placeholder="Contraseña"><br>
 <button onclick="register()">Registrar</button>
@@ -89,21 +91,21 @@ input,select{
 
 <!-- CASINO -->
 <div id="casino" class="screen">
-<h2>Fichas: $<span id="saldo">0</span></h2>
+<h2>Saldo: $<span id="saldo">0</span></h2>
 
 <div class="container">
 
 <div class="card">
 <h3>🎰 Slot</h3>
 <input id="slotBet" type="number">
-<button onclick="slot()">Girar</button>
+<button onclick="slot()">Jugar</button>
 <p id="slotRes"></p>
 </div>
 
 <div class="card">
 <h3>🎲 Dado</h3>
 <input id="diceBet" type="number">
-<button onclick="dice()">Lanzar</button>
+<button onclick="dice()">Jugar</button>
 <p id="diceRes"></p>
 </div>
 
@@ -114,15 +116,8 @@ input,select{
 <option value="rojo">Rojo</option>
 <option value="negro">Negro</option>
 </select>
-<button onclick="roulette()">Girar</button>
+<button onclick="roulette()">Jugar</button>
 <p id="roulRes"></p>
-</div>
-
-<div class="card">
-<h3>🃏 Blackjack</h3>
-<input id="bjBet" type="number">
-<button onclick="blackjack()">Jugar</button>
-<p id="bjRes"></p>
 </div>
 
 </div>
@@ -130,8 +125,22 @@ input,select{
 
 <script>
 
-// ===== VARIABLES =====
-let saldo = 1000;
+// ===== LOADER =====
+window.onload = () => {
+  setTimeout(()=>{
+    document.getElementById("loader").style.display="none";
+
+    let current = localStorage.getItem("currentUser");
+
+    if(current){
+      cargarUsuario(JSON.parse(current));
+      show("casino");
+    }else{
+      show("auth");
+    }
+
+  },1000);
+};
 
 // ===== UI =====
 function show(screen){
@@ -139,9 +148,13 @@ function show(screen){
   document.getElementById(screen).classList.add("active");
 }
 
-function update(){
-  document.getElementById("saldo").innerText = saldo;
-  localStorage.setItem("saldo", saldo);
+// ===== BASE DE DATOS LOCAL =====
+function getUsers(){
+  return JSON.parse(localStorage.getItem("users")) || [];
+}
+
+function saveUsers(users){
+  localStorage.setItem("users", JSON.stringify(users));
 }
 
 // ===== REGISTRO =====
@@ -151,10 +164,19 @@ function register(){
 
   if(!email || !pass) return alert("Completa los campos");
 
-  localStorage.setItem("user", JSON.stringify({email,pass}));
-  localStorage.setItem("saldo",1000);
+  let users = getUsers();
 
-  alert("Cuenta creada 🎉 ahora inicia sesión");
+  if(users.find(u => u.email === email)){
+    alert("Este usuario ya existe");
+    return;
+  }
+
+  let newUser = { email, pass, saldo:1000 };
+
+  users.push(newUser);
+  saveUsers(users);
+
+  alert("Registrado correctamente 🎉");
 }
 
 // ===== LOGIN =====
@@ -162,49 +184,61 @@ function login(){
   let email = document.getElementById("email").value;
   let pass = document.getElementById("pass").value;
 
-  let user = JSON.parse(localStorage.getItem("user"));
+  let users = getUsers();
 
-  if(!user) return alert("No existe cuenta");
+  let user = users.find(u => u.email===email && u.pass===pass);
 
-  if(user.email===email && user.pass===pass){
-    saldo = parseInt(localStorage.getItem("saldo")) || 1000;
-
-    localStorage.setItem("autoLogin","true");
-
-    show("casino");
-    update();
-  }else{
+  if(!user){
     alert("Datos incorrectos");
+    return;
   }
+
+  localStorage.setItem("currentUser", JSON.stringify(user));
+
+  cargarUsuario(user);
+  show("casino");
 }
 
-// ===== AUTO LOGIN CONTROLADO =====
-window.onload = ()=>{
-  if(localStorage.getItem("user") && localStorage.getItem("autoLogin")==="true"){
-    saldo = parseInt(localStorage.getItem("saldo")) || 1000;
-    show("casino");
-    update();
-  }
+// ===== CARGAR USUARIO =====
+let saldo = 0;
+let usuarioActual = null;
+
+function cargarUsuario(user){
+  usuarioActual = user;
+  saldo = user.saldo;
+  update();
+}
+
+// ===== GUARDAR =====
+function save(){
+  let users = getUsers();
+
+  users = users.map(u=>{
+    if(u.email === usuarioActual.email){
+      u.saldo = saldo;
+    }
+    return u;
+  });
+
+  saveUsers(users);
+  localStorage.setItem("currentUser", JSON.stringify(usuarioActual));
 }
 
 // ===== LOGOUT =====
 function logout(){
-  localStorage.setItem("autoLogin","false");
-  show("auth");
-}
-
-// ===== RESET =====
-function resetUser(){
-  localStorage.clear();
+  localStorage.removeItem("currentUser");
   location.reload();
 }
 
-// ===== JUEGOS =====
+// ===== UI =====
+function update(){
+  document.getElementById("saldo").innerText = saldo;
+}
 
-// SLOT
+// ===== JUEGOS =====
 function slot(){
   let bet = +document.getElementById("slotBet").value;
-  if(!bet || bet>saldo) return alert("Apuesta inválida");
+  if(!bet || bet > saldo) return alert("Apuesta inválida");
 
   let res = document.getElementById("slotRes");
   res.innerText = "Girando... 🎰";
@@ -215,71 +249,41 @@ function slot(){
     let b=s[Math.floor(Math.random()*4)];
     let c=s[Math.floor(Math.random()*4)];
 
-    let win=(a===b && b===c);
+    let win = (a===b && b===c);
 
     saldo += win ? bet*3 : -bet;
 
     res.innerText = `${a} ${b} ${c} → ${win?"JACKPOT 💰":"PERDISTE ❌"}`;
-    update();
+    update(); save();
   },1000);
 }
 
-// DADO
 function dice(){
-  let bet=+document.getElementById("diceBet").value;
-  if(!bet || bet>saldo) return alert("Apuesta inválida");
+  let bet = +document.getElementById("diceBet").value;
+  if(!bet || bet > saldo) return alert("Apuesta inválida");
 
-  let res=document.getElementById("diceRes");
-  res.innerText="Lanzando...";
+  let d = Math.floor(Math.random()*6)+1;
+  let win = d>=4;
 
-  setTimeout(()=>{
-    let d=Math.floor(Math.random()*6)+1;
-    let win=d>=4;
+  saldo += win ? bet : -bet;
 
-    saldo+=win?bet:-bet;
-
-    res.innerText=`🎲 ${d} → ${win?"GANASTE":"PERDISTE"}`;
-    update();
-  },800);
+  document.getElementById("diceRes").innerText = `🎲 ${d}`;
+  update(); save();
 }
 
-// RULETA
 function roulette(){
-  let bet=+document.getElementById("roulBet").value;
-  let c=document.getElementById("color").value;
+  let bet = +document.getElementById("roulBet").value;
+  let c = document.getElementById("color").value;
 
-  if(!bet || bet>saldo) return alert("Apuesta inválida");
+  if(!bet || bet > saldo) return alert("Apuesta inválida");
 
-  let res=document.getElementById("roulRes");
-  res.innerText="Girando...";
+  let r = Math.random()<0.5?"rojo":"negro";
+  let win = r===c;
 
-  setTimeout(()=>{
-    let r=Math.random()<0.5?"rojo":"negro";
-    let win=r===c;
+  saldo += win ? bet : -bet;
 
-    saldo+=win?bet:-bet;
-
-    res.innerText=`${r} → ${win?"GANASTE 💰":"PERDISTE ❌"}`;
-    update();
-  },1200);
-}
-
-// BLACKJACK
-function blackjack(){
-  let bet=+document.getElementById("bjBet").value;
-  if(!bet || bet>saldo) return alert("Apuesta inválida");
-
-  let p=Math.floor(Math.random()*10)+12;
-  let d=Math.floor(Math.random()*10)+12;
-
-  let win=(p>d && p<=21)||d>21;
-
-  saldo+=win?bet:-bet;
-
-  document.getElementById("bjRes").innerText=
-    `🃏 Tú:${p} Dealer:${d} → ${win?"GANASTE":"PERDISTE"}`;
-
-  update();
+  document.getElementById("roulRes").innerText = r;
+  update(); save();
 }
 
 </script>
