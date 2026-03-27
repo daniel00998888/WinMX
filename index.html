@@ -17,7 +17,6 @@ header{
   background:#0f2a3a;
   padding:15px;
   font-size:26px;
-  font-weight:bold;
 }
 
 .screen{display:none;}
@@ -37,15 +36,6 @@ header{
   border-radius:15px;
   width:260px;
   box-shadow:0 0 20px rgba(0,0,0,0.6);
-  transition:0.3s;
-}
-
-.card:hover{transform:scale(1.05);}
-
-input,select{
-  width:80%;
-  padding:8px;
-  margin-top:10px;
 }
 
 button{
@@ -57,15 +47,12 @@ button{
   background:#00c896;
   color:white;
   cursor:pointer;
-  font-weight:bold;
 }
 
-button:hover{background:#00a87d;}
-
-#saldoBox{
-  font-size:22px;
+input,select{
+  width:80%;
+  padding:8px;
   margin-top:10px;
-  color:#00ffcc;
 }
 
 .logout{
@@ -75,26 +62,21 @@ button:hover{background:#00a87d;}
   background:red;
 }
 
-.loader{
-  position:fixed;
-  width:100%;
-  height:100%;
-  background:black;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  z-index:100;
+.reset{
+  position:absolute;
+  left:10px;
+  top:10px;
+  background:orange;
 }
 </style>
 </head>
 
 <body>
 
-<div class="loader" id="loader">Cargando...</div>
-
-<header>🎰 CASINO ROYALE PRO</header>
+<header>🎰 CASINO PRO</header>
 
 <button class="logout" onclick="logout()">Salir</button>
+<button class="reset" onclick="resetUser()">Reset</button>
 
 <!-- LOGIN -->
 <div id="auth" class="screen active">
@@ -107,7 +89,7 @@ button:hover{background:#00a87d;}
 
 <!-- CASINO -->
 <div id="casino" class="screen">
-<div id="saldoBox">Fichas: $<span id="saldo">0</span></div>
+<h2>Fichas: $<span id="saldo">0</span></h2>
 
 <div class="container">
 
@@ -148,10 +130,10 @@ button:hover{background:#00a87d;}
 
 <script>
 
-// ================= VARIABLES =================
+// ===== VARIABLES =====
 let saldo = 1000;
 
-// ================= UI =================
+// ===== UI =====
 function show(screen){
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
   document.getElementById(screen).classList.add("active");
@@ -162,7 +144,7 @@ function update(){
   localStorage.setItem("saldo", saldo);
 }
 
-// ================= LOGIN =================
+// ===== REGISTRO =====
 function register(){
   let email = document.getElementById("email").value;
   let pass = document.getElementById("pass").value;
@@ -172,9 +154,10 @@ function register(){
   localStorage.setItem("user", JSON.stringify({email,pass}));
   localStorage.setItem("saldo",1000);
 
-  alert("Cuenta creada 🎉");
+  alert("Cuenta creada 🎉 ahora inicia sesión");
 }
 
+// ===== LOGIN =====
 function login(){
   let email = document.getElementById("email").value;
   let pass = document.getElementById("pass").value;
@@ -185,6 +168,9 @@ function login(){
 
   if(user.email===email && user.pass===pass){
     saldo = parseInt(localStorage.getItem("saldo")) || 1000;
+
+    localStorage.setItem("autoLogin","true");
+
     show("casino");
     update();
   }else{
@@ -192,103 +178,106 @@ function login(){
   }
 }
 
-// ================= AUTO LOGIN =================
+// ===== AUTO LOGIN CONTROLADO =====
 window.onload = ()=>{
-  setTimeout(()=>{
-    document.getElementById("loader").style.display="none";
-
-    if(localStorage.getItem("user")){
-      saldo = parseInt(localStorage.getItem("saldo")) || 1000;
-      show("casino");
-      update();
-    }
-  },1000);
+  if(localStorage.getItem("user") && localStorage.getItem("autoLogin")==="true"){
+    saldo = parseInt(localStorage.getItem("saldo")) || 1000;
+    show("casino");
+    update();
+  }
 }
 
-// ================= LOGOUT =================
+// ===== LOGOUT =====
 function logout(){
+  localStorage.setItem("autoLogin","false");
+  show("auth");
+}
+
+// ===== RESET =====
+function resetUser(){
+  localStorage.clear();
   location.reload();
 }
 
-// ================= JUEGOS =================
+// ===== JUEGOS =====
 
-// 🎰 SLOT
+// SLOT
 function slot(){
   let bet = +document.getElementById("slotBet").value;
-  if(!bet || bet > saldo) return alert("Apuesta inválida");
+  if(!bet || bet>saldo) return alert("Apuesta inválida");
 
-  const res = document.getElementById("slotRes");
+  let res = document.getElementById("slotRes");
   res.innerText = "Girando... 🎰";
 
-  setTimeout(() => {
-    let symbols = ["🍒","💎","7️⃣","⭐"];
-    let s1 = symbols[Math.floor(Math.random()*symbols.length)];
-    let s2 = symbols[Math.floor(Math.random()*symbols.length)];
-    let s3 = symbols[Math.floor(Math.random()*symbols.length)];
+  setTimeout(()=>{
+    let s=["🍒","💎","7️⃣","⭐"];
+    let a=s[Math.floor(Math.random()*4)];
+    let b=s[Math.floor(Math.random()*4)];
+    let c=s[Math.floor(Math.random()*4)];
 
-    let win = (s1===s2 && s2===s3);
+    let win=(a===b && b===c);
 
     saldo += win ? bet*3 : -bet;
 
-    res.innerText = `${s1} ${s2} ${s3} → ${win ? "JACKPOT 💰" : "Perdiste ❌"}`;
+    res.innerText = `${a} ${b} ${c} → ${win?"JACKPOT 💰":"PERDISTE ❌"}`;
     update();
   },1000);
 }
 
-// 🎲 DADO
+// DADO
 function dice(){
-  let bet = +document.getElementById("diceBet").value;
-  if(!bet || bet > saldo) return alert("Apuesta inválida");
+  let bet=+document.getElementById("diceBet").value;
+  if(!bet || bet>saldo) return alert("Apuesta inválida");
 
-  const res = document.getElementById("diceRes");
-  res.innerText = "Lanzando... 🎲";
+  let res=document.getElementById("diceRes");
+  res.innerText="Lanzando...";
 
   setTimeout(()=>{
-    let d = Math.floor(Math.random()*6)+1;
-    let win = d >= 4;
+    let d=Math.floor(Math.random()*6)+1;
+    let win=d>=4;
 
-    saldo += win ? bet : -bet;
+    saldo+=win?bet:-bet;
 
-    res.innerText = `🎲 ${d} → ${win?"GANASTE":"PERDISTE"}`;
+    res.innerText=`🎲 ${d} → ${win?"GANASTE":"PERDISTE"}`;
     update();
   },800);
 }
 
-// 🎡 RULETA
+// RULETA
 function roulette(){
-  let bet = +document.getElementById("roulBet").value;
-  let c = document.getElementById("color").value;
+  let bet=+document.getElementById("roulBet").value;
+  let c=document.getElementById("color").value;
 
-  if(!bet || bet > saldo) return alert("Apuesta inválida");
+  if(!bet || bet>saldo) return alert("Apuesta inválida");
 
-  const res = document.getElementById("roulRes");
-  res.innerText = "Girando ruleta... 🎡";
+  let res=document.getElementById("roulRes");
+  res.innerText="Girando...";
 
   setTimeout(()=>{
-    let r = Math.random()<0.5?"rojo":"negro";
-    let win = r===c;
+    let r=Math.random()<0.5?"rojo":"negro";
+    let win=r===c;
 
-    saldo += win ? bet : -bet;
+    saldo+=win?bet:-bet;
 
-    res.innerText = `Salió ${r} → ${win?"GANASTE 💰":"PERDISTE ❌"}`;
+    res.innerText=`${r} → ${win?"GANASTE 💰":"PERDISTE ❌"}`;
     update();
   },1200);
 }
 
-// 🃏 BLACKJACK
+// BLACKJACK
 function blackjack(){
-  let bet = +document.getElementById("bjBet").value;
-  if(!bet || bet > saldo) return alert("Apuesta inválida");
+  let bet=+document.getElementById("bjBet").value;
+  if(!bet || bet>saldo) return alert("Apuesta inválida");
 
-  let p = Math.floor(Math.random()*10)+12;
-  let d = Math.floor(Math.random()*10)+12;
+  let p=Math.floor(Math.random()*10)+12;
+  let d=Math.floor(Math.random()*10)+12;
 
-  let win = (p>d && p<=21)||d>21;
+  let win=(p>d && p<=21)||d>21;
 
-  saldo += win ? bet : -bet;
+  saldo+=win?bet:-bet;
 
-  document.getElementById("bjRes").innerText =
-    `🃏 Tú:${p} | Dealer:${d} → ${win?"GANASTE":"PERDISTE"}`;
+  document.getElementById("bjRes").innerText=
+    `🃏 Tú:${p} Dealer:${d} → ${win?"GANASTE":"PERDISTE"}`;
 
   update();
 }
