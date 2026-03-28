@@ -3,109 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Casino Real PRO | Oficial</title>
+    <title>CASINO REAL PRO | Multi-Juegos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        body { background: linear-gradient(135deg, #0a1625, #1a2a3f); font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
-        .neon-text { text-shadow: 0 0 10px #22d3ee, 0 0 20px #22d3ee; }
-        .reel {
-            width: 85px; height: 85px; background: #0f1c2e; border: 4px solid #22d3ee;
-            border-radius: 14px; font-size: 46px; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 20px rgba(34, 211, 238, 0.6); overflow: hidden;
-        }
-        @media (min-width: 640px) { .reel { width: 100px; height: 100px; font-size: 56px; } }
-        .spinning { animation: blurSpin 0.15s linear infinite; }
-        @keyframes blurSpin {
-            0% { transform: translateY(-10px); filter: blur(4px); }
-            100% { transform: translateY(10px); filter: blur(4px); }
-        }
+        body { background: linear-gradient(135deg, #0a1625, #050a14); font-family: 'Segoe UI', sans-serif; color: white; }
+        .neon-border { border: 1px solid rgba(34, 211, 238, 0.3); box-shadow: 0 0 15px rgba(34, 211, 238, 0.1); }
+        .game-card { transition: all 0.3s ease; cursor: pointer; }
+        .game-card:hover { transform: translateY(-5px); border-color: #22d3ee; box-shadow: 0 10px 30px rgba(34, 211, 238, 0.2); }
+        .reel.spinning { animation: blur 0.1s infinite; }
+        @keyframes blur { 0% { filter: blur(0px); transform: translateY(-2px); } 50% { filter: blur(4px); } 100% { filter: blur(0px); transform: translateY(2px); } }
+        .hidden { display: none; }
     </style>
 </head>
-<body class="text-white min-h-screen">
+<body class="min-h-screen">
 
-    <header id="topbar" class="hidden bg-zinc-950 border-b border-cyan-500/30 py-4 px-4 sticky top-0 z-40">
-        <div class="flex items-center justify-between max-w-7xl mx-auto">
+    <header id="topbar" class="hidden bg-zinc-950/80 backdrop-blur-md border-b border-white/10 py-4 px-6 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <span class="text-3xl">🎰</span>
-                <h1 class="text-2xl font-bold tracking-wider neon-text">CASINO REAL PRO</h1>
+                <span class="text-3xl">💎</span>
+                <h1 class="text-xl font-black tracking-tighter text-cyan-400">CASINO REAL PRO</h1>
             </div>
             <div class="flex items-center gap-4">
-                <div class="flex items-center gap-2 bg-zinc-900 px-6 py-3 rounded-2xl border border-cyan-500/20">
-                    <i class="fas fa-coins text-yellow-400"></i>
-                    <span id="saldo" class="font-semibold text-2xl text-yellow-300">$0</span>
+                <div class="bg-zinc-900 px-4 py-2 rounded-xl border border-yellow-500/30">
+                    <span class="text-yellow-500 font-bold" id="saldoDisplay">$0</span>
                 </div>
-                <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-5 py-3 rounded-2xl text-sm transition">Salir</button>
+                <button onclick="logout()" class="text-zinc-500 hover:text-white text-sm">Salir</button>
             </div>
         </div>
     </header>
 
-    <div id="auth" class="min-h-screen flex items-center justify-center p-4">
-        <div class="bg-zinc-900 p-10 rounded-3xl shadow-2xl w-full max-w-md border border-cyan-500/30">
-            <div class="text-center mb-10">
-                <span class="text-7xl">🎰</span>
-                <h2 class="text-4xl font-bold mt-4 neon-text">CASINO REAL</h2>
-                <p class="text-zinc-400 mt-2">Ingresa para jugar</p>
-            </div>
-            <input id="email" type="email" placeholder="Correo electrónico" class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-6 py-5 mb-4 focus:outline-none focus:border-cyan-400 text-lg">
-            <input id="pass" type="password" placeholder="Contraseña (mín. 6)" class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-6 py-5 mb-6 focus:outline-none focus:border-cyan-400 text-lg">
+    <div id="authSection" class="flex items-center justify-center min-h-screen p-6">
+        <div class="bg-zinc-900 p-8 rounded-[2rem] w-full max-w-md border border-white/5">
+            <h2 class="text-3xl font-bold text-center mb-8">Bienvenido</h2>
+            <input id="email" type="email" placeholder="Email" class="w-full bg-zinc-800 p-4 rounded-2xl mb-4 outline-none focus:ring-2 ring-cyan-500">
+            <input id="pass" type="password" placeholder="Contraseña" class="w-full bg-zinc-800 p-4 rounded-2xl mb-6 outline-none focus:ring-2 ring-cyan-500">
             <div class="grid grid-cols-2 gap-4">
-                <button onclick="register()" class="bg-zinc-700 hover:bg-zinc-600 py-5 rounded-2xl font-semibold text-lg transition">Registrarse</button>
-                <button onclick="login()" class="bg-cyan-500 hover:bg-cyan-600 text-black py-5 rounded-2xl font-semibold text-lg transition">Entrar</button>
+                <button onclick="authAction('up')" class="bg-zinc-800 py-4 rounded-2xl font-bold hover:bg-zinc-700">Registro</button>
+                <button onclick="authAction('in')" class="bg-cyan-500 text-black py-4 rounded-2xl font-bold hover:bg-cyan-400">Entrar</button>
             </div>
-            <p id="msg" class="text-center mt-6 text-sm min-h-[28px]"></p>
+            <p id="authMsg" class="text-center mt-4 text-sm"></p>
         </div>
     </div>
 
-    <div id="casino" class="hidden min-h-screen">
-        <div class="flex h-[calc(100vh-80px)] overflow-hidden">
-            <div id="sidebar" class="w-72 bg-zinc-950 border-r border-zinc-800 p-6 flex flex-col fixed md:static inset-y-0 left-0 z-50 -translate-x-full md:translate-x-0 transition-transform duration-300">
-                <h3 class="text-cyan-400 font-semibold mb-5 flex items-center gap-2 text-lg uppercase tracking-widest text-xs opacity-60">Juegos</h3>
-                <div onclick="showGame('slot')" class="flex items-center gap-4 p-5 hover:bg-zinc-900 rounded-3xl cursor-pointer mb-3 text-lg border border-transparent hover:border-cyan-500/30 transition">🎰 <span class="font-medium">Slots</span></div>
-                <div onclick="openBankModal()" class="flex items-center gap-4 p-5 hover:bg-zinc-900 rounded-3xl cursor-pointer text-lg border border-transparent hover:border-emerald-500/30 transition">🏦 <span class="font-medium">Banco</span></div>
-                
-                <h3 class="text-cyan-400 font-semibold mt-auto mb-5 flex items-center gap-2 text-lg uppercase tracking-widest text-xs opacity-60">Top Ganadores</h3>
-                <div id="rankingBox" class="space-y-3 max-h-40 overflow-auto"></div>
-            </div>
-
-            <div class="flex-1 p-6 md:p-10 overflow-auto flex flex-col items-center justify-center">
-                <div id="slot" class="game w-full max-w-2xl">
-                    <h2 class="text-4xl font-bold mb-10 text-center">🎰 JACKPOT SLOTS</h2>
-                    <div class="bg-zinc-900/80 p-10 rounded-[40px] border border-cyan-500/20 shadow-2xl">
-                        <div class="flex justify-center gap-4 md:gap-8 mb-12">
-                            <div class="reel" id="r1">🍒</div>
-                            <div class="reel" id="r2">💎</div>
-                            <div class="reel" id="r3">7️⃣</div>
-                        </div>
-                        <div class="max-w-xs mx-auto space-y-4">
-                            <input id="betSlot" type="number" value="10" class="w-full bg-zinc-950 border border-zinc-800 rounded-3xl px-10 py-5 text-center text-3xl font-bold focus:border-cyan-500 outline-none">
-                            <button onclick="spinSlot()" id="btnSpin" class="w-full bg-cyan-500 text-black py-6 rounded-3xl font-black text-2xl active:scale-95 transition-all">GIRAR</button>
-                        </div>
-                        <p id="slotRes" class="text-center mt-12 text-2xl font-bold min-h-[40px]"></p>
-                    </div>
-                </div>
-            </div>
+    <main id="mainCasino" class="hidden max-w-7xl mx-auto p-6">
+        
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <button onclick="switchTab('tab-slots')" class="bg-zinc-900 p-4 rounded-2xl border border-white/5 hover:border-cyan-500 transition">🎰 Slots</button>
+            <button onclick="switchTab('tab-dice')" class="bg-zinc-900 p-4 rounded-2xl border border-white/5 hover:border-cyan-500 transition">🎲 Dados</button>
+            <button onclick="switchTab('tab-bj')" class="bg-zinc-900 p-4 rounded-2xl border border-white/5 hover:border-cyan-500 transition">🃏 Blackjack</button>
+            <button onclick="openBank()" class="bg-emerald-900/30 p-4 rounded-2xl border border-emerald-500/30 text-emerald-400 font-bold hover:bg-emerald-900/50 transition">🏦 BANCO</button>
         </div>
-    </div>
 
-    <div id="bankModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
-        <div class="bg-zinc-900 rounded-[35px] p-10 w-full max-w-lg border border-white/10">
-            <h2 class="text-3xl font-bold mb-8">🏦 Banco Real</h2>
-            <div class="bg-zinc-800/50 p-6 rounded-3xl mb-8 text-center">
-                <p class="text-zinc-400 text-sm">Tu Saldo</p>
-                <p id="modalSaldo" class="text-5xl font-bold text-yellow-300">$0</p>
-            </div>
-            <div class="space-y-4">
-                <input id="depositAmount" type="number" placeholder="Monto $" class="w-full bg-zinc-900 rounded-2xl px-5 py-4 outline-none border border-transparent focus:border-emerald-500">
-                <button onclick="generateCLABE()" class="w-full bg-emerald-600 py-4 rounded-2xl font-bold hover:bg-emerald-500 transition">Generar CLABE</button>
-                <div id="clabeContainer" class="hidden space-y-4">
-                    <div class="bg-black p-4 rounded-2xl border border-zinc-700 text-center">
-                        <span id="clabeDisplay" class="font-mono text-cyan-400 text-xl tracking-wider"></span>
-                    </div>
-                    <button onclick="confirmDeposit()" class="w-full bg-emerald-500 text-black py-4 rounded-2xl font-black uppercase transition hover:bg-emerald-400">Confirmar Pago</button>
+        <section id="tab-slots" class="tab-content">
+            <div class="bg-zinc-900/50 p-10 rounded-[3rem] text-center neon-border max-w-2xl mx-auto">
+                <h2 class="text-2xl font-bold mb-8">TRAGAMONEDAS VOLCÁNICO</h2>
+                <div class="flex justify-center gap-4 mb-10">
+                    <div id="s1" class="w-20 h-24 bg-black rounded-xl text-4xl flex items-center justify-center border border-white/10">🎰</div>
+                    <div id="s2" class="w-20 h-24 bg-black rounded-xl text-4xl flex items-center justify-center border border-white/10">🎰</div>
+                    <div id="s3" class="w-20 h-24 bg-black rounded-xl text-4xl flex items-center justify-center border border-white/10">🎰</div>
                 </div>
-                <button onclick="closeBankModal()" class="w-full text-zinc-500 mt-4">Cerrar</button>
+                <input id="betSlots" type="number" placeholder="Apuesta" value="10" class="bg-black p-4 rounded-xl mb-4 text-center w-32 border border-white/10">
+                <button onclick="playSlots()" id="btnSlots" class="w-full bg-cyan-500 text-black py-4 rounded-2xl font-black text-xl">GIRAR</button>
+            </div>
+        </section>
+
+        <section id="tab-dice" class="tab-content hidden">
+            <div class="bg-zinc-900/50 p-10 rounded-[3rem] text-center neon-border max-w-lg mx-auto">
+                <h2 class="text-2xl font-bold mb-4">DADOS DE LA SUERTE</h2>
+                <p class="text-zinc-400 mb-8">Si sumas 7 u 11, ¡ganas el triple!</p>
+                <div class="flex justify-center gap-8 mb-10">
+                    <div id="d1" class="text-6xl p-4 bg-white text-black rounded-2xl">🎲</div>
+                    <div id="d2" class="text-6xl p-4 bg-white text-black rounded-2xl">🎲</div>
+                </div>
+                <input id="betDice" type="number" value="10" class="bg-black p-4 rounded-xl mb-4 text-center w-32">
+                <button onclick="playDice()" class="w-full bg-indigo-500 py-4 rounded-2xl font-black text-xl">LANZAR DADOS</button>
+            </div>
+        </section>
+
+        <section id="tab-bj" class="tab-content hidden text-center">
+            <div class="bg-zinc-900/50 p-8 rounded-[2rem] max-w-lg mx-auto border border-white/10">
+                <h2 class="text-2xl font-bold mb-6">MINI BLACKJACK</h2>
+                <div class="flex justify-around mb-8">
+                    <div><p class="text-xs uppercase opacity-50">Tú</p><p id="playerScore" class="text-4xl font-bold">0</p></div>
+                    <div class="text-4xl opacity-20">VS</div>
+                    <div><p class="text-xs uppercase opacity-50">Casa</p><p id="dealerScore" class="text-4xl font-bold">0</p></div>
+                </div>
+                <input id="betBJ" type="number" value="20" class="bg-black p-4 rounded-xl mb-4 text-center w-32">
+                <button onclick="playBJ()" class="w-full bg-red-600 py-4 rounded-2xl font-black text-xl">PEDIR CARTA</button>
+            </div>
+        </section>
+    </main>
+
+    <div id="bankModal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4 backdrop-blur-md">
+        <div class="bg-zinc-900 p-8 rounded-[2.5rem] w-full max-w-lg border border-white/10">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold">🏦 BANCO CENTRAL</h2>
+                <button onclick="closeBank()" class="text-3xl">&times;</button>
+            </div>
+
+            <div class="flex gap-2 mb-8 bg-black p-1 rounded-2xl">
+                <button onclick="switchBankTab('dep')" id="btnDep" class="flex-1 py-3 rounded-xl font-bold bg-zinc-800 text-white">DEPOSITAR</button>
+                <button onclick="switchBankTab('ret')" id="btnRet" class="flex-1 py-3 rounded-xl font-bold text-zinc-500">RETIRAR</button>
+            </div>
+
+            <div id="bank-dep" class="space-y-4">
+                <input id="depAmt" type="number" placeholder="Monto a depositar" class="w-full bg-black p-5 rounded-2xl outline-none border border-white/5">
+                <button onclick="doDep()" class="w-full bg-emerald-500 text-black py-4 rounded-2xl font-bold">GENERAR CLABE SPEI</button>
+                <div id="clabeArea" class="hidden p-4 bg-zinc-800 rounded-2xl text-center">
+                    <p class="text-xs text-zinc-400 mb-2">Transfiere a esta CLABE:</p>
+                    <p id="clabeNum" class="font-mono text-xl text-cyan-400 mb-4">000000000000000000</p>
+                    <button onclick="confirmRealDep()" class="w-full bg-emerald-600 py-3 rounded-xl text-sm font-bold">YA DEPOSITÉ</button>
+                </div>
+            </div>
+
+            <div id="bank-ret" class="hidden space-y-4">
+                <input id="retAmt" type="number" placeholder="Monto a retirar" class="w-full bg-black p-5 rounded-2xl outline-none border border-white/5">
+                <input type="text" placeholder="Tu CLABE Bancaria (18 dígitos)" class="w-full bg-black p-5 rounded-2xl outline-none border border-white/5">
+                <button onclick="doRet()" class="w-full bg-red-500 text-white py-4 rounded-2xl font-bold">SOLICITAR RETIRO</button>
+                <p class="text-[10px] text-zinc-500 text-center">Los retiros pueden tardar hasta 24 horas en procesarse.</p>
             </div>
         </div>
     </div>
@@ -118,127 +135,161 @@
 
         let user = null;
         let saldo = 0;
-        const symbols = ["🍒", "💎", "7️⃣", "🔔", "🍋", "🍀"];
 
-        // --- AUTH USANDO TU TABLA 'usuarios' ---
-        async function register() {
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("pass").value;
-            if (password.length < 6) return msg("Mínimo 6 caracteres", "text-red-400");
-            
-            const { data, error } = await sb.auth.signUp({ email, password });
-            if (error) return msg(error.message, "text-red-500");
-            
-            // Insertamos en 'usuarios' como tú lo tienes
-            const { error: dbErr } = await sb.from('usuarios').insert([{ id: data.user.id, email: email, saldo: 500 }]);
-            if(dbErr) console.error("Error al crear en tabla usuarios:", dbErr);
-            msg("¡Registro exitoso! Ya puedes entrar.", "text-green-400");
-        }
+        // --- AUTENTICACIÓN ---
+        async function authAction(type) {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('pass').value;
+            const msg = document.getElementById('authMsg');
 
-        async function login() {
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("pass").value;
-            const { data, error } = await sb.auth.signInWithPassword({ email, password });
-            if (error) return msg("Datos incorrectos", "text-red-500");
-            user = data.user;
-            loadAppData();
-        }
-
-        async function loadAppData() {
-            // Buscamos en tu tabla 'usuarios'
-            const { data, error } = await sb.from('usuarios').select('*').eq('id', user.id).single();
-            if (data) {
-                saldo = data.saldo;
-                updateUI();
-                document.getElementById("auth").classList.add("hidden");
-                document.getElementById("casino").classList.remove("hidden");
-                document.getElementById("topbar").classList.remove("hidden");
-                loadRanking();
+            if(type === 'up') {
+                const { data, error } = await sb.auth.signUp({ email, password: pass });
+                if(error) return msg.innerText = error.message;
+                await sb.from('usuarios').insert([{ id: data.user.id, email, saldo: 500 }]);
+                msg.innerText = "¡Cuenta creada! Inicia sesión.";
+            } else {
+                const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+                if(error) return msg.innerText = "Error en los datos.";
+                user = data.user;
+                initApp();
             }
         }
 
-        // --- JUEGO SLOTS ---
-        async function spinSlot() {
-            const bet = parseInt(document.getElementById("betSlot").value);
-            const resEl = document.getElementById("slotRes");
-            const btn = document.getElementById("btnSpin");
+        async function initApp() {
+            const { data } = await sb.from('usuarios').select('*').eq('id', user.id).single();
+            if(data) {
+                saldo = data.saldo;
+                updateSaldo();
+                document.getElementById('authSection').classList.add('hidden');
+                document.getElementById('topbar').classList.remove('hidden');
+                document.getElementById('mainCasino').classList.remove('hidden');
+            }
+        }
 
-            if (isNaN(bet) || bet <= 0 || bet > saldo) return alert("Monto no válido o saldo insuficiente");
+        function updateSaldo() {
+            const el = document.getElementById('saldoDisplay');
+            const el2 = document.getElementById('saldoDisplay'); 
+            el.innerText = `$${saldo.toLocaleString()}`;
+            sb.from('usuarios').update({ saldo }).eq('id', user.id).then();
+        }
 
-            btn.disabled = true;
-            saldo -= bet;
-            updateUI();
+        // --- NAVEGACIÓN ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+        }
+
+        // --- JUEGO: SLOTS ---
+        const icons = ["🍒", "💎", "7️⃣", "🔔", "🍋", "⭐"];
+        function playSlots() {
+            const bet = parseInt(document.getElementById('betSlots').value);
+            if(bet > saldo) return alert("Saldo insuficiente");
             
-            const reels = [document.getElementById("r1"), document.getElementById("r2"), document.getElementById("r3")];
-            reels.forEach(r => { r.classList.add("spinning"); r.textContent = "🎲"; });
+            saldo -= bet; updateSaldo();
+            const reels = [document.getElementById('s1'), document.getElementById('s2'), document.getElementById('s3')];
+            reels.forEach(r => r.classList.add('spinning'));
 
-            setTimeout(async () => {
+            setTimeout(() => {
                 const results = reels.map(r => {
-                    r.classList.remove("spinning");
-                    const icon = symbols[Math.floor(Math.random() * symbols.length)];
-                    r.textContent = icon;
-                    return icon;
+                    r.classList.remove('spinning');
+                    const res = icons[Math.floor(Math.random() * icons.length)];
+                    r.innerText = res;
+                    return res;
                 });
 
-                let win = 0;
-                if (results[0] === results[1] && results[1] === results[2]) {
-                    win = bet * 10;
-                    resEl.innerHTML = `<span class="text-yellow-400">💰 ¡GANASTE $${win}!</span>`;
-                } else if (results[0] === results[1] || results[1] === results[2] || results[0] === results[2]) {
-                    win = bet * 2;
-                    resEl.innerHTML = `<span class="text-cyan-400">✨ PREMIO MENOR $${win}</span>`;
-                } else {
-                    resEl.innerHTML = `<span class="text-zinc-500">❌ SUERTE PARA LA PRÓXIMA</span>`;
+                if(results[0] === results[1] && results[1] === results[2]) {
+                    const win = bet * 10; saldo += win;
+                    alert("¡JACKPOT! Ganaste $" + win);
+                } else if(results[0] === results[1] || results[1] === results[2]) {
+                    const win = bet * 2; saldo += win;
                 }
-
-                saldo += win;
-                updateUI();
-                btn.disabled = false;
-                // Guardamos el saldo actualizado en 'usuarios'
-                await sb.from('usuarios').update({ saldo: saldo }).eq('id', user.id);
-            }, 1200);
+                updateSaldo();
+            }, 1000);
         }
 
-        // --- BANCO (TU LÓGICA DE CLABE) ---
-        function generateCLABE() {
-            if (val("depositAmount") < 100) return alert("Mínimo $100");
-            document.getElementById("clabeDisplay").textContent = "012" + Math.floor(Math.random() * 1000000000000000);
-            document.getElementById("clabeContainer").classList.remove("hidden");
+        // --- JUEGO: DADOS ---
+        function playDice() {
+            const bet = parseInt(document.getElementById('betDice').value);
+            if(bet > saldo) return alert("Saldo insuficiente");
+
+            saldo -= bet;
+            const r1 = Math.floor(Math.random() * 6) + 1;
+            const r2 = Math.floor(Math.random() * 6) + 1;
+            const total = r1 + r2;
+
+            document.getElementById('d1').innerText = r1;
+            document.getElementById('d2').innerText = r2;
+
+            if(total === 7 || total === 11) {
+                const win = bet * 3; saldo += win;
+                alert("¡Suerte de dados! Ganaste $" + win);
+            }
+            updateSaldo();
         }
 
-        async function confirmDeposit() {
-            const amount = parseInt(document.getElementById("depositAmount").value);
-            saldo += amount;
-            await sb.from('usuarios').update({ saldo: saldo }).eq('id', user.id);
-            updateUI();
-            alert("¡Saldo cargado!");
-            closeBankModal();
+        // --- JUEGO: BLACKJACK (SIMPLE) ---
+        function playBJ() {
+            const bet = parseInt(document.getElementById('betBJ').value);
+            if(bet > saldo) return alert("Saldo insuficiente");
+
+            const pCard = Math.floor(Math.random() * 11) + 1;
+            const dCard = Math.floor(Math.random() * 11) + 1;
+            
+            document.getElementById('playerScore').innerText = pCard;
+            document.getElementById('dealerScore').innerText = dCard;
+
+            if(pCard > dCard) {
+                saldo += bet;
+                alert("Ganaste la mano");
+            } else {
+                saldo -= bet;
+            }
+            updateSaldo();
         }
 
-        // --- UTILIDADES ---
-        function updateUI() {
-            const format = new Intl.NumberFormat('es-MX').format(saldo);
-            document.getElementById("saldo").textContent = "$" + format;
-            document.getElementById("modalSaldo").textContent = "$" + format;
-        }
+        // --- BANCO ---
+        function openBank() { document.getElementById('bankModal').classList.remove('hidden'); }
+        function closeBank() { document.getElementById('bankModal').classList.add('hidden'); }
 
-        async function loadRanking() {
-            const { data } = await sb.from('usuarios').select('email, saldo').order('saldo', { ascending: false }).limit(5);
-            if (data) {
-                document.getElementById("rankingBox").innerHTML = data.map((u, i) => `
-                    <div class="flex justify-between text-xs bg-zinc-900/50 p-2 rounded-lg border border-white/5">
-                        <span class="truncate w-24">${i+1}. ${u.email.split('@')[0]}</span>
-                        <span class="text-yellow-500 font-bold">$${u.saldo}</span>
-                    </div>`).join('');
+        function switchBankTab(type) {
+            if(type === 'dep') {
+                document.getElementById('bank-dep').classList.remove('hidden');
+                document.getElementById('bank-ret').classList.add('hidden');
+                document.getElementById('btnDep').className = "flex-1 py-3 rounded-xl font-bold bg-zinc-800 text-white";
+                document.getElementById('btnRet').className = "flex-1 py-3 rounded-xl font-bold text-zinc-500";
+            } else {
+                document.getElementById('bank-dep').classList.add('hidden');
+                document.getElementById('bank-ret').classList.remove('hidden');
+                document.getElementById('btnRet').className = "flex-1 py-3 rounded-xl font-bold bg-zinc-800 text-white";
+                document.getElementById('btnDep').className = "flex-1 py-3 rounded-xl font-bold text-zinc-500";
             }
         }
 
-        function val(id) { return parseInt(document.getElementById(id).value) || 0; }
-        function msg(text, color) { const el = document.getElementById("msg"); el.className = `text-center mt-6 text-sm ${color}`; el.textContent = text; }
-        function openBankModal() { document.getElementById("bankModal").classList.remove("hidden"); }
-        function closeBankModal() { document.getElementById("bankModal").classList.add("hidden"); }
-        function logout() { sb.auth.signOut(); location.reload(); }
-        function showGame(id) { /* Para añadir más juegos luego */ }
+        function doDep() {
+            const amt = document.getElementById('depAmt').value;
+            if(amt < 50) return alert("Mínimo $50");
+            document.getElementById('clabeNum').innerText = "012" + Math.floor(Math.random() * 1000000000000000);
+            document.getElementById('clabeArea').classList.remove('hidden');
+        }
+
+        function confirmRealDep() {
+            const amt = parseInt(document.getElementById('depAmt').value);
+            saldo += amt;
+            updateSaldo();
+            alert("Pago procesado con éxito.");
+            closeBank();
+        }
+
+        function doRet() {
+            const amt = parseInt(document.getElementById('retAmt').value);
+            if(amt > saldo || amt < 100) return alert("Monto inválido o insuficiente.");
+            saldo -= amt;
+            updateSaldo();
+            alert("Solicitud enviada. Recibirás tu dinero en breve.");
+            closeBank();
+        }
+
+        function logout() { location.reload(); }
     </script>
 </body>
 </html>
