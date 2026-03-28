@@ -11,11 +11,11 @@
         :root { --mx-green: #006341; --bg: #050505; }
         body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; }
         .glass { background: rgba(20, 20, 20, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); }
-        .bet-input { background: #000; border: 1px solid #333; border-radius: 10px; padding: 10px; width: 100%; text-align: center; font-weight: 900; color: #10b981; outline: none; }
         #notification-container { position: fixed; top: 20px; right: 20px; z-index: 10000; }
         .toast { transform: translateX(120%); transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); min-width: 250px; }
         .toast.show { transform: translateX(0); }
         .hidden { display: none !important; }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body>
@@ -42,10 +42,15 @@
             </div>
 
             <div id="form-verify" class="hidden">
-                <p class="text-sm text-zinc-400 mb-6 uppercase font-bold tracking-widest">Ingresa el código enviado a tu correo</p>
-                <input id="verify-code" type="text" maxlength="6" placeholder="000000" class="w-full bg-black text-center text-4xl p-5 rounded-2xl border border-emerald-500/50 mb-6 font-black tracking-[1rem] outline-none">
-                <button onclick="confirmOTP()" class="w-full bg-emerald-600 text-black py-4 rounded-xl font-black uppercase italic">Verificar y Entrar</button>
-                <button onclick="cancelVerify()" class="mt-4 text-[10px] text-zinc-500 uppercase font-bold">Volver atrás</button>
+                <p class="text-[10px] text-zinc-400 mb-2 uppercase font-black tracking-widest">Código enviado a tu correo</p>
+                <input id="verify-code" type="number" placeholder="000000" class="w-full bg-black text-center text-4xl p-5 rounded-2xl border border-emerald-500/50 mb-6 font-black tracking-[0.5rem] outline-none">
+                
+                <button onclick="confirmOTP()" class="w-full bg-emerald-600 text-black py-4 rounded-xl font-black uppercase italic mb-4">Verificar Ahora</button>
+                
+                <div class="flex flex-col gap-2">
+                    <button id="btn-resend" onclick="resendCode()" class="text-[10px] text-emerald-500 uppercase font-black disabled:text-zinc-600">Reenviar código</button>
+                    <button onclick="cancelVerify()" class="text-[10px] text-zinc-500 uppercase font-bold">Usar otro correo</button>
+                </div>
             </div>
         </div>
     </div>
@@ -54,7 +59,7 @@
         <header class="glass sticky top-0 z-50 py-4 px-8 flex justify-between items-center border-b border-white/5">
             <div class="bg-emerald-600 px-3 py-1 rounded font-black italic text-black skew-x-[-15deg]">WinMX</div>
             <div class="flex items-center gap-4">
-                <div onclick="openBank()" class="cursor-pointer bg-zinc-950 px-5 py-2 rounded-2xl border border-white/10 hover:border-emerald-500 transition">
+                <div class="bg-zinc-950 px-5 py-2 rounded-2xl border border-white/10">
                     <p id="balance" class="text-emerald-400 font-black text-lg">$0</p>
                 </div>
                 <button onclick="logout()" class="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center border border-white/10 text-zinc-500 hover:text-red-500 transition">
@@ -63,63 +68,35 @@
             </div>
         </header>
         <main class="p-20 text-center">
-            <h1 class="text-6xl font-black mb-4">¡BIENVENIDO A WINMX!</h1>
-            <p class="text-zinc-500 uppercase tracking-[0.5rem]">Tu cuenta ha sido verificada</p>
-            <button onclick="openBank()" class="mt-10 bg-emerald-600 text-black px-10 py-4 rounded-full font-black italic uppercase">Ir al Cajero</button>
+            <h1 class="text-6xl font-black mb-4 uppercase">¡Bienvenido!</h1>
+            <p class="text-zinc-500 uppercase tracking-[0.5rem]">Verificación completada con éxito</p>
         </main>
     </div>
 
-    <div id="bank-modal" class="fixed inset-0 bg-black/95 z-[1000] flex items-center justify-center p-4 hidden">
-        <div class="bg-zinc-900 w-full max-w-lg rounded-[2.5rem] overflow-hidden border border-white/10">
-            <div class="bg-emerald-600 p-6 flex justify-between items-center text-black font-black uppercase italic">
-                <h2>Cajero WinMX</h2>
-                <button onclick="closeBank()" class="text-3xl">&times;</button>
-            </div>
-            <div class="p-8 space-y-4">
-                <div class="bg-black/40 p-6 rounded-3xl border border-white/5 text-center">
-                    <p id="bank-balance" class="text-4xl font-black text-emerald-400">$0.00</p>
-                </div>
-                </div>
-        </div>
-    </div>
-
     <script>
+        // CONFIGURACIÓN SUPABASE
         const sb = window.supabase.createClient("https://dakhnqriwbzihlzhtfcb.supabase.co", "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs");
-        let user = null, saldo = 0;
+        let user = null;
+        let resendTimer = 0;
 
         window.onload = async () => {
             const { data: { session } } = await sb.auth.getSession();
-            checkSession(session);
-        };
-
-        function checkSession(session) {
-            document.getElementById('loading').classList.add('hidden');
             if(session) {
                 user = session.user;
-                initApp();
-                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('loading').classList.add('hidden');
                 document.getElementById('main-interface').classList.remove('hidden');
+                document.getElementById('balance').innerText = `$0`; 
             } else {
+                document.getElementById('loading').classList.add('hidden');
                 document.getElementById('auth-screen').classList.remove('hidden');
-                document.getElementById('main-interface').classList.add('hidden');
             }
-        }
+        };
 
-        async function initApp() {
-            const { data } = await sb.from('usuarios').select('*').eq('id', user.id).single();
-            if(data) {
-                saldo = data.saldo; 
-                document.getElementById('balance').innerText = `$${saldo.toLocaleString()}`;
-                document.getElementById('bank-balance').innerText = `$${saldo.toLocaleString()}.00`;
-            }
-        }
-
-        // --- FLUJO DE REGISTRO CON CÓDIGO ---
-
+        // --- LÓGICA DE REGISTRO ---
         async function handleRegister() {
             const email = document.getElementById('auth-email').value;
             const pass = document.getElementById('auth-pass').value;
-            if(!email || !pass) return toast("ERROR: Campos vacíos", "err");
+            if(!email || !pass) return toast("RELLENA LOS CAMPOS", "err");
 
             document.getElementById('loading').classList.remove('hidden');
 
@@ -127,41 +104,62 @@
                 const { data, error } = await sb.auth.signUp({ email, password: pass });
                 if(error) throw error;
 
-                // Si no hay error, pasamos a la pantalla de código
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('form-main').classList.add('hidden');
                 document.getElementById('form-verify').classList.remove('hidden');
-                toast("CÓDIGO ENVIADO AL CORREO", "ok");
+                startResendTimer();
+                toast("CÓDIGO ENVIADO", "ok");
             } catch(e) {
                 document.getElementById('loading').classList.add('hidden');
                 toast("ERROR: " + e.message, "err");
             }
         }
 
+        // --- VERIFICAR CÓDIGO ---
         async function confirmOTP() {
             const email = document.getElementById('auth-email').value;
             const token = document.getElementById('verify-code').value;
-            if(token.length < 6) return toast("Código incompleto", "err");
+            if(token.length < 6) return toast("EL CÓDIGO ES DE 6 DÍGITOS", "err");
 
             document.getElementById('loading').classList.remove('hidden');
 
             try {
-                const { data, error } = await sb.verifyOtp({
-                    email,
-                    token,
+                const { data, error } = await sb.auth.verifyOtp({
+                    email: email,
+                    token: token,
                     type: 'signup'
                 });
                 
                 if(error) throw error;
 
-                toast("¡VERIFICACIÓN EXITOSA!", "ok");
-                location.reload(); // Recarga para entrar al casino
+                toast("¡VERIFICADO!", "ok");
+                location.reload(); 
             } catch(e) {
                 document.getElementById('loading').classList.add('hidden');
-                toast("CÓDIGO INVÁLIDO: " + e.message, "err");
+                toast("CÓDIGO INVÁLIDO O EXPIRADO", "err");
             }
         }
 
+        // --- REENVIAR CÓDIGO ---
+        async function resendCode() {
+            const email = document.getElementById('auth-email').value;
+            if(resendTimer > 0) return;
+
+            try {
+                const { error } = await sb.auth.resend({
+                    type: 'signup',
+                    email: email
+                });
+                if(error) throw error;
+
+                toast("CÓDIGO REENVIADO", "ok");
+                startResendTimer();
+            } catch(e) {
+                toast("ERROR: " + e.message, "err");
+            }
+        }
+
+        // --- LOGIN NORMAL ---
         async function handleLogin() {
             const email = document.getElementById('auth-email').value;
             const pass = document.getElementById('auth-pass').value;
@@ -172,8 +170,24 @@
                 location.reload();
             } catch(e) {
                 document.getElementById('loading').classList.add('hidden');
-                toast("ERROR: " + e.message, "err");
+                toast("DATOS INCORRECTOS", "err");
             }
+        }
+
+        // --- UTILIDADES ---
+        function startResendTimer() {
+            resendTimer = 60;
+            const btn = document.getElementById('btn-resend');
+            btn.disabled = true;
+            const interval = setInterval(() => {
+                resendTimer--;
+                btn.innerText = `REENVIAR EN ${resendTimer}S`;
+                if(resendTimer <= 0) {
+                    clearInterval(interval);
+                    btn.innerText = "REENVIAR CÓDIGO";
+                    btn.disabled = false;
+                }
+            }, 1000);
         }
 
         function cancelVerify() {
@@ -181,14 +195,12 @@
             document.getElementById('form-verify').classList.add('hidden');
         }
 
-        // --- SISTEMA ---
         async function logout() { await sb.auth.signOut(); location.reload(); }
-        function openBank() { document.getElementById('bank-modal').classList.remove('hidden'); }
-        function closeBank() { document.getElementById('bank-modal').classList.add('hidden'); }
+
         function toast(m, t) {
             const c = document.getElementById('notification-container');
             const e = document.createElement('div');
-            e.className = `toast glass p-4 rounded-xl mb-4 border-l-4 ${t==='ok'?'border-emerald-500':'border-red-500'} font-bold text-[10px] uppercase`;
+            e.className = `toast glass p-4 rounded-xl mb-4 border-l-4 ${t==='ok'?'border-emerald-500':'border-red-500'} font-black text-[10px] uppercase shadow-2xl`;
             e.innerText = m;
             c.appendChild(e);
             setTimeout(() => e.classList.add('show'), 10);
