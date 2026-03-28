@@ -8,121 +8,139 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        body { background: linear-gradient(135deg, #0a1625, #050a14); font-family: 'Segoe UI', sans-serif; color: white; }
+        body { background: linear-gradient(135deg, #0a1625, #050a14); font-family: 'Segoe UI', sans-serif; color: white; overflow-x: hidden; }
         .neon-border { border: 1px solid rgba(34, 211, 238, 0.3); box-shadow: 0 0 15px rgba(34, 211, 238, 0.1); }
-        .game-card { transition: all 0.3s ease; cursor: pointer; }
-        .game-card:hover { transform: translateY(-5px); border-color: #22d3ee; box-shadow: 0 10px 30px rgba(34, 211, 238, 0.2); }
         .reel.spinning { animation: blur 0.1s infinite; }
         @keyframes blur { 0% { filter: blur(0px); transform: translateY(-2px); } 50% { filter: blur(4px); } 100% { filter: blur(0px); transform: translateY(2px); } }
-        .hidden { display: none; }
+        
+        /* Sistema de Notificaciones */
+        #notification-container { position: fixed; top: 20px; right: 20px; z-index: 9999; pointer-events: none; }
+        .toast { 
+            background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255,255,255,0.1);
+            padding: 16px 24px; border-radius: 16px; margin-bottom: 10px;
+            backdrop-blur: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            transform: translateX(120%); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: auto; min-width: 250px;
+        }
+        .toast.show { transform: translateX(0); }
     </style>
 </head>
 <body class="min-h-screen">
+
+    <div id="notification-container"></div>
 
     <header id="topbar" class="hidden bg-zinc-950/80 backdrop-blur-md border-b border-white/10 py-4 px-6 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-3">
                 <span class="text-3xl">💎</span>
-                <h1 class="text-xl font-black tracking-tighter text-cyan-400">CASINO REAL PRO</h1>
+                <h1 class="text-xl font-black tracking-tighter text-cyan-400 uppercase">Casino Real</h1>
             </div>
             <div class="flex items-center gap-4">
-                <div class="bg-zinc-900 px-4 py-2 rounded-xl border border-yellow-500/30">
-                    <span class="text-yellow-500 font-bold" id="saldoDisplay">$0</span>
+                <div class="bg-zinc-900 px-6 py-2 rounded-full border border-yellow-500/30">
+                    <span class="text-yellow-400 font-bold text-xl" id="saldoDisplay">$0</span>
                 </div>
-                <button onclick="logout()" class="text-zinc-500 hover:text-white text-sm">Salir</button>
+                <button onclick="logout()" class="text-zinc-500 hover:text-white transition"><i class="fas fa-sign-out-alt"></i></button>
             </div>
         </div>
     </header>
 
     <div id="authSection" class="flex items-center justify-center min-h-screen p-6">
         <div class="bg-zinc-900 p-8 rounded-[2rem] w-full max-w-md border border-white/5">
-            <h2 class="text-3xl font-bold text-center mb-8">Bienvenido</h2>
+            <div class="text-center mb-8">
+                <span class="text-6xl">🎰</span>
+                <h2 class="text-3xl font-bold mt-4">Bienvenido</h2>
+            </div>
             <input id="email" type="email" placeholder="Email" class="w-full bg-zinc-800 p-4 rounded-2xl mb-4 outline-none focus:ring-2 ring-cyan-500">
             <input id="pass" type="password" placeholder="Contraseña" class="w-full bg-zinc-800 p-4 rounded-2xl mb-6 outline-none focus:ring-2 ring-cyan-500">
             <div class="grid grid-cols-2 gap-4">
-                <button onclick="authAction('up')" class="bg-zinc-800 py-4 rounded-2xl font-bold hover:bg-zinc-700">Registro</button>
-                <button onclick="authAction('in')" class="bg-cyan-500 text-black py-4 rounded-2xl font-bold hover:bg-cyan-400">Entrar</button>
+                <button onclick="authAction('up')" class="bg-zinc-800 py-4 rounded-2xl font-bold hover:bg-zinc-700 transition">Registro</button>
+                <button onclick="authAction('in')" class="bg-cyan-500 text-black py-4 rounded-2xl font-bold hover:bg-cyan-400 transition">Entrar</button>
             </div>
-            <p id="authMsg" class="text-center mt-4 text-sm"></p>
         </div>
     </div>
 
-    <main id="mainCasino" class="hidden max-w-7xl mx-auto p-6">
+    <main id="mainCasino" class="hidden max-w-7xl mx-auto p-6 animate-fade-in">
         
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-            <button onclick="switchTab('tab-slots')" class="bg-zinc-900 p-4 rounded-2xl border border-white/5 hover:border-cyan-500 transition">🎰 Slots</button>
-            <button onclick="switchTab('tab-dice')" class="bg-zinc-900 p-4 rounded-2xl border border-white/5 hover:border-cyan-500 transition">🎲 Dados</button>
-            <button onclick="switchTab('tab-bj')" class="bg-zinc-900 p-4 rounded-2xl border border-white/5 hover:border-cyan-500 transition">🃏 Blackjack</button>
-            <button onclick="openBank()" class="bg-emerald-900/30 p-4 rounded-2xl border border-emerald-500/30 text-emerald-400 font-bold hover:bg-emerald-900/50 transition">🏦 BANCO</button>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <button onclick="switchTab('tab-slots')" class="bg-zinc-900 p-5 rounded-2xl border border-white/5 hover:border-cyan-500 transition font-bold">🎰 SLOTS</button>
+            <button onclick="switchTab('tab-dice')" class="bg-zinc-900 p-5 rounded-2xl border border-white/5 hover:border-cyan-500 transition font-bold">🎲 DADOS</button>
+            <button onclick="switchTab('tab-bj')" class="bg-zinc-900 p-5 rounded-2xl border border-white/5 hover:border-cyan-500 transition font-bold">🃏 BLACKJACK</button>
+            <button onclick="openBank()" class="bg-emerald-900/30 p-5 rounded-2xl border border-emerald-500/30 text-emerald-400 font-bold hover:bg-emerald-900/50 transition">🏦 BANCO</button>
         </div>
 
         <section id="tab-slots" class="tab-content">
             <div class="bg-zinc-900/50 p-10 rounded-[3rem] text-center neon-border max-w-2xl mx-auto">
-                <h2 class="text-2xl font-bold mb-8">TRAGAMONEDAS VOLCÁNICO</h2>
+                <h2 class="text-2xl font-black mb-8 tracking-widest text-cyan-400">TRAGAMONEDAS</h2>
                 <div class="flex justify-center gap-4 mb-10">
-                    <div id="s1" class="w-20 h-24 bg-black rounded-xl text-4xl flex items-center justify-center border border-white/10">🎰</div>
-                    <div id="s2" class="w-20 h-24 bg-black rounded-xl text-4xl flex items-center justify-center border border-white/10">🎰</div>
-                    <div id="s3" class="w-20 h-24 bg-black rounded-xl text-4xl flex items-center justify-center border border-white/10">🎰</div>
+                    <div id="s1" class="w-20 h-28 bg-black rounded-2xl text-5xl flex items-center justify-center border-2 border-zinc-800">🍒</div>
+                    <div id="s2" class="w-20 h-28 bg-black rounded-2xl text-5xl flex items-center justify-center border-2 border-zinc-800">💎</div>
+                    <div id="s3" class="w-20 h-28 bg-black rounded-2xl text-5xl flex items-center justify-center border-2 border-zinc-800">7️⃣</div>
                 </div>
-                <input id="betSlots" type="number" placeholder="Apuesta" value="10" class="bg-black p-4 rounded-xl mb-4 text-center w-32 border border-white/10">
-                <button onclick="playSlots()" id="btnSlots" class="w-full bg-cyan-500 text-black py-4 rounded-2xl font-black text-xl">GIRAR</button>
+                <div class="flex flex-col items-center">
+                    <input id="betSlots" type="number" value="10" class="bg-black p-4 rounded-xl mb-4 text-center w-40 border border-zinc-700 text-2xl font-bold">
+                    <button onclick="playSlots()" id="btnSlots" class="w-full max-w-sm bg-gradient-to-r from-cyan-500 to-blue-600 text-black py-5 rounded-2xl font-black text-2xl shadow-lg shadow-cyan-500/20 active:scale-95 transition-all">GIRAR AHORA</button>
+                </div>
             </div>
         </section>
 
         <section id="tab-dice" class="tab-content hidden">
             <div class="bg-zinc-900/50 p-10 rounded-[3rem] text-center neon-border max-w-lg mx-auto">
-                <h2 class="text-2xl font-bold mb-4">DADOS DE LA SUERTE</h2>
-                <p class="text-zinc-400 mb-8">Si sumas 7 u 11, ¡ganas el triple!</p>
+                <h2 class="text-2xl font-black mb-4 text-indigo-400">DADOS LUCKY 7</h2>
+                <p class="text-zinc-500 mb-8 uppercase text-xs tracking-widest">Suma 7 u 11 y triplica tu apuesta</p>
                 <div class="flex justify-center gap-8 mb-10">
-                    <div id="d1" class="text-6xl p-4 bg-white text-black rounded-2xl">🎲</div>
-                    <div id="d2" class="text-6xl p-4 bg-white text-black rounded-2xl">🎲</div>
+                    <div id="d1" class="text-7xl p-6 bg-white text-black rounded-3xl shadow-xl">🎲</div>
+                    <div id="d2" class="text-7xl p-6 bg-white text-black rounded-3xl shadow-xl">🎲</div>
                 </div>
-                <input id="betDice" type="number" value="10" class="bg-black p-4 rounded-xl mb-4 text-center w-32">
-                <button onclick="playDice()" class="w-full bg-indigo-500 py-4 rounded-2xl font-black text-xl">LANZAR DADOS</button>
+                <input id="betDice" type="number" value="10" class="bg-black p-4 rounded-xl mb-4 text-center w-40 border border-zinc-700 text-2xl font-bold">
+                <button onclick="playDice()" class="w-full bg-indigo-500 py-5 rounded-2xl font-black text-xl hover:bg-indigo-400 transition">LANZAR DADOS</button>
             </div>
         </section>
 
-        <section id="tab-bj" class="tab-content hidden text-center">
-            <div class="bg-zinc-900/50 p-8 rounded-[2rem] max-w-lg mx-auto border border-white/10">
-                <h2 class="text-2xl font-bold mb-6">MINI BLACKJACK</h2>
-                <div class="flex justify-around mb-8">
-                    <div><p class="text-xs uppercase opacity-50">Tú</p><p id="playerScore" class="text-4xl font-bold">0</p></div>
-                    <div class="text-4xl opacity-20">VS</div>
-                    <div><p class="text-xs uppercase opacity-50">Casa</p><p id="dealerScore" class="text-4xl font-bold">0</p></div>
+        <section id="tab-bj" class="tab-content hidden">
+            <div class="bg-zinc-900/50 p-10 rounded-[3rem] max-w-lg mx-auto border border-white/10 text-center">
+                <h2 class="text-2xl font-black mb-10 text-red-500">DEALER VS TÚ</h2>
+                <div class="flex justify-around items-center mb-10">
+                    <div class="bg-black/40 p-6 rounded-3xl w-32 border border-white/5">
+                        <p class="text-[10px] text-zinc-500 mb-2 uppercase">Tu Mano</p>
+                        <p id="playerScore" class="text-5xl font-black text-white">0</p>
+                    </div>
+                    <div class="text-2xl font-bold opacity-30">VS</div>
+                    <div class="bg-black/40 p-6 rounded-3xl w-32 border border-white/5">
+                        <p class="text-[10px] text-zinc-500 mb-2 uppercase">Casa</p>
+                        <p id="dealerScore" class="text-5xl font-black text-white">0</p>
+                    </div>
                 </div>
-                <input id="betBJ" type="number" value="20" class="bg-black p-4 rounded-xl mb-4 text-center w-32">
-                <button onclick="playBJ()" class="w-full bg-red-600 py-4 rounded-2xl font-black text-xl">PEDIR CARTA</button>
+                <input id="betBJ" type="number" value="20" class="bg-black p-4 rounded-xl mb-4 text-center w-40 border border-zinc-700 text-2xl font-bold">
+                <button onclick="playBJ()" class="w-full bg-red-600 py-5 rounded-2xl font-black text-xl hover:bg-red-500 transition shadow-lg shadow-red-900/20">PEDIR CARTA</button>
             </div>
         </section>
     </main>
 
-    <div id="bankModal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4 backdrop-blur-md">
+    <div id="bankModal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4 backdrop-blur-xl">
         <div class="bg-zinc-900 p-8 rounded-[2.5rem] w-full max-w-lg border border-white/10">
             <div class="flex justify-between items-center mb-8">
-                <h2 class="text-2xl font-bold">🏦 BANCO CENTRAL</h2>
-                <button onclick="closeBank()" class="text-3xl">&times;</button>
+                <h2 class="text-2xl font-black">🏦 BANCO REAL</h2>
+                <button onclick="closeBank()" class="text-3xl text-zinc-500">&times;</button>
             </div>
 
             <div class="flex gap-2 mb-8 bg-black p-1 rounded-2xl">
-                <button onclick="switchBankTab('dep')" id="btnDep" class="flex-1 py-3 rounded-xl font-bold bg-zinc-800 text-white">DEPOSITAR</button>
+                <button onclick="switchBankTab('dep')" id="btnDep" class="flex-1 py-3 rounded-xl font-bold bg-zinc-800">DEPOSITAR</button>
                 <button onclick="switchBankTab('ret')" id="btnRet" class="flex-1 py-3 rounded-xl font-bold text-zinc-500">RETIRAR</button>
             </div>
 
             <div id="bank-dep" class="space-y-4">
-                <input id="depAmt" type="number" placeholder="Monto a depositar" class="w-full bg-black p-5 rounded-2xl outline-none border border-white/5">
-                <button onclick="doDep()" class="w-full bg-emerald-500 text-black py-4 rounded-2xl font-bold">GENERAR CLABE SPEI</button>
-                <div id="clabeArea" class="hidden p-4 bg-zinc-800 rounded-2xl text-center">
-                    <p class="text-xs text-zinc-400 mb-2">Transfiere a esta CLABE:</p>
-                    <p id="clabeNum" class="font-mono text-xl text-cyan-400 mb-4">000000000000000000</p>
-                    <button onclick="confirmRealDep()" class="w-full bg-emerald-600 py-3 rounded-xl text-sm font-bold">YA DEPOSITÉ</button>
+                <input id="depAmt" type="number" placeholder="Monto $" class="w-full bg-black p-5 rounded-2xl border border-white/5">
+                <button onclick="doDep()" class="w-full bg-emerald-500 text-black py-4 rounded-2xl font-black">GENERAR CLABE</button>
+                <div id="clabeArea" class="hidden p-6 bg-zinc-800 rounded-3xl text-center border border-white/5">
+                    <p id="clabeNum" class="font-mono text-2xl text-cyan-400 mb-4 tracking-tighter">000000000000000000</p>
+                    <button onclick="confirmRealDep()" class="w-full bg-emerald-600 py-4 rounded-2xl font-bold">YA DEPOSITÉ</button>
                 </div>
             </div>
 
             <div id="bank-ret" class="hidden space-y-4">
-                <input id="retAmt" type="number" placeholder="Monto a retirar" class="w-full bg-black p-5 rounded-2xl outline-none border border-white/5">
-                <input type="text" placeholder="Tu CLABE Bancaria (18 dígitos)" class="w-full bg-black p-5 rounded-2xl outline-none border border-white/5">
-                <button onclick="doRet()" class="w-full bg-red-500 text-white py-4 rounded-2xl font-bold">SOLICITAR RETIRO</button>
-                <p class="text-[10px] text-zinc-500 text-center">Los retiros pueden tardar hasta 24 horas en procesarse.</p>
+                <input id="retAmt" type="number" placeholder="Monto a retirar" class="w-full bg-black p-5 rounded-2xl border border-white/5">
+                <input type="text" placeholder="CLABE Bancaria de 18 dígitos" class="w-full bg-black p-5 rounded-2xl border border-white/5">
+                <button onclick="doRet()" class="w-full bg-red-500 text-white py-4 rounded-2xl font-black">CONFIRMAR RETIRO</button>
             </div>
         </div>
     </div>
@@ -136,20 +154,36 @@
         let user = null;
         let saldo = 0;
 
-        // --- AUTENTICACIÓN ---
+        // --- SISTEMA DE NOTIFICACIONES (SIN ALERT) ---
+        function notify(msg, type = 'info') {
+            const container = document.getElementById('notification-container');
+            const toast = document.createElement('div');
+            toast.className = `toast border-l-4 ${type === 'win' ? 'border-green-500' : type === 'error' ? 'border-red-500' : 'border-cyan-500'}`;
+            
+            const icon = type === 'win' ? '🏆' : type === 'error' ? '❌' : 'ℹ️';
+            toast.innerHTML = `<div class="flex items-center gap-3"><span>${icon}</span><span class="font-bold">${msg}</span></div>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
+        // --- AUTH ---
         async function authAction(type) {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('pass').value;
-            const msg = document.getElementById('authMsg');
 
             if(type === 'up') {
                 const { data, error } = await sb.auth.signUp({ email, password: pass });
-                if(error) return msg.innerText = error.message;
+                if(error) return notify(error.message, 'error');
                 await sb.from('usuarios').insert([{ id: data.user.id, email, saldo: 500 }]);
-                msg.innerText = "¡Cuenta creada! Inicia sesión.";
+                notify("¡Cuenta creada! Inicia sesión.");
             } else {
                 const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-                if(error) return msg.innerText = "Error en los datos.";
+                if(error) return notify("Credenciales inválidas", 'error');
                 user = data.user;
                 initApp();
             }
@@ -159,18 +193,19 @@
             const { data } = await sb.from('usuarios').select('*').eq('id', user.id).single();
             if(data) {
                 saldo = data.saldo;
-                updateSaldo();
+                updateSaldo(false);
                 document.getElementById('authSection').classList.add('hidden');
                 document.getElementById('topbar').classList.remove('hidden');
                 document.getElementById('mainCasino').classList.remove('hidden');
+                notify("¡Bienvenido al Casino Real!");
             }
         }
 
-        function updateSaldo() {
-            const el = document.getElementById('saldoDisplay');
-            const el2 = document.getElementById('saldoDisplay'); 
-            el.innerText = `$${saldo.toLocaleString()}`;
-            sb.from('usuarios').update({ saldo }).eq('id', user.id).then();
+        async function updateSaldo(sync = true) {
+            document.getElementById('saldoDisplay').innerText = `$${saldo.toLocaleString()}`;
+            if(sync && user) {
+                await sb.from('usuarios').update({ saldo }).eq('id', user.id);
+            }
         }
 
         // --- NAVEGACIÓN ---
@@ -183,7 +218,7 @@
         const icons = ["🍒", "💎", "7️⃣", "🔔", "🍋", "⭐"];
         function playSlots() {
             const bet = parseInt(document.getElementById('betSlots').value);
-            if(bet > saldo) return alert("Saldo insuficiente");
+            if(bet > saldo || bet <= 0) return notify("Saldo insuficiente", 'error');
             
             saldo -= bet; updateSaldo();
             const reels = [document.getElementById('s1'), document.getElementById('s2'), document.getElementById('s3')];
@@ -198,10 +233,13 @@
                 });
 
                 if(results[0] === results[1] && results[1] === results[2]) {
-                    const win = bet * 10; saldo += win;
-                    alert("¡JACKPOT! Ganaste $" + win);
+                    const win = bet * 15; saldo += win;
+                    notify(`¡MEGA JACKPOT! +$${win}`, 'win');
                 } else if(results[0] === results[1] || results[1] === results[2]) {
                     const win = bet * 2; saldo += win;
+                    notify(`¡Premio pequeño! +$${win}`, 'win');
+                } else {
+                    notify("No hubo suerte esta vez", 'info');
                 }
                 updateSaldo();
             }, 1000);
@@ -210,7 +248,7 @@
         // --- JUEGO: DADOS ---
         function playDice() {
             const bet = parseInt(document.getElementById('betDice').value);
-            if(bet > saldo) return alert("Saldo insuficiente");
+            if(bet > saldo) return notify("Saldo insuficiente", 'error');
 
             saldo -= bet;
             const r1 = Math.floor(Math.random() * 6) + 1;
@@ -222,27 +260,33 @@
 
             if(total === 7 || total === 11) {
                 const win = bet * 3; saldo += win;
-                alert("¡Suerte de dados! Ganaste $" + win);
+                notify(`¡Dados ganadores! +$${win}`, 'win');
+            } else {
+                notify(`Sumaste ${total}. Perdiste.`, 'info');
             }
             updateSaldo();
         }
 
-        // --- JUEGO: BLACKJACK (SIMPLE) ---
+        // --- JUEGO: BLACKJACK ---
         function playBJ() {
             const bet = parseInt(document.getElementById('betBJ').value);
-            if(bet > saldo) return alert("Saldo insuficiente");
+            if(bet > saldo) return notify("Saldo insuficiente", 'error');
 
-            const pCard = Math.floor(Math.random() * 11) + 1;
-            const dCard = Math.floor(Math.random() * 11) + 1;
+            const p = Math.floor(Math.random() * 11) + 2;
+            const d = Math.floor(Math.random() * 11) + 2;
             
-            document.getElementById('playerScore').innerText = pCard;
-            document.getElementById('dealerScore').innerText = dCard;
+            document.getElementById('playerScore').innerText = p;
+            document.getElementById('dealerScore').innerText = d;
 
-            if(pCard > dCard) {
+            if(p > d) {
+                const win = bet * 2; saldo += win;
+                notify(`¡Le ganaste a la casa! +$${win}`, 'win');
+            } else if( p === d) {
                 saldo += bet;
-                alert("Ganaste la mano");
+                notify("Empate, recuperas tu apuesta");
             } else {
                 saldo -= bet;
+                notify("La casa gana", 'error');
             }
             updateSaldo();
         }
@@ -252,22 +296,15 @@
         function closeBank() { document.getElementById('bankModal').classList.add('hidden'); }
 
         function switchBankTab(type) {
-            if(type === 'dep') {
-                document.getElementById('bank-dep').classList.remove('hidden');
-                document.getElementById('bank-ret').classList.add('hidden');
-                document.getElementById('btnDep').className = "flex-1 py-3 rounded-xl font-bold bg-zinc-800 text-white";
-                document.getElementById('btnRet').className = "flex-1 py-3 rounded-xl font-bold text-zinc-500";
-            } else {
-                document.getElementById('bank-dep').classList.add('hidden');
-                document.getElementById('bank-ret').classList.remove('hidden');
-                document.getElementById('btnRet').className = "flex-1 py-3 rounded-xl font-bold bg-zinc-800 text-white";
-                document.getElementById('btnDep').className = "flex-1 py-3 rounded-xl font-bold text-zinc-500";
-            }
+            document.getElementById('bank-dep').classList.toggle('hidden', type !== 'dep');
+            document.getElementById('bank-ret').classList.toggle('hidden', type !== 'ret');
+            document.getElementById('btnDep').className = type === 'dep' ? "flex-1 py-3 rounded-xl font-bold bg-zinc-800" : "flex-1 py-3 rounded-xl font-bold text-zinc-500";
+            document.getElementById('btnRet').className = type === 'ret' ? "flex-1 py-3 rounded-xl font-bold bg-zinc-800" : "flex-1 py-3 rounded-xl font-bold text-zinc-500";
         }
 
         function doDep() {
             const amt = document.getElementById('depAmt').value;
-            if(amt < 50) return alert("Mínimo $50");
+            if(amt < 50) return notify("El depósito mínimo es $50", 'error');
             document.getElementById('clabeNum').innerText = "012" + Math.floor(Math.random() * 1000000000000000);
             document.getElementById('clabeArea').classList.remove('hidden');
         }
@@ -276,16 +313,16 @@
             const amt = parseInt(document.getElementById('depAmt').value);
             saldo += amt;
             updateSaldo();
-            alert("Pago procesado con éxito.");
+            notify(`Depósito de $${amt} acreditado con éxito`, 'win');
             closeBank();
         }
 
         function doRet() {
             const amt = parseInt(document.getElementById('retAmt').value);
-            if(amt > saldo || amt < 100) return alert("Monto inválido o insuficiente.");
+            if(amt > saldo || amt < 100) return notify("Monto de retiro inválido", 'error');
             saldo -= amt;
             updateSaldo();
-            alert("Solicitud enviada. Recibirás tu dinero en breve.");
+            notify(`Solicitud de retiro por $${amt} enviada`, 'info');
             closeBank();
         }
 
