@@ -3,145 +3,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WinMX | Casino Real</title>
+    <title>WinMX | Casino Digital de Élite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
-        :root { --bg: #050505; --mx-green: #10b981; }
-        body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(20, 20, 20, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.05); }
-        .toast { position: fixed; top: 20px; right: 20px; transform: translateX(120%); transition: 0.4s; z-index: 10000; }
-        .toast.show { transform: translateX(0); }
-        input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;900&display=swap');
+        
+        :root { --mx-green: #10b981; --mx-dark: #050505; }
+        body { background: var(--mx-dark); color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .font-casino { font-family: 'Archivo Black', sans-serif; }
+        
+        .glass { background: rgba(15, 15, 15, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.05); }
+        .btn-primary { background: var(--mx-green); color: black; transition: 0.3s; box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(16, 185, 129, 0.5); }
+        
+        /* Animación de los Slots */
+        .slot-box { height: 120px; overflow: hidden; background: #000; border: 2px solid #1a1a1a; border-radius: 1rem; }
+        .slot-reel { transition: transform 2s cubic-bezier(0.1, 0, 0.1, 1); display: flex; flex-direction: column; align-items: center; }
+        .slot-item { height: 120px; display: flex; items-center; justify-center; font-size: 3rem; }
     </style>
 </head>
 <body>
 
-    <div id="notification-container"></div>
-
-    <div id="loading" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[5000] hidden">
-        <div class="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+    <div id="loading" class="fixed inset-0 bg-black flex items-center justify-center z-[9999] hidden">
+        <div class="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
     </div>
 
-    <div id="auth-screen" class="min-h-screen flex items-center justify-center p-6">
+    <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4">
         <div class="glass p-10 rounded-[3rem] w-full max-w-md text-center shadow-2xl border-b-8 border-emerald-600">
-            <h2 class="text-6xl font-black italic mb-2 tracking-tighter uppercase">Win<span class="text-emerald-500">MX</span></h2>
-            <p class="text-zinc-500 text-[10px] tracking-[0.3em] font-bold mb-10 uppercase">Sistema de Acceso Real</p>
+            <h2 class="text-7xl font-casino italic mb-2 tracking-tighter uppercase">Win<span class="text-emerald-500">MX</span></h2>
+            <p class="text-zinc-500 text-[10px] tracking-[0.4em] font-black mb-12 uppercase">Experiencia de Juego Real</p>
             
             <div id="form-main">
                 <div class="relative mb-6">
                     <i class="fas fa-envelope absolute left-5 top-5 text-zinc-600"></i>
-                    <input id="auth-email" type="email" placeholder="tu@correo.com" class="w-full bg-zinc-950 p-5 pl-14 rounded-2xl border border-white/5 outline-none focus:border-emerald-500 transition text-white">
+                    <input id="auth-email" type="email" placeholder="TU GMAIL" class="w-full bg-zinc-950 p-5 pl-14 rounded-2xl border border-white/5 outline-none focus:border-emerald-500 text-white font-bold">
                 </div>
-                <button onclick="handleRegister()" class="w-full bg-emerald-600 text-black py-5 rounded-2xl font-black uppercase italic text-sm hover:bg-emerald-400 transition transform active:scale-95 shadow-lg">
-                    Enviar código al correo
+                <button onclick="handleRegister()" class="btn-primary w-full py-5 rounded-2xl font-black uppercase italic text-sm">
+                    Enviar Código de Acceso
                 </button>
             </div>
 
-            <div id="form-verify" class="hidden animate-in fade-in zoom-in duration-300">
-                <p class="text-[11px] text-emerald-400 font-black uppercase mb-6">Revisa tu bandeja de entrada</p>
-                <input id="verify-code" type="number" placeholder="000000" class="w-full bg-black text-center text-5xl p-6 rounded-3xl border-2 border-emerald-500 mb-6 font-black tracking-[0.5rem] outline-none shadow-inner text-white">
-                <button onclick="confirmOTP()" class="w-full bg-white text-black py-5 rounded-2xl font-black uppercase italic text-sm hover:bg-zinc-200 transition">
-                    Verificar Código
+            <div id="form-verify" class="hidden animate-pulse">
+                <p class="text-xs text-emerald-400 font-bold mb-6 uppercase">Código enviado a tu bandeja</p>
+                <input id="verify-code" type="number" placeholder="000000" class="w-full bg-black text-center text-5xl p-6 rounded-3xl border-2 border-emerald-500 mb-6 font-casino tracking-widest outline-none">
+                <button onclick="confirmOTP()" class="btn-primary w-full py-5 rounded-2xl font-black uppercase italic text-sm">
+                    Verificar y Entrar
                 </button>
-                <button onclick="location.reload()" class="mt-4 text-[10px] text-zinc-600 uppercase font-bold">Volver atrás</button>
             </div>
         </div>
     </div>
 
-    <div id="main-interface" class="hidden min-h-screen flex flex-col items-center justify-center">
-        <h1 class="text-5xl font-black mb-4">BIENVENIDO A <span class="text-emerald-500">WINMX</span></h1>
-        <p class="text-zinc-400">Has accedido correctamente con tu correo.</p>
-        <button onclick="logout()" class="mt-8 bg-red-600 px-10 py-3 rounded-full font-bold">Cerrar Sesión</button>
+    <div id="main-app" class="hidden min-h-screen bg-[#080808]">
+        <nav class="p-6 flex justify-between items-center glass sticky top-0 z-50">
+            <h1 class="text-3xl font-casino italic">Win<span class="text-emerald-500">MX</span></h1>
+            <div class="flex items-center gap-4">
+                <div class="bg-black px-6 py-2 rounded-full border border-emerald-500/30">
+                    <span class="text-[10px] text-zinc-500 font-bold block leading-none">SALDO DISPONIBLE</span>
+                    <span id="balance-display" class="text-xl font-casino text-emerald-400">$1,000.00</span>
+                </div>
+                <button onclick="logout()" class="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center hover:bg-red-600 transition"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </nav>
+
+        <main class="max-w-4xl mx-auto p-6 pt-12">
+            <div class="text-center mb-12">
+                <h3 class="text-zinc-500 font-bold tracking-[0.5em] mb-2 uppercase text-xs">Premium Slot Machine</h3>
+                <h2 class="text-4xl font-casino uppercase">Suerte de los Dioses</h2>
+            </div>
+
+            <div class="glass p-8 rounded-[3rem] shadow-[0_0_100px_rgba(16,185,129,0.1)] border border-white/10">
+                <div class="grid grid-cols-3 gap-4 mb-8">
+                    <div class="slot-box"><div id="reel-1" class="slot-reel"></div></div>
+                    <div class="slot-box"><div id="reel-2" class="slot-reel"></div></div>
+                    <div class="slot-box"><div id="reel-3" class="slot-reel"></div></div>
+                </div>
+
+                <div class="flex flex-col items-center gap-6">
+                    <div class="flex items-center gap-4 bg-black/50 p-2 rounded-2xl border border-white/5">
+                        <button onclick="changeBet(-10)" class="w-12 h-12 rounded-xl bg-zinc-800 font-bold">-</button>
+                        <div class="px-8 text-center">
+                            <span class="text-[10px] text-zinc-500 font-bold block">APUESTA</span>
+                            <span id="bet-display" class="text-2xl font-casino">$10</span>
+                        </div>
+                        <button onclick="changeBet(10)" class="w-12 h-12 rounded-xl bg-zinc-800 font-bold">+</button>
+                    </div>
+
+                    <button id="spin-btn" onclick="spin()" class="btn-primary w-full max-w-sm py-6 rounded-3xl font-casino text-2xl uppercase italic">
+                        GIRAR AHORA
+                    </button>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script>
-        // Configuración de tu Supabase
-        const sb = window.supabase.createClient("https://dakhnqriwbzihlzhtfcb.supabase.co", "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs");
+        // CONFIGURACIÓN SUPABASE (¡YA FUNCIONA!)
+        const supabaseUrl = "https://dakhnqriwbzihlzhtfcb.supabase.co";
+        const supabaseKey = "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs";
+        const sb = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        // 1. Enviar el código real
+        let balance = 1000;
+        let currentBet = 10;
+        const symbols = ['💎', '🍋', '🍒', '🔔', '⭐️', '7️⃣'];
+
+        // --- SISTEMA DE AUTENTICACIÓN ---
         async function handleRegister() {
             const email = document.getElementById('auth-email').value;
-            if(!email) return showToast("Ingresa tu correo", "err");
-
+            if(!email) return;
             toggleLoading(true);
 
-            // Esto dispara el SMTP de Resend configurado en Supabase
-            const { error } = await sb.auth.signInWithOtp({
-                email: email,
-                options: { shouldCreateUser: true }
-            });
+            const { error } = await sb.auth.signInWithOtp({ email: email });
 
             toggleLoading(false);
-
-            if (error) {
-                console.error(error);
-                showToast("Error: " + error.message, "err");
+            if(error) {
+                alert("Error: " + error.message);
             } else {
                 document.getElementById('form-main').classList.add('hidden');
                 document.getElementById('form-verify').classList.remove('hidden');
-                showToast("Código enviado con éxito", "ok");
             }
         }
 
-        // 2. Verificar el código ingresado por el usuario
         async function confirmOTP() {
             const email = document.getElementById('auth-email').value;
             const code = document.getElementById('verify-code').value;
-
-            if(code.length < 6) return showToast("El código tiene 6 números", "err");
-
             toggleLoading(true);
 
-            const { data, error } = await sb.auth.verifyOtp({
-                email: email,
-                token: code,
-                type: 'email'
-            });
+            const { data, error } = await sb.auth.verifyOtp({ email, token: code, type: 'email' });
 
             toggleLoading(false);
-
-            if (error) {
-                showToast("Código inválido", "err");
+            if(error) {
+                alert("Código incorrecto");
             } else {
-                showToast("Acceso concedido", "ok");
-                showApp();
+                initApp();
             }
         }
 
-        // Utilidades
-        function showApp() {
+        // --- LÓGICA DEL CASINO ---
+        function initApp() {
             document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('main-interface').classList.remove('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            setupReels();
         }
 
-        async function logout() {
-            await sb.auth.signOut();
-            location.reload();
+        function setupReels() {
+            [1, 2, 3].forEach(id => {
+                const reel = document.getElementById(`reel-${id}`);
+                reel.innerHTML = '';
+                for(let i=0; i<20; i++) {
+                    const item = document.createElement('div');
+                    item.className = 'slot-item';
+                    item.innerText = symbols[Math.floor(Math.random() * symbols.length)];
+                    reel.appendChild(item);
+                }
+            });
         }
 
-        function toggleLoading(show) {
-            document.getElementById('loading').classList.toggle('hidden', !show);
+        function changeBet(amount) {
+            currentBet = Math.max(10, currentBet + amount);
+            document.getElementById('bet-display').innerText = `$${currentBet}`;
         }
 
-        function showToast(msg, type) {
-            const container = document.getElementById('notification-container');
-            const toast = document.createElement('div');
-            toast.className = `toast glass p-5 rounded-2xl mb-4 border-l-4 ${type==='ok'?'border-emerald-500':'border-red-500'} font-black text-xs uppercase tracking-widest shadow-2xl`;
-            toast.innerText = msg;
-            container.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => { 
-                toast.classList.remove('show'); 
-                setTimeout(() => toast.remove(), 400); 
-            }, 3000);
+        function spin() {
+            if(balance < currentBet) return alert("SALDO INSUFICIENTE");
+            
+            balance -= currentBet;
+            updateUI();
+            
+            document.getElementById('spin-btn').disabled = true;
+            const results = [];
+
+            [1, 2, 3].forEach((id, index) => {
+                const reel = document.getElementById(`reel-${id}`);
+                const randomIndex = Math.floor(Math.random() * symbols.length);
+                const stopPos = (randomIndex * 120);
+                
+                reel.style.transform = `translateY(-${stopPos}px)`;
+                results.push(symbols[randomIndex]);
+            });
+
+            setTimeout(() => {
+                if(results[0] === results[1] && results[1] === results[2]) {
+                    const win = currentBet * 10;
+                    balance += win;
+                    alert("¡JACKPOT! GANASTE $" + win);
+                }
+                updateUI();
+                document.getElementById('spin-btn').disabled = false;
+            }, 2100);
         }
 
-        // Verificar sesión activa
+        function updateUI() {
+            document.getElementById('balance-display').innerText = `$${balance.toFixed(2)}`;
+        }
+
+        function toggleLoading(s) { document.getElementById('loading').classList.toggle('hidden', !s); }
+
+        async function logout() { await sb.auth.signOut(); location.reload(); }
+
         window.onload = async () => {
             const { data: { session } } = await sb.auth.getSession();
-            if(session) showApp();
+            if(session) initApp();
         };
     </script>
 </body>
