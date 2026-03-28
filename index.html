@@ -14,12 +14,56 @@
         #notification-container { position: fixed; top: 20px; right: 20px; z-index: 10000; }
         .toast { transform: translateX(120%); transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
         .toast.show { transform: translateX(0); }
-        .card-game { transition: all 0.3s; cursor: pointer; border: 1px solid rgba(255,255,255,0.05); overflow: hidden; }
-        .card-game:hover { border-color: var(--gold); transform: translateY(-5px); background: rgba(255,255,255,0.03); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
-        .history-scroll { max-height: 200px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #333 transparent; }
-        .history-scroll::-webkit-scrollbar { width: 4px; }
-        .history-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        .history-scroll { max-height: 180px; overflow-y: auto; }
+        
+        /* ESTILOS DEL SLIDER (NUEVO) */
+        .swipe-container {
+            position: relative;
+            background: rgba(255,255,255,0.05);
+            height: 60px;
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .swipe-text {
+            font-size: 12px;
+            font-weight: 900;
+            color: rgba(255,255,255,0.3);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .swipe-handle {
+            position: absolute;
+            left: 5px;
+            top: 5px;
+            height: 50px;
+            width: 60px;
+            background: white;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: black;
+            cursor: pointer;
+            z-index: 2;
+            transition: transform 0.1s ease-out;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .swipe-bg-progress {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0%;
+            background: var(--mx-green);
+            opacity: 0.3;
+            transition: width 0.1s ease-out;
+        }
     </style>
 </head>
 <body>
@@ -27,18 +71,16 @@
     <div id="notification-container"></div>
 
     <div id="loading" class="fixed inset-0 bg-black flex flex-col items-center justify-center z-[500]">
-        <div class="w-24 h-24 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-        <h2 class="text-white font-black tracking-[0.3em] animate-pulse uppercase text-xl mt-4">Win<span class="text-emerald-500">MX</span></h2>
+        <div class="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+        <h2 class="text-white font-black tracking-[0.3em] uppercase text-sm mt-4">Win<span class="text-emerald-500">MX</span></h2>
     </div>
 
     <header id="nav" class="hidden glass sticky top-0 z-50 py-4 px-8 flex justify-between items-center border-b border-white/5">
-        <div class="flex items-center gap-3">
-            <div class="bg-emerald-600 px-3 py-1 rounded font-black italic text-black skew-x-[-15deg]">WinMX</div>
-        </div>
+        <div class="flex items-center gap-3"><div class="bg-emerald-600 px-3 py-1 rounded font-black italic text-black skew-x-[-15deg]">WinMX</div></div>
         <div class="flex items-center gap-6">
-            <div onclick="openBank()" class="cursor-pointer group flex items-center gap-3 bg-zinc-900 px-5 py-2 rounded-2xl border border-white/10 hover:border-emerald-500 transition">
+            <div onclick="openBank()" class="cursor-pointer flex items-center gap-3 bg-zinc-900 px-5 py-2 rounded-2xl border border-white/10">
                 <div class="text-right">
-                    <p class="text-[10px] text-zinc-500 font-bold uppercase">Balance</p>
+                    <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Balance</p>
                     <p id="balance" class="text-emerald-400 font-black text-lg leading-tight">$0</p>
                 </div>
                 <i class="fas fa-wallet text-emerald-500"></i>
@@ -47,88 +89,74 @@
         </div>
     </header>
 
-    <div id="auth" class="min-h-screen flex items-center justify-center p-6 hidden">
-        <div class="glass p-10 rounded-[2.5rem] w-full max-w-md shadow-2xl text-center border-b-4 border-emerald-600">
-            <h2 class="text-5xl font-black italic tracking-tighter mb-8">Win<span class="text-emerald-500">MX</span></h2>
-            <div class="space-y-4 mb-8">
-                <input id="email" type="email" placeholder="Correo" class="w-full bg-zinc-900 p-5 rounded-2xl border border-white/5 outline-none focus:border-emerald-500">
-                <input id="pass" type="password" placeholder="Pass" class="w-full bg-zinc-900 p-5 rounded-2xl border border-white/5 outline-none focus:border-emerald-500">
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <button onclick="handleAuth('up')" class="bg-zinc-800 py-4 rounded-2xl font-bold">REGISTRO</button>
-                <button onclick="handleAuth('in')" class="bg-emerald-600 text-black py-4 rounded-2xl font-black uppercase">ENTRAR</button>
-            </div>
-        </div>
-    </div>
-
     <main id="app" class="hidden p-8 max-w-7xl mx-auto">
-        <h2 class="text-2xl font-black mb-8">SALAS <span class="text-emerald-500">VIP</span></h2>
+        <h2 class="text-2xl font-black mb-8 italic">SALAS <span class="text-emerald-500">WinMX</span></h2>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
-            <div onclick="tab('slots')" class="card-game glass p-8 rounded-[2rem] text-center"><div class="text-5xl mb-4">🎰</div><p class="font-black text-xs uppercase tracking-widest">Tragamonedas</p></div>
-            <div onclick="tab('crash')" class="card-game glass p-8 rounded-[2rem] text-center"><div class="text-5xl mb-4">🚀</div><p class="font-black text-xs uppercase tracking-widest">Crash Win</p></div>
-            <div onclick="tab('roulette')" class="card-game glass p-8 rounded-[2rem] text-center"><div class="text-5xl mb-4">🎯</div><p class="font-black text-xs uppercase tracking-widest">Ruleta MX</p></div>
-            <div onclick="tab('flip')" class="card-game glass p-8 rounded-[2rem] text-center"><div class="text-5xl mb-4">🪙</div><p class="font-black text-xs uppercase tracking-widest">Coin Flip</p></div>
-        </div>
-
-        <div id="game-zone">
-            <div id="tab-slots" class="tab-content glass p-12 rounded-[3rem] text-center max-w-2xl mx-auto border-t-4 border-emerald-500">
-                <div class="flex justify-center gap-4 mb-10">
-                    <div id="s1" class="w-24 h-32 bg-zinc-950 rounded-2xl text-6xl flex items-center justify-center border border-white/5">💎</div>
-                    <div id="s2" class="w-24 h-32 bg-zinc-950 rounded-2xl text-6xl flex items-center justify-center border border-white/5">💎</div>
-                    <div id="s3" class="w-24 h-32 bg-zinc-950 rounded-2xl text-6xl flex items-center justify-center border border-white/5">💎</div>
-                </div>
-                <button id="btn-slots" onclick="playSlots()" class="w-full max-w-sm bg-emerald-600 text-black py-5 rounded-2xl font-black text-xl">GIRAR AHORA</button>
+            <div onclick="tab('slots')" class="glass p-8 rounded-[2rem] text-center border border-white/5 hover:border-emerald-500 transition cursor-pointer">
+                <div class="text-5xl mb-4">🎰</div>
+                <p class="font-black text-xs uppercase tracking-widest">Tragamonedas</p>
             </div>
+        </div>
+        <div id="tab-slots" class="tab-content glass p-12 rounded-[3rem] text-center max-w-2xl mx-auto border-t-4 border-emerald-500">
+            <div class="flex justify-center gap-4 mb-10">
+                <div id="s1" class="w-20 h-28 bg-black rounded-2xl text-5xl flex items-center justify-center border border-white/10">💎</div>
+                <div id="s2" class="w-20 h-28 bg-black rounded-2xl text-5xl flex items-center justify-center border border-white/10">💎</div>
+                <div id="s3" class="w-20 h-28 bg-black rounded-2xl text-5xl flex items-center justify-center border border-white/10">💎</div>
+            </div>
+            <button id="btn-slots" onclick="playSlots()" class="w-full max-w-sm bg-emerald-600 text-black py-5 rounded-2xl font-black text-xl uppercase italic">Girar</button>
         </div>
     </main>
 
     <div id="bank-modal" class="fixed inset-0 bg-black/95 z-[1000] flex items-center justify-center p-4 hidden">
         <div class="bg-zinc-900 w-full max-w-lg rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl">
-            <div class="bg-emerald-600 p-6 flex justify-between items-center">
-                <h2 class="text-black text-xl font-black italic tracking-tighter">BANCO WinMX</h2>
-                <button onclick="closeBank()" class="text-black text-3xl">&times;</button>
+            <div class="bg-emerald-600 p-6 flex justify-between items-center text-black">
+                <h2 class="text-xl font-black italic tracking-tighter">BANCO WinMX</h2>
+                <button onclick="closeBank()" class="text-3xl">&times;</button>
             </div>
             
             <div class="p-6">
-                <div class="bg-black/50 p-6 rounded-3xl border border-white/5 mb-6 text-center">
-                    <p class="text-[10px] text-zinc-500 font-black uppercase mb-1 tracking-widest">Balance de Cuenta</p>
+                <div class="bg-black/40 p-5 rounded-3xl border border-white/5 mb-6 text-center">
+                    <p class="text-[10px] text-zinc-500 font-bold uppercase mb-1">Tu Efectivo</p>
                     <p id="bank-balance" class="text-4xl font-black text-emerald-400">$0.00</p>
                 </div>
 
-                <div class="flex gap-2 mb-6 bg-black p-1 rounded-xl">
-                    <button onclick="switchBankTab('dep')" id="tab-btn-dep" class="flex-1 py-3 bg-zinc-800 rounded-lg font-bold text-xs">DEPOSITAR</button>
-                    <button onclick="switchBankTab('ret')" id="tab-btn-ret" class="flex-1 py-3 text-zinc-500 rounded-lg font-bold text-xs">RETIRAR</button>
+                <div class="flex gap-2 mb-6 bg-black p-1 rounded-2xl">
+                    <button onclick="switchBankTab('dep')" id="tab-btn-dep" class="flex-1 py-3 bg-zinc-800 rounded-xl font-black text-[10px]">DEPÓSITO</button>
+                    <button onclick="switchBankTab('ret')" id="tab-btn-ret" class="flex-1 py-3 text-zinc-500 rounded-xl font-black text-[10px]">RETIRO</button>
                 </div>
 
                 <div id="section-dep" class="space-y-4">
                     <div id="dep-input-group">
-                        <input id="in-amt" type="number" placeholder="Monto $ MXN" class="w-full bg-black p-5 rounded-2xl border border-white/5 outline-none focus:border-emerald-500 text-xl font-bold">
-                        <button onclick="generateClabeDep()" class="w-full bg-white text-black py-5 rounded-2xl font-black mt-4 uppercase text-sm">Generar CLABE SPEI</button>
-                    </div>
-                    <div id="clabe-display" class="hidden bg-emerald-950/20 p-6 rounded-3xl border border-emerald-500/30 space-y-4">
-                        <div class="text-center">
-                            <span class="text-zinc-500 text-[9px] block mb-1">CUENTA CLABE RECEPTORA</span>
-                            <span id="generated-clabe" class="text-lg font-mono font-bold text-emerald-400">---</span>
+                        <input id="in-amt" type="number" placeholder="Monto a cargar" class="w-full bg-black p-5 rounded-2xl border border-white/5 outline-none focus:border-emerald-500 text-xl font-bold">
+                        
+                        <div class="swipe-container mt-4" id="slider-dep">
+                            <div class="swipe-bg-progress" id="progress-dep"></div>
+                            <span class="swipe-text">Desliza para Depósito</span>
+                            <div class="swipe-handle" id="handle-dep"><i class="fas fa-chevron-right"></i></div>
                         </div>
-                        <button onclick="confirmDeposit()" class="w-full bg-emerald-500 text-black py-4 rounded-xl font-black text-xs uppercase">Ya realicé el pago</button>
+                    </div>
+                    
+                    <div id="clabe-display" class="hidden bg-emerald-950/20 p-6 rounded-3xl border border-emerald-500/30 text-center">
+                        <span class="text-zinc-500 text-[10px] block mb-2 uppercase tracking-widest">CLABE SPEI</span>
+                        <span id="generated-clabe" class="text-lg font-mono font-bold text-emerald-400 block mb-4">---</span>
+                        <button onclick="confirmDeposit()" class="w-full bg-emerald-500 text-black py-4 rounded-xl font-black text-xs uppercase">Confirmar recepción</button>
                     </div>
                 </div>
 
                 <div id="section-ret" class="hidden space-y-4">
-                    <input id="out-amt" type="number" placeholder="¿Cuánto retirar?" class="w-full bg-black p-5 rounded-2xl border border-white/5 outline-none focus:border-red-600 text-lg font-bold">
-                    <input id="out-clabe" type="text" maxlength="18" placeholder="Ingresa tu CLABE (18 dígitos)" class="w-full bg-black p-5 rounded-2xl border border-white/5 outline-none font-mono">
-                    <button onclick="processWithdrawal()" class="w-full bg-zinc-800 text-red-500 py-5 rounded-2xl font-black uppercase text-sm border border-red-500/20">Solicitar Fondos</button>
+                    <input id="out-amt" type="number" placeholder="¿Cuánto retiras?" class="w-full bg-black p-5 rounded-2xl border border-white/5 outline-none font-bold">
+                    <input id="out-clabe" type="text" maxlength="18" placeholder="Tu CLABE (18 dígitos)" class="w-full bg-black p-5 rounded-2xl border border-white/5 outline-none font-mono">
+                    
+                    <div class="swipe-container mt-4 border-red-900/20" id="slider-ret">
+                        <div class="swipe-bg-progress !bg-red-600" id="progress-ret"></div>
+                        <span class="swipe-text">Desliza para Retirar</span>
+                        <div class="swipe-handle" id="handle-ret"><i class="fas fa-chevron-right"></i></div>
+                    </div>
                 </div>
 
                 <hr class="my-6 border-white/5">
-
-                <div>
-                    <h3 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <i class="fas fa-history text-emerald-500"></i> Historial de Movimientos
-                    </h3>
-                    <div id="history-list" class="history-scroll space-y-2 pr-2">
-                        <p id="empty-history" class="text-center text-zinc-600 text-[10px] py-4 uppercase">No hay transacciones recientes</p>
-                    </div>
+                <div id="history-list" class="history-scroll space-y-2">
+                    <p class="text-center text-zinc-600 text-[10px] py-4 uppercase font-bold tracking-widest">Historial Vacío</p>
                 </div>
             </div>
         </div>
@@ -141,24 +169,105 @@
         window.onload = async () => {
             const { data: { session } } = await sb.auth.getSession();
             if(session) { user = session.user; await initApp(); } 
-            else { showAuth(); }
+            else { document.getElementById('loading').classList.add('hidden'); location.reload(); }
         };
 
         async function initApp() {
             const { data } = await sb.from('usuarios').select('*').eq('id', user.id).single();
             if(data) {
                 saldo = data.saldo; 
-                // Cargamos historial guardado si existiera o iniciamos vacío
                 history = JSON.parse(localStorage.getItem(`history_${user.id}`)) || [];
                 updateUI();
                 renderHistory();
+                initSliders();
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('nav').classList.remove('hidden');
                 document.getElementById('app').classList.remove('hidden');
             }
         }
 
-        function showAuth() { document.getElementById('loading').classList.add('hidden'); document.getElementById('auth').classList.remove('hidden'); }
+        // --- LÓGICA DE LOS SLIDERS (NUEVO) ---
+        function initSliders() {
+            setupSlider('dep', () => {
+                const amt = parseInt(document.getElementById('in-amt').value);
+                if(!amt || amt < 50) { toast("Mínimo $50", "err"); return false; }
+                document.getElementById('generated-clabe').innerText = "012" + Math.floor(Math.random() * 1000000000000000);
+                document.getElementById('dep-input-group').classList.add('hidden');
+                document.getElementById('clabe-display').classList.remove('hidden');
+                return true;
+            });
+
+            setupSlider('ret', () => {
+                const amt = parseInt(document.getElementById('out-amt').value);
+                const clabe = document.getElementById('out-clabe').value;
+                if(!amt || amt > saldo) { toast("Saldo insuficiente", "err"); return false; }
+                if(clabe.length !== 18) { toast("CLABE inválida", "err"); return false; }
+                
+                saldo -= amt;
+                addMovement('Retiro', amt, 'Pendiente');
+                updateUI();
+                toast("Retiro en proceso", "ok");
+                closeBank();
+                return true;
+            });
+        }
+
+        function setupSlider(id, onComplete) {
+            const handle = document.getElementById(`handle-${id}`);
+            const progress = document.getElementById(`progress-${id}`);
+            const container = document.getElementById(`slider-${id}`);
+            let isDragging = false;
+            let startX = 0;
+            const maxDrag = container.offsetWidth - handle.offsetWidth - 10;
+
+            const onStart = (e) => { isDragging = true; startX = e.type.includes('mouse') ? e.pageX : e.touches[0].pageX; };
+            const onMove = (e) => {
+                if (!isDragging) return;
+                const x = e.type.includes('mouse') ? e.pageX : e.touches[0].pageX;
+                let moveX = x - startX;
+                if (moveX < 0) moveX = 0;
+                if (moveX > maxDrag) moveX = maxDrag;
+                
+                handle.style.transform = `translateX(${moveX}px)`;
+                progress.style.width = `${(moveX / maxDrag) * 100}%`;
+                
+                if (moveX === maxDrag) {
+                    isDragging = false;
+                    const success = onComplete();
+                    if (!success) resetSlider(handle, progress);
+                }
+            };
+            const onEnd = () => { if (isDragging) { isDragging = false; resetSlider(handle, progress); } };
+
+            handle.addEventListener('mousedown', onStart);
+            handle.addEventListener('touchstart', onStart);
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('touchmove', onMove);
+            window.addEventListener('mouseup', onEnd);
+            window.addEventListener('touchend', onEnd);
+        }
+
+        function resetSlider(handle, progress) {
+            handle.style.transition = 'transform 0.3s ease';
+            progress.style.transition = 'width 0.3s ease';
+            handle.style.transform = 'translateX(0px)';
+            progress.style.width = '0%';
+            setTimeout(() => { handle.style.transition = ''; progress.style.transition = ''; }, 300);
+        }
+
+        // --- SISTEMA BANCARIO ---
+        function confirmDeposit() {
+            const amt = parseInt(document.getElementById('in-amt').value);
+            saldo += amt;
+            addMovement('Depósito', amt);
+            updateUI();
+            toast("Balance actualizado", "ok");
+            closeBank();
+            document.getElementById('dep-input-group').classList.remove('hidden');
+            document.getElementById('clabe-display').classList.add('hidden');
+            document.getElementById('in-amt').value = "";
+            resetSlider(document.getElementById('handle-dep'), document.getElementById('progress-dep'));
+        }
 
         function updateUI() {
             document.getElementById('balance').innerText = `$${saldo.toLocaleString()}`;
@@ -167,105 +276,41 @@
             localStorage.setItem(`history_${user.id}`, JSON.stringify(history));
         }
 
-        // --- SISTEMA DE HISTORIAL ---
-        function addMovement(type, amount, status = 'Completado') {
-            const now = new Date();
-            const timeStr = now.toLocaleDateString() + ' ' + now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0');
-            
-            const movement = {
-                id: Date.now(),
-                type: type, // 'Depósito' o 'Retiro'
-                amount: amount,
-                time: timeStr,
-                status: status
-            };
-            
-            history.unshift(movement); // Agregar al inicio
-            if(history.length > 20) history.pop(); // Mantener solo los últimos 20
+        function addMovement(type, amount, status = 'Éxito') {
+            history.unshift({ type, amount, status, time: new Date().toLocaleTimeString() });
+            if(history.length > 10) history.pop();
             renderHistory();
         }
 
         function renderHistory() {
             const container = document.getElementById('history-list');
             if(history.length === 0) return;
-            
-            document.getElementById('empty-history').classList.add('hidden');
             container.innerHTML = history.map(m => `
-                <div class="bg-black/40 p-3 rounded-xl border border-white/5 flex justify-between items-center text-[11px]">
-                    <div>
-                        <p class="font-bold ${m.type === 'Depósito' ? 'text-emerald-500' : 'text-red-500'} uppercase tracking-tighter">
-                            ${m.type === 'Depósito' ? '↓' : '↑'} ${m.type}
-                        </p>
-                        <p class="text-zinc-600 text-[9px]">${m.time}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="font-black">$${m.amount.toLocaleString()}</p>
-                        <p class="text-[8px] opacity-50 uppercase">${m.status}</p>
-                    </div>
+                <div class="bg-black/20 p-3 rounded-xl flex justify-between items-center text-[10px] border border-white/5">
+                    <div><p class="font-bold ${m.type === 'Depósito' ? 'text-emerald-500' : 'text-red-500'} uppercase">${m.type}</p><p class="opacity-40">${m.time}</p></div>
+                    <div class="text-right font-black">$${m.amount.toLocaleString()}<p class="opacity-30 text-[8px] uppercase">${m.status}</p></div>
                 </div>
             `).join('');
         }
 
-        // --- LÓGICA BANCO ---
-        function switchBankTab(type) {
-            document.getElementById('section-dep').classList.toggle('hidden', type !== 'dep');
-            document.getElementById('section-ret').classList.toggle('hidden', type !== 'ret');
-            document.getElementById('tab-btn-dep').className = type === 'dep' ? "flex-1 py-3 bg-zinc-800 rounded-lg font-bold text-xs" : "flex-1 py-3 text-zinc-500 rounded-lg font-bold text-xs";
-            document.getElementById('tab-btn-ret').className = type === 'ret' ? "flex-1 py-3 bg-zinc-800 rounded-lg font-bold text-xs" : "flex-1 py-3 text-zinc-500 rounded-lg font-bold text-xs";
+        function openBank() { document.getElementById('bank-modal').classList.remove('hidden'); }
+        function closeBank() { document.getElementById('bank-modal').classList.add('hidden'); }
+        function switchBankTab(t) {
+            document.getElementById('section-dep').classList.toggle('hidden', t !== 'dep');
+            document.getElementById('section-ret').classList.toggle('hidden', t !== 'ret');
+            document.getElementById('tab-btn-dep').className = t === 'dep' ? "flex-1 py-3 bg-zinc-800 rounded-xl font-black text-[10px]" : "flex-1 py-3 text-zinc-500 rounded-xl font-black text-[10px]";
+            document.getElementById('tab-btn-ret').className = t === 'ret' ? "flex-1 py-3 bg-zinc-800 rounded-xl font-black text-[10px]" : "flex-1 py-3 text-zinc-500 rounded-xl font-black text-[10px]";
         }
 
-        function generateClabeDep() {
-            const amt = parseInt(document.getElementById('in-amt').value);
-            if(!amt || amt < 50) return toast("Mínimo $50 MXN", "err");
-            document.getElementById('generated-clabe').innerText = "012" + Math.floor(Math.random() * 1000000000000000);
-            document.getElementById('dep-input-group').classList.add('hidden');
-            document.getElementById('clabe-display').classList.remove('hidden');
-        }
-
-        function confirmDeposit() {
-            const amt = parseInt(document.getElementById('in-amt').value);
-            saldo += amt;
-            addMovement('Depósito', amt);
-            updateUI();
-            toast("Transferencia confirmada", "ok");
-            closeBank();
-            document.getElementById('dep-input-group').classList.remove('hidden');
-            document.getElementById('clabe-display').classList.add('hidden');
-            document.getElementById('in-amt').value = "";
-        }
-
-        function processWithdrawal() {
-            const amt = parseInt(document.getElementById('out-amt').value);
-            const clabe = document.getElementById('out-clabe').value;
-            if(!amt || amt > saldo) return toast("Saldo insuficiente", "err");
-            if(clabe.length !== 18) return toast("CLABE inválida", "err");
-
-            saldo -= amt;
-            addMovement('Retiro', amt, 'En Proceso');
-            updateUI();
-            toast("Solicitud de retiro enviada", "ok");
-            closeBank();
-            document.getElementById('out-amt').value = "";
-            document.getElementById('out-clabe').value = "";
-        }
-
-        // --- GENERAL ---
-        function toast(m, t = 'ok') {
+        function toast(m, t) {
             const c = document.getElementById('notification-container');
             const e = document.createElement('div');
-            e.className = `toast glass p-5 rounded-2xl mb-4 border-l-4 ${t==='ok'?'border-emerald-500':'border-red-500'} flex items-center gap-4`;
-            e.innerHTML = `<span class="font-bold uppercase text-[10px] tracking-widest">${m}</span>`;
+            e.className = `toast glass p-4 rounded-2xl mb-4 border-l-4 ${t==='ok'?'border-emerald-500':'border-red-500'} font-bold text-xs`;
+            e.innerText = m.toUpperCase();
             c.appendChild(e);
             setTimeout(() => e.classList.add('show'), 10);
             setTimeout(() => { e.classList.remove('show'); setTimeout(()=>e.remove(), 400); }, 3000);
         }
-
-        function openBank() { document.getElementById('bank-modal').classList.remove('hidden'); }
-        function closeBank() { document.getElementById('bank-modal').classList.add('hidden'); }
-        function tab(id) { document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden')); document.getElementById('tab-'+id).classList.remove('hidden'); }
-        async function logout() { await sb.auth.signOut(); location.reload(); }
-        
-        // (Aquí seguirían tus funciones de juegos slots/crash que ya tienes)
     </script>
 </body>
 </html>
