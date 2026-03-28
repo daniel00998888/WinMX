@@ -12,21 +12,15 @@
         body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
         .glass { background: rgba(20, 20, 20, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); }
         
-        /* SCROLL DEL BANCO */
-        .bank-scroll-area {
-            max-height: 65vh;
-            overflow-y: auto;
-            padding-right: 8px;
-            scroll-behavior: smooth;
-        }
+        .bank-scroll-area { max-height: 60vh; overflow-y: auto; padding-right: 8px; }
         .bank-scroll-area::-webkit-scrollbar { width: 4px; }
         .bank-scroll-area::-webkit-scrollbar-thumb { background: var(--mx-green); border-radius: 10px; }
 
         .card-game { transition: all 0.3s; cursor: pointer; border: 1px solid rgba(255,255,255,0.05); }
-        .card-game:hover { border-color: var(--gold); transform: translateY(-5px); background: rgba(255,255,255,0.03); }
+        .card-game:hover { border-color: var(--gold); transform: translateY(-5px); background: rgba(255,255,255,0.02); }
         
-        .spinning { animation: spin 0.15s infinite linear; }
-        @keyframes spin { from { transform: translateY(-10px); filter: blur(4px); } to { transform: translateY(10px); filter: blur(4px); } }
+        .spinning { animation: spin 0.1s infinite linear; }
+        @keyframes spin { from { transform: translateY(-20px); filter: blur(6px); opacity: 0.5; } to { transform: translateY(20px); filter: blur(6px); opacity: 0.5; } }
         
         #notification-container { position: fixed; top: 20px; right: 20px; z-index: 10000; }
         .toast { transform: translateX(120%); transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
@@ -38,85 +32,88 @@
     <div id="notification-container"></div>
 
     <div id="loading" class="fixed inset-0 bg-black flex flex-col items-center justify-center z-[500]">
-        <div class="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-        <h2 class="text-white font-black tracking-[0.3em] uppercase text-sm mt-4 italic">Win<span class="text-emerald-500">MX</span></h2>
+        <div class="w-12 h-12 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+
+    <div id="auth" class="min-h-screen flex items-center justify-center p-6 hidden">
+        <div class="glass p-10 rounded-[2.5rem] w-full max-w-md text-center border-b-4 border-emerald-600">
+            <h2 class="text-5xl font-black italic mb-10 tracking-tighter">Win<span class="text-emerald-500">MX</span></h2>
+            <div class="space-y-4 mb-8">
+                <input id="email" type="email" placeholder="Correo electrónico" class="w-full bg-zinc-900 p-5 rounded-2xl border border-white/5 outline-none focus:border-emerald-500 text-sm">
+                <input id="pass" type="password" placeholder="Contraseña" class="w-full bg-zinc-900 p-5 rounded-2xl border border-white/5 outline-none focus:border-emerald-500 text-sm">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="handleAuth('up')" class="bg-zinc-800 py-4 rounded-2xl font-bold text-xs uppercase">Registrar</button>
+                <button onclick="handleAuth('in')" class="bg-emerald-600 text-black py-4 rounded-2xl font-black text-xs uppercase">Entrar</button>
+            </div>
+        </div>
     </div>
 
     <header id="nav" class="hidden glass sticky top-0 z-50 py-4 px-8 flex justify-between items-center border-b border-white/5">
-        <div class="flex items-center gap-3">
-            <div class="bg-emerald-600 px-3 py-1 rounded font-black italic text-black skew-x-[-15deg]">WinMX</div>
-        </div>
+        <div class="bg-emerald-600 px-3 py-1 rounded font-black italic text-black skew-x-[-15deg]">WinMX</div>
         <div class="flex items-center gap-6">
-            <div onclick="openBank()" class="cursor-pointer flex items-center gap-3 bg-zinc-900 px-5 py-2 rounded-2xl border border-white/10 hover:border-emerald-500 transition">
+            <div onclick="openBank()" class="cursor-pointer flex items-center gap-3 bg-zinc-950 px-5 py-2 rounded-2xl border border-white/10">
                 <div class="text-right">
-                    <p class="text-[10px] text-zinc-500 font-bold uppercase">Balance</p>
+                    <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Balance</p>
                     <p id="balance" class="text-emerald-400 font-black text-lg">$0</p>
                 </div>
                 <i class="fas fa-wallet text-emerald-500"></i>
             </div>
-            <button onclick="logout()" class="text-zinc-500 hover:text-red-500 transition"><i class="fas fa-power-off text-xl"></i></button>
+            <button onclick="logout()" class="text-zinc-600 hover:text-red-500 transition"><i class="fas fa-power-off"></i></button>
         </div>
     </header>
 
-    <div id="auth" class="min-h-screen flex items-center justify-center p-6 hidden">
-        <div class="glass p-10 rounded-[2.5rem] w-full max-w-md text-center border-b-4 border-emerald-600">
-            <h2 class="text-5xl font-black italic mb-8 italic">Win<span class="text-emerald-500">MX</span></h2>
-            <div class="space-y-4 mb-8">
-                <input id="email" type="email" placeholder="Correo Electrónico" class="w-full bg-zinc-900 p-5 rounded-2xl border border-white/5 outline-none focus:border-emerald-500">
-                <input id="pass" type="password" placeholder="Contraseña" class="w-full bg-zinc-900 p-5 rounded-2xl border border-white/5 outline-none focus:border-emerald-500">
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <button onclick="handleAuth('up')" class="bg-zinc-800 py-4 rounded-2xl font-bold">REGISTRO</button>
-                <button onclick="handleAuth('in')" class="bg-emerald-600 text-black py-4 rounded-2xl font-black uppercase">ENTRAR</button>
-            </div>
-        </div>
-    </div>
-
     <main id="app" class="hidden p-8 max-w-7xl mx-auto">
-        <h2 class="text-2xl font-black mb-8 italic">SALAS <span class="text-emerald-500">VIP</span></h2>
+        <h2 class="text-2xl font-black mb-8 italic uppercase tracking-tighter">Salas <span class="text-emerald-500">VIP</span></h2>
         
         <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
             <div onclick="tab('slots')" class="card-game glass p-8 rounded-[2rem] text-center">
                 <div class="text-5xl mb-4">🎰</div>
-                <p class="font-black text-xs uppercase tracking-widest">Tragamonedas</p>
+                <p class="font-black text-[10px] uppercase tracking-[0.2em]">Tragamonedas</p>
             </div>
             <div onclick="tab('crash')" class="card-game glass p-8 rounded-[2rem] text-center">
                 <div class="text-5xl mb-4">🚀</div>
-                <p class="font-black text-xs uppercase tracking-widest">Crash Win</p>
+                <p class="font-black text-[10px] uppercase tracking-[0.2em]">Crash Win</p>
             </div>
             <div onclick="tab('roulette')" class="card-game glass p-8 rounded-[2rem] text-center">
                 <div class="text-5xl mb-4">🎯</div>
-                <p class="font-black text-xs uppercase tracking-widest">Ruleta MX</p>
+                <p class="font-black text-[10px] uppercase tracking-[0.2em]">Ruleta MX</p>
             </div>
             <div onclick="tab('flip')" class="card-game glass p-8 rounded-[2rem] text-center">
                 <div class="text-5xl mb-4">🪙</div>
-                <p class="font-black text-xs uppercase tracking-widest">Coin Flip</p>
+                <p class="font-black text-[10px] uppercase tracking-[0.2em]">Coin Flip</p>
             </div>
         </div>
 
         <div id="game-zone">
             <div id="tab-slots" class="tab-content glass p-12 rounded-[3rem] text-center max-w-2xl mx-auto border-t-4 border-emerald-500">
                 <div class="flex justify-center gap-4 mb-10">
-                    <div id="s1" class="w-24 h-32 bg-zinc-950 rounded-2xl text-6xl flex items-center justify-center border border-white/5">💎</div>
-                    <div id="s2" class="w-24 h-32 bg-zinc-950 rounded-2xl text-6xl flex items-center justify-center border border-white/5">💎</div>
-                    <div id="s3" class="w-24 h-32 bg-zinc-950 rounded-2xl text-6xl flex items-center justify-center border border-white/5">💎</div>
+                    <div id="s1" class="w-20 h-28 bg-black rounded-2xl text-5xl flex items-center justify-center border border-white/5">💎</div>
+                    <div id="s2" class="w-20 h-28 bg-black rounded-2xl text-5xl flex items-center justify-center border border-white/5">💎</div>
+                    <div id="s3" class="w-20 h-28 bg-black rounded-2xl text-5xl flex items-center justify-center border border-white/5">💎</div>
                 </div>
-                <button id="btn-slots" onclick="playSlots()" class="w-full max-w-sm bg-emerald-600 text-black py-5 rounded-2xl font-black text-xl italic uppercase">Girar Ahora</button>
+                <div class="mb-6">
+                    <p class="text-[10px] text-zinc-500 font-bold mb-2">APUESTA POR GIRO: $10.00</p>
+                    <button id="btn-slots" onclick="playSlots()" class="w-full max-w-sm bg-emerald-600 text-black py-5 rounded-2xl font-black text-xl italic uppercase">Girar</button>
+                </div>
             </div>
+            
+            <div id="tab-crash" class="tab-content hidden glass p-20 rounded-[3rem] text-center max-w-2xl mx-auto">
+                <p class="text-zinc-500 uppercase font-bold text-xs">Sala de Crash en mantenimiento...</p>
             </div>
+        </div>
     </main>
 
     <div id="bank-modal" class="fixed inset-0 bg-black/95 z-[1000] flex items-center justify-center p-4 hidden">
-        <div class="bg-zinc-900 w-full max-w-lg rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl relative">
-            
+        <div class="bg-zinc-900 w-full max-w-lg rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl">
             <div class="bg-emerald-600 p-6 flex justify-between items-center text-black">
-                <h2 class="text-xl font-black italic tracking-tighter uppercase">Banco WinMX</h2>
+                <h2 class="text-xl font-black italic tracking-tighter">BANCO WinMX</h2>
                 <button onclick="closeBank()" class="text-3xl">&times;</button>
             </div>
             
             <div class="bank-scroll-area p-6">
                 <div class="bg-black/40 p-6 rounded-3xl border border-white/5 mb-6 text-center">
-                    <p class="text-[10px] text-zinc-500 font-bold uppercase mb-1">Saldo Disponible</p>
+                    <p class="text-[10px] text-zinc-500 font-bold uppercase mb-1">Tu Saldo</p>
                     <p id="bank-balance" class="text-4xl font-black text-emerald-400">$0.00</p>
                 </div>
 
@@ -127,33 +124,33 @@
 
                 <div id="section-dep" class="space-y-4">
                     <div id="dep-input-group">
-                        <input id="in-amt" type="number" placeholder="Monto MXN" class="w-full bg-black p-5 rounded-2xl border border-white/5 outline-none focus:border-emerald-500 text-xl font-bold">
-                        <button onclick="processDepositBtn()" class="w-full bg-white text-black py-5 rounded-2xl font-black mt-4 uppercase text-sm">Generar CLABE de Pago</button>
+                        <input id="in-amt" type="number" placeholder="¿Cuánto quieres cargar?" class="w-full bg-black p-5 rounded-2xl border border-white/5 outline-none focus:border-emerald-500 font-bold">
+                        <button onclick="processDeposit()" class="w-full bg-white text-black py-5 rounded-2xl font-black mt-4 uppercase text-xs">Generar Cuenta CLABE</button>
                     </div>
                     <div id="clabe-display" class="hidden bg-emerald-950/20 p-5 rounded-3xl border border-emerald-500/30 text-center">
-                        <span class="text-zinc-500 text-[10px] block mb-2 uppercase">Cuenta CLABE SPEI</span>
-                        <span id="generated-clabe" class="text-lg font-mono font-bold text-emerald-400 block mb-4 tracking-tighter">---</span>
-                        <button onclick="confirmFinalDeposit()" class="w-full bg-emerald-500 text-black py-4 rounded-xl font-black text-xs uppercase">Confirmar Transferencia</button>
+                        <span class="text-zinc-500 text-[9px] block mb-2 uppercase tracking-widest">CLABE SPEI WinMX</span>
+                        <span id="generated-clabe" class="text-lg font-mono font-bold text-emerald-400 block mb-4">---</span>
+                        <button onclick="confirmDeposit()" class="w-full bg-emerald-500 text-black py-4 rounded-xl font-black text-[10px] uppercase">He transferido el monto</button>
                     </div>
                 </div>
 
                 <div id="section-ret" class="hidden space-y-4">
                     <input id="out-amt" type="number" placeholder="Monto a retirar" class="w-full bg-black p-5 rounded-2xl border border-white/5 outline-none font-bold">
-                    <input id="out-clabe" type="text" maxlength="18" placeholder="Tu CLABE (18 dígitos)" class="w-full bg-black p-5 rounded-2xl border border-white/5 outline-none font-mono">
-                    <button onclick="processWithdrawalBtn()" class="w-full bg-zinc-800 text-red-500 py-5 rounded-2xl font-black uppercase text-sm border border-red-500/20">Solicitar Retiro</button>
+                    <input id="out-clabe" type="text" maxlength="18" placeholder="Tu CLABE (18 dígitos)" class="w-full bg-black p-5 rounded-2xl border border-white/5 outline-none font-mono text-sm">
+                    <button onclick="processWithdrawal()" class="w-full bg-zinc-800 text-red-500 py-5 rounded-2xl font-black uppercase text-[10px] border border-red-500/20">Solicitar Retiro</button>
                 </div>
 
                 <hr class="my-8 border-white/5">
-
-                <h3 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4 italic">Historial de Transacciones</h3>
-                <div id="history-list" class="space-y-2 pb-6">
-                    <p class="text-center text-zinc-700 text-[9px] py-4 uppercase font-bold">Sin movimientos aún</p>
+                <h3 class="text-[10px] font-black text-zinc-500 uppercase mb-4 tracking-widest italic">Movimientos Recientes</h3>
+                <div id="history-list" class="space-y-2 pb-6 text-center text-zinc-700 text-[9px] font-bold">
+                    No hay transacciones registradas
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        // CONFIGURACIÓN SUPABASE
         const sb = window.supabase.createClient("https://dakhnqriwbzihlzhtfcb.supabase.co", "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs");
         let user = null, saldo = 0, history = [];
 
@@ -164,7 +161,7 @@
         };
 
         async function initApp() {
-            const { data } = await sb.from('usuarios').select('*').eq('id', user.id).single();
+            const { data, error } = await sb.from('usuarios').select('*').eq('id', user.id).single();
             if(data) {
                 saldo = data.saldo; 
                 history = JSON.parse(localStorage.getItem(`history_${user.id}`)) || [];
@@ -173,46 +170,104 @@
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('nav').classList.remove('hidden');
                 document.getElementById('app').classList.remove('hidden');
+            } else {
+                // Crear usuario si no existe en la tabla
+                await sb.from('usuarios').insert([{ id: user.id, saldo: 100, email: user.email }]);
+                location.reload();
             }
         }
 
-        // LÓGICA DE BOTONES (SIN DESLIZAR)
-        function processDepositBtn() {
+        // AUTENTICACIÓN
+        async function handleAuth(mode) {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('pass').value;
+            if(!email || !pass) return toast("Completa los campos", "err");
+
+            try {
+                if(mode === 'up') {
+                    const { data, error } = await sb.auth.signUp({ email, password: pass });
+                    if(error) throw error;
+                    toast("Registro exitoso. ¡Inicia sesión!", "ok");
+                } else {
+                    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+                    if(error) throw error;
+                    location.reload();
+                }
+            } catch(e) { toast(e.message, "err"); }
+        }
+
+        // SISTEMA DE JUEGO (SLOTS)
+        function playSlots() {
+            if(saldo < 10) return toast("Saldo insuficiente (Mín. $10)", "err");
+            
+            const btn = document.getElementById('btn-slots');
+            const reels = [document.getElementById('s1'), document.getElementById('s2'), document.getElementById('s3')];
+            const icons = ["🍒", "💎", "7️⃣", "🔔", "🍉", "🍀"];
+            
+            btn.disabled = true;
+            saldo -= 10;
+            updateUI();
+            
+            reels.forEach(r => r.classList.add('spinning'));
+
+            setTimeout(() => {
+                const results = reels.map(r => {
+                    r.classList.remove('spinning');
+                    const res = icons[Math.floor(Math.random() * icons.length)];
+                    r.innerText = res;
+                    return res;
+                });
+
+                // Lógica de premios
+                if(results[0] === results[1] && results[1] === results[2]) {
+                    const win = 100;
+                    saldo += win;
+                    toast(`¡JACKPOT! Ganaste $${win}`, "ok");
+                } else if(results[0] === results[1] || results[1] === results[2]) {
+                    const win = 20;
+                    saldo += win;
+                    toast(`¡Par! Ganaste $${win}`, "ok");
+                }
+                
+                updateUI();
+                btn.disabled = false;
+            }, 1000);
+        }
+
+        // BANCO
+        function processDeposit() {
             const amt = parseInt(document.getElementById('in-amt').value);
             if(!amt || amt < 50) return toast("Mínimo $50 MXN", "err");
-            document.getElementById('generated-clabe').innerText = "012" + Math.floor(Math.random() * 1000000000000000);
+            document.getElementById('generated-clabe').innerText = "012 " + Math.floor(Math.random()*900 + 100) + " " + Math.floor(Math.random()*900000000000 + 100000000000);
             document.getElementById('dep-input-group').classList.add('hidden');
             document.getElementById('clabe-display').classList.remove('hidden');
         }
 
-        function confirmFinalDeposit() {
+        function confirmDeposit() {
             const amt = parseInt(document.getElementById('in-amt').value);
             saldo += amt;
             addMovement('Depósito', amt);
             updateUI();
-            toast("¡Depósito acreditado!", "ok");
+            toast("Balance actualizado", "ok");
             closeBank();
             document.getElementById('dep-input-group').classList.remove('hidden');
             document.getElementById('clabe-display').classList.add('hidden');
             document.getElementById('in-amt').value = "";
         }
 
-        function processWithdrawalBtn() {
+        function processWithdrawal() {
             const amt = parseInt(document.getElementById('out-amt').value);
             const clabe = document.getElementById('out-clabe').value;
-            if(!amt || amt > saldo) return toast("Saldo insuficiente", "err");
-            if(clabe.length !== 18) return toast("CLABE de 18 dígitos requerida", "err");
+            if(!amt || amt > saldo) return toast("Fondos insuficientes", "err");
+            if(clabe.length !== 18) return toast("CLABE inválida (18 dígitos)", "err");
             
             saldo -= amt;
-            addMovement('Retiro', amt, 'En proceso');
+            addMovement('Retiro', amt, 'Pendiente');
             updateUI();
-            toast("Solicitud de retiro enviada", "ok");
+            toast("Retiro solicitado con éxito", "ok");
             closeBank();
-            document.getElementById('out-amt').value = "";
-            document.getElementById('out-clabe').value = "";
         }
 
-        // UI & SISTEMA
         function updateUI() {
             document.getElementById('balance').innerText = `$${saldo.toLocaleString()}`;
             document.getElementById('bank-balance').innerText = `$${saldo.toLocaleString()}.00`;
@@ -221,9 +276,8 @@
         }
 
         function addMovement(type, amount, status = 'Éxito') {
-            const time = new Date().toLocaleString();
-            history.unshift({ type, amount, status, time });
-            if(history.length > 15) history.pop();
+            history.unshift({ type, amount, status, time: new Date().toLocaleTimeString() });
+            if(history.length > 10) history.pop();
             renderHistory();
         }
 
@@ -231,52 +285,42 @@
             const container = document.getElementById('history-list');
             if(history.length === 0) return;
             container.innerHTML = history.map(m => `
-                <div class="bg-black/30 p-3 rounded-xl flex justify-between items-center border border-white/5 text-[11px]">
-                    <div>
+                <div class="bg-black/30 p-3 rounded-xl flex justify-between items-center border border-white/5 text-[10px] mb-2">
+                    <div class="text-left">
                         <p class="font-black ${m.type === 'Depósito' ? 'text-emerald-500' : 'text-red-500'} uppercase">${m.type}</p>
-                        <p class="text-[9px] text-zinc-600">${m.time}</p>
+                        <p class="text-[8px] text-zinc-600">${m.time}</p>
                     </div>
                     <div class="text-right font-black">
                         $${m.amount.toLocaleString()}
-                        <p class="text-[8px] opacity-40 uppercase">${m.status}</p>
+                        <p class="text-[7px] opacity-40 uppercase">${m.status}</p>
                     </div>
                 </div>
             `).join('');
         }
 
+        // NAVEGACIÓN
+        function openBank() { document.getElementById('bank-modal').classList.remove('hidden'); }
+        function closeBank() { document.getElementById('bank-modal').classList.add('hidden'); }
         function switchBankTab(t) {
             document.getElementById('section-dep').classList.toggle('hidden', t !== 'dep');
             document.getElementById('section-ret').classList.toggle('hidden', t !== 'ret');
             document.getElementById('tab-btn-dep').className = t === 'dep' ? "flex-1 py-3 bg-zinc-800 rounded-xl font-black text-[10px]" : "flex-1 py-3 text-zinc-500 rounded-xl font-black text-[10px]";
             document.getElementById('tab-btn-ret').className = t === 'ret' ? "flex-1 py-3 bg-zinc-800 rounded-xl font-black text-[10px]" : "flex-1 py-3 text-zinc-500 rounded-xl font-black text-[10px]";
         }
-
-        function openBank() { document.getElementById('bank-modal').classList.remove('hidden'); }
-        function closeBank() { document.getElementById('bank-modal').classList.add('hidden'); }
-        function tab(id) { document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden')); document.getElementById('tab-'+id).classList.remove('hidden'); }
+        function tab(id) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.getElementById('tab-'+id).classList.remove('hidden');
+        }
         function toast(m, t) {
             const c = document.getElementById('notification-container');
             const e = document.createElement('div');
-            e.className = `toast glass p-4 rounded-2xl mb-4 border-l-4 ${t==='ok'?'border-emerald-500':'border-red-500'} font-bold text-xs uppercase`;
+            e.className = `toast glass p-4 rounded-xl mb-4 border-l-4 ${t==='ok'?'border-emerald-500':'border-red-500'} font-bold text-[10px] uppercase`;
             e.innerText = m;
             c.appendChild(e);
             setTimeout(() => e.classList.add('show'), 10);
             setTimeout(() => { e.classList.remove('show'); setTimeout(()=>e.remove(), 400); }, 3000);
         }
         async function logout() { await sb.auth.signOut(); location.reload(); }
-
-        // SLOTS SIMPLE
-        function playSlots() {
-            const btn = document.getElementById('btn-slots');
-            const reels = [document.getElementById('s1'), document.getElementById('s2'), document.getElementById('s3')];
-            if(saldo < 10) return toast("Saldo insuficiente", "err");
-            btn.disabled = true; saldo -= 10; updateUI();
-            reels.forEach(r => r.classList.add('spinning'));
-            setTimeout(() => {
-                reels.forEach(r => { r.classList.remove('spinning'); r.innerText = ["🍒", "💎", "7️⃣", "🔔"][Math.floor(Math.random()*4)]; });
-                btn.disabled = false;
-            }, 1000);
-        }
     </script>
 </body>
 </html>
