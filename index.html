@@ -3,128 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WinMX | Pro Probability System</title>
+    <title>WinMX | Hard-Core Probability Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;700;900&display=swap');
-        
         :root { --mx-green: #10b981; --mx-dark: #050505; }
         body { background: var(--mx-dark); color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
         .font-casino { font-family: 'Archivo Black', sans-serif; }
-        
-        .glass { background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.05); }
-        .btn-primary { background: var(--mx-green); color: black; transition: 0.3s; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(16, 185, 129, 0.5); }
-        
-        /* Contenedor de Rodillos */
-        .slot-box { height: 150px; overflow: hidden; background: #000; border: 3px solid #1a1a1a; border-radius: 2rem; position: relative; box-shadow: inset 0 0 60px #000; }
+        .glass { background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.05); }
+        .btn-primary { background: var(--mx-green); color: black; transition: 0.3s; font-weight: 900; }
+        .btn-primary:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(16, 185, 129, 0.4); }
+        .slot-box { height: 150px; overflow: hidden; background: #000; border: 3px solid #151515; border-radius: 2rem; position: relative; }
         .slot-reel { display: flex; flex-direction: column; align-items: center; }
         .slot-item { height: 150px; min-height: 150px; display: flex; align-items: center; justify-content: center; font-size: 4.5rem; }
-
-        /* Pestañas de Historial */
-        .tab-btn { padding: 12px 20px; font-size: 10px; font-weight: 900; color: #444; border-bottom: 2px solid transparent; transition: 0.3s; text-transform: uppercase; }
+        .tab-btn { padding: 12px; font-size: 10px; font-weight: 900; color: #444; border-bottom: 2px solid transparent; text-transform: uppercase; transition: 0.3s; }
         .tab-btn.active { color: var(--mx-green); border-bottom: 2px solid var(--mx-green); }
-
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar { width: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #333; }
     </style>
 </head>
 <body class="antialiased">
 
-    <div id="loading" class="fixed inset-0 bg-black flex items-center justify-center z-[9999] hidden">
-        <div class="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-    </div>
-
-    <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4">
-        <div class="glass p-12 rounded-[4rem] w-full max-w-md text-center border-b-[12px] border-emerald-600 shadow-2xl">
-            <h2 class="text-7xl font-casino italic mb-2 tracking-tighter">Win<span class="text-emerald-500">MX</span></h2>
-            <p class="text-zinc-600 text-[10px] tracking-[0.6em] font-black mb-12 uppercase">Math-Based Odds System</p>
-            <input id="auth-email" type="email" placeholder="CORREO ELECTRÓNICO" class="w-full bg-black p-6 rounded-3xl border border-white/5 outline-none focus:border-emerald-500 text-white font-bold mb-6 text-center text-xl">
-            <button onclick="handleQuickAccess()" class="btn-primary w-full py-6 rounded-3xl font-black uppercase italic tracking-widest">Entrar</button>
-        </div>
-    </div>
-
-    <div id="main-app" class="hidden min-h-screen">
+    <div id="main-app" class="min-h-screen">
         <nav class="p-6 flex justify-between items-center glass sticky top-0 z-50">
             <h1 class="text-4xl font-casino italic tracking-tighter">Win<span class="text-emerald-500">MX</span></h1>
-            <div class="flex items-center gap-8">
-                <div onclick="openBankPanel()" class="flex flex-col items-end cursor-pointer group">
-                    <span class="text-[9px] text-zinc-500 font-black uppercase tracking-widest group-hover:text-emerald-500 transition">Saldo WinMX</span>
-                    <span id="balance-display" class="text-3xl font-casino text-emerald-400 leading-none">$1,000.00</span>
+            <div class="flex items-center gap-6">
+                <div class="flex flex-col items-end">
+                    <span class="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Saldo Real</span>
+                    <span id="balance-display" class="text-3xl font-casino text-emerald-400">$1,000.00</span>
                 </div>
-                <button onclick="openBankPanel()" class="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500 hover:text-black transition">
-                    <i class="fas fa-wallet text-xl"></i>
-                </button>
+                <button onclick="openBank()" class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"><i class="fas fa-wallet"></i></button>
             </div>
         </nav>
 
         <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-10 pt-10">
-            
-            <div class="lg:col-span-7">
-                <div class="glass p-12 rounded-[4rem] shadow-2xl border border-white/5 relative overflow-hidden">
-                    <div class="flex justify-center mb-8 gap-4">
-                        <div class="px-4 py-1 rounded-full bg-zinc-900 border border-white/5 text-[9px] font-bold text-zinc-500">RTP: 95%</div>
-                        <div class="px-4 py-1 rounded-full bg-zinc-900 border border-white/5 text-[9px] font-bold text-zinc-500">VOLATILIDAD: ALTA</div>
-                    </div>
-
+            <div class="lg:col-span-7 space-y-6">
+                <div class="glass p-10 rounded-[3.5rem] border border-white/5 shadow-2xl">
                     <div class="grid grid-cols-3 gap-6 mb-12">
                         <div class="slot-box"><div id="reel-1" class="slot-reel"></div></div>
                         <div class="slot-box"><div id="reel-2" class="slot-reel"></div></div>
                         <div class="slot-box"><div id="reel-3" class="slot-reel"></div></div>
                     </div>
-
-                    <div class="flex flex-col items-center gap-10">
-                        <div class="flex items-center gap-10 bg-black/50 p-4 rounded-full border border-white/5 px-8">
-                            <button onclick="changeBet(-50)" class="w-12 h-12 rounded-full bg-zinc-900 font-black hover:bg-emerald-500 transition">-</button>
-                            <div class="text-center min-w-[140px]">
-                                <span id="bet-display" class="text-4xl font-casino">$10</span>
-                            </div>
-                            <button onclick="changeBet(50)" class="w-12 h-12 rounded-full bg-zinc-900 font-black hover:bg-emerald-500 transition">+</button>
+                    <div class="flex flex-col items-center gap-8">
+                        <div class="flex items-center gap-10 bg-black p-4 rounded-full border border-white/5">
+                            <button onclick="changeBet(-50)" class="w-10 h-10 rounded-full bg-zinc-900">-</button>
+                            <span id="bet-display" class="text-4xl font-casino">$10</span>
+                            <button onclick="changeBet(50)" class="w-10 h-10 rounded-full bg-zinc-900">+</button>
                         </div>
-                        <button id="spin-btn" onclick="spin()" class="btn-primary w-full py-8 rounded-[3rem] font-casino text-4xl uppercase italic tracking-tighter">Girar Rodillos</button>
+                        <button id="spin-btn" onclick="spin()" class="btn-primary w-full py-8 rounded-[2.5rem] font-casino text-4xl uppercase italic">Girar Rodillos</button>
                     </div>
                 </div>
             </div>
 
-            <div id="bank-section" class="lg:col-span-5">
-                <div class="glass p-10 rounded-[4rem] h-full flex flex-col border border-white/5">
-                    <h3 class="font-casino text-2xl mb-8 text-emerald-500">BANCO CENTRAL</h3>
-                    
-                    <div class="grid grid-cols-2 gap-4 mb-10">
-                        <button onclick="showTransactionModal('deposit')" class="p-6 rounded-[2.5rem] bg-zinc-950 border border-emerald-500/10 hover:border-emerald-500 transition">
-                            <i class="fas fa-plus text-emerald-500 text-3xl mb-2"></i>
-                            <span class="text-[10px] font-black uppercase">Depositar</span>
-                        </button>
-                        <button onclick="showTransactionModal('withdraw')" class="p-6 rounded-[2.5rem] bg-zinc-950 border border-red-500/10 hover:border-red-500 transition">
-                            <i class="fas fa-minus text-red-500 text-3xl mb-2"></i>
-                            <span class="text-[10px] font-black uppercase">Retirar</span>
-                        </button>
+            <div id="bank-section" class="lg:col-span-5 space-y-6">
+                <div class="glass p-8 rounded-[3rem] h-full border border-white/5 flex flex-col">
+                    <h3 class="font-casino text-xl mb-6 text-emerald-500 uppercase">Gestión Bancaria</h3>
+                    <div class="grid grid-cols-2 gap-4 mb-8">
+                        <button onclick="showModal('deposit')" class="p-4 bg-zinc-950 rounded-2xl border border-white/5 text-[10px] font-bold uppercase"><i class="fas fa-plus block text-xl mb-1 text-emerald-500"></i>Depósito</button>
+                        <button onclick="showModal('withdraw')" class="p-4 bg-zinc-950 rounded-2xl border border-white/5 text-[10px] font-bold uppercase"><i class="fas fa-minus block text-xl mb-1 text-red-500"></i>Retiro</button>
                     </div>
 
-                    <div class="flex border-b border-white/5 mb-6">
-                        <button onclick="switchTab('tab-bets')" id="btn-tab-bets" class="tab-btn active">Juego</button>
+                    <div class="flex border-b border-white/5 mb-4">
+                        <button onclick="switchTab('tab-bets')" id="btn-tab-bets" class="tab-btn active">Apuestas</button>
                         <button onclick="switchTab('tab-deposits')" id="btn-tab-deposits" class="tab-btn">Depósitos</button>
                         <button onclick="switchTab('tab-withdraws')" id="btn-tab-withdraws" class="tab-btn">Retiros</button>
                     </div>
 
-                    <div class="flex-grow overflow-y-auto max-h-[400px] custom-scroll space-y-3">
-                        <div id="tab-bets" class="tab-content space-y-3"></div>
-                        <div id="tab-deposits" class="tab-content hidden space-y-3"></div>
-                        <div id="tab-withdraws" class="tab-content hidden space-y-3"></div>
+                    <div class="flex-grow overflow-y-auto max-h-[350px] custom-scroll space-y-2">
+                        <div id="tab-bets" class="tab-content"></div>
+                        <div id="tab-deposits" class="tab-content hidden"></div>
+                        <div id="tab-withdraws" class="tab-content hidden"></div>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <div id="modal-bank" class="fixed inset-0 bg-black/95 backdrop-blur-3xl flex items-center justify-center z-[100] hidden p-6">
-        <div class="glass p-12 rounded-[4rem] w-full max-w-sm text-center border border-emerald-500/20">
-            <h2 id="modal-title" class="font-casino text-5xl mb-12">DEPOSITAR</h2>
-            <input id="modal-amount" type="number" placeholder="0.00" class="w-full bg-transparent text-center text-6xl font-casino outline-none border-b-2 border-white/5 focus:border-emerald-500 text-white py-4 mb-12">
-            <button onclick="executeTransaction()" class="btn-primary w-full py-7 rounded-[2.5rem] font-black uppercase italic tracking-widest mb-6">Confirmar</button>
-            <button onclick="closeBankModal()" class="text-zinc-600 text-[10px] font-black uppercase">Cancelar</button>
+    <div id="modal-bank" class="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] hidden p-6">
+        <div class="glass p-12 rounded-[3.5rem] w-full max-w-sm text-center">
+            <h2 id="modal-title" class="font-casino text-4xl mb-10">TRANSACCIÓN</h2>
+            <input id="modal-amount" type="number" placeholder="0.00" class="w-full bg-transparent text-center text-6xl font-casino border-b-2 border-emerald-500 py-4 mb-10 outline-none">
+            <button onclick="executeTransaction()" class="btn-primary w-full py-6 rounded-3xl uppercase tracking-widest mb-4">Confirmar</button>
+            <button onclick="closeModal()" class="text-zinc-600 text-[10px] font-bold uppercase">Cancelar</button>
         </div>
     </div>
 
@@ -132,46 +94,85 @@
         const sb = window.supabase.createClient("https://dakhnqriwbzihlzhtfcb.supabase.co", "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs");
         let balance = 1000.00;
         let currentBet = 10;
-        let currentAction = 'deposit'; 
+        let currentAction = 'deposit';
         const symbols = ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'];
 
-        // --- SISTEMA DE PROBABILIDAD REAL ---
-        function calculateResult() {
-            const chance = Math.random() * 100; // Genera 0.00 a 100.00
-
-            // 1. JACKPOT (5% de probabilidad) - Tres 7s
-            if (chance <= 5) return { type: 'JACKPOT', icons: ['7️⃣', '7️⃣', '7️⃣'], multiplier: 50 };
+        // --- MOTOR DE PROBABILIDAD ESTRICTO ---
+        function calculateMathResult() {
+            const rng = Math.random() * 100;
             
-            // 2. PREMIO GRANDE (10% de probabilidad) - Tres Diamantes
-            if (chance <= 15) return { type: 'BIG_WIN', icons: ['💎', '💎', '💎'], multiplier: 20 };
-
-            // 3. PREMIO MEDIO (20% de probabilidad) - Dos iguales
-            if (chance <= 35) {
-                const icon = symbols[Math.floor(Math.random() * 4)]; // Evita el 7 y Diamante
-                return { type: 'MID_WIN', icons: [icon, icon, '🔔'], multiplier: 3 };
+            // JACKPOT (0.5% Prob)
+            if (rng <= 0.5) return { type: 'JACKPOT', icons: ['7️⃣', '7️⃣', '7️⃣'], mult: 100 };
+            
+            // GRAN PREMIO (2% Prob)
+            if (rng <= 2.5) return { type: 'GRAN PREMIO', icons: ['💎', '💎', '💎'], mult: 30 };
+            
+            // PREMIO ESTÁNDAR (8% Prob)
+            if (rng <= 10.5) return { type: 'PREMIO', icons: ['⭐️', '⭐️', '⭐️'], mult: 5 };
+            
+            // CONSOLACIÓN (15% Prob - Dos iguales)
+            if (rng <= 25.5) {
+                const s = symbols[Math.floor(Math.random() * 3)];
+                return { type: 'PEQUEÑO', icons: [s, s, '🍒'], mult: 2 };
             }
 
-            // 4. PERDER (65% de probabilidad) - Todos diferentes
-            return { type: 'LOSE', icons: ['🍒', '🍋', '7️⃣'], multiplier: 0 };
+            // PERDER (74.5% Prob)
+            return { type: 'LOSE', icons: [symbols[0], symbols[1], symbols[2]], mult: 0 };
         }
 
-        async function handleQuickAccess() {
-            const email = document.getElementById('auth-email').value;
-            if(!email) return;
-            toggleLoading(true);
-            await sb.auth.signUp({ email, password: 'winmx_system_key' });
-            await sb.auth.signInWithPassword({ email, password: 'winmx_system_key' });
-            toggleLoading(false);
-            initApp();
+        function setupReels() {
+            [1, 2, 3].forEach(id => {
+                const reel = document.getElementById(`reel-${id}`);
+                reel.innerHTML = '';
+                const items = [...symbols, ...symbols, ...symbols, ...symbols, ...symbols, ...symbols];
+                items.forEach(s => {
+                    const d = document.createElement('div');
+                    d.className = 'slot-item';
+                    d.innerText = s;
+                    reel.appendChild(d);
+                });
+            });
         }
 
-        function initApp() {
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
-            setupReels();
+        function spin() {
+            if (balance < currentBet) return alert("Saldo insuficiente");
+            balance -= currentBet;
             updateUI();
+            
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            addLog('tab-bets', 'Apuesta', currentBet, 'text-zinc-600', 'fa-dice', time);
+
+            const btn = document.getElementById('spin-btn');
+            btn.disabled = true;
+
+            const res = calculateMathResult();
+
+            [1, 2, 3].forEach((id, i) => {
+                const reel = document.getElementById(`reel-${id}`);
+                reel.style.transition = 'none';
+                reel.style.transform = `translateY(0px)`;
+                reel.offsetHeight; // Reset de fuerza
+
+                const iconIdx = symbols.indexOf(res.icons[i]);
+                const finalPos = (iconIdx * 150) + 3000;
+
+                reel.style.transition = `transform ${2.5 + (i * 0.5)}s cubic-bezier(0.15, 0, 0.05, 1)`;
+                reel.style.transform = `translateY(-${finalPos}px)`;
+            });
+
+            setTimeout(() => {
+                if (res.mult > 0) {
+                    const win = currentBet * res.mult;
+                    balance += win;
+                    addLog('tab-bets', res.type, win, 'text-yellow-500', 'fa-trophy', time);
+                    alert(`¡${res.type}! Ganaste $${win}`);
+                }
+                updateUI();
+                btn.disabled = false;
+            }, 4000);
         }
 
+        // --- FUNCIONES DE SOPORTE ---
         function switchTab(id) {
             document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden'));
             document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
@@ -179,108 +180,44 @@
             document.getElementById('btn-' + id).classList.add('active');
         }
 
-        function openBankPanel() { document.getElementById('bank-section').scrollIntoView({ behavior: 'smooth' }); }
-
-        function showTransactionModal(type) {
+        function showModal(type) {
             currentAction = type;
             document.getElementById('modal-title').innerText = type === 'deposit' ? 'DEPOSITAR' : 'RETIRAR';
             document.getElementById('modal-bank').classList.remove('hidden');
         }
 
-        function closeBankModal() { document.getElementById('modal-bank').classList.add('hidden'); }
+        function closeModal() { document.getElementById('modal-bank').classList.add('hidden'); }
 
         function executeTransaction() {
-            const amount = parseFloat(document.getElementById('modal-amount').value);
-            if(!amount || amount <= 0) return;
+            const amt = parseFloat(document.getElementById('modal-amount').value);
+            if (!amt || amt <= 0) return;
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            if(currentAction === 'deposit') {
-                balance += amount;
-                addLog('tab-deposits', 'Depósito', amount, 'text-emerald-500', 'fa-plus', time);
+            if (currentAction === 'deposit') {
+                balance += amt;
+                addLog('tab-deposits', 'Depósito', amt, 'text-emerald-500', 'fa-plus', time);
             } else {
-                if(amount > balance) return alert("Saldo insuficiente");
-                balance -= amount;
-                addLog('tab-withdraws', 'Retiro', amount, 'text-red-500', 'fa-minus', time);
+                if (amt > balance) return alert("Error de fondos");
+                balance -= amt;
+                addLog('tab-withdraws', 'Retiro', amt, 'text-red-500', 'fa-minus', time);
             }
-            updateUI(); closeBankModal();
+            updateUI(); closeModal();
         }
 
-        function addLog(tabId, title, amount, color, icon, time) {
+        function addLog(tabId, title, amt, color, icon, time) {
             const container = document.getElementById(tabId);
-            const html = `<div class="bg-zinc-950 p-5 rounded-3xl border border-white/5 flex justify-between items-center animate-in slide-in-from-right">
-                <div class="flex items-center gap-4">
-                    <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center"><i class="fas ${icon} ${color} text-[10px]"></i></div>
-                    <span class="text-[10px] font-bold text-zinc-300 uppercase">${title}</span>
-                </div>
-                <span class="font-casino ${color} text-xl">$${amount.toLocaleString()}</span>
+            const html = `<div class="bg-black/40 p-4 rounded-2xl border border-white/5 flex justify-between items-center mb-2">
+                <div class="flex items-center gap-3"><i class="fas ${icon} ${color} text-[8px]"></i>
+                <span class="text-[9px] font-bold text-zinc-400 uppercase">${title}</span></div>
+                <span class="font-casino ${color} text-lg">$${amt.toLocaleString()}</span>
             </div>`;
             container.insertAdjacentHTML('afterbegin', html);
         }
 
-        function setupReels() {
-            [1, 2, 3].forEach(id => {
-                const reel = document.getElementById(`reel-${id}`);
-                reel.innerHTML = '';
-                const loopSymbols = [...symbols, ...symbols, ...symbols, ...symbols, ...symbols, ...symbols];
-                loopSymbols.forEach(s => {
-                    const div = document.createElement('div');
-                    div.className = 'slot-item';
-                    div.innerText = s;
-                    reel.appendChild(div);
-                });
-            });
-        }
-
-        function spin() {
-            if(balance < currentBet) return alert("Saldo insuficiente");
-            balance -= currentBet;
-            updateUI();
-
-            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            addLog('tab-bets', 'Apuesta', currentBet, 'text-zinc-500', 'fa-dice', time);
-
-            const btn = document.getElementById('spin-btn');
-            btn.disabled = true;
-
-            // 1. Obtener resultado basado en PROBABILIDAD
-            const result = calculateResult();
-
-            // 2. Ejecutar giros con FUERZA CONSTANTE
-            [1, 2, 3].forEach((id, index) => {
-                const reel = document.getElementById(`reel-${id}`);
-                reel.style.transition = 'none';
-                reel.style.transform = `translateY(0px)`;
-                reel.offsetHeight; // Reflow
-
-                const itemHeight = 150;
-                const iconIndex = symbols.indexOf(result.icons[index]);
-                const extraSpins = 3000; // Fuerza del giro
-                const finalPos = (iconIndex * itemHeight) + extraSpins;
-
-                reel.style.transition = `transform ${3 + (index * 0.4)}s cubic-bezier(0.15, 0, 0.05, 1)`;
-                reel.style.transform = `translateY(-${finalPos}px)`;
-            });
-
-            setTimeout(() => {
-                if(result.multiplier > 0) {
-                    const win = currentBet * result.multiplier;
-                    balance += win;
-                    addLog('tab-bets', result.type, win, 'text-yellow-400', 'fa-trophy', time);
-                    alert(`¡${result.type}! Ganaste $${win}`);
-                }
-                updateUI();
-                btn.disabled = false;
-            }, 4200);
-        }
-
-        function changeBet(v) { currentBet = Math.max(10, currentBet + v); document.getElementById('bet-display').innerText = `$${currentBet}`; }
         function updateUI() { document.getElementById('balance-display').innerText = `$${balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`; }
-        function toggleLoading(s) { document.getElementById('loading').classList.toggle('hidden', !s); }
-        async function logout() { await sb.auth.signOut(); location.reload(); }
-
-        window.onload = async () => {
-            const { data: { session } } = await sb.auth.getSession();
-            if(session) initApp();
-        };
+        function changeBet(v) { currentBet = Math.max(10, currentBet + v); document.getElementById('bet-display').innerText = `$${currentBet}`; }
+        function openBank() { document.getElementById('bank-section').scrollIntoView({ behavior: 'smooth' }); }
+        
+        window.onload = setupReels;
     </script>
 </body>
 </html>
