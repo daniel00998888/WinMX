@@ -3,53 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WinMX | Verificación Segura</title>
+    <title>WinMX | Casino Online</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        :root { --mx-green: #006341; --bg: #050505; }
-        body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(20, 20, 20, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); }
+        :root { --bg: #050505; --mx-green: #10b981; }
+        body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .glass { background: rgba(20, 20, 20, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.05); }
         #notification-container { position: fixed; top: 20px; right: 20px; z-index: 10000; }
-        .toast { transform: translateX(120%); transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); min-width: 250px; }
+        .toast { transform: translateX(120%); transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); min-width: 280px; }
         .toast.show { transform: translateX(0); }
         .hidden { display: none !important; }
-        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
     </style>
 </head>
 <body>
 
     <div id="notification-container"></div>
 
-    <div id="loading" class="fixed inset-0 bg-black flex items-center justify-center z-[500]">
-        <div class="w-10 h-10 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+    <div id="loading" class="fixed inset-0 bg-black flex items-center justify-center z-[5000] hidden">
+        <div class="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
     </div>
 
-    <div id="auth-screen" class="min-h-screen flex items-center justify-center p-6 hidden">
-        <div id="auth-box" class="glass p-10 rounded-[2.5rem] w-full max-w-md text-center border-b-4 border-emerald-600">
-            <h2 class="text-5xl font-black italic mb-10 tracking-tighter uppercase">Win<span class="text-emerald-500">MX</span></h2>
+    <div id="auth-screen" class="min-h-screen flex items-center justify-center p-6">
+        <div class="glass p-10 rounded-[3rem] w-full max-w-md text-center shadow-2xl border-b-8 border-emerald-600">
+            <h2 class="text-6xl font-black italic mb-2 tracking-tighter uppercase">Win<span class="text-emerald-500">MX</span></h2>
+            <p class="text-zinc-500 text-[10px] tracking-[0.3em] font-bold mb-10 uppercase">Official Casino Partner</p>
             
             <div id="form-main">
                 <div class="space-y-4 mb-8 text-left">
-                    <input id="auth-email" type="email" placeholder="Correo electrónico" class="w-full bg-zinc-900 p-5 rounded-2xl border border-white/5 outline-none focus:border-emerald-500">
-                    <input id="auth-pass" type="password" placeholder="Contraseña" class="w-full bg-zinc-900 p-5 rounded-2xl border border-white/5 outline-none focus:border-emerald-500">
+                    <div class="relative">
+                        <i class="fas fa-envelope absolute left-5 top-5 text-zinc-600"></i>
+                        <input id="auth-email" type="email" placeholder="Correo Electrónico" class="w-full bg-zinc-950 p-5 pl-14 rounded-2xl border border-white/5 outline-none focus:border-emerald-500 transition">
+                    </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <button onclick="handleRegister()" class="bg-zinc-800 py-4 rounded-2xl font-bold uppercase text-xs">Registrar</button>
-                    <button onclick="handleLogin()" class="bg-emerald-600 text-black py-4 rounded-2xl font-black uppercase text-xs">Entrar</button>
-                </div>
+                <button onclick="handleRegister()" class="w-full bg-emerald-600 text-black py-5 rounded-2xl font-black uppercase italic text-sm hover:bg-emerald-400 transition transform active:scale-95 shadow-lg shadow-emerald-900/20">
+                    Enviar Código de Acceso
+                </button>
+                <p class="mt-6 text-[9px] text-zinc-600 uppercase font-bold tracking-widest">Al continuar aceptas nuestros términos</p>
             </div>
 
-            <div id="form-verify" class="hidden">
-                <p class="text-[10px] text-zinc-400 mb-2 uppercase font-black tracking-widest">Código enviado a tu correo</p>
-                <input id="verify-code" type="number" placeholder="000000" class="w-full bg-black text-center text-4xl p-5 rounded-2xl border border-emerald-500/50 mb-6 font-black tracking-[0.5rem] outline-none">
+            <div id="form-verify" class="hidden animate-in fade-in zoom-in duration-300">
+                <div class="bg-emerald-500/10 p-4 rounded-2xl mb-6 border border-emerald-500/20">
+                    <p class="text-[10px] text-emerald-400 font-black uppercase tracking-widest">Verifica tu bandeja de entrada</p>
+                </div>
                 
-                <button onclick="confirmOTP()" class="w-full bg-emerald-600 text-black py-4 rounded-xl font-black uppercase italic mb-4">Verificar Ahora</button>
+                <input id="verify-code" type="number" placeholder="000000" class="w-full bg-black text-center text-5xl p-6 rounded-3xl border-2 border-emerald-500 mb-6 font-black tracking-[0.8rem] outline-none shadow-inner">
                 
-                <div class="flex flex-col gap-2">
-                    <button id="btn-resend" onclick="resendCode()" class="text-[10px] text-emerald-500 uppercase font-black disabled:text-zinc-600">Reenviar código</button>
-                    <button onclick="cancelVerify()" class="text-[10px] text-zinc-500 uppercase font-bold">Usar otro correo</button>
+                <button onclick="confirmOTP()" class="w-full bg-white text-black py-5 rounded-2xl font-black uppercase italic text-sm hover:bg-zinc-200 transition mb-4">
+                    Verificar y Entrar
+                </button>
+                
+                <div class="flex flex-col gap-3">
+                    <button id="btn-resend" onclick="handleRegister()" class="text-[10px] text-emerald-500 uppercase font-black hover:underline">¿No llegó? Reenviar</button>
+                    <button onclick="cancelVerify()" class="text-[10px] text-zinc-600 uppercase font-bold">Cambiar correo</button>
                 </div>
             </div>
         </div>
@@ -57,137 +65,93 @@
 
     <div id="main-interface" class="hidden">
         <header class="glass sticky top-0 z-50 py-4 px-8 flex justify-between items-center border-b border-white/5">
-            <div class="bg-emerald-600 px-3 py-1 rounded font-black italic text-black skew-x-[-15deg]">WinMX</div>
+            <div class="text-2xl font-black italic">Win<span class="text-emerald-500">MX</span></div>
             <div class="flex items-center gap-4">
-                <div class="bg-zinc-950 px-5 py-2 rounded-2xl border border-white/10">
-                    <p id="balance" class="text-emerald-400 font-black text-lg">$0</p>
+                <div class="bg-zinc-950 px-6 py-2 rounded-full border border-emerald-500/30">
+                    <span id="balance" class="text-emerald-400 font-black tracking-tighter">$0.00</span>
                 </div>
-                <button onclick="logout()" class="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center border border-white/10 text-zinc-500 hover:text-red-500 transition">
-                    <i class="fas fa-power-off"></i>
-                </button>
+                <button onclick="logout()" class="text-zinc-500 hover:text-red-500 transition"><i class="fas fa-power-off text-xl"></i></button>
             </div>
         </header>
-        <main class="p-20 text-center">
-            <h1 class="text-6xl font-black mb-4 uppercase">¡Bienvenido!</h1>
-            <p class="text-zinc-500 uppercase tracking-[0.5rem]">Verificación completada con éxito</p>
+        <main class="p-10 text-center">
+            <h1 class="text-5xl font-black mb-4">¡BIENVENIDO!</h1>
+            <p class="text-zinc-500 uppercase tracking-widest text-sm">Tu cuenta ha sido verificada con éxito.</p>
         </main>
     </div>
 
     <script>
-        // CONFIGURACIÓN SUPABASE
+        // CONFIGURACIÓN DE TU PROYECTO
         const sb = window.supabase.createClient("https://dakhnqriwbzihlzhtfcb.supabase.co", "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs");
-        let user = null;
-        let resendTimer = 0;
 
+        // Verificar sesión al cargar
         window.onload = async () => {
             const { data: { session } } = await sb.auth.getSession();
             if(session) {
-                user = session.user;
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('main-interface').classList.remove('hidden');
-                document.getElementById('balance').innerText = `$0`; 
-            } else {
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('auth-screen').classList.remove('hidden');
+                showApp();
             }
         };
 
-        // --- LÓGICA DE REGISTRO ---
+        // --- FUNCIÓN DE REGISTRO (ENVÍA EL CÓDIGO REAL) ---
         async function handleRegister() {
             const email = document.getElementById('auth-email').value;
-            const pass = document.getElementById('auth-pass').value;
-            if(!email || !pass) return toast("RELLENA LOS CAMPOS", "err");
+            if(!email || !email.includes('@')) return toast("INGRESA UN CORREO VÁLIDO", "err");
 
-            document.getElementById('loading').classList.remove('hidden');
+            loading(true);
 
             try {
-                const { data, error } = await sb.auth.signUp({ email, password: pass });
+                // Este método dispara el SMTP de Resend que configuraste
+                const { error } = await sb.auth.signInWithOtp({
+                    email: email,
+                    options: {
+                        shouldCreateUser: true // Lo registra si no existe
+                    }
+                });
+
                 if(error) throw error;
 
-                document.getElementById('loading').classList.add('hidden');
+                loading(false);
                 document.getElementById('form-main').classList.add('hidden');
                 document.getElementById('form-verify').classList.remove('hidden');
-                startResendTimer();
                 toast("CÓDIGO ENVIADO", "ok");
+
             } catch(e) {
-                document.getElementById('loading').classList.add('hidden');
+                loading(false);
                 toast("ERROR: " + e.message, "err");
+                console.error(e);
             }
         }
 
-        // --- VERIFICAR CÓDIGO ---
+        // --- FUNCIÓN DE VERIFICACIÓN (VALIDA EL CÓDIGO) ---
         async function confirmOTP() {
             const email = document.getElementById('auth-email').value;
-            const token = document.getElementById('verify-code').value;
-            if(token.length < 6) return toast("EL CÓDIGO ES DE 6 DÍGITOS", "err");
+            const code = document.getElementById('verify-code').value;
 
-            document.getElementById('loading').classList.remove('hidden');
+            if(code.length < 6) return toast("EL CÓDIGO ES DE 6 DÍGITOS", "err");
+
+            loading(true);
 
             try {
                 const { data, error } = await sb.auth.verifyOtp({
                     email: email,
-                    token: token,
-                    type: 'signup'
+                    token: code,
+                    type: 'email' // Tipo 'email' para signInWithOtp
                 });
-                
+
                 if(error) throw error;
 
-                toast("¡VERIFICADO!", "ok");
-                location.reload(); 
+                toast("¡ACCESO CONCEDIDO!", "ok");
+                setTimeout(() => location.reload(), 1000);
+
             } catch(e) {
-                document.getElementById('loading').classList.add('hidden');
+                loading(false);
                 toast("CÓDIGO INVÁLIDO O EXPIRADO", "err");
             }
         }
 
-        // --- REENVIAR CÓDIGO ---
-        async function resendCode() {
-            const email = document.getElementById('auth-email').value;
-            if(resendTimer > 0) return;
-
-            try {
-                const { error } = await sb.auth.resend({
-                    type: 'signup',
-                    email: email
-                });
-                if(error) throw error;
-
-                toast("CÓDIGO REENVIADO", "ok");
-                startResendTimer();
-            } catch(e) {
-                toast("ERROR: " + e.message, "err");
-            }
-        }
-
-        // --- LOGIN NORMAL ---
-        async function handleLogin() {
-            const email = document.getElementById('auth-email').value;
-            const pass = document.getElementById('auth-pass').value;
-            document.getElementById('loading').classList.remove('hidden');
-            try {
-                const { error } = await sb.auth.signInWithPassword({ email, password: pass });
-                if(error) throw error;
-                location.reload();
-            } catch(e) {
-                document.getElementById('loading').classList.add('hidden');
-                toast("DATOS INCORRECTOS", "err");
-            }
-        }
-
-        // --- UTILIDADES ---
-        function startResendTimer() {
-            resendTimer = 60;
-            const btn = document.getElementById('btn-resend');
-            btn.disabled = true;
-            const interval = setInterval(() => {
-                resendTimer--;
-                btn.innerText = `REENVIAR EN ${resendTimer}S`;
-                if(resendTimer <= 0) {
-                    clearInterval(interval);
-                    btn.innerText = "REENVIAR CÓDIGO";
-                    btn.disabled = false;
-                }
-            }, 1000);
+        // --- FUNCIONES DE APOYO ---
+        function showApp() {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('main-interface').classList.remove('hidden');
         }
 
         function cancelVerify() {
@@ -195,16 +159,26 @@
             document.getElementById('form-verify').classList.add('hidden');
         }
 
-        async function logout() { await sb.auth.signOut(); location.reload(); }
+        async function logout() { 
+            await sb.auth.signOut(); 
+            location.reload(); 
+        }
+
+        function loading(s) {
+            document.getElementById('loading').classList.toggle('hidden', !s);
+        }
 
         function toast(m, t) {
             const c = document.getElementById('notification-container');
             const e = document.createElement('div');
-            e.className = `toast glass p-4 rounded-xl mb-4 border-l-4 ${t==='ok'?'border-emerald-500':'border-red-500'} font-black text-[10px] uppercase shadow-2xl`;
+            e.className = `toast glass p-5 rounded-2xl mb-4 border-l-4 ${t==='ok'?'border-emerald-500':'border-red-500'} font-black text-[11px] uppercase tracking-widest shadow-2xl`;
             e.innerText = m;
             c.appendChild(e);
             setTimeout(() => e.classList.add('show'), 10);
-            setTimeout(() => { e.classList.remove('show'); setTimeout(()=>e.remove(), 400); }, 4000);
+            setTimeout(() => { 
+                e.classList.remove('show'); 
+                setTimeout(()=>e.remove(), 400); 
+            }, 4000);
         }
     </script>
 </body>
