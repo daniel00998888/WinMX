@@ -9,115 +9,78 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         :root { --mx-green: #006341; --mx-red: #ce1126; --gold: #fbbf24; --bg: #050505; }
-        body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; overflow: hidden; }
         .glass { background: rgba(20, 20, 20, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); }
-        #notification-container { position: fixed; top: 20px; right: 20px; z-index: 10000; }
-        .toast { transform: translateX(120%); transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
-        .toast.show { transform: translateX(0); }
-        .history-scroll { max-height: 180px; overflow-y: auto; }
         
-        /* ESTILOS DEL SLIDER (NUEVO) */
-        .swipe-container {
-            position: relative;
-            background: rgba(255,255,255,0.05);
-            height: 60px;
-            border-radius: 20px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(255,255,255,0.1);
+        /* CONTENEDOR DESLIZABLE DEL BANCO */
+        .bank-scroll-area {
+            max-height: 70vh; /* Altura máxima para que siempre quepa en pantalla */
+            overflow-y: auto;
+            padding-right: 8px;
+            scroll-behavior: smooth;
         }
-        .swipe-text {
-            font-size: 12px;
-            font-weight: 900;
-            color: rgba(255,255,255,0.3);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            pointer-events: none;
-            z-index: 1;
+
+        /* DISEÑO DE LA BARRA DE DESLIZAMIENTO (SCROLLBAR) */
+        .bank-scroll-area::-webkit-scrollbar {
+            width: 4px;
         }
-        .swipe-handle {
+        .bank-scroll-area::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.02);
+            border-radius: 10px;
+        }
+        .bank-scroll-area::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, var(--mx-green), transparent);
+            border-radius: 10px;
+        }
+
+        /* EFECTO DE DESVANECIMIENTO AL FINAL PARA INDICAR MÁS CONTENIDO */
+        .scroll-indicator {
             position: absolute;
-            left: 5px;
-            top: 5px;
-            height: 50px;
-            width: 60px;
-            background: white;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: black;
-            cursor: pointer;
-            z-index: 2;
-            transition: transform 0.1s ease-out;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-        .swipe-bg-progress {
-            position: absolute;
+            bottom: 0;
             left: 0;
-            top: 0;
-            height: 100%;
-            width: 0%;
-            background: var(--mx-green);
-            opacity: 0.3;
-            transition: width 0.1s ease-out;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(to top, var(--bg), transparent);
+            pointer-events: none;
+            opacity: 0.8;
         }
+
+        /* Estilos de los Sliders de confirmación */
+        .swipe-container { position: relative; background: rgba(255,255,255,0.05); height: 56px; border-radius: 18px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); }
+        .swipe-text { font-size: 11px; font-weight: 900; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1px; pointer-events: none; z-index: 1; }
+        .swipe-handle { position: absolute; left: 4px; top: 4px; height: 46px; width: 56px; background: white; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: black; cursor: pointer; z-index: 2; transition: transform 0.1s ease-out; }
+        .swipe-bg-progress { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: var(--mx-green); opacity: 0.2; transition: width 0.1s ease-out; }
     </style>
 </head>
 <body>
 
-    <div id="notification-container"></div>
+    <div id="notification-container" class="fixed top-5 right-5 z-[10001]"></div>
 
     <div id="loading" class="fixed inset-0 bg-black flex flex-col items-center justify-center z-[500]">
-        <div class="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-        <h2 class="text-white font-black tracking-[0.3em] uppercase text-sm mt-4">Win<span class="text-emerald-500">MX</span></h2>
+        <div class="w-12 h-12 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
     </div>
 
     <header id="nav" class="hidden glass sticky top-0 z-50 py-4 px-8 flex justify-between items-center border-b border-white/5">
-        <div class="flex items-center gap-3"><div class="bg-emerald-600 px-3 py-1 rounded font-black italic text-black skew-x-[-15deg]">WinMX</div></div>
-        <div class="flex items-center gap-6">
-            <div onclick="openBank()" class="cursor-pointer flex items-center gap-3 bg-zinc-900 px-5 py-2 rounded-2xl border border-white/10">
-                <div class="text-right">
-                    <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Balance</p>
-                    <p id="balance" class="text-emerald-400 font-black text-lg leading-tight">$0</p>
-                </div>
-                <i class="fas fa-wallet text-emerald-500"></i>
-            </div>
-            <button onclick="logout()" class="text-zinc-500 hover:text-red-500 transition"><i class="fas fa-power-off text-xl"></i></button>
+        <div class="bg-emerald-600 px-3 py-1 rounded font-black italic text-black skew-x-[-15deg]">WinMX</div>
+        <div onclick="openBank()" class="cursor-pointer flex items-center gap-3 bg-zinc-900 px-5 py-2 rounded-2xl border border-white/10">
+            <p id="balance" class="text-emerald-400 font-black text-lg">$0</p>
+            <i class="fas fa-wallet text-emerald-500"></i>
         </div>
     </header>
 
-    <main id="app" class="hidden p-8 max-w-7xl mx-auto">
-        <h2 class="text-2xl font-black mb-8 italic">SALAS <span class="text-emerald-500">WinMX</span></h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
-            <div onclick="tab('slots')" class="glass p-8 rounded-[2rem] text-center border border-white/5 hover:border-emerald-500 transition cursor-pointer">
-                <div class="text-5xl mb-4">🎰</div>
-                <p class="font-black text-xs uppercase tracking-widest">Tragamonedas</p>
-            </div>
-        </div>
-        <div id="tab-slots" class="tab-content glass p-12 rounded-[3rem] text-center max-w-2xl mx-auto border-t-4 border-emerald-500">
-            <div class="flex justify-center gap-4 mb-10">
-                <div id="s1" class="w-20 h-28 bg-black rounded-2xl text-5xl flex items-center justify-center border border-white/10">💎</div>
-                <div id="s2" class="w-20 h-28 bg-black rounded-2xl text-5xl flex items-center justify-center border border-white/10">💎</div>
-                <div id="s3" class="w-20 h-28 bg-black rounded-2xl text-5xl flex items-center justify-center border border-white/10">💎</div>
-            </div>
-            <button id="btn-slots" onclick="playSlots()" class="w-full max-w-sm bg-emerald-600 text-black py-5 rounded-2xl font-black text-xl uppercase italic">Girar</button>
-        </div>
-    </main>
-
     <div id="bank-modal" class="fixed inset-0 bg-black/95 z-[1000] flex items-center justify-center p-4 hidden">
-        <div class="bg-zinc-900 w-full max-w-lg rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl">
+        <div class="bg-zinc-900 w-full max-w-lg rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl relative">
+            
             <div class="bg-emerald-600 p-6 flex justify-between items-center text-black">
-                <h2 class="text-xl font-black italic tracking-tighter">BANCO WinMX</h2>
+                <h2 class="text-xl font-black italic tracking-tighter">MI CARTERA WinMX</h2>
                 <button onclick="closeBank()" class="text-3xl">&times;</button>
             </div>
             
-            <div class="p-6">
-                <div class="bg-black/40 p-5 rounded-3xl border border-white/5 mb-6 text-center">
-                    <p class="text-[10px] text-zinc-500 font-bold uppercase mb-1">Tu Efectivo</p>
-                    <p id="bank-balance" class="text-4xl font-black text-emerald-400">$0.00</p>
+            <div class="bank-scroll-area p-6">
+                
+                <div class="bg-black/40 p-6 rounded-3xl border border-white/5 mb-6 text-center">
+                    <p class="text-[10px] text-zinc-500 font-bold uppercase mb-1">Disponible para jugar</p>
+                    <p id="bank-balance" class="text-5xl font-black text-emerald-400">$0.00</p>
                 </div>
 
                 <div class="flex gap-2 mb-6 bg-black p-1 rounded-2xl">
@@ -126,50 +89,54 @@
                 </div>
 
                 <div id="section-dep" class="space-y-4">
-                    <div id="dep-input-group">
-                        <input id="in-amt" type="number" placeholder="Monto a cargar" class="w-full bg-black p-5 rounded-2xl border border-white/5 outline-none focus:border-emerald-500 text-xl font-bold">
-                        
-                        <div class="swipe-container mt-4" id="slider-dep">
-                            <div class="swipe-bg-progress" id="progress-dep"></div>
-                            <span class="swipe-text">Desliza para Depósito</span>
-                            <div class="swipe-handle" id="handle-dep"><i class="fas fa-chevron-right"></i></div>
-                        </div>
+                    <input id="in-amt" type="number" placeholder="Monto MXN" class="w-full bg-black p-5 rounded-2xl border border-white/5 outline-none focus:border-emerald-500 text-xl font-bold">
+                    <div class="swipe-container" id="slider-dep">
+                        <div class="swipe-bg-progress" id="progress-dep"></div>
+                        <span class="swipe-text">Desliza para cargar</span>
+                        <div class="swipe-handle" id="handle-dep"><i class="fas fa-arrow-right"></i></div>
                     </div>
-                    
-                    <div id="clabe-display" class="hidden bg-emerald-950/20 p-6 rounded-3xl border border-emerald-500/30 text-center">
-                        <span class="text-zinc-500 text-[10px] block mb-2 uppercase tracking-widest">CLABE SPEI</span>
-                        <span id="generated-clabe" class="text-lg font-mono font-bold text-emerald-400 block mb-4">---</span>
-                        <button onclick="confirmDeposit()" class="w-full bg-emerald-500 text-black py-4 rounded-xl font-black text-xs uppercase">Confirmar recepción</button>
+                    <div id="clabe-display" class="hidden bg-emerald-950/20 p-5 rounded-3xl border border-emerald-500/30 text-center">
+                        <span class="text-emerald-500 text-[10px] font-bold block mb-2 uppercase">Transfiere aquí</span>
+                        <span id="generated-clabe" class="text-lg font-mono font-bold block mb-4">---</span>
+                        <button onclick="confirmDeposit()" class="w-full bg-emerald-500 text-black py-4 rounded-xl font-black text-xs uppercase">Confirmar pago realizado</button>
                     </div>
                 </div>
 
                 <div id="section-ret" class="hidden space-y-4">
-                    <input id="out-amt" type="number" placeholder="¿Cuánto retiras?" class="w-full bg-black p-5 rounded-2xl border border-white/5 outline-none font-bold">
-                    <input id="out-clabe" type="text" maxlength="18" placeholder="Tu CLABE (18 dígitos)" class="w-full bg-black p-5 rounded-2xl border border-white/5 outline-none font-mono">
-                    
-                    <div class="swipe-container mt-4 border-red-900/20" id="slider-ret">
+                    <input id="out-amt" type="number" placeholder="Monto a retirar" class="w-full bg-black p-5 rounded-2xl border border-white/5 outline-none font-bold">
+                    <input id="out-clabe" type="text" maxlength="18" placeholder="CLABE de 18 dígitos" class="w-full bg-black p-5 rounded-2xl border border-white/5 outline-none font-mono">
+                    <div class="swipe-container" id="slider-ret">
                         <div class="swipe-bg-progress !bg-red-600" id="progress-ret"></div>
-                        <span class="swipe-text">Desliza para Retirar</span>
-                        <div class="swipe-handle" id="handle-ret"><i class="fas fa-chevron-right"></i></div>
+                        <span class="swipe-text">Desliza para retirar</span>
+                        <div class="swipe-handle" id="handle-ret"><i class="fas fa-arrow-right"></i></div>
                     </div>
                 </div>
 
-                <hr class="my-6 border-white/5">
-                <div id="history-list" class="history-scroll space-y-2">
-                    <p class="text-center text-zinc-600 text-[10px] py-4 uppercase font-bold tracking-widest">Historial Vacío</p>
+                <hr class="my-8 border-white/5">
+
+                <div>
+                    <h3 class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-4">Movimientos Recientes</h3>
+                    <div id="history-list" class="space-y-3">
+                        <p class="text-center text-zinc-700 text-[10px] py-8 font-bold">DESLIZA HACIA ARRIBA PARA VER MÁS</p>
+                    </div>
                 </div>
+
+                <div class="h-10"></div>
             </div>
+
+            <div class="scroll-indicator"></div>
         </div>
     </div>
 
     <script>
+        // Lógica de Supabase y Balance
         const sb = window.supabase.createClient("https://dakhnqriwbzihlzhtfcb.supabase.co", "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs");
         let user = null, saldo = 0, history = [];
 
         window.onload = async () => {
             const { data: { session } } = await sb.auth.getSession();
             if(session) { user = session.user; await initApp(); } 
-            else { document.getElementById('loading').classList.add('hidden'); location.reload(); }
+            else { document.getElementById('loading').classList.add('hidden'); }
         };
 
         async function initApp() {
@@ -182,93 +149,10 @@
                 initSliders();
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('nav').classList.remove('hidden');
-                document.getElementById('app').classList.remove('hidden');
             }
         }
 
-        // --- LÓGICA DE LOS SLIDERS (NUEVO) ---
-        function initSliders() {
-            setupSlider('dep', () => {
-                const amt = parseInt(document.getElementById('in-amt').value);
-                if(!amt || amt < 50) { toast("Mínimo $50", "err"); return false; }
-                document.getElementById('generated-clabe').innerText = "012" + Math.floor(Math.random() * 1000000000000000);
-                document.getElementById('dep-input-group').classList.add('hidden');
-                document.getElementById('clabe-display').classList.remove('hidden');
-                return true;
-            });
-
-            setupSlider('ret', () => {
-                const amt = parseInt(document.getElementById('out-amt').value);
-                const clabe = document.getElementById('out-clabe').value;
-                if(!amt || amt > saldo) { toast("Saldo insuficiente", "err"); return false; }
-                if(clabe.length !== 18) { toast("CLABE inválida", "err"); return false; }
-                
-                saldo -= amt;
-                addMovement('Retiro', amt, 'Pendiente');
-                updateUI();
-                toast("Retiro en proceso", "ok");
-                closeBank();
-                return true;
-            });
-        }
-
-        function setupSlider(id, onComplete) {
-            const handle = document.getElementById(`handle-${id}`);
-            const progress = document.getElementById(`progress-${id}`);
-            const container = document.getElementById(`slider-${id}`);
-            let isDragging = false;
-            let startX = 0;
-            const maxDrag = container.offsetWidth - handle.offsetWidth - 10;
-
-            const onStart = (e) => { isDragging = true; startX = e.type.includes('mouse') ? e.pageX : e.touches[0].pageX; };
-            const onMove = (e) => {
-                if (!isDragging) return;
-                const x = e.type.includes('mouse') ? e.pageX : e.touches[0].pageX;
-                let moveX = x - startX;
-                if (moveX < 0) moveX = 0;
-                if (moveX > maxDrag) moveX = maxDrag;
-                
-                handle.style.transform = `translateX(${moveX}px)`;
-                progress.style.width = `${(moveX / maxDrag) * 100}%`;
-                
-                if (moveX === maxDrag) {
-                    isDragging = false;
-                    const success = onComplete();
-                    if (!success) resetSlider(handle, progress);
-                }
-            };
-            const onEnd = () => { if (isDragging) { isDragging = false; resetSlider(handle, progress); } };
-
-            handle.addEventListener('mousedown', onStart);
-            handle.addEventListener('touchstart', onStart);
-            window.addEventListener('mousemove', onMove);
-            window.addEventListener('touchmove', onMove);
-            window.addEventListener('mouseup', onEnd);
-            window.addEventListener('touchend', onEnd);
-        }
-
-        function resetSlider(handle, progress) {
-            handle.style.transition = 'transform 0.3s ease';
-            progress.style.transition = 'width 0.3s ease';
-            handle.style.transform = 'translateX(0px)';
-            progress.style.width = '0%';
-            setTimeout(() => { handle.style.transition = ''; progress.style.transition = ''; }, 300);
-        }
-
-        // --- SISTEMA BANCARIO ---
-        function confirmDeposit() {
-            const amt = parseInt(document.getElementById('in-amt').value);
-            saldo += amt;
-            addMovement('Depósito', amt);
-            updateUI();
-            toast("Balance actualizado", "ok");
-            closeBank();
-            document.getElementById('dep-input-group').classList.remove('hidden');
-            document.getElementById('clabe-display').classList.add('hidden');
-            document.getElementById('in-amt').value = "";
-            resetSlider(document.getElementById('handle-dep'), document.getElementById('progress-dep'));
-        }
-
+        // Función para actualizar UI y guardar datos
         function updateUI() {
             document.getElementById('balance').innerText = `$${saldo.toLocaleString()}`;
             document.getElementById('bank-balance').innerText = `$${saldo.toLocaleString()}.00`;
@@ -276,21 +160,75 @@
             localStorage.setItem(`history_${user.id}`, JSON.stringify(history));
         }
 
-        function addMovement(type, amount, status = 'Éxito') {
-            history.unshift({ type, amount, status, time: new Date().toLocaleTimeString() });
-            if(history.length > 10) history.pop();
-            renderHistory();
-        }
-
+        // Renderizado del historial en la lista
         function renderHistory() {
             const container = document.getElementById('history-list');
             if(history.length === 0) return;
             container.innerHTML = history.map(m => `
-                <div class="bg-black/20 p-3 rounded-xl flex justify-between items-center text-[10px] border border-white/5">
-                    <div><p class="font-bold ${m.type === 'Depósito' ? 'text-emerald-500' : 'text-red-500'} uppercase">${m.type}</p><p class="opacity-40">${m.time}</p></div>
-                    <div class="text-right font-black">$${m.amount.toLocaleString()}<p class="opacity-30 text-[8px] uppercase">${m.status}</p></div>
+                <div class="bg-black/30 p-4 rounded-2xl flex justify-between items-center border border-white/5">
+                    <div>
+                        <p class="text-[10px] font-black ${m.type === 'Depósito' ? 'text-emerald-500' : 'text-red-500'} uppercase">${m.type}</p>
+                        <p class="text-[9px] text-zinc-600">${m.time}</p>
+                    </div>
+                    <p class="font-black text-sm">$${m.amount.toLocaleString()}</p>
                 </div>
             `).join('');
+        }
+
+        // Lógica de los Sliders (Swipe)
+        function initSliders() {
+            setupSlider('dep', () => {
+                const amt = parseInt(document.getElementById('in-amt').value);
+                if(!amt || amt < 50) return false;
+                document.getElementById('generated-clabe').innerText = "012" + Math.floor(Math.random() * 1000000000000000);
+                document.getElementById('dep-input-group')?.classList.add('hidden');
+                document.getElementById('clabe-display').classList.remove('hidden');
+                return true;
+            });
+
+            setupSlider('ret', () => {
+                const amt = parseInt(document.getElementById('out-amt').value);
+                const clabe = document.getElementById('out-clabe').value;
+                if(!amt || amt > saldo || clabe.length !== 18) return false;
+                saldo -= amt;
+                history.unshift({ type: 'Retiro', amount: amt, time: new Date().toLocaleString() });
+                updateUI(); renderHistory();
+                closeBank();
+                return true;
+            });
+        }
+
+        function setupSlider(id, onComplete) {
+            const handle = document.getElementById(`handle-${id}`);
+            const container = document.getElementById(`slider-${id}`);
+            const progress = document.getElementById(`progress-${id}`);
+            let isDragging = false; let startX = 0;
+            const max = container.offsetWidth - handle.offsetWidth - 8;
+
+            const start = (e) => { isDragging = true; startX = e.pageX || e.touches[0].pageX; handle.style.transition = 'none'; };
+            const move = (e) => {
+                if(!isDragging) return;
+                let x = (e.pageX || e.touches[0].pageX) - startX;
+                x = Math.max(0, Math.min(x, max));
+                handle.style.transform = `translateX(${x}px)`;
+                progress.style.width = `${(x/max)*100}%`;
+                if(x >= max) { isDragging = false; if(!onComplete()) reset(); }
+            };
+            const reset = () => { isDragging = false; handle.style.transition = 'all 0.3s'; handle.style.transform = 'translateX(0px)'; progress.style.width = '0%'; };
+            
+            handle.addEventListener('mousedown', start); handle.addEventListener('touchstart', start);
+            window.addEventListener('mousemove', move); window.addEventListener('touchmove', move);
+            window.addEventListener('mouseup', reset); window.addEventListener('touchend', reset);
+        }
+
+        function confirmDeposit() {
+            const amt = parseInt(document.getElementById('in-amt').value);
+            saldo += amt;
+            history.unshift({ type: 'Depósito', amount: amt, time: new Date().toLocaleString() });
+            updateUI(); renderHistory();
+            closeBank();
+            document.getElementById('clabe-display').classList.add('hidden');
+            document.getElementById('in-amt').value = "";
         }
 
         function openBank() { document.getElementById('bank-modal').classList.remove('hidden'); }
@@ -300,16 +238,6 @@
             document.getElementById('section-ret').classList.toggle('hidden', t !== 'ret');
             document.getElementById('tab-btn-dep').className = t === 'dep' ? "flex-1 py-3 bg-zinc-800 rounded-xl font-black text-[10px]" : "flex-1 py-3 text-zinc-500 rounded-xl font-black text-[10px]";
             document.getElementById('tab-btn-ret').className = t === 'ret' ? "flex-1 py-3 bg-zinc-800 rounded-xl font-black text-[10px]" : "flex-1 py-3 text-zinc-500 rounded-xl font-black text-[10px]";
-        }
-
-        function toast(m, t) {
-            const c = document.getElementById('notification-container');
-            const e = document.createElement('div');
-            e.className = `toast glass p-4 rounded-2xl mb-4 border-l-4 ${t==='ok'?'border-emerald-500':'border-red-500'} font-bold text-xs`;
-            e.innerText = m.toUpperCase();
-            c.appendChild(e);
-            setTimeout(() => e.classList.add('show'), 10);
-            setTimeout(() => { e.classList.remove('show'); setTimeout(()=>e.remove(), 400); }, 3000);
         }
     </script>
 </body>
