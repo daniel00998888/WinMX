@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WinMX | Casino Pro</title>
+    <title>WinMX | Casino Online</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
@@ -13,24 +13,27 @@
         body { background: var(--mx-dark); color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
         .font-casino { font-family: 'Archivo Black', sans-serif; }
         .glass { background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.05); }
-        .slot-box { height: 150px; overflow: hidden; background: #000; border: 3px solid #151515; border-radius: 2.5rem; }
-        .slot-item { height: 150px; display: flex; align-items: center; justify-content: center; font-size: 4.5rem; }
-        .btn-primary { background: var(--mx-green); color: black; font-weight: 900; transition: 0.3s; cursor: pointer; border: none; }
-        .btn-primary:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(16, 185, 129, 0.4); }
-        .tab-btn { padding: 14px; font-size: 10px; font-weight: 900; color: #444; border-bottom: 2px solid transparent; text-transform: uppercase; }
+        .slot-box { height: 150px; overflow: hidden; background: #000; border: 3px solid #151515; border-radius: 2.5rem; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
+        .slot-reel { display: flex; flex-direction: column; align-items: center; }
+        .slot-item { height: 150px; min-height: 150px; display: flex; align-items: center; justify-content: center; font-size: 4.5rem; }
+        .tab-btn { padding: 14px; font-size: 10px; font-weight: 900; color: #444; border-bottom: 2px solid transparent; text-transform: uppercase; transition: 0.3s; }
         .tab-btn.active { color: var(--mx-green); border-bottom: 2px solid var(--mx-green); }
+        .btn-primary { background: var(--mx-green); color: black; font-weight: 900; transition: 0.3s; cursor: pointer; }
+        .btn-primary:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(16, 185, 129, 0.4); }
+        .custom-scroll::-webkit-scrollbar { width: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
 <body class="antialiased">
 
     <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4">
         <div class="glass p-12 rounded-[4rem] w-full max-w-md text-center border-b-[12px] border-emerald-600 shadow-2xl">
-            <h2 class="text-7xl font-casino italic mb-8 tracking-tighter">Win<span class="text-emerald-500">MX</span></h2>
+            <h2 class="text-7xl font-casino italic mb-8 tracking-tighter text-white">Win<span class="text-emerald-500">MX</span></h2>
             <div class="space-y-4">
                 <input id="auth-email" type="email" placeholder="EMAIL" class="w-full bg-black/50 p-6 rounded-3xl border border-white/5 text-white text-center text-lg outline-none focus:border-emerald-500">
                 <input id="auth-password" type="password" placeholder="CONTRASEÑA" class="w-full bg-black/50 p-6 rounded-3xl border border-white/5 text-white text-center text-lg outline-none focus:border-emerald-500">
                 <button onclick="handleAuth()" class="btn-primary w-full py-6 rounded-3xl font-black uppercase italic tracking-widest mt-4 text-xl">Entrar</button>
-                <button onclick="toggleAuthMode()" id="auth-switch-btn" class="text-zinc-500 text-[11px] font-black uppercase mt-6 block mx-auto underline">¿No tienes cuenta? Regístrate</button>
+                <button onclick="toggleAuthMode()" id="auth-switch-btn" class="text-zinc-500 text-[11px] font-black uppercase mt-6 block mx-auto underline tracking-widest">¿No tienes cuenta? Regístrate</button>
             </div>
         </div>
     </div>
@@ -40,10 +43,10 @@
             <h1 class="text-4xl font-casino italic tracking-tighter">Win<span class="text-emerald-500">MX</span></h1>
             <div class="flex items-center gap-8">
                 <div class="flex flex-col items-end">
-                    <span class="text-[9px] text-zinc-500 font-black uppercase">Balance Global</span>
+                    <span class="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Saldo</span>
                     <span id="balance-display" class="text-4xl font-casino text-emerald-400">$0.00</span>
                 </div>
-                <button onclick="logout()" class="w-12 h-12 rounded-2xl bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all"><i class="fas fa-power-off"></i></button>
+                <button onclick="logout()" class="w-12 h-12 rounded-2xl bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 transition-all"><i class="fas fa-power-off"></i></button>
             </div>
         </nav>
 
@@ -70,14 +73,14 @@
                 <div class="glass p-8 rounded-[3.5rem] flex-grow border border-white/5 flex flex-col shadow-2xl">
                     <div class="grid grid-cols-2 gap-4 mb-8">
                         <button onclick="openDepositStep1()" class="p-5 bg-emerald-500/10 border border-emerald-500/20 rounded-3xl text-emerald-500 font-black text-[11px] uppercase tracking-widest hover:bg-emerald-500 hover:text-black transition-all">Depósito</button>
-                        <button onclick="showModal('withdraw')" class="p-5 bg-red-500/10 border border-red-500/20 rounded-3xl text-red-500 font-black text-[11px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">Retiro</button>
+                        <button onclick="showWithdrawModal()" class="p-5 bg-red-500/10 border border-red-500/20 rounded-3xl text-red-500 font-black text-[11px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">Retiro</button>
                     </div>
                     <div class="flex border-b border-white/5 mb-6">
                         <button onclick="switchTab('tab-bets')" id="btn-tab-bets" class="tab-btn active">Apuestas</button>
                         <button onclick="switchTab('tab-deposits')" id="btn-tab-deposits" class="tab-btn">Cajero</button>
                         <button onclick="switchTab('tab-withdraws')" id="btn-tab-withdraws" class="tab-btn">Retiros</button>
                     </div>
-                    <div id="logs-all" class="flex-grow overflow-y-auto max-h-[420px] pr-2 space-y-3">
+                    <div class="flex-grow overflow-y-auto max-h-[420px] custom-scroll pr-2 space-y-3">
                         <div id="tab-bets" class="tab-content"></div>
                         <div id="tab-deposits" class="tab-content hidden"></div>
                         <div id="tab-withdraws" class="tab-content hidden"></div>
@@ -90,91 +93,88 @@
     <div id="modal-bank" class="fixed inset-0 bg-black/98 flex items-center justify-center z-[100] hidden p-6">
         <div class="glass p-10 rounded-[3rem] w-full max-w-sm text-center border border-white/10 shadow-2xl">
             
-            <div id="step-1">
-                <h2 class="font-casino text-4xl mb-6 text-emerald-500 uppercase">DEPÓSITO</h2>
-                <p class="text-[10px] text-zinc-500 font-black mb-10 tracking-widest">¿CUÁNTO DESEAS RECARGAR?</p>
+            <div id="dep-step-1">
+                <h2 class="font-casino text-4xl mb-2 text-emerald-500 uppercase tracking-tighter">DEPOSITAR</h2>
+                <p class="text-[9px] text-zinc-500 font-black mb-10 tracking-[0.3em]">CANTIDAD A RECARGAR</p>
                 <div class="relative mb-12">
-                    <input id="modal-amount" type="number" placeholder="0.00" class="w-full bg-transparent text-center text-6xl font-casino border-b-2 border-emerald-500 py-4 outline-none text-white">
+                    <span class="absolute left-0 top-1/2 -translate-y-1/2 text-emerald-500 font-casino text-2xl">$</span>
+                    <input id="modal-amount" type="number" placeholder="0.00" class="w-full bg-transparent text-center text-6xl font-casino border-b border-zinc-800 py-4 outline-none text-white focus:border-emerald-500">
                 </div>
                 <button onclick="goToStep2()" class="btn-primary w-full py-6 rounded-3xl font-black uppercase italic tracking-widest text-xl">Siguiente</button>
             </div>
 
-            <div id="step-2" class="hidden">
-                <h2 class="font-casino text-2xl mb-6 text-emerald-500 uppercase tracking-tighter">INSTRUCCIONES DE PAGO</h2>
+            <div id="dep-step-2" class="hidden text-left">
+                <h2 class="font-casino text-2xl mb-6 text-emerald-500 uppercase text-center">DATOS DE PAGO</h2>
                 
-                <div class="space-y-4 text-left">
+                <div class="space-y-3">
                     <div class="bg-zinc-950 p-4 rounded-2xl border border-white/5">
-                        <span class="text-[8px] text-zinc-600 font-black uppercase block mb-1">CANTIDAD A TRANSFERIR</span>
+                        <span class="text-[8px] text-zinc-500 font-black uppercase block mb-1">CANTIDAD A ENVIAR</span>
                         <span id="display-final-amount" class="text-3xl font-casino text-white tracking-tighter">$0.00</span>
                     </div>
 
                     <div class="bg-zinc-950 p-4 rounded-2xl border border-white/5 flex justify-between items-center">
                         <div>
-                            <span class="text-[8px] text-zinc-600 font-black uppercase block mb-1">CUENTA CLAVE (STP)</span>
+                            <span class="text-[8px] text-zinc-500 font-black uppercase block mb-1">CLAVE (STP)</span>
                             <span class="text-emerald-400 font-mono text-sm font-bold">722969020533491161</span>
                         </div>
-                        <button onclick="copyClabe()" class="w-10 h-10 bg-emerald-500/20 text-emerald-500 rounded-xl hover:bg-emerald-500 hover:text-black transition">
+                        <button onclick="copyData('722969020533491161')" class="w-10 h-10 bg-emerald-500/10 text-emerald-500 rounded-xl hover:bg-emerald-500 transition">
                             <i class="fas fa-copy"></i>
                         </button>
                     </div>
 
-                    <div class="bg-zinc-950 p-4 rounded-2xl border border-white/5">
-                        <span class="text-[8px] text-zinc-600 font-black uppercase block mb-1">CONCEPTO DE PAGO</span>
-                        <span id="display-concepto" class="text-white font-bold text-sm">CASINO_WINMX_XXXX</span>
+                    <div class="bg-zinc-950 p-4 rounded-2xl border border-white/5 flex justify-between items-center">
+                        <div>
+                            <span class="text-[8px] text-zinc-500 font-black uppercase block mb-1">CONCEPTO</span>
+                            <span id="display-concepto" class="text-white font-bold text-sm tracking-widest uppercase font-mono">---</span>
+                        </div>
+                        <button onclick="copyData(document.getElementById('display-concepto').innerText)" class="w-10 h-10 bg-white/5 text-zinc-400 rounded-xl hover:bg-white/10 transition">
+                            <i class="fas fa-copy"></i>
+                        </button>
                     </div>
                 </div>
 
-                <p class="text-[9px] text-zinc-500 mt-6 leading-tight font-bold">Una vez realizada la transferencia, haz clic en "Ya transferí" para procesar tu saldo.</p>
+                <p class="text-[9px] text-zinc-500 mt-6 leading-tight font-bold uppercase text-center">Realiza la transferencia y pulsa el botón de abajo.</p>
                 <button onclick="executeTransaction()" class="btn-primary w-full py-6 rounded-3xl font-black uppercase italic tracking-widest text-xl mt-6">Ya transferí</button>
             </div>
 
-            <button onclick="closeModal()" class="text-zinc-600 text-[10px] font-black uppercase mt-6 block mx-auto underline tracking-widest">Cancelar proceso</button>
+            <div id="withdraw-step" class="hidden">
+                <h2 class="font-casino text-4xl mb-8 text-red-500 uppercase">RETIRAR</h2>
+                <input id="withdraw-amount" type="number" placeholder="0.00" class="w-full bg-transparent text-center text-5xl font-casino border-b border-red-500 py-4 outline-none text-white mb-8">
+                <button onclick="executeTransaction()" class="bg-red-600 text-white w-full py-6 rounded-3xl font-black uppercase italic tracking-widest text-xl">Confirmar Retiro</button>
+            </div>
+
+            <button onclick="closeModal()" class="text-zinc-600 text-[10px] font-black uppercase mt-8 block mx-auto underline tracking-[0.2em]">Cerrar</button>
         </div>
     </div>
 
     <script>
         const sb = window.supabase.createClient("https://dakhnqriwbzihlzhtfcb.supabase.co", "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs");
         
+        let isLoginMode = true;
         let userId = null;
         let balance = 0;
         let currentBet = 10;
         let currentAction = 'deposit';
         const symbols = ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'];
 
-        // --- MANEJO DE PASOS DEPÓSITO ---
-        function openDepositStep1() {
-            currentAction = 'deposit';
-            document.getElementById('step-1').classList.remove('hidden');
-            document.getElementById('step-2').classList.add('hidden');
-            document.getElementById('modal-amount').value = '';
-            document.getElementById('modal-bank').classList.remove('hidden');
+        // --- AUTH ---
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('auth-switch-btn').innerText = isLoginMode ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Entra';
         }
 
-        function goToStep2() {
-            const amt = document.getElementById('modal-amount').value;
-            if(!amt || amt <= 0) return alert("Ingresa una cantidad válida");
-            
-            // Generar concepto único basado en el ID de usuario corto
-            const concepto = `RECARGA_${userId.substring(0,5).toUpperCase()}`;
-            
-            document.getElementById('display-final-amount').innerText = `$${parseFloat(amt).toLocaleString()}`;
-            document.getElementById('display-concepto').innerText = concepto;
-            
-            document.getElementById('step-1').classList.add('hidden');
-            document.getElementById('step-2').classList.remove('hidden');
-        }
-
-        function copyClabe() {
-            navigator.clipboard.writeText("722969020533491161");
-            alert("CLABE copiada al portapapeles");
-        }
-
-        // --- LÓGICA DE NEGOCIO (MANTIENE TODO LO ANTERIOR) ---
         async function handleAuth() {
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
-            const { error } = await sb.auth.signInWithPassword({ email, password });
-            if(error) alert("Error de acceso");
+            if(isLoginMode) {
+                const { error } = await sb.auth.signInWithPassword({ email, password });
+                if(error) return alert("Error de acceso");
+            } else {
+                const { data, error } = await sb.auth.signUp({ email, password });
+                if(data.user) await sb.from('usuarios').insert({ id: data.user.id, saldo: 1000 });
+                if(error) return alert(error.message);
+                toggleAuthMode(); return;
+            }
             checkUser();
         }
 
@@ -193,67 +193,113 @@
             if (data) { balance = data.saldo; updateUI(); loadHistory(); }
         }
 
-        async function spin() {
-            if (balance < currentBet) return alert("Saldo insuficiente");
-            const res = calculateProbability(); // Tu lógica de probabilidad (0.2% Jackpot)
-            const win = currentBet * res.mult;
-            const newSaldo = (balance - currentBet) + win;
-            
-            document.getElementById('spin-btn').disabled = true;
-            // Animación y Update DB... (Lógica idéntica a la anterior)
-            const { error } = await sb.from('usuarios').update({ saldo: newSaldo }).eq('id', userId);
-            if(!error) {
-                balance = newSaldo;
-                await sb.from('history').insert({ user_id: userId, type: 'bets', amount: win > 0 ? win : -currentBet, label: res.type });
-                setTimeout(() => { updateUI(); loadHistory(); document.getElementById('spin-btn').disabled = false; }, 3000);
-            }
-        }
-
-        function calculateProbability() {
+        // --- MOTOR DE JUEGO (MANTIENE TUS REGLAS) ---
+        function calculateMathResult() {
             const rng = Math.random() * 100;
             if (rng <= 0.2) return { type: 'JACKPOT', icons: ['7️⃣','7️⃣','7️⃣'], mult: 200 };
             if (rng <= 20.0) return { type: 'WIN', icons: ['🍒','🍒','🍋'], mult: 2 };
             return { type: 'LOSE', icons: ['🍋','🔔','🍒'], mult: 0 };
         }
 
+        async function spin() {
+            if (balance < currentBet) return alert("Saldo insuficiente");
+            const res = calculateMathResult();
+            const win = currentBet * res.mult;
+            const newSaldo = (balance - currentBet) + win;
+            document.getElementById('spin-btn').disabled = true;
+
+            [1,2,3].forEach((id, i) => {
+                const reel = document.getElementById(`reel-${id}`);
+                reel.style.transition = 'none';
+                reel.style.transform = `translateY(0px)`;
+                reel.offsetHeight;
+                const finalPos = (symbols.indexOf(res.icons[i]) * 150) + 4500;
+                reel.style.transition = `transform ${3 + (i*0.5)}s cubic-bezier(0.1, 0, 0.1, 1)`;
+                reel.style.transform = `translateY(-${finalPos}px)`;
+            });
+
+            setTimeout(async () => {
+                const { error } = await sb.from('usuarios').update({ saldo: newSaldo }).eq('id', userId);
+                if (!error) {
+                    balance = newSaldo;
+                    await sb.from('history').insert({ user_id: userId, type: 'bets', amount: win > 0 ? win : -currentBet, label: res.type });
+                    loadHistory(); updateUI();
+                }
+                document.getElementById('spin-btn').disabled = false;
+            }, 4500);
+        }
+
+        // --- SISTEMA DE DEPÓSITO POR PASOS ---
+        function openDepositStep1() {
+            currentAction = 'deposit';
+            document.getElementById('dep-step-1').classList.remove('hidden');
+            document.getElementById('dep-step-2').classList.add('hidden');
+            document.getElementById('withdraw-step').classList.add('hidden');
+            document.getElementById('modal-bank').classList.remove('hidden');
+        }
+
+        function goToStep2() {
+            const amt = document.getElementById('modal-amount').value;
+            if(!amt || amt <= 0) return alert("Ingresa un monto");
+            document.getElementById('display-final-amount').innerText = `$${parseFloat(amt).toLocaleString()}`;
+            document.getElementById('display-concepto').innerText = `WMX-${userId.substring(0,5).toUpperCase()}`;
+            document.getElementById('dep-step-1').classList.add('hidden');
+            document.getElementById('dep-step-2').classList.remove('hidden');
+        }
+
+        function showWithdrawModal() {
+            currentAction = 'withdraw';
+            document.getElementById('dep-step-1').classList.add('hidden');
+            document.getElementById('dep-step-2').classList.add('hidden');
+            document.getElementById('withdraw-step').classList.remove('hidden');
+            document.getElementById('modal-bank').classList.remove('hidden');
+        }
+
+        function copyData(txt) {
+            navigator.clipboard.writeText(txt);
+            alert("Copiado con éxito");
+        }
+
         async function executeTransaction() {
-            const amt = parseFloat(document.getElementById('modal-amount').value);
+            const amt = currentAction === 'deposit' ? parseFloat(document.getElementById('modal-amount').value) : parseFloat(document.getElementById('withdraw-amount').value);
+            if(!amt || amt <= 0) return;
             const newSaldo = currentAction === 'deposit' ? balance + amt : balance - amt;
-            
+            if(newSaldo < 0) return alert("Sin saldo suficiente");
+
             const { error } = await sb.from('usuarios').update({ saldo: newSaldo }).eq('id', userId);
             if(!error) {
-                await sb.from('history').insert({ user_id: userId, type: currentAction, amount: amt, label: currentAction.toUpperCase() });
+                await sb.from('history').insert({ user_id: userId, type: currentAction === 'deposit' ? 'deposits' : 'withdraws', amount: amt, label: currentAction.toUpperCase() });
                 balance = newSaldo; updateUI(); loadHistory(); closeModal();
             }
         }
 
+        // --- INTERFAZ ---
         async function loadHistory() {
             const { data: logs } = await sb.from('history').select('*').eq('user_id', userId).order('created_at', { ascending: false });
             ['tab-bets', 'tab-deposits', 'tab-withdraws'].forEach(id => document.getElementById(id).innerHTML = '');
             logs?.forEach(log => {
                 const container = document.getElementById(`tab-${log.type}`);
-                if(container) container.innerHTML += `<div class="bg-black/40 p-4 rounded-2xl flex justify-between items-center border border-white/5 mb-2"><span class="text-[10px] font-bold text-zinc-300 uppercase">${log.label}</span><span class="font-casino text-emerald-500 text-lg">$${Math.abs(log.amount).toLocaleString()}</span></div>`;
+                if(container) container.innerHTML += `<div class="bg-black/40 p-5 rounded-3xl border border-white/5 flex justify-between items-center mb-2"><span class="text-[10px] font-bold text-zinc-300 uppercase">${log.label}</span><span class="font-casino text-emerald-500 text-lg">$${Math.abs(log.amount).toLocaleString()}</span></div>`;
             });
         }
 
-        // --- UI HELPERS ---
         function updateUI() { document.getElementById('balance-display').innerText = `$${balance.toLocaleString()}`; }
         function setupReels() {
             [1,2,3].forEach(id => {
                 const reel = document.getElementById(`reel-${id}`);
                 reel.innerHTML = '';
-                [...symbols, ...symbols, ...symbols, ...symbols].forEach(s => {
+                [...symbols, ...symbols, ...symbols, ...symbols, ...symbols, ...symbols].forEach(s => {
                     const d = document.createElement('div'); d.className = 'slot-item'; d.innerText = s; reel.appendChild(d);
                 });
             });
         }
-        function closeModal() { document.getElementById('modal-bank').classList.add('hidden'); }
         function switchTab(id) {
             document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden'));
             document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
             document.getElementById(id).classList.remove('hidden');
             document.getElementById('btn-' + id).classList.add('active');
         }
+        function closeModal() { document.getElementById('modal-bank').classList.add('hidden'); }
         function changeBet(v) { currentBet = Math.max(10, currentBet + v); document.getElementById('bet-display').innerText = `$${currentBet}`; }
         async function logout() { await sb.auth.signOut(); location.reload(); }
         window.onload = checkUser;
