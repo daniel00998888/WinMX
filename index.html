@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CASINO REAL OLYMPUS | Pro Edition</title>
+    <title>CASINO REAL OLYMPUS | No-Bug Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        :root { --neon: #22d3ee; --gold: #fbbf24; --danger: #ef4444; }
+        :root { --neon: #22d3ee; --gold: #fbbf24; }
         body { background: #020617; color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
         .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
         .neon-text { text-shadow: 0 0 10px var(--neon); }
         .btn-primary { background: linear-gradient(to right, #0891b2, #0e7490); transition: all 0.3s; }
-        .btn-primary:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(34, 211, 238, 0.4); }
+        .btn-primary:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 0 20px rgba(34, 211, 238, 0.4); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
         
-        /* Animaciones de Juegos */
         .spinning { animation: spin 0.1s infinite linear; }
         @keyframes spin { from { filter: blur(4px); transform: translateY(-5px); } to { filter: blur(4px); transform: translateY(5px); } }
         
@@ -23,11 +23,7 @@
         .toast { transform: translateX(120%); transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
         .toast.show { transform: translateX(0); }
 
-        /* Estilo Ruleta */
         .ruleta-container { position: relative; width: 200px; height: 200px; border-radius: 50%; border: 8px solid #1e293b; overflow: hidden; transition: transform 4s cubic-bezier(0.1, 0, 0.1, 1); }
-        
-        /* Estilo Crash */
-        #crash-graph { height: 150px; background: linear-gradient(to top, rgba(34,211,238,0.1), transparent); border-left: 2px solid var(--neon); border-bottom: 2px solid var(--neon); position: relative; }
     </style>
 </head>
 <body>
@@ -37,29 +33,28 @@
     <div id="loading" class="fixed inset-0 bg-slate-950 flex items-center justify-center z-[300]">
         <div class="text-center">
             <div class="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p class="text-cyan-500 font-bold animate-pulse">CARGANDO OLYMPUS...</p>
+            <p class="text-cyan-500 font-bold animate-pulse">VERIFICANDO SESIÓN...</p>
         </div>
     </div>
 
     <header id="nav" class="hidden glass sticky top-0 z-50 py-4 px-6 flex justify-between items-center">
         <div class="flex items-center gap-3">
             <i class="fas fa-bolt text-yellow-400 text-2xl"></i>
-            <h1 class="font-black text-xl tracking-widest neon-text">OLYMPUS CASINO</h1>
+            <h1 class="font-black text-xl tracking-widest neon-text">OLYMPUS</h1>
         </div>
         <div class="flex items-center gap-6">
             <div class="bg-slate-900 border border-cyan-500/30 px-6 py-2 rounded-full">
-                <span class="text-zinc-400 text-xs block">SALDO</span>
                 <span id="balance" class="text-yellow-400 font-black text-xl">$0</span>
             </div>
-            <button onclick="logout()" class="text-zinc-500 hover:text-red-500"><i class="fas fa-power-off text-xl"></i></button>
+            <button onclick="logout()" class="text-zinc-500 hover:text-red-500"><i class="fas fa-power-off"></i></button>
         </div>
     </header>
 
     <div id="auth" class="min-h-screen flex items-center justify-center p-6 hidden">
-        <div class="glass p-10 rounded-[2.5rem] w-full max-w-md shadow-2xl">
-            <h2 class="text-4xl font-black text-center mb-8 italic">LOGIN</h2>
-            <input id="email" type="email" placeholder="Email" class="w-full bg-slate-800/50 p-4 rounded-2xl mb-4 border border-white/10 outline-none focus:border-cyan-500">
-            <input id="pass" type="password" placeholder="Password" class="w-full bg-slate-800/50 p-4 rounded-2xl mb-8 border border-white/10 outline-none focus:border-cyan-500">
+        <div class="glass p-10 rounded-[2.5rem] w-full max-w-md shadow-2xl text-center">
+            <h2 class="text-4xl font-black mb-8 italic">BIENVENIDO</h2>
+            <input id="email" type="email" placeholder="Email" class="w-full bg-slate-800/50 p-4 rounded-2xl mb-4 border border-white/10 outline-none">
+            <input id="pass" type="password" placeholder="Password" class="w-full bg-slate-800/50 p-4 rounded-2xl mb-8 border border-white/10 outline-none">
             <div class="grid grid-cols-2 gap-4">
                 <button onclick="handleAuth('up')" class="bg-slate-800 py-4 rounded-2xl font-bold">REGISTRO</button>
                 <button onclick="handleAuth('in')" class="btn-primary py-4 rounded-2xl font-bold text-black uppercase">ENTRAR</button>
@@ -68,57 +63,44 @@
     </div>
 
     <main id="app" class="hidden p-6 max-w-6xl mx-auto">
-        
         <div class="flex gap-4 overflow-x-auto pb-6 no-scrollbar">
-            <button onclick="tab('slots')" class="flex-shrink-0 bg-slate-900 px-8 py-4 rounded-2xl border border-white/5 hover:border-cyan-500 transition">🎰 Slots</button>
-            <button onclick="tab('ruleta')" class="flex-shrink-0 bg-slate-900 px-8 py-4 rounded-2xl border border-white/5 hover:border-cyan-500 transition">🎯 Ruleta</button>
-            <button onclick="tab('crash')" class="flex-shrink-0 bg-slate-900 px-8 py-4 rounded-2xl border border-white/5 hover:border-cyan-500 transition">🚀 Crash</button>
-            <button onclick="tab('dice')" class="flex-shrink-0 bg-slate-900 px-8 py-4 rounded-2xl border border-white/5 hover:border-cyan-500 transition">🎲 Dados</button>
-            <button onclick="tab('tower')" class="flex-shrink-0 bg-slate-900 px-8 py-4 rounded-2xl border border-white/5 hover:border-cyan-500 transition">🏰 Torre</button>
-            <button onclick="tab('bj')" class="flex-shrink-0 bg-slate-900 px-8 py-4 rounded-2xl border border-white/5 hover:border-cyan-500 transition">🃏 BJ</button>
-            <button onclick="openBank()" class="flex-shrink-0 bg-emerald-600/20 px-8 py-4 rounded-2xl border border-emerald-500 text-emerald-400 font-bold uppercase">🏦 Banco</button>
+            <button onclick="tab('slots')" class="bg-slate-900 px-8 py-4 rounded-2xl border border-white/5 hover:border-cyan-500 transition">🎰 Slots</button>
+            <button onclick="tab('ruleta')" class="bg-slate-900 px-8 py-4 rounded-2xl border border-white/5 hover:border-cyan-500 transition">🎯 Ruleta</button>
+            <button onclick="tab('crash')" class="bg-slate-900 px-8 py-4 rounded-2xl border border-white/5 hover:border-cyan-500 transition">🚀 Crash</button>
+            <button onclick="openBank()" class="bg-emerald-600/20 px-8 py-4 rounded-2xl border border-emerald-500 text-emerald-400 font-bold uppercase">🏦 Banco</button>
         </div>
 
         <div id="game-zone" class="mt-4">
             <div id="tab-slots" class="tab-content glass p-10 rounded-[3rem] text-center max-w-2xl mx-auto">
                 <div class="flex justify-center gap-4 mb-10">
-                    <div id="s1" class="w-24 h-32 bg-black rounded-3xl text-6xl flex items-center justify-center border-b-4 border-cyan-900">🔔</div>
-                    <div id="s2" class="w-24 h-32 bg-black rounded-3xl text-6xl flex items-center justify-center border-b-4 border-cyan-900">🔔</div>
-                    <div id="s3" class="w-24 h-32 bg-black rounded-3xl text-6xl flex items-center justify-center border-b-4 border-cyan-900">🔔</div>
+                    <div id="s1" class="w-24 h-32 bg-black rounded-3xl text-6xl flex items-center justify-center border-b-4 border-cyan-900">🍒</div>
+                    <div id="s2" class="w-24 h-32 bg-black rounded-3xl text-6xl flex items-center justify-center border-b-4 border-cyan-900">💎</div>
+                    <div id="s3" class="w-24 h-32 bg-black rounded-3xl text-6xl flex items-center justify-center border-b-4 border-cyan-900">7️⃣</div>
                 </div>
-                <input id="bet-slots" type="number" value="10" class="bg-black p-4 rounded-xl mb-6 text-center w-40 text-2xl font-bold">
-                <button onclick="playSlots()" id="btn-slots" class="w-full btn-primary py-6 rounded-3xl font-black text-2xl text-black">SPIN</button>
+                <input id="bet-slots" type="number" value="10" class="bg-black p-4 rounded-xl mb-6 text-center w-40 text-2xl font-bold border border-white/10 outline-none">
+                <button onclick="playSlots()" id="btn-slots" class="w-full btn-primary py-6 rounded-3xl font-black text-2xl text-black">GIRAR</button>
             </div>
 
             <div id="tab-crash" class="tab-content hidden glass p-10 rounded-[3rem] max-w-lg mx-auto text-center">
-                <h3 class="text-2xl font-bold mb-4">CRASH ROCKET</h3>
-                <div id="crash-graph" class="flex items-end justify-center mb-6 overflow-hidden">
-                    <span id="crash-mult" class="text-6xl font-black text-cyan-400 mb-8">1.00x</span>
+                <div class="h-[150px] flex items-center justify-center mb-6">
+                    <span id="crash-mult" class="text-6xl font-black text-cyan-400">1.00x</span>
                 </div>
-                <input id="bet-crash" type="number" value="50" class="bg-black p-4 rounded-xl mb-4 text-center w-full">
+                <input id="bet-crash" type="number" value="50" class="bg-black p-4 rounded-xl mb-4 text-center w-full border border-white/10 outline-none">
                 <button id="btn-crash" onclick="startCrash()" class="w-full bg-orange-500 py-5 rounded-2xl font-black text-xl">APOSTAR</button>
             </div>
 
             <div id="tab-ruleta" class="tab-content hidden glass p-10 rounded-[3rem] max-w-lg mx-auto text-center">
-                <h3 class="text-2xl font-bold mb-8">RULETA FLASH</h3>
                 <div class="flex justify-center mb-10">
-                    <div id="wheel" class="ruleta-container flex items-center justify-center border-4 border-dashed border-white/20">
+                    <div id="wheel" class="ruleta-container flex items-center justify-center bg-slate-900">
                         <div id="wheel-res" class="text-5xl font-bold">?</div>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4 mb-6">
-                    <button onclick="setRoulette('red')" id="btn-red" class="bg-red-600 p-4 rounded-xl font-bold border-4 border-transparent">ROJO (x2)</button>
+                    <button onclick="setRoulette('red')" id="btn-red" class="bg-red-600 p-4 rounded-xl font-bold border-4 border-cyan-500">ROJO (x2)</button>
                     <button onclick="setRoulette('black')" id="btn-black" class="bg-slate-950 p-4 rounded-xl font-bold border-4 border-transparent">NEGRO (x2)</button>
                 </div>
-                <input id="bet-ruleta" type="number" value="10" class="bg-black p-4 rounded-xl mb-4 text-center w-full">
-                <button onclick="playRuleta()" class="w-full btn-primary py-5 rounded-2xl font-black text-black">APOSTAR</button>
-            </div>
-
-            <div id="tab-tower" class="tab-content hidden glass p-10 rounded-[3rem] max-w-sm mx-auto text-center">
-                <h3 class="text-xl font-bold mb-6 uppercase tracking-tighter">Torre de Cristal</h3>
-                <div id="tower-grid" class="grid grid-cols-3 gap-2 mb-6">
-                    </div>
-                <button onclick="startTower()" id="btn-tower" class="w-full bg-cyan-600 py-4 rounded-xl font-bold">NUEVA TORRE</button>
+                <input id="bet-ruleta" type="number" value="10" class="bg-black p-4 rounded-xl mb-4 text-center w-full border border-white/10 outline-none">
+                <button id="btn-ruleta" onclick="playRuleta()" class="w-full btn-primary py-5 rounded-2xl font-black text-black">APOSTAR</button>
             </div>
         </div>
     </main>
@@ -129,21 +111,10 @@
                 <h2 class="text-2xl font-bold">OLYMPUS BANK</h2>
                 <button onclick="closeBank()" class="text-zinc-500 text-3xl">&times;</button>
             </div>
-            <div class="flex gap-2 mb-6 bg-black p-1 rounded-xl">
-                <button onclick="bankTab('in')" id="bt-in" class="flex-1 py-3 bg-slate-800 rounded-lg font-bold">DEPÓSITO</button>
-                <button onclick="bankTab('out')" id="bt-out" class="flex-1 py-3 text-zinc-500 rounded-lg font-bold">RETIRO</button>
-            </div>
-            <div id="bank-in" class="space-y-4">
-                <input id="in-amt" type="number" placeholder="Monto $" class="w-full bg-black p-4 rounded-xl">
-                <button onclick="genClabe()" class="w-full bg-emerald-500 text-black font-bold py-4 rounded-xl">GENERAR CLABE</button>
-                <div id="clabe-box" class="hidden p-4 bg-zinc-900 rounded-xl text-center border border-white/10">
-                    <p id="clabe-val" class="text-cyan-400 font-mono text-xl mb-4">000000000000000000</p>
-                    <button onclick="confirmDep()" class="w-full bg-emerald-600 py-3 rounded-lg text-sm font-bold">CONFIRMAR TRANSFERENCIA</button>
-                </div>
-            </div>
-            <div id="bank-out" class="hidden space-y-4">
-                <input id="out-amt" type="number" placeholder="Monto a retirar" class="w-full bg-black p-4 rounded-xl">
-                <button onclick="confirmRet()" class="w-full bg-red-600 font-bold py-4 rounded-xl">RETIRAR A MI CUENTA</button>
+            <div class="space-y-4">
+                <input id="in-amt" type="number" placeholder="Monto $" class="w-full bg-black p-4 rounded-xl border border-white/5 outline-none">
+                <button onclick="confirmDep()" class="w-full bg-emerald-500 text-black font-bold py-4 rounded-xl">DEPOSITAR AL INSTANTE</button>
+                <button onclick="confirmRet()" class="w-full bg-red-600 font-bold py-4 rounded-xl mt-4">RETIRAR SALDO</button>
             </div>
         </div>
     </div>
@@ -207,57 +178,84 @@
             document.getElementById('tab-'+id).classList.remove('hidden');
         }
 
-        // --- JUEGO: SLOTS ---
+        // --- JUEGO: SLOTS (ANTI-SPAM) ---
         const icons = ["🍒", "💎", "7️⃣", "🔔", "🍋", "⭐"];
         function playSlots() {
+            const btn = document.getElementById('btn-slots');
             const b = parseInt(document.getElementById('bet-slots').value);
             if(b > saldo || b <= 0) return toast("Saldo insuficiente", 'err');
+
+            // BLOQUEO INMEDIATO
+            btn.disabled = true;
             saldo -= b; syncSaldo();
+
             const r = [document.getElementById('s1'), document.getElementById('s2'), document.getElementById('s3')];
             r.forEach(x => x.classList.add('spinning'));
+
             setTimeout(() => {
-                const res = r.map(x => { x.classList.remove('spinning'); const i = icons[Math.floor(Math.random()*icons.length)]; x.innerText = i; return i; });
-                if(res[0] === res[1] && res[1] === res[2]) { saldo += b*10; toast("JACKPOT! +$"+(b*10)); }
-                else if(res[0] === res[1]) { saldo += b*2; toast("WIN! +$"+(b*2)); }
+                const res = r.map(x => { 
+                    x.classList.remove('spinning'); 
+                    const i = icons[Math.floor(Math.random()*icons.length)]; 
+                    x.innerText = i; return i; 
+                });
+
+                if(res[0] === res[1] && res[1] === res[2]) {
+                    const win = b*10; saldo += win; toast("JACKPOT! +$"+win);
+                } else if(res[0] === res[1] || res[1] === res[2] || res[0] === res[2]) {
+                    const win = b*2; saldo += win; toast("WIN! +$"+win);
+                }
                 syncSaldo();
-            }, 1000);
+                // DESBLOQUEO TRAS RESULTADO
+                btn.disabled = false;
+            }, 1200);
         }
 
-        // --- JUEGO: CRASH ---
-        let crashMult = 1, crashInterval = null, isCrashed = false;
+        // --- JUEGO: CRASH (LÓGICA MEJORADA) ---
+        let crashMult = 1, crashInterval = null;
         function startCrash() {
+            const btn = document.getElementById('btn-crash');
             const b = parseInt(document.getElementById('bet-crash').value);
-            if(b > saldo) return toast("Saldo insuficiente", 'err');
-            if(document.getElementById('btn-crash').innerText === "CASH OUT") {
+
+            if(btn.innerText === "CASH OUT") {
                 const win = Math.floor(b * crashMult);
-                saldo += win; toast("Ganaste $"+win); clearInterval(crashInterval);
-                document.getElementById('btn-crash').innerText = "APOSTAR";
-                document.getElementById('btn-crash').className = "w-full bg-orange-500 py-5 rounded-2xl font-black text-xl";
+                saldo += win; toast("Ganaste $"+win); 
+                stopCrashGame();
                 syncSaldo(); return;
             }
+
+            if(b > saldo || b <= 0) return toast("Saldo insuficiente", 'err');
+            
             saldo -= b; syncSaldo();
-            crashMult = 1; isCrashed = false;
-            document.getElementById('btn-crash').innerText = "CASH OUT";
-            document.getElementById('btn-crash').className = "w-full bg-cyan-500 py-5 rounded-2xl font-black text-xl text-black";
-            const limit = Math.random() * 5 + 1;
+            crashMult = 1;
+            btn.innerText = "CASH OUT";
+            btn.className = "w-full bg-cyan-500 py-5 rounded-2xl font-black text-xl text-black";
+            
+            const limit = (Math.random() * 4 + 1.1).toFixed(2);
             crashInterval = setInterval(() => {
-                crashMult += 0.05;
+                crashMult += 0.03;
                 document.getElementById('crash-mult').innerText = crashMult.toFixed(2) + "x";
                 if(crashMult >= limit) {
                     clearInterval(crashInterval);
                     document.getElementById('crash-mult').innerText = "BOOM!";
-                    document.getElementById('crash-mult').className = "text-6xl font-black text-red-500 mb-8";
-                    document.getElementById('btn-crash').innerText = "PERDISTE";
+                    btn.innerText = "PERDISTE";
+                    btn.disabled = true;
                     setTimeout(() => {
-                        document.getElementById('btn-crash').innerText = "APOSTAR";
-                        document.getElementById('btn-crash').className = "w-full bg-orange-500 py-5 rounded-2xl font-black text-xl";
-                        document.getElementById('crash-mult').className = "text-6xl font-black text-cyan-400 mb-8";
+                        stopCrashGame();
+                        btn.disabled = false;
                     }, 2000);
                 }
             }, 100);
         }
 
-        // --- JUEGO: RULETA ---
+        function stopCrashGame() {
+            clearInterval(crashInterval);
+            const btn = document.getElementById('btn-crash');
+            btn.innerText = "APOSTAR";
+            btn.className = "w-full bg-orange-500 py-5 rounded-2xl font-black text-xl";
+            document.getElementById('crash-mult').innerText = "1.00x";
+        }
+
+        // --- JUEGO: RULETA (ANTI-SPAM) ---
         let wheelBet = 'red';
         function setRoulette(color) {
             wheelBet = color;
@@ -265,32 +263,30 @@
             document.getElementById('btn-black').style.borderColor = color === 'black' ? 'cyan' : 'transparent';
         }
         function playRuleta() {
+            const btn = document.getElementById('btn-ruleta');
             const b = parseInt(document.getElementById('bet-ruleta').value);
-            if(b > saldo) return toast("Saldo insuficiente", 'err');
+            if(b > saldo || b <= 0) return toast("Saldo insuficiente", 'err');
+
+            btn.disabled = true;
             saldo -= b; syncSaldo();
+
             const colors = ['red', 'black'];
             const res = colors[Math.floor(Math.random()*2)];
             document.getElementById('wheel').style.transform = `rotate(${3600 + Math.random()*360}deg)`;
+            
             setTimeout(() => {
                 document.getElementById('wheel-res').innerText = res === 'red' ? '🔴' : '⚫';
-                if(res === wheelBet) { saldo += b*2; toast("RUEDA GANADORA! +$"+(b*2)); }
+                if(res === wheelBet) { 
+                    const win = b*2; saldo += win; toast("RUEDA GANADORA! +$"+win); 
+                }
                 syncSaldo();
+                btn.disabled = false;
             }, 4000);
         }
 
         // --- BANCO ---
         function openBank() { document.getElementById('modal-bank').classList.remove('hidden'); }
         function closeBank() { document.getElementById('modal-bank').classList.add('hidden'); }
-        function bankTab(t) {
-            document.getElementById('bank-in').classList.toggle('hidden', t !== 'in');
-            document.getElementById('bank-out').classList.toggle('hidden', t !== 'out');
-            document.getElementById('bt-in').className = t==='in' ? "flex-1 py-3 bg-slate-800 rounded-lg font-bold" : "flex-1 py-3 text-zinc-500 font-bold";
-            document.getElementById('bt-out').className = t==='out' ? "flex-1 py-3 bg-slate-800 rounded-lg font-bold" : "flex-1 py-3 text-zinc-500 font-bold";
-        }
-        function genClabe() {
-            document.getElementById('clabe-val').innerText = "012" + Math.floor(Math.random()*1000000000000000);
-            document.getElementById('clabe-box').classList.remove('hidden');
-        }
         function confirmDep() {
             const a = parseInt(document.getElementById('in-amt').value) || 0;
             saldo += a; syncSaldo(); toast("Depósito acreditado", 'ok'); closeBank();
