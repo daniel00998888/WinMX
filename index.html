@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WinMX | Casino Digital de Élite</title>
+    <title>WinMX | Casino Digital</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -18,10 +18,10 @@
         .btn-primary { background: var(--mx-green); color: black; transition: 0.3s; box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(16, 185, 129, 0.5); }
         
-        /* Animación de los Slots */
+        /* Animación de los Slots (Tu favorita) */
         .slot-box { height: 120px; overflow: hidden; background: #000; border: 2px solid #1a1a1a; border-radius: 1rem; }
         .slot-reel { transition: transform 2s cubic-bezier(0.1, 0, 0.1, 1); display: flex; flex-direction: column; align-items: center; }
-        .slot-item { height: 120px; display: flex; items-center; justify-center; font-size: 3rem; }
+        .slot-item { height: 120px; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
     </style>
 </head>
 <body>
@@ -33,25 +33,15 @@
     <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4">
         <div class="glass p-10 rounded-[3rem] w-full max-w-md text-center shadow-2xl border-b-8 border-emerald-600">
             <h2 class="text-7xl font-casino italic mb-2 tracking-tighter uppercase">Win<span class="text-emerald-500">MX</span></h2>
-            <p class="text-zinc-500 text-[10px] tracking-[0.4em] font-black mb-12 uppercase">Experiencia de Juego Real</p>
+            <p class="text-zinc-500 text-[10px] tracking-[0.4em] font-black mb-12 uppercase">Acceso Instantáneo</p>
             
-            <div id="form-main">
-                <div class="relative mb-6">
-                    <i class="fas fa-envelope absolute left-5 top-5 text-zinc-600"></i>
-                    <input id="auth-email" type="email" placeholder="TU GMAIL" class="w-full bg-zinc-950 p-5 pl-14 rounded-2xl border border-white/5 outline-none focus:border-emerald-500 text-white font-bold">
-                </div>
-                <button onclick="handleRegister()" class="btn-primary w-full py-5 rounded-2xl font-black uppercase italic text-sm">
-                    Enviar Código de Acceso
-                </button>
+            <div class="relative mb-6">
+                <i class="fas fa-user absolute left-5 top-5 text-zinc-600"></i>
+                <input id="auth-email" type="email" placeholder="TU CORREO O USUARIO" class="w-full bg-zinc-950 p-5 pl-14 rounded-2xl border border-white/5 outline-none focus:border-emerald-500 text-white font-bold">
             </div>
-
-            <div id="form-verify" class="hidden animate-pulse">
-                <p class="text-xs text-emerald-400 font-bold mb-6 uppercase">Código enviado a tu bandeja</p>
-                <input id="verify-code" type="number" placeholder="000000" class="w-full bg-black text-center text-5xl p-6 rounded-3xl border-2 border-emerald-500 mb-6 font-casino tracking-widest outline-none">
-                <button onclick="confirmOTP()" class="btn-primary w-full py-5 rounded-2xl font-black uppercase italic text-sm">
-                    Verificar y Entrar
-                </button>
-            </div>
+            <button onclick="handleQuickAccess()" class="btn-primary w-full py-5 rounded-2xl font-black uppercase italic text-sm">
+                Entrar a Jugar
+            </button>
         </div>
     </div>
 
@@ -59,11 +49,14 @@
         <nav class="p-6 flex justify-between items-center glass sticky top-0 z-50">
             <h1 class="text-3xl font-casino italic">Win<span class="text-emerald-500">MX</span></h1>
             <div class="flex items-center gap-4">
-                <div class="bg-black px-6 py-2 rounded-full border border-emerald-500/30">
-                    <span class="text-[10px] text-zinc-500 font-bold block leading-none">SALDO DISPONIBLE</span>
-                    <span id="balance-display" class="text-xl font-casino text-emerald-400">$1,000.00</span>
+                <div class="bg-black px-6 py-2 rounded-xl border border-emerald-500/30 flex items-center gap-3">
+                    <i class="fas fa-university text-emerald-500"></i>
+                    <div>
+                        <span class="text-[9px] text-zinc-500 font-bold block leading-none uppercase">Banco WinMX</span>
+                        <span id="balance-display" class="text-xl font-casino text-emerald-400">$1,000.00</span>
+                    </div>
                 </div>
-                <button onclick="logout()" class="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center hover:bg-red-600 transition"><i class="fas fa-sign-out-alt"></i></button>
+                <button onclick="logout()" class="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center hover:bg-red-600 transition"><i class="fas fa-power-off"></i></button>
             </div>
         </nav>
 
@@ -82,16 +75,16 @@
 
                 <div class="flex flex-col items-center gap-6">
                     <div class="flex items-center gap-4 bg-black/50 p-2 rounded-2xl border border-white/5">
-                        <button onclick="changeBet(-10)" class="w-12 h-12 rounded-xl bg-zinc-800 font-bold">-</button>
+                        <button onclick="changeBet(-10)" class="w-12 h-12 rounded-xl bg-zinc-800 font-bold hover:bg-zinc-700">-</button>
                         <div class="px-8 text-center">
                             <span class="text-[10px] text-zinc-500 font-bold block">APUESTA</span>
                             <span id="bet-display" class="text-2xl font-casino">$10</span>
                         </div>
-                        <button onclick="changeBet(10)" class="w-12 h-12 rounded-xl bg-zinc-800 font-bold">+</button>
+                        <button onclick="changeBet(10)" class="w-12 h-12 rounded-xl bg-zinc-800 font-bold hover:bg-zinc-700">+</button>
                     </div>
 
                     <button id="spin-btn" onclick="spin()" class="btn-primary w-full max-w-sm py-6 rounded-3xl font-casino text-2xl uppercase italic">
-                        GIRAR AHORA
+                        PROBAR SUERTE
                     </button>
                 </div>
             </div>
@@ -99,59 +92,56 @@
     </div>
 
     <script>
-        // CONFIGURACIÓN SUPABASE (¡YA FUNCIONA!)
-        const supabaseUrl = "https://dakhnqriwbzihlzhtfcb.supabase.co";
-        const supabaseKey = "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs";
-        const sb = window.supabase.createClient(supabaseUrl, supabaseKey);
+        // Configuración Supabase
+        const sb = window.supabase.createClient("https://dakhnqriwbzihlzhtfcb.supabase.co", "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs");
 
         let balance = 1000;
         let currentBet = 10;
         const symbols = ['💎', '🍋', '🍒', '🔔', '⭐️', '7️⃣'];
 
-        // --- SISTEMA DE AUTENTICACIÓN ---
-        async function handleRegister() {
+        // --- ACCESO RÁPIDO SIN CÓDIGO ---
+        async function handleQuickAccess() {
             const email = document.getElementById('auth-email').value;
-            if(!email) return;
+            if(!email) return alert("Ingresa un correo o nombre para entrar");
+
             toggleLoading(true);
 
-            const { error } = await sb.auth.signInWithOtp({ email: email });
+            // Intentamos loguear o crear directo (Usando contraseña genérica interna)
+            const { data, error } = await sb.auth.signUp({
+                email: email,
+                password: 'winmx_password_default'
+            });
+
+            // Si el usuario ya existe, intentamos entrar
+            if(error && error.message.includes("already registered")) {
+                const { error: loginError } = await sb.auth.signInWithPassword({
+                    email: email,
+                    password: 'winmx_password_default'
+                });
+                if(loginError) { 
+                    toggleLoading(false);
+                    return alert("Error al entrar");
+                }
+            }
 
             toggleLoading(false);
-            if(error) {
-                alert("Error: " + error.message);
-            } else {
-                document.getElementById('form-main').classList.add('hidden');
-                document.getElementById('form-verify').classList.remove('hidden');
-            }
+            initApp();
         }
 
-        async function confirmOTP() {
-            const email = document.getElementById('auth-email').value;
-            const code = document.getElementById('verify-code').value;
-            toggleLoading(true);
-
-            const { data, error } = await sb.auth.verifyOtp({ email, token: code, type: 'email' });
-
-            toggleLoading(false);
-            if(error) {
-                alert("Código incorrecto");
-            } else {
-                initApp();
-            }
-        }
-
-        // --- LÓGICA DEL CASINO ---
         function initApp() {
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
             setupReels();
+            updateUI();
         }
 
+        // --- LÓGICA DEL JUEGO (SLOTS) ---
         function setupReels() {
             [1, 2, 3].forEach(id => {
                 const reel = document.getElementById(`reel-${id}`);
                 reel.innerHTML = '';
-                for(let i=0; i<20; i++) {
+                // Creamos una tira larga de símbolos para la animación
+                for(let i=0; i<30; i++) {
                     const item = document.createElement('div');
                     item.className = 'slot-item';
                     item.innerText = symbols[Math.floor(Math.random() * symbols.length)];
@@ -166,36 +156,44 @@
         }
 
         function spin() {
-            if(balance < currentBet) return alert("SALDO INSUFICIENTE");
+            if(balance < currentBet) return alert("NO TIENES SUFICIENTE SALDO EN EL BANCO");
             
             balance -= currentBet;
             updateUI();
             
             document.getElementById('spin-btn').disabled = true;
+            document.getElementById('spin-btn').innerText = "GIRANDO...";
             const results = [];
 
             [1, 2, 3].forEach((id, index) => {
                 const reel = document.getElementById(`reel-${id}`);
                 const randomIndex = Math.floor(Math.random() * symbols.length);
-                const stopPos = (randomIndex * 120);
+                const stopPos = (randomIndex * 120); // 120 es la altura de cada símbolo
                 
                 reel.style.transform = `translateY(-${stopPos}px)`;
                 results.push(symbols[randomIndex]);
             });
 
             setTimeout(() => {
+                // Lógica de Ganador
                 if(results[0] === results[1] && results[1] === results[2]) {
-                    const win = currentBet * 10;
+                    const win = currentBet * 15;
                     balance += win;
-                    alert("¡JACKPOT! GANASTE $" + win);
+                    alert("¡PREMIO MAYOR! HAS GANADO $" + win);
+                } else if(results[0] === results[1] || results[1] === results[2]) {
+                    const win = currentBet * 2;
+                    balance += win;
+                    alert("¡CASI! GANASTE $" + win);
                 }
+
                 updateUI();
                 document.getElementById('spin-btn').disabled = false;
+                document.getElementById('spin-btn').innerText = "PROBAR SUERTE";
             }, 2100);
         }
 
         function updateUI() {
-            document.getElementById('balance-display').innerText = `$${balance.toFixed(2)}`;
+            document.getElementById('balance-display').innerText = `$${balance.toLocaleString()}`;
         }
 
         function toggleLoading(s) { document.getElementById('loading').classList.toggle('hidden', !s); }
