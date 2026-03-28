@@ -3,27 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Casino Real PRO</title>
+    <title>Casino Real PRO | Oficial</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        body { background: linear-gradient(135deg, #0a1625, #1a2a3f); font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #0a1625, #1a2a3f); font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
         .neon-text { text-shadow: 0 0 10px #22d3ee, 0 0 20px #22d3ee; }
         .reel {
             width: 85px; height: 85px; background: #0f1c2e; border: 4px solid #22d3ee;
             border-radius: 14px; font-size: 46px; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 20px rgba(34, 211, 238, 0.6);
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.6); overflow: hidden;
         }
         @media (min-width: 640px) { .reel { width: 100px; height: 100px; font-size: 56px; } }
-        .spinning { animation: spin 0.1s linear infinite; }
-        @keyframes spin { 0% { transform: translateY(-10px); filter: blur(2px); } 100% { transform: translateY(10px); filter: blur(2px); } }
+        
+        /* Animación de giro mejorada */
+        .spinning { animation: blurSpin 0.15s linear infinite; }
+        @keyframes blurSpin {
+            0% { transform: scale(1); filter: blur(0px); }
+            50% { transform: scale(0.95); filter: blur(4px); }
+            100% { transform: scale(1); filter: blur(0px); }
+        }
         #confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
     </style>
 </head>
 <body class="text-white min-h-screen">
+
     <header id="topbar" class="hidden bg-zinc-950 border-b border-cyan-500/30 py-4 px-4 sticky top-0 z-40">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between max-w-7xl mx-auto">
             <div class="flex items-center gap-3">
                 <span class="text-3xl">🎰</span>
                 <h1 class="text-2xl font-bold tracking-wider neon-text">CASINO REAL PRO</h1>
@@ -33,7 +40,7 @@
                     <i class="fas fa-coins text-yellow-400"></i>
                     <span id="saldo" class="font-semibold text-2xl text-yellow-300">$0</span>
                 </div>
-                <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-5 py-3 rounded-2xl text-sm">Salir</button>
+                <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-5 py-3 rounded-2xl text-sm transition">Salir</button>
             </div>
         </div>
     </header>
@@ -42,11 +49,11 @@
         <div class="bg-zinc-900 p-10 rounded-3xl shadow-2xl w-full max-w-md border border-cyan-500/30">
             <div class="text-center mb-10">
                 <span class="text-7xl">🎰</span>
-                <h2 class="text-4xl font-bold mt-4 neon-text">CASINO REAL</h2>
-                <p class="text-zinc-400 mt-2">¡Bienvenido!</p>
+                <h2 class="text-4xl font-bold mt-4 neon-text">BIENVENIDO</h2>
+                <p class="text-zinc-400 mt-2">Tu fortuna te espera</p>
             </div>
             <input id="email" type="email" placeholder="Correo electrónico" class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-6 py-5 mb-4 focus:outline-none focus:border-cyan-400 text-lg">
-            <input id="pass" type="password" placeholder="Contraseña" class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-6 py-5 mb-6 focus:outline-none focus:border-cyan-400 text-lg">
+            <input id="pass" type="password" placeholder="Contraseña (mín. 6 caracteres)" class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-6 py-5 mb-6 focus:outline-none focus:border-cyan-400 text-lg">
             <div class="grid grid-cols-2 gap-4">
                 <button onclick="register()" class="bg-zinc-700 hover:bg-zinc-600 py-5 rounded-2xl font-semibold text-lg transition">Registrarse</button>
                 <button onclick="login()" class="bg-cyan-500 hover:bg-cyan-600 text-black py-5 rounded-2xl font-semibold text-lg transition">Entrar</button>
@@ -56,46 +63,81 @@
     </div>
 
     <div id="casino" class="hidden min-h-screen">
-        <div class="flex h-screen overflow-hidden">
+        <div class="flex h-[calc(100vh-80px)] overflow-hidden">
+            
             <div id="sidebar" class="w-72 bg-zinc-950 border-r border-zinc-800 p-6 flex flex-col fixed md:static inset-y-0 left-0 z-50 -translate-x-full md:translate-x-0 transition-transform duration-300">
-                <h3 class="text-cyan-400 font-semibold mb-5 flex items-center gap-2 text-lg"><i class="fas fa-gamepad"></i> JUEGOS</h3>
-                <div onclick="showGame('slot')" class="flex items-center gap-4 p-5 hover:bg-zinc-900 rounded-3xl cursor-pointer mb-3 text-lg">🎰 <span class="font-medium">Slots</span></div>
-                <div onclick="openBankModal()" class="flex items-center gap-4 p-5 hover:bg-zinc-900 rounded-3xl cursor-pointer text-lg">🏦 <span class="font-medium">Depósito / Retiro</span></div>
-                <h3 class="text-cyan-400 font-semibold mt-auto mb-5 flex items-center gap-2 text-lg"><i class="fas fa-trophy"></i> TOP 5</h3>
-                <div id="rankingBox" class="flex-1 space-y-4 overflow-auto"></div>
+                <h3 class="text-cyan-400 font-semibold mb-5 flex items-center gap-2 text-lg uppercase tracking-widest text-xs opacity-60">Juegos</h3>
+                <div onclick="showGame('slot')" class="flex items-center gap-4 p-5 hover:bg-zinc-900 rounded-3xl cursor-pointer mb-3 text-lg border border-transparent hover:border-cyan-500/30 transition">🎰 <span class="font-medium">Slots</span></div>
+                
+                <h3 class="text-cyan-400 font-semibold mt-6 mb-5 flex items-center gap-2 text-lg uppercase tracking-widest text-xs opacity-60">Finanzas</h3>
+                <div onclick="openBankModal()" class="flex items-center gap-4 p-5 hover:bg-zinc-900 rounded-3xl cursor-pointer text-lg border border-transparent hover:border-emerald-500/30 transition">🏦 <span class="font-medium">Banco / Retiro</span></div>
+                
+                <h3 class="text-cyan-400 font-semibold mt-auto mb-5 flex items-center gap-2 text-lg uppercase tracking-widest text-xs opacity-60">Top Ganadores</h3>
+                <div id="rankingBox" class="space-y-3 max-h-40 overflow-auto">
+                    </div>
             </div>
 
-            <div class="flex-1 flex flex-col p-6 md:p-10 overflow-auto">
-                <div id="slot" class="game">
-                    <h2 class="text-4xl font-bold mb-8 flex items-center gap-4"><span>🎰</span> Tragamonedas Premium</h2>
-                    <div class="max-w-lg mx-auto bg-zinc-900/50 p-8 rounded-3xl">
-                        <div class="flex justify-center gap-6 mb-12">
-                            <div class="reel" id="r1">🍒</div>
-                            <div class="reel" id="r2">💎</div>
-                            <div class="reel" id="r3">7️⃣</div>
+            <div class="flex-1 p-6 md:p-10 overflow-auto flex flex-col items-center justify-center">
+                <div id="slot" class="game w-full max-w-2xl">
+                    <h2 class="text-4xl font-bold mb-10 text-center flex items-center justify-center gap-4">
+                        <span class="text-cyan-400">JACKPOT</span> SLOTS <span class="text-cyan-400">777</span>
+                    </h2>
+                    
+                    <div class="bg-zinc-900/80 p-10 rounded-[40px] border border-cyan-500/20 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+                        <div class="flex justify-center gap-4 md:gap-8 mb-12">
+                            <div class="reel" id="r1">❓</div>
+                            <div class="reel" id="r2">❓</div>
+                            <div class="reel" id="r3">❓</div>
                         </div>
-                        <div class="flex flex-col gap-4">
-                            <input id="betSlot" type="number" placeholder="Monto a apostar" class="bg-zinc-800 border border-zinc-700 rounded-3xl px-6 py-5 text-center text-2xl outline-none focus:border-cyan-500">
-                            <button onclick="spinSlot()" class="bg-gradient-to-r from-cyan-500 to-blue-600 py-5 rounded-3xl font-bold text-xl active:scale-95 transition">GIRAR</button>
+                        
+                        <div class="max-w-xs mx-auto space-y-4">
+                            <div class="relative">
+                                <span class="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-500 font-bold">$</span>
+                                <input id="betSlot" type="number" value="10" min="1" class="w-full bg-zinc-950 border border-zinc-800 rounded-3xl px-10 py-5 text-center text-3xl font-bold focus:border-cyan-500 outline-none transition">
+                            </div>
+                            <button onclick="spinSlot()" id="btnSpin" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 py-6 rounded-3xl font-black text-2xl shadow-lg shadow-cyan-500/20 active:scale-95 transition-all">GIRAR AHORA</button>
                         </div>
-                        <p id="slotRes" class="text-center mt-12 text-3xl font-bold min-h-[80px]"></p>
+                        <p id="slotRes" class="text-center mt-12 text-2xl font-bold min-h-[40px] tracking-wide"></p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="bankModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[100]">
-        <div class="bg-zinc-900 rounded-3xl p-8 w-full max-w-lg">
-            <h2 class="text-3xl font-bold mb-6">🏦 Depósito Express</h2>
-            <input id="depositAmount" type="number" placeholder="Monto" class="w-full bg-zinc-800 rounded-2xl px-5 py-4 text-2xl mb-4 outline-none">
-            <button onclick="confirmDeposit()" class="w-full bg-green-600 py-4 rounded-2xl font-bold mb-4">CONFIRMAR CARGA</button>
-            <button onclick="closeBankModal()" class="w-full text-zinc-400">Cerrar</button>
+    <div id="bankModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
+        <div class="bg-zinc-900 rounded-[35px] p-10 w-full max-w-lg border border-white/10 shadow-2xl">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-bold">🏦 Banco Real</h2>
+                <button onclick="closeBankModal()" class="text-4xl text-zinc-500 hover:text-white transition">&times;</button>
+            </div>
+            
+            <div class="bg-zinc-800/50 p-6 rounded-3xl mb-8 text-center border border-white/5">
+                <p class="text-zinc-400 text-sm mb-1">Tu Saldo</p>
+                <p id="modalSaldo" class="text-5xl font-bold text-yellow-300">$0</p>
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-zinc-800 p-6 rounded-3xl">
+                    <h3 class="text-emerald-400 font-bold mb-4 uppercase text-xs tracking-widest">Cargar Saldo (SPEI)</h3>
+                    <div class="flex gap-2 mb-4">
+                        <input id="depositAmount" type="number" placeholder="Monto $" class="flex-1 bg-zinc-900 rounded-2xl px-5 py-4 outline-none border border-transparent focus:border-emerald-500 transition">
+                        <button onclick="generateCLABE()" class="bg-emerald-600 px-6 py-4 rounded-2xl font-bold hover:bg-emerald-500 transition">Generar</button>
+                    </div>
+                    
+                    <div id="clabeContainer" class="hidden animate-fade-in">
+                        <div class="bg-black p-4 rounded-2xl border border-zinc-700 flex justify-between items-center">
+                            <span id="clabeDisplay" class="font-mono text-cyan-400"></span>
+                            <button onclick="copyCLABE()" class="text-xs bg-zinc-800 px-3 py-1 rounded-lg">Copiar</button>
+                        </div>
+                        <button onclick="confirmDeposit()" class="w-full mt-4 bg-emerald-500 text-black py-4 rounded-2xl font-black uppercase transition hover:bg-emerald-400">Ya deposité</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // TU CONFIGURACIÓN ORIGINAL
+        // CONEXIÓN SUPABASE
         const sb = window.supabase.createClient(
             "https://dakhnqriwbzihlzhtfcb.supabase.co",
             "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs"
@@ -103,36 +145,38 @@
 
         let user = null;
         let saldo = 0;
-        const symbols = ["🍒", "💎", "7️⃣", "🔔", "🍋"];
+        const symbols = ["🍒", "💎", "7️⃣", "🔔", "🍋", "🍀", "🍇"];
 
-        // FUNCIONES DE AUTH CONECTADAS A SUPABASE
+        // --- AUTENTICACIÓN MEJORADA ---
         async function register() {
             const email = document.getElementById("email").value;
             const password = document.getElementById("pass").value;
+            if (password.length < 6) return msg("Mínimo 6 caracteres", "text-red-400");
+            
             const { data, error } = await sb.auth.signUp({ email, password });
             if (error) return msg(error.message, "text-red-500");
             
-            // Crear perfil en tu tabla 'profiles'
-            await sb.from('profiles').insert([{ id: data.user.id, email: email, saldo: 100 }]);
-            msg("Registro exitoso. ¡Inicia sesión!", "text-green-500");
+            // Crear perfil en DB (Error 404 corregido si creaste la tabla)
+            const { error: dbErr } = await sb.from('profiles').insert([{ id: data.user.id, email: email, saldo: 500 }]);
+            if(dbErr) console.log("Nota: Crea la tabla profiles en SQL editor.");
+            
+            msg("¡Cuenta creada! Inicia sesión.", "text-green-400");
         }
 
         async function login() {
             const email = document.getElementById("email").value;
             const password = document.getElementById("pass").value;
             const { data, error } = await sb.auth.signInWithPassword({ email, password });
-            if (error) return msg("Error: Datos incorrectos", "text-red-500");
+            if (error) return msg("Datos incorrectos", "text-red-500");
             
             user = data.user;
-            loadUserData();
+            initApp();
         }
 
-        async function logout() {
-            await sb.auth.signOut();
-            location.reload();
-        }
+        async function logout() { await sb.auth.signOut(); location.reload(); }
 
-        async function loadUserData() {
+        // --- INICIO DE LA APP ---
+        async function initApp() {
             const { data } = await sb.from('profiles').select('*').eq('id', user.id).single();
             if (data) {
                 saldo = data.saldo;
@@ -140,66 +184,107 @@
                 document.getElementById("auth").classList.add("hidden");
                 document.getElementById("casino").classList.remove("hidden");
                 document.getElementById("topbar").classList.remove("hidden");
+                loadRanking();
             }
         }
 
-        // LÓGICA DE JUEGO PERSISTENTE
+        // --- LÓGICA DEL TRAGAMONEDAS ---
         async function spinSlot() {
-            const bet = parseInt(document.getElementById("betSlot").value) || 0;
-            if (bet <= 0 || bet > saldo) return alert("Saldo insuficiente");
+            const bet = parseInt(document.getElementById("betSlot").value);
+            const resEl = document.getElementById("slotRes");
+            const btn = document.getElementById("btnSpin");
 
+            if (isNaN(bet) || bet <= 0 || bet > saldo) {
+                resEl.textContent = "❌ Saldo insuficiente";
+                resEl.className = "text-center mt-12 text-2xl font-bold text-red-500";
+                return;
+            }
+
+            // Descontar y girar
+            btn.disabled = true;
             saldo -= bet;
             updateUI();
+            resEl.textContent = "GIRANDO...";
+            resEl.className = "text-center mt-12 text-2xl font-bold text-zinc-500";
 
             const reels = [document.getElementById("r1"), document.getElementById("r2"), document.getElementById("r3")];
             reels.forEach(r => r.classList.add("spinning"));
 
             setTimeout(async () => {
-                const res = reels.map(r => {
+                const results = reels.map(r => {
                     r.classList.remove("spinning");
-                    const s = symbols[Math.floor(Math.random() * symbols.length)];
-                    r.textContent = s;
-                    return s;
+                    const icon = symbols[Math.floor(Math.random() * symbols.length)];
+                    r.textContent = icon;
+                    return icon;
                 });
 
-                if (res[0] === res[1] && res[1] === res[2]) {
-                    const win = bet * 10;
-                    saldo += win;
-                    document.getElementById("slotRes").innerHTML = "💰 ¡GANASTE $" + win + "!";
+                let win = 0;
+                if (results[0] === results[1] && results[1] === results[2]) {
+                    win = bet * 10;
+                    resEl.innerHTML = `💎 ¡JACKPOT BRUTAL! +$${win}`;
+                    resEl.className = "text-center mt-12 text-3xl font-bold text-yellow-400 animate-bounce";
+                } else if (results[0] === results[1] || results[1] === results[2] || results[0] === results[2]) {
+                    win = bet * 2;
+                    resEl.innerHTML = `✨ ¡GANASTE! +$${win}`;
+                    resEl.className = "text-center mt-12 text-2xl font-bold text-cyan-400";
                 } else {
-                    document.getElementById("slotRes").innerHTML = "❌ PERDISTE";
+                    resEl.textContent = "Sigue intentando...";
                 }
 
+                saldo += win;
                 updateUI();
-                // GUARDAR EN SUPABASE
+                btn.disabled = false;
+                
+                // Guardar en Supabase
                 await sb.from('profiles').update({ saldo: saldo }).eq('id', user.id);
-            }, 1000);
+            }, 1200);
         }
 
-        // BANCO CONECTADO
+        // --- BANCO (TU LÓGICA MEJORADA) ---
+        function generateCLABE() {
+            const amount = parseInt(document.getElementById("depositAmount").value);
+            if (amount < 100) return alert("Mínimo $100");
+            document.getElementById("clabeDisplay").textContent = "012" + Math.floor(Math.random() * 1000000000000000);
+            document.getElementById("clabeContainer").classList.remove("hidden");
+        }
+
         async function confirmDeposit() {
-            const amt = parseInt(document.getElementById("depositAmount").value) || 0;
-            if (amt <= 0) return;
-            
-            saldo += amt;
+            const amount = parseInt(document.getElementById("depositAmount").value);
+            saldo += amount;
             await sb.from('profiles').update({ saldo: saldo }).eq('id', user.id);
             updateUI();
+            alert("¡Depósito acreditado!");
             closeBankModal();
-            alert("Saldo cargado correctamente");
         }
 
+        // --- UI UTILS ---
         function updateUI() {
-            document.getElementById("saldo").textContent = "$" + saldo;
+            const format = new Intl.NumberFormat('es-MX').format(saldo);
+            document.getElementById("saldo").textContent = "$" + format;
+            document.getElementById("modalSaldo").textContent = "$" + format;
+        }
+
+        async function loadRanking() {
+            const { data } = await sb.from('profiles').select('email, saldo').order('saldo', { ascending: false }).limit(5);
+            if (data) {
+                document.getElementById("rankingBox").innerHTML = data.map((u, i) => `
+                    <div class="flex justify-between text-xs bg-zinc-900/50 p-2 rounded-lg border border-white/5">
+                        <span class="truncate w-24">${i+1}. ${u.email.split('@')[0]}</span>
+                        <span class="text-yellow-500 font-bold">$${u.saldo}</span>
+                    </div>
+                `).join('');
+            }
         }
 
         function msg(text, color) {
-            document.getElementById("msg").className = "text-center mt-6 text-sm " + color;
-            document.getElementById("msg").textContent = text;
+            const el = document.getElementById("msg");
+            el.className = `text-center mt-6 text-sm ${color}`;
+            el.textContent = text;
         }
 
         function openBankModal() { document.getElementById("bankModal").classList.remove("hidden"); }
         function closeBankModal() { document.getElementById("bankModal").classList.add("hidden"); }
-        function showGame(id) { /* lógica para cambiar divs de juegos */ }
+        function copyCLABE() { navigator.clipboard.writeText(document.getElementById("clabeDisplay").textContent); alert("Copiado"); }
     </script>
 </body>
 </html>
