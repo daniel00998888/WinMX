@@ -8,24 +8,27 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        body { background: linear-gradient(135deg, #0a1625, #1a2a3f); font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background: linear-gradient(135deg, #0a1625, #1a2a3f); font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
         .neon-text { text-shadow: 0 0 10px #22d3ee, 0 0 20px #22d3ee; }
         .reel {
             width: 85px; height: 85px; background: #0f1c2e; border: 4px solid #22d3ee;
             border-radius: 14px; font-size: 46px; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 20px rgba(34, 211, 238, 0.6);
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.6); transition: transform 0.1s;
         }
-        @media (min-width: 640px) {
-            .reel { width: 100px; height: 100px; font-size: 56px; }
+        @media (min-width: 640px) { .reel { width: 100px; height: 100px; font-size: 56px; } }
+        .spinning { animation: spin 0.1s linear infinite; }
+        @keyframes spin { 
+            0% { transform: scale(1); filter: blur(0px); }
+            50% { transform: scale(0.9); filter: blur(4px); }
+            100% { transform: scale(1); filter: blur(0px); }
         }
-        .reel.spinning { animation: spin 0.85s linear infinite; }
-        @keyframes spin { 0% { transform: translateY(-400%); } 100% { transform: translateY(0); } }
         #confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #22d3ee; border-radius: 10px; }
     </style>
 </head>
 <body class="text-white min-h-screen">
 
-    <!-- HEADER -->
     <header id="topbar" class="hidden bg-zinc-950 border-b border-cyan-500/30 py-4 px-4 sticky top-0 z-40">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
@@ -37,20 +40,17 @@
                     <i class="fas fa-coins text-yellow-400"></i>
                     <span id="saldo" class="font-semibold text-2xl text-yellow-300">$0</span>
                 </div>
-                <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-5 py-3 rounded-2xl text-sm flex items-center gap-2">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
+                <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-5 py-3 rounded-2xl text-sm transition">Salir</button>
             </div>
         </div>
     </header>
 
-    <!-- LOGIN -->
     <div id="auth" class="min-h-screen flex items-center justify-center p-4">
         <div class="bg-zinc-900 p-10 rounded-3xl shadow-2xl w-full max-w-md border border-cyan-500/30">
             <div class="text-center mb-10">
                 <span class="text-7xl">🎰</span>
                 <h2 class="text-4xl font-bold mt-4 neon-text">CASINO REAL</h2>
-                <p class="text-zinc-400 mt-2">¡Bienvenido!</p>
+                <p class="text-zinc-400 mt-2">Ingresa para apostar</p>
             </div>
             <input id="email" type="email" placeholder="Correo electrónico" class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-6 py-5 mb-4 focus:outline-none focus:border-cyan-400 text-lg">
             <input id="pass" type="password" placeholder="Contraseña" class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-6 py-5 mb-6 focus:outline-none focus:border-cyan-400 text-lg">
@@ -62,332 +62,116 @@
         </div>
     </div>
 
-    <!-- CASINO -->
     <div id="casino" class="hidden min-h-screen">
-        <div class="flex h-screen overflow-hidden">
-
-            <!-- SIDEBAR -->
+        <div class="flex h-[calc(100vh-80px)] overflow-hidden">
+            
             <div id="sidebar" class="w-72 bg-zinc-950 border-r border-zinc-800 p-6 flex flex-col fixed md:static inset-y-0 left-0 z-50 -translate-x-full md:translate-x-0 transition-transform duration-300">
-                <div class="md:hidden flex justify-between mb-8">
-                    <h2 class="text-2xl font-bold neon-text">Menú</h2>
-                    <button onclick="toggleSidebar()" class="text-4xl">×</button>
-                </div>
-                
                 <h3 class="text-cyan-400 font-semibold mb-5 flex items-center gap-2 text-lg"><i class="fas fa-gamepad"></i> JUEGOS</h3>
-                <div onclick="showGame('slot');toggleSidebar()" class="flex items-center gap-4 p-5 hover:bg-zinc-900 rounded-3xl cursor-pointer mb-3 text-lg">🎰 <span class="font-medium">Slots</span></div>
-                <div onclick="showGame('roulette');toggleSidebar()" class="flex items-center gap-4 p-5 hover:bg-zinc-900 rounded-3xl cursor-pointer mb-3 text-lg">🎡 <span class="font-medium">Ruleta</span></div>
-                <div onclick="showGame('dice');toggleSidebar()" class="flex items-center gap-4 p-5 hover:bg-zinc-900 rounded-3xl cursor-pointer mb-3 text-lg">🎲 <span class="font-medium">Dados</span></div>
-                <div onclick="showGame('bj');toggleSidebar()" class="flex items-center gap-4 p-5 hover:bg-zinc-900 rounded-3xl cursor-pointer mb-8 text-lg">🃏 <span class="font-medium">Blackjack</span></div>
-
-                <h3 class="text-cyan-400 font-semibold mb-5 flex items-center gap-2 text-lg"><i class="fas fa-university"></i> BANCO</h3>
-                <div onclick="openBankModal(); toggleSidebar()" class="flex items-center gap-4 p-5 hover:bg-zinc-900 rounded-3xl cursor-pointer text-lg">🏦 <span class="font-medium">Depósito / Retiro</span></div>
-
-                <h3 class="text-cyan-400 font-semibold mt-auto mb-5 flex items-center gap-2 text-lg"><i class="fas fa-trophy"></i> TOP 5</h3>
-                <div id="rankingBox" class="flex-1 space-y-4 overflow-auto"></div>
+                <div onclick="showGame('slot')" class="flex items-center gap-4 p-5 hover:bg-zinc-900 rounded-3xl cursor-pointer mb-3 text-lg">🎰 <span class="font-medium">Slots</span></div>
+                <div onclick="showGame('roulette')" class="flex items-center gap-4 p-5 hover:bg-zinc-900 rounded-3xl cursor-pointer mb-3 text-lg">🎡 <span class="font-medium">Ruleta</span></div>
+                
+                <h3 class="text-cyan-400 font-semibold mt-6 mb-5 flex items-center gap-2 text-lg"><i class="fas fa-university"></i> BANCO</h3>
+                <div onclick="openBankModal()" class="flex items-center gap-4 p-5 hover:bg-zinc-900 rounded-3xl cursor-pointer text-lg">🏦 <span class="font-medium">Depósito / Retiro</span></div>
+                
+                <h3 class="text-cyan-400 font-semibold mt-auto mb-5 flex items-center gap-2 text-lg"><i class="fas fa-trophy"></i> TOP GANADORES</h3>
+                <div id="rankingBox" class="space-y-3 overflow-auto max-h-40">
+                    <p class="text-xs text-zinc-500">Cargando ranking...</p>
+                </div>
             </div>
 
-            <!-- MAIN CONTENT -->
-            <div class="flex-1 flex flex-col">
-                <div class="md:hidden bg-zinc-900 border-b border-zinc-800 p-4 flex items-center justify-between">
-                    <button onclick="toggleSidebar()" class="text-3xl"><i class="fas fa-bars"></i></button>
-                    <span class="font-bold text-xl">Casino Real PRO</span>
-                    <button onclick="toggleChat()" class="text-3xl"><i class="fas fa-comments"></i></button>
-                </div>
-
-                <div class="flex-1 p-6 md:p-10 overflow-auto">
-                    <!-- SLOTS -->
-                    <div id="slot" class="game">
-                        <h2 class="text-4xl font-bold mb-8 flex items-center gap-4"><span>🎰</span> Tragamonedas Premium</h2>
-                        <div class="max-w-lg mx-auto">
-                            <div class="flex justify-center gap-6 mb-12">
-                                <div class="reel" id="r1">🍒</div>
-                                <div class="reel" id="r2">💎</div>
-                                <div class="reel" id="r3">7️⃣</div>
-                            </div>
-                            <div class="flex flex-col sm:flex-row gap-4 max-w-sm mx-auto">
-                                <input id="betSlot" type="number" placeholder="Cantidad a apostar" class="flex-1 bg-zinc-800 border border-zinc-700 rounded-3xl px-6 py-5 text-center text-2xl focus:outline-none focus:border-cyan-400">
-                                <button onclick="spinSlot()" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 px-12 py-5 rounded-3xl font-bold text-xl">GIRAR</button>
-                            </div>
-                            <p id="slotRes" class="text-center mt-12 text-3xl font-bold min-h-[80px]"></p>
+            <div class="flex-1 p-6 md:p-10 overflow-auto">
+                <div id="slot" class="game">
+                    <h2 class="text-4xl font-bold mb-8 flex items-center gap-4"><span>🎰</span> Tragamonedas</h2>
+                    <div class="max-w-lg mx-auto bg-zinc-900/50 p-10 rounded-3xl border border-white/5 shadow-2xl">
+                        <div class="flex justify-center gap-6 mb-12">
+                            <div class="reel" id="r1">❓</div>
+                            <div class="reel" id="r2">❓</div>
+                            <div class="reel" id="r3">❓</div>
                         </div>
+                        <div class="flex flex-col gap-4">
+                            <input id="betSlot" type="number" value="10" class="bg-zinc-800 border border-zinc-700 rounded-3xl px-6 py-5 text-center text-2xl focus:border-cyan-400 outline-none">
+                            <button onclick="spinSlot()" id="btnSpin" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 py-5 rounded-3xl font-bold text-xl shadow-lg shadow-cyan-500/20 transition-all active:scale-95">GIRAR AHORA</button>
+                        </div>
+                        <p id="slotRes" class="text-center mt-12 text-2xl font-bold min-h-[40px]"></p>
                     </div>
+                </div>
 
-                    <!-- Ruleta, Dados y Blackjack (funcionales) -->
-                    <div id="roulette" class="game hidden"> <!-- Código de ruleta aquí --> </div>
-                    <div id="dice" class="game hidden"> <!-- Código de dados aquí --> </div>
-                    <div id="bj" class="game hidden"> <!-- Código de blackjack aquí --> </div>
+                <div id="roulette" class="game hidden text-center mt-20">
+                    <h2 class="text-5xl mb-4">🎡</h2>
+                    <h2 class="text-4xl font-bold mb-4">Ruleta Europea</h2>
+                    <p class="text-zinc-400">Este juego estará disponible en la próxima actualización.</p>
                 </div>
             </div>
 
-            <!-- CHAT -->
-            <div id="chatPanel" class="w-80 bg-zinc-950 border-l border-zinc-800 flex flex-col fixed md:static inset-y-0 right-0 z-50 translate-x-full md:translate-x-0 transition-transform duration-300">
-                <div class="p-5 border-b border-zinc-800 bg-zinc-900 flex justify-between md:hidden">
-                    <h3 class="font-semibold text-lg">Chat en Vivo</h3>
-                    <button onclick="toggleChat()" class="text-3xl">×</button>
+            <div id="chatPanel" class="w-80 bg-zinc-950 border-l border-zinc-800 flex flex-col hidden md:flex">
+                <div class="p-5 border-b border-zinc-800 bg-zinc-900">
+                    <h3 class="font-semibold flex items-center gap-2"><i class="fas fa-comments text-cyan-400"></i> Chat Global</h3>
                 </div>
-                <div id="chatBox" class="chat-box flex-1 p-5 overflow-auto space-y-4 text-sm"></div>
+                <div id="chatBox" class="flex-1 p-5 overflow-auto space-y-4 text-sm flex flex-col-reverse"></div>
                 <div class="p-5 border-t border-zinc-800 bg-zinc-900">
-                    <div class="flex gap-3">
-                        <input id="chatInput" placeholder="Mensaje..." class="flex-1 bg-zinc-800 border border-zinc-700 rounded-3xl px-5 py-4 focus:outline-none focus:border-cyan-400">
-                        <button onclick="sendMsg()" class="bg-cyan-500 hover:bg-cyan-600 text-black px-8 rounded-3xl font-semibold">Enviar</button>
+                    <div class="flex gap-2">
+                        <input id="chatInput" placeholder="Escribe..." class="flex-1 bg-zinc-800 border border-zinc-700 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-cyan-500">
+                        <button onclick="sendMsg()" class="bg-cyan-500 text-black p-2 w-10 h-10 rounded-full flex items-center justify-center"><i class="fas fa-paper-plane"></i></button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL BANCO -->
-    <div id="bankModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[100]">
-        <div class="bg-zinc-900 rounded-3xl p-8 w-full max-w-md">
-            <div class="flex justify-between mb-6">
-                <h2 class="text-3xl font-bold">🏦 Banco</h2>
-                <button onclick="closeBankModal()" class="text-4xl text-zinc-400 hover:text-white">×</button>
+    <div id="bankModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4">
+        <div class="bg-zinc-900 rounded-3xl p-8 w-full max-w-lg border border-white/10">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold">🏦 Mi Banco</h2>
+                <button onclick="closeBankModal()" class="text-4xl text-zinc-500 hover:text-white">&times;</button>
             </div>
-
-            <div class="mb-6">
-                <p class="text-zinc-400">Saldo actual</p>
+            <div class="bg-zinc-800/50 p-6 rounded-2xl mb-6 text-center">
+                <p class="text-zinc-400 text-sm mb-1">Saldo Disponible</p>
                 <p id="modalSaldo" class="text-5xl font-bold text-yellow-300">$0</p>
             </div>
-
-            <!-- DEPÓSITO -->
-            <div class="bg-zinc-800 rounded-2xl p-6 mb-6">
-                <h3 class="text-green-400 text-xl font-semibold mb-4">💰 Depósito (SPEI)</h3>
-                <input id="depositAmount" type="number" placeholder="Monto a depositar" class="w-full bg-zinc-700 border border-zinc-600 rounded-2xl px-5 py-4 text-center text-2xl mb-4">
-                
-                <button onclick="generateCLABE()" 
-                        class="w-full bg-green-600 hover:bg-green-700 py-4 rounded-2xl font-bold text-lg mb-4">
-                    Generar CLABE
-                </button>
-
-                <div id="clabeContainer" class="hidden">
-                    <p class="text-sm text-zinc-400 mb-2">Deposita exactamente a esta CLABE:</p>
-                    <div class="flex items-center gap-3 bg-zinc-900 p-4 rounded-2xl">
-                        <p id="clabeDisplay" class="font-mono text-2xl flex-1"></p>
-                        <button onclick="copyCLABE()" class="bg-zinc-700 hover:bg-zinc-600 px-5 py-2 rounded-xl text-sm">Copiar</button>
+            <div class="space-y-4">
+                <div class="bg-zinc-800 p-5 rounded-2xl">
+                    <h3 class="text-green-400 font-bold mb-3">DEPÓSITO RÁPIDO</h3>
+                    <div class="flex gap-2">
+                        <input id="depositAmount" type="number" placeholder="Monto" class="flex-1 bg-zinc-700 rounded-xl px-4 py-3 outline-none">
+                        <button onclick="confirmDeposit()" class="bg-green-600 px-6 py-3 rounded-xl font-bold">CARGAR</button>
                     </div>
-                    <p class="text-xs text-zinc-500 mt-3">Banco: BBVA • Concepto: Depósito Casino Real</p>
-                    
-                    <button onclick="confirmDeposit()" 
-                            class="w-full mt-6 bg-emerald-600 hover:bg-emerald-700 py-4 rounded-2xl font-bold text-lg">
-                        ✅ Ya realicé el depósito
-                    </button>
                 </div>
             </div>
-
-            <!-- RETIRO -->
-            <div class="bg-zinc-800 rounded-2xl p-6">
-                <h3 class="text-red-400 text-xl font-semibold mb-4">💸 Retiro</h3>
-                <input id="withdrawAmount" type="number" placeholder="Monto a retirar" class="w-full bg-zinc-700 border border-zinc-600 rounded-2xl px-5 py-4 text-center text-2xl mb-4">
-                <button onclick="makeWithdraw()" class="w-full bg-red-600 hover:bg-red-700 py-4 rounded-2xl font-bold text-lg">Retirar fondos</button>
-            </div>
-
-            <button onclick="closeBankModal()" class="w-full mt-6 text-zinc-400 hover:text-white">Cerrar</button>
         </div>
     </div>
 
-    <canvas id="confetti"></canvas>
-
     <script>
+        // CONFIGURACIÓN DE SUPABASE (Reemplaza con tus llaves reales si las cambias)
         const sb = window.supabase.createClient(
-            "https://dakhnqriwbzihlzhtfcb.supabase.co",
+            "https://dakhnqriwbzihlzhtfcb.supabase.co", 
             "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs"
         );
 
         let user = null;
         let saldo = 0;
-        let chatChannel = null;
-        let currentDepositAmount = 0;
+        const symbols = ["🍒", "💎", "7️⃣", "🔔", "🍋", "🍇", "🍀"];
 
-        function msg(text, color = "text-white") {
-            const el = document.getElementById("msg");
-            if (el) el.innerHTML = `<span class="${color}">${text}</span>`;
+        // --- AUTH ---
+        async function register() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("pass").value;
+            if(!email || !password) return msg("Llena los campos", "text-yellow-500");
+            
+            const { data, error } = await sb.auth.signUp({ email, password });
+            if (error) return msg(error.message, "text-red-500");
+            
+            await sb.from('profiles').insert([{ id: data.user.id, email: email, saldo: 500 }]);
+            msg("¡Registro exitoso! Ya puedes entrar.", "text-green-400");
         }
 
-        function val(id) {
-            const el = document.getElementById(id);
-            return el ? parseFloat(el.value) || 0 : 0;
-        }
-
-        function formatSaldo(n) {
-            return new Intl.NumberFormat('es-MX').format(Math.floor(n || 0));
-        }
-
-        function updateSaldo() {
-            document.getElementById("saldo").textContent = "$" + formatSaldo(saldo);
-        }
-
-        function toggleSidebar() { document.getElementById("sidebar").classList.toggle("-translate-x-full"); }
-        function toggleChat() { document.getElementById("chatPanel").classList.toggle("translate-x-full"); }
-
-        function openBankModal() {
-            document.getElementById("modalSaldo").textContent = "$" + formatSaldo(saldo);
-            document.getElementById("bankModal").classList.remove("hidden");
-            document.getElementById("clabeContainer").classList.add("hidden");
-            document.getElementById("depositAmount").value = "";
-            document.getElementById("withdrawAmount").value = "";
-        }
-
-        function closeBankModal() {
-            document.getElementById("bankModal").classList.add("hidden");
-        }
-
-        // ==================== GENERAR CLABE ====================
-        function generateCLABE() {
-            let amount = val("depositAmount");
-            if (amount < 100) {
-                alert("El monto mínimo de depósito es $100");
-                return;
-            }
-
-            currentDepositAmount = amount;
-
-            // Generar CLABE realista (18 dígitos)
-            const bankCode = "012"; // BBVA
-            let clabe = bankCode;
-            for (let i = 0; i < 14; i++) {
-                clabe += Math.floor(Math.random() * 10);
-            }
-            clabe += "9"; // dígito verificador falso
-
-            document.getElementById("clabeDisplay").textContent = clabe;
-            document.getElementById("clabeContainer").classList.remove("hidden");
-        }
-
-        function copyCLABE() {
-            const clabe = document.getElementById("clabeDisplay").textContent;
-            navigator.clipboard.writeText(clabe).then(() => {
-                alert("✅ CLABE copiada al portapapeles");
-            });
-        }
-
-        // ==================== CONFIRMAR DEPÓSITO ====================
-        async function confirmDeposit() {
-            if (currentDepositAmount <= 0) return;
-
-            saldo += currentDepositAmount;
-            await saveSaldo();
-            updateSaldo();
-            loadRanking();
-
-            alert(`✅ Depósito de $${currentDepositAmount} confirmado y acreditado a tu saldo.`);
-            closeBankModal();
-            currentDepositAmount = 0;
-        }
-
-        // ==================== RETIRO ====================
-        async function makeWithdraw() {
-            let amount = val("withdrawAmount");
-            if (amount < 100) {
-                alert("El retiro mínimo es de $100");
-                return;
-            }
-            if (amount > saldo) {
-                alert("No tienes suficiente saldo");
-                return;
-            }
-
-            saldo -= amount;
-            await saveSaldo();
-            updateSaldo();
-            loadRanking();
-
-            alert(`✅ Retiro de $${amount} procesado correctamente.`);
-            closeBankModal();
-        }
-
-        // ==================== RESTO DEL CÓDIGO (auth, juegos, chat, etc.) ====================
-        // (incluyo solo las funciones principales para que funcione completo)
-
-        async function startCasino() {
-            document.getElementById("auth").classList.add("hidden");
-            document.getElementById("casino").classList.remove("hidden");
-            document.getElementById("topbar").classList.remove("hidden");
-
-            let { data } = await sb.from("usuarios").select("*").eq("id", user.id).maybeSingle();
-
-            if (!data) {
-                await sb.from("usuarios").insert([{ id: user.id, saldo: 3000 }]);
-                saldo = 3000;
-            } else {
-                saldo = data.saldo || 3000;
-            }
-
-            updateSaldo();
-            loadRanking();
-            initChat();
-            showGame('slot');
-        }
-
-        async function saveSaldo() {
-            if (user) await sb.from("usuarios").update({ saldo }).eq("id", user.id);
-        }
-
-        function showGame(gameId) {
-            document.querySelectorAll('.game').forEach(g => g.classList.add('hidden'));
-            const game = document.getElementById(gameId);
-            if (game) game.classList.remove('hidden');
-        }
-
-        async function spinSlot() {
-            let bet = parseInt(val("betSlot"));
-            if (!bet || bet <= 0 || bet > saldo) {
-                alert("Saldo insuficiente o apuesta inválida");
-                return;
-            }
-
-            const reels = [document.getElementById('r1'), document.getElementById('r2'), document.getElementById('r3')];
-            reels.forEach(r => r.classList.add('spinning'));
-            await new Promise(r => setTimeout(r, 1600));
-            reels.forEach(r => r.classList.remove('spinning'));
-
-            const symbols = ["🍒","💎","7️⃣","⭐","🍀","🔔","🍉"];
-            let a = symbols[Math.floor(Math.random()*symbols.length)];
-            let b = symbols[Math.floor(Math.random()*symbols.length)];
-            let c = symbols[Math.floor(Math.random()*symbols.length)];
-
-            reels[0].innerText = a; reels[1].innerText = b; reels[2].innerText = c;
-
-            const win = (a === b && b === c);
-            saldo += win ? bet * 15 : -bet;
-
-            document.getElementById("slotRes").innerHTML = win 
-                ? `<span class="text-yellow-400">¡JACKPOT! +$${bet*15}</span>` 
-                : `<span class="text-red-400">-$${bet}</span>`;
-
-            if (win) launchConfetti();
-
-            updateSaldo();
-            await saveSaldo();
-            loadRanking();
-        }
-
-        // Funciones restantes (initChat, sendMsg, loadRanking, logout, etc.)
-        function initChat() {
-            if (chatChannel) return;
-            chatChannel = sb.channel('chat-room');
-            chatChannel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat' }, (payload) => {
-                const box = document.getElementById("chatBox");
-                if (box) {
-                    box.innerHTML += `<div class="bg-zinc-900 p-3 rounded-2xl"><span class="text-cyan-400">Usuario:</span> ${payload.new.mensaje}</div>`;
-                    box.scrollTop = box.scrollHeight;
-                }
-            }).subscribe();
-        }
-
-        async function sendMsg() {
-            const text = val("chatInput");
-            if (!text || !user) return;
-            await sb.from("chat").insert([{ user_id: user.id, mensaje: text }]);
-            document.getElementById("chatInput").value = "";
-        }
-
-        async function loadRanking() {
-            const { data } = await sb.from("usuarios").select("saldo").order("saldo", { ascending: false }).limit(5);
-            let html = "";
-            (data || []).forEach((u, i) => {
-                html += `<div class="bg-zinc-900 p-4 rounded-3xl flex justify-between"><span>#${i+1}</span><span class="text-yellow-300">$${formatSaldo(u.saldo)}</span></div>`;
-            });
-            document.getElementById("rankingBox").innerHTML = html || "<p class='text-zinc-500'>Cargando...</p>";
+        async function login() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("pass").value;
+            const { data, error } = await sb.auth.signInWithPassword({ email, password });
+            if (error) return msg("Error: Credenciales inválidas", "text-red-500");
+            
+            user = data.user;
+            initApp();
         }
 
         async function logout() {
@@ -395,13 +179,143 @@
             location.reload();
         }
 
-        window.onload = async () => {
-            const { data: { session } } = await sb.auth.getSession();
-            if (session) {
-                user = session.user;
-                startCasino();
+        // --- APP LOGIC ---
+        async function initApp() {
+            document.getElementById("auth").classList.add("hidden");
+            document.getElementById("casino").classList.remove("hidden");
+            document.getElementById("topbar").classList.remove("hidden");
+            
+            const { data } = await sb.from('profiles').select('*').eq('id', user.id).single();
+            if(data) {
+                saldo = data.saldo;
+                updateUI();
+                initRealtime();
+                loadRanking();
             }
-        };
+        }
+
+        async function spinSlot() {
+            const betInput = document.getElementById("betSlot");
+            const bet = parseInt(betInput.value);
+            const btn = document.getElementById("btnSpin");
+            const slotRes = document.getElementById("slotRes");
+
+            if (isNaN(bet) || bet <= 0 || bet > saldo) {
+                slotRes.className = "text-center mt-12 text-2xl font-bold text-red-500";
+                slotRes.innerText = "❌ Saldo insuficiente";
+                return;
+            }
+
+            // Bloquear y descontar
+            btn.disabled = true;
+            saldo -= bet;
+            updateUI();
+            slotRes.innerText = "Girando...";
+            
+            const reels = [document.getElementById("r1"), document.getElementById("r2"), document.getElementById("r3")];
+            reels.forEach(r => r.classList.add("spinning"));
+
+            setTimeout(async () => {
+                const results = reels.map(r => {
+                    r.classList.remove("spinning");
+                    const res = symbols[Math.floor(Math.random() * symbols.length)];
+                    r.textContent = res;
+                    return res;
+                });
+
+                let win = 0;
+                if (results[0] === results[1] && results[1] === results[2]) {
+                    win = bet * 15;
+                    slotRes.className = "text-center mt-12 text-3xl font-bold text-yellow-400 animate-bounce";
+                    slotRes.innerText = `💰 ¡JACKPOT! +$${win}`;
+                } else if (results[0] === results[1] || results[1] === results[2] || results[0] === results[2]) {
+                    win = bet * 3;
+                    slotRes.className = "text-center mt-12 text-2xl font-bold text-cyan-400";
+                    slotRes.innerText = `✨ ¡Ganaste! +$${win}`;
+                } else {
+                    slotRes.className = "text-center mt-12 text-2xl font-bold text-zinc-600";
+                    slotRes.innerText = "Sigue intentando";
+                }
+
+                saldo += win;
+                btn.disabled = false;
+                updateUI();
+                await sb.from('profiles').update({ saldo: saldo }).eq('id', user.id);
+                loadRanking();
+            }, 1000);
+        }
+
+        // --- UI & BANK ---
+        function updateUI() {
+            const formatted = new Intl.NumberFormat('es-MX').format(saldo);
+            document.getElementById("saldo").innerText = "$" + formatted;
+            document.getElementById("modalSaldo").innerText = "$" + formatted;
+        }
+
+        function showGame(id) {
+            document.querySelectorAll('.game').forEach(g => g.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function openBankModal() { document.getElementById("bankModal").classList.remove("hidden"); }
+        function closeBankModal() { document.getElementById("bankModal").classList.add("hidden"); }
+
+        async function confirmDeposit() {
+            const amt = parseInt(document.getElementById("depositAmount").value);
+            if(amt > 0) {
+                saldo += amt;
+                await sb.from('profiles').update({ saldo: saldo }).eq('id', user.id);
+                updateUI();
+                alert("Depósito exitoso");
+                closeBankModal();
+            }
+        }
+
+        // --- REALTIME CHAT & RANKING ---
+        async function loadRanking() {
+            const { data } = await sb.from('profiles').select('email, saldo').order('saldo', { ascending: false }).limit(5);
+            const box = document.getElementById("rankingBox");
+            if(data) {
+                box.innerHTML = data.map((u, i) => `
+                    <div class="flex justify-between items-center bg-zinc-900/50 p-2 rounded-lg border border-white/5">
+                        <span class="text-xs truncate w-32">${i+1}. ${u.email.split('@')[0]}</span>
+                        <span class="text-yellow-500 font-bold">$${u.saldo}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function initRealtime() {
+            sb.channel('chat-room')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'mensajes' }, payload => {
+                addMessageToBox(payload.new);
+            }).subscribe();
+        }
+
+        async function sendMsg() {
+            const input = document.getElementById("chatInput");
+            if (!input.value) return;
+            await sb.from('mensajes').insert([{ 
+                user_id: user.id, 
+                username: user.email.split('@')[0], 
+                contenido: input.value 
+            }]);
+            input.value = "";
+        }
+
+        function addMessageToBox(m) {
+            const box = document.getElementById("chatBox");
+            const div = document.createElement("div");
+            div.className = "bg-zinc-900 border border-white/5 p-3 rounded-2xl";
+            div.innerHTML = `<p class="text-[10px] text-cyan-500 font-bold uppercase">${m.username}</p><p class="text-zinc-200">${m.contenido}</p>`;
+            box.prepend(div);
+        }
+
+        function msg(text, color) {
+            const el = document.getElementById("msg");
+            el.className = `text-center mt-6 text-sm ${color}`;
+            el.textContent = text;
+        }
     </script>
 </body>
 </html>
