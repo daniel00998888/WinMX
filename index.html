@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WinMX | Casino Pro</title>
+    <title>WinMX | Casino Blindado</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
@@ -23,6 +23,19 @@
     </style>
 </head>
 <body class="antialiased">
+
+    <script>
+        (function() {
+            // Bloqueo de clic derecho
+            document.addEventListener('contextmenu', e => e.preventDefault());
+            // Bloqueo de teclas de inspección
+            document.onkeydown = function(e) {
+                if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67)) || (e.ctrlKey && e.keyCode == 85)) {
+                    return false;
+                }
+            };
+        })();
+    </script>
 
     <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4">
         <div class="glass p-12 rounded-[3rem] w-full max-w-md text-center border-b-[8px] border-emerald-600 shadow-2xl">
@@ -65,7 +78,7 @@
             </div>
 
             <div class="lg:col-span-5 flex flex-col gap-6">
-                <div class="glass p-6 rounded-[2.5rem] border border-white/5 shadow-xl flex flex-col">
+                <div class="glass p-6 rounded-[2.5rem] border border-white/5 shadow-xl flex-grow">
                     <div class="grid grid-cols-2 gap-3 mb-6">
                         <button onclick="openDeposit()" class="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-500 font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 hover:text-black transition-all">Depósito</button>
                         <button onclick="alert('Retiros en mantenimiento')" class="p-4 bg-zinc-800 border border-white/5 rounded-2xl text-zinc-500 font-black text-[10px] uppercase tracking-widest cursor-not-allowed">Retiro</button>
@@ -76,7 +89,7 @@
                         <button onclick="switchTab('tab-deposits')" id="btn-tab-deposits" class="tab-btn">Cajero</button>
                     </div>
                     
-                    <div class="flex-grow overflow-y-auto max-h-[350px] space-y-2" id="history-container">
+                    <div class="overflow-y-auto max-h-[350px] space-y-2" id="history-container">
                         <div id="tab-bets" class="tab-content"></div>
                         <div id="tab-deposits" class="tab-content hidden"></div>
                     </div>
@@ -93,20 +106,16 @@
                 <button onclick="goToStep2()" class="btn-primary w-full py-5 rounded-2xl font-black uppercase text-lg">Siguiente</button>
             </div>
             <div id="step-2" class="hidden text-left">
-                <h3 class="font-casino text-sm mb-4 text-emerald-500 text-center uppercase">Realiza tu Transferencia</h3>
-                <div class="space-y-3 mb-6 text-[11px]">
-                    <div class="bg-black p-4 rounded-xl border border-white/5">
-                        <span class="text-zinc-500 block mb-1 uppercase font-bold">CLAVE STP</span>
-                        <span class="text-white font-mono font-bold text-lg">722969020533491161</span>
-                    </div>
+                <h3 class="font-casino text-sm mb-4 text-emerald-500 text-center uppercase">Transferencia</h3>
+                <div class="bg-black p-4 rounded-xl border border-white/5 mb-6 text-center">
+                    <span class="text-zinc-500 block mb-1 uppercase font-bold text-[8px]">CLAVE STP</span>
+                    <span class="text-white font-mono font-bold text-lg">722969020533491161</span>
                 </div>
-                <div class="border-2 border-dashed border-zinc-800 rounded-2xl p-6 text-center bg-black/20 hover:border-emerald-500/50 transition-colors">
-                    <input type="file" id="receipt-upload" accept="image/*" class="hidden">
-                    <label for="receipt-upload" class="cursor-pointer">
-                        <i class="fas fa-upload text-xl text-zinc-600 mb-2"></i>
-                        <p id="file-name" class="text-[9px] font-bold text-zinc-400 uppercase">Subir foto del comprobante</p>
-                    </label>
-                </div>
+                <input type="file" id="receipt-upload" accept="image/*" class="hidden">
+                <label for="receipt-upload" class="cursor-pointer border-2 border-dashed border-zinc-800 rounded-2xl p-6 block text-center bg-black/20 hover:border-emerald-500/50 transition-colors">
+                    <i class="fas fa-upload text-xl text-zinc-600 mb-2"></i>
+                    <p id="file-name" class="text-[9px] font-bold text-zinc-400 uppercase">Subir Comprobante</p>
+                </label>
                 <button id="confirm-btn" onclick="verifyAndUpload()" class="btn-primary w-full py-5 rounded-2xl font-black uppercase italic tracking-widest text-lg mt-6">Confirmar Pago</button>
             </div>
             <button onclick="closeModal()" class="text-zinc-700 text-[10px] font-black uppercase mt-6 block mx-auto underline">Cancelar</button>
@@ -114,7 +123,7 @@
     </div>
 
     <script>
-        // CONFIGURACIÓN DE TU BASE DE DATOS
+        // CONFIGURACIÓN SUPABASE
         const sb = window.supabase.createClient("https://dakhnqriwbzihlzhtfcb.supabase.co", "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs");
         
         let userId = null; let balance = 0; let currentBet = 10;
@@ -129,7 +138,7 @@
             if(error) {
                 const { data: up, error: errUp } = await sb.auth.signUp({ email, password });
                 if(up.user) await sb.from('usuarios').insert({ id: up.user.id, saldo: 0 });
-                else return alert("Error al crear cuenta");
+                else return alert("Error al entrar");
             }
             checkUser();
         }
@@ -148,6 +157,8 @@
             const { data } = await sb.from('usuarios').select('saldo').eq('id', userId).single();
             if (data) { balance = data.saldo; updateUI(); loadHistory(); }
         }
+
+        function updateUI() { document.getElementById('balance-display').innerText = `$${balance.toLocaleString()}`; }
 
         // --- CAJERO ---
         function openDeposit() {
@@ -170,7 +181,7 @@
         async function verifyAndUpload() {
             const fileInput = document.getElementById('receipt-upload');
             const amt = parseFloat(document.getElementById('modal-amount').value);
-            if (fileInput.files.length === 0) return alert("Por favor sube la foto del pago");
+            if (fileInput.files.length === 0) return alert("Sube la foto del pago");
 
             const btn = document.getElementById('confirm-btn');
             btn.innerText = "ENVIANDO..."; btn.disabled = true;
@@ -179,99 +190,90 @@
             const filePath = `comprobantes/${userId}-${Date.now()}.png`;
 
             const { error: uploadError } = await sb.storage.from('comprobantes').upload(filePath, file);
-            if (uploadError) {
-                btn.innerText = "ERROR"; btn.disabled = false;
-                return alert("Error al subir imagen");
-            }
+            if (uploadError) return alert("Error al subir");
 
             const { data: { publicUrl } } = sb.storage.from('comprobantes').getPublicUrl(filePath);
 
-            // AQUÍ ES DONDE SE SEPARA: TYPE 'deposits' Y STATUS 'pending'
             await sb.from('history').insert({
-                user_id: userId, 
-                type: 'deposits', 
-                amount: amt, 
-                label: 'DEPÓSITO PENDIENTE', 
-                status: 'pending', 
-                evidence_url: publicUrl
+                user_id: userId, type: 'deposits', amount: amt, 
+                label: 'DEPÓSITO PENDIENTE', status: 'pending', evidence_url: publicUrl
             });
 
-            alert("Depósito en revisión. Se acreditará pronto.");
+            alert("Depósito en revisión.");
             closeModal(); loadHistory();
         }
 
-        // --- JUEGO (TRAGAMONEDAS) ---
+        // --- JUEGO ---
         function spin() {
-            if (balance < currentBet) return alert("Saldo insuficiente. Por favor recarga.");
-            
+            if (balance < currentBet) return alert("Saldo insuficiente.");
             document.getElementById('spin-btn').disabled = true;
             
             const res = { type: 'INTENTA OTRA VEZ', icons: ['🍋','🔔','🍒'], mult: 0 };
             const rng = Math.random() * 100;
-
-            if(rng <= 0.5) { res.type = 'JACKPOT 🎰'; res.icons = ['7️⃣','7️⃣','7️⃣']; res.mult = 100; }
-            else if(rng <= 5) { res.type = 'GRAN GANANCIA'; res.icons = ['💎','💎','💎']; res.mult = 20; }
-            else if(rng <= 15) { res.type = 'GANASTE'; res.icons = ['🍒','🍒','🍒']; res.mult = 3; }
+            if(rng <= 1) { res.type = 'JACKPOT 🎰'; res.icons = ['7️⃣','7️⃣','7️⃣']; res.mult = 50; }
+            else if(rng <= 10) { res.type = 'GANASTE'; res.icons = ['💎','💎','💎']; res.mult = 5; }
 
             const netChange = (currentBet * res.mult) - currentBet;
             const newSaldo = balance + netChange;
 
-            // Animación
             [1,2,3].forEach((id, i) => {
                 const reel = document.getElementById(`reel-${id}`);
-                const position = (symbols.indexOf(res.icons[i]) * 120) + (120 * 12);
-                reel.style.transform = `translateY(-${position}px)`;
+                const pos = (symbols.indexOf(res.icons[i]) * 120) + (120 * 12);
+                reel.style.transform = `translateY(-${pos}px)`;
             });
 
             setTimeout(async () => {
-                // GUARDAR JUGADA: TYPE 'bets' Y STATUS 'completed'
+                // ACTUALIZACIÓN DE SALDO (Protegida por RLS)
                 await sb.from('usuarios').update({ saldo: newSaldo }).eq('id', userId);
                 await sb.from('history').insert({ 
-                    user_id: userId, 
-                    type: 'bets', 
-                    amount: netChange, 
-                    label: res.type, 
-                    status: 'completed' 
+                    user_id: userId, type: 'bets', amount: netChange, 
+                    label: res.type, status: 'completed' 
                 });
                 
                 balance = newSaldo; updateUI(); loadHistory();
                 document.getElementById('spin-btn').disabled = false;
-                [1,2,3].forEach(id => { document.getElementById(`reel-${id}`).style.transition = 'none'; document.getElementById(`reel-${id}`).style.transform = 'translateY(0)'; setTimeout(() => { document.getElementById(`reel-${id}`).style.transition = 'transform 2s cubic-bezier(0.1, 0, 0.1, 1)'; }, 50); });
+                [1,2,3].forEach(id => { 
+                    document.getElementById(`reel-${id}`).style.transition = 'none'; 
+                    document.getElementById(`reel-${id}`).style.transform = 'translateY(0)'; 
+                    setTimeout(() => { document.getElementById(`reel-${id}`).style.transition = 'transform 2s cubic-bezier(0.1, 0, 0.1, 1)'; }, 50); 
+                });
             }, 2500);
         }
 
         // --- UTILIDADES ---
-        function updateUI() { document.getElementById('balance-display').innerText = `$${balance.toLocaleString()}`; }
         function setupReels() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); r.innerHTML = ''; [...symbols, ...symbols, ...symbols].forEach(s => { r.innerHTML += `<div class="slot-item">${s}</div>`; }); }); }
+        
         function switchTab(id) { 
             document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden')); 
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(id).classList.remove('hidden'); 
             document.getElementById('btn-' + id).classList.add('active');
         }
-        function closeModal() { document.getElementById('modal-bank').classList.add('hidden'); }
-        function changeBet(v) { currentBet = Math.max(10, currentBet + v); document.getElementById('bet-display').innerText = `$${currentBet}`; }
+
         async function loadHistory() {
-            const { data } = await sb.from('history').select('*').eq('user_id', userId).order('created_at', {ascending: false}).limit(20);
+            const { data } = await sb.from('history').select('*').eq('user_id', userId).order('created_at', {ascending: false}).limit(15);
             const tBets = document.getElementById('tab-bets');
             const tDeps = document.getElementById('tab-deposits');
             tBets.innerHTML = ''; tDeps.innerHTML = '';
             
             data?.forEach(h => {
                 const color = h.status === 'pending' ? 'text-yellow-500' : (h.amount >= 0 ? 'text-emerald-500' : 'text-red-500');
-                const sign = h.amount >= 0 ? '+' : '';
-                const html = `<div class="bg-black/30 p-4 rounded-xl border border-white/5 flex justify-between items-center mb-1">
+                const html = `<div class="bg-black/30 p-4 rounded-xl border border-white/5 flex justify-between items-center mb-1 animate-fadeIn">
                     <span class="text-[8px] font-bold text-zinc-500 uppercase">${h.label}</span>
-                    <span class="font-casino text-sm ${color}">${sign}$${h.amount.toFixed(2)}</span>
+                    <span class="font-casino text-sm ${color}">${h.amount >= 0 ? '+' : ''}$${h.amount.toFixed(2)}</span>
                 </div>`;
-                if(h.type === 'bets') tBets.innerHTML += html;
-                else tDeps.innerHTML += html;
+                if(h.type === 'bets') tBets.innerHTML += html; else tDeps.innerHTML += html;
             });
         }
+
+        // ALIAS PARA EVITAR ERROR loadPending
+        function loadPending() { loadHistory(); }
+
+        function closeModal() { document.getElementById('modal-bank').classList.add('hidden'); }
+        function changeBet(v) { currentBet = Math.max(10, currentBet + v); document.getElementById('bet-display').innerText = `$${currentBet}`; }
         async function logout() { await sb.auth.signOut(); location.reload(); }
+        
         window.onload = checkUser;
-        loadPending();
-        setInterval(loadPending, 10000); // Recarga cada 10 segundos
     </script>
 </body>
 </html>
