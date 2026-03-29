@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WinMX | Original Ecosystem</title>
+    <title>WinMX | Professional Casino Ecosystem</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -17,254 +17,332 @@
             --st-bg: #0f212e;
             --st-sidebar: #1a2c38;
             --st-card: #213743;
-            --st-accent: #00e701;
+            --st-accent: #00e701; /* Verde Stake */
             --st-text-muted: #b1bad3;
             --st-header: #1a2c38;
-            --st-input: #0f212e;
-            --st-blue: #2f4553;
-            --st-transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --st-blue-dark: #071824;
+            --st-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        body { background-color: var(--st-bg); color: #fff; overflow-x: hidden; }
+        body { background-color: var(--st-bg); color: #fff; overflow-x: hidden; min-height: 100vh; }
 
-        /* SCROLLBAR CUSTOMIZATION */
-        ::-webkit-scrollbar { width: 6px; }
+        /* CUSTOM SCROLLBAR */
+        ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: var(--st-bg); }
         ::-webkit-scrollbar-thumb { background: var(--st-card); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--st-text-muted); }
 
-        /* LAYOUT CORE */
-        .app-wrapper { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; transition: var(--st-transition); }
-        .sidebar-collapsed { grid-template-columns: 60px 1fr; }
-
-        /* HEADER & NAVIGATION */
+        /* LAYOUT ESTRUCTURAL */
+        .app-container { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; transition: var(--st-transition); }
+        .sidebar-hidden { grid-template-columns: 0px 1fr; }
+        
         header { 
-            height: 64px; background: var(--st-header); border-bottom: 2px solid rgba(0,0,0,0.1); 
-            display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
+            height: 64px; background: var(--st-header); border-bottom: 2px solid rgba(0,0,0,0.15); 
+            display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
             position: sticky; top: 0; z-index: 1000;
         }
 
-        .monedero-mx {
-            background: var(--st-blue); display: flex; align-items: center; border-radius: 4px;
-            padding: 2px; gap: 10px; border: 1px solid rgba(255,255,255,0.05);
-        }
-
-        /* SIDEBAR STYLING */
         aside { 
-            background: var(--st-sidebar); display: flex; flex-direction: column; 
-            border-right: 1px solid rgba(255,255,255,0.05); overflow-y: auto; height: calc(100vh - 64px);
-            position: sticky; top: 64px;
+            background: var(--st-sidebar); border-right: 1px solid rgba(255,255,255,0.03); 
+            height: calc(100vh - 64px); position: sticky; top: 64px; overflow-y: auto;
+            transition: var(--st-transition); z-index: 900;
         }
 
-        .nav-item {
-            padding: 12px 20px; display: flex; align-items: center; gap: 15px; color: var(--st-text-muted);
-            cursor: pointer; transition: var(--st-transition); font-weight: 600; font-size: 14px;
-        }
-        .nav-item:hover { background: rgba(255,255,255,0.03); color: #fff; }
-        .nav-item.active { color: #fff; border-left: 3px solid var(--st-accent); background: rgba(0,231,1,0.03); }
-        .nav-item i { width: 20px; text-align: center; font-size: 18px; }
+        .sidebar-hidden aside { transform: translateX(-260px); visibility: hidden; }
 
-        /* GAME GRID */
-        .main-content { padding: 40px; max-width: 1400px; mx-auto; }
+        /* COMPONENTES DE UI */
+        .nav-link {
+            padding: 14px 24px; display: flex; align-items: center; gap: 16px; 
+            color: var(--st-text-muted); cursor: pointer; font-weight: 600; font-size: 14px;
+            transition: 0.2s;
+        }
+        .nav-link:hover { background: rgba(255,255,255,0.03); color: #fff; }
+        .nav-link.active { color: #fff; background: rgba(255,255,255,0.05); border-right: 3px solid var(--st-accent); }
+
+        .monedero-container {
+            background: #2f4553; border-radius: 4px; display: flex; align-items: center;
+            padding: 2px; gap: 12px; border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* GRID DE JUEGOS ESTILO STAKE */
         .game-grid { 
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
-            gap: 15px; margin-top: 25px; 
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
+            gap: 20px; margin-top: 30px; 
         }
 
         .game-card {
-            background: var(--st-card); border-radius: 8px; overflow: hidden;
-            position: relative; transition: var(--st-transition); cursor: pointer;
-            aspect-ratio: 3/4;
+            background: var(--st-card); border-radius: 10px; overflow: hidden;
+            position: relative; transition: transform 0.3s; cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
+        .game-card:hover { transform: translateY(-10px); }
+        .game-card img { width: 100%; aspect-ratio: 3/4; object-fit: cover; }
 
-        .game-card:hover { transform: translateY(-8px); }
-        .game-card img { width: 100%; height: 100%; object-fit: cover; }
-
-        .game-overlay {
-            position: absolute; inset: 0; background: rgba(0,0,0,0.4); opacity: 0;
-            display: flex; align-items: center; justify-content: center; transition: 0.3s;
+        .game-info {
+            position: absolute; bottom: 0; left: 0; right: 0; padding: 10px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.9));
+            font-size: 11px; display: flex; align-items: center; gap: 5px;
         }
-        .game-card:hover .game-overlay { opacity: 1; }
-
-        .live-tag {
-            position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7);
-            padding: 2px 8px; border-radius: 10px; font-size: 10px; display: flex; align-items: center; gap: 4px;
-        }
-        .dot { width: 6px; height: 6px; background: var(--st-accent); border-radius: 50%; }
 
         /* SEARCH BAR */
-        .search-container {
+        .search-wrapper {
             background: var(--st-card); border-radius: 50px; display: flex; align-items: center;
-            padding: 0 20px; border: 2px solid transparent; transition: 0.3s;
+            padding: 0 25px; margin-bottom: 40px; border: 2px solid transparent;
         }
-        .search-container:focus-within { border-color: var(--st-blue); }
-        .search-container input { 
-            background: transparent; border: none; padding: 15px; color: #fff; width: 100%;
-            outline: none; font-size: 14px;
-        }
+        .search-wrapper:focus-within { border-color: var(--st-blue-dark); }
+        .search-wrapper input { background: transparent; border: none; padding: 15px; color: #fff; width: 100%; outline: none; }
 
-        /* BUTTONS STAKE STYLE */
-        .btn-monedero { background: #213743; color: #fff; font-weight: 700; padding: 8px 16px; border-radius: 4px; font-size: 14px; }
-        .btn-deposit { background: #007aff; color: #fff; font-weight: 700; padding: 8px 24px; border-radius: 4px; font-size: 14px; }
-
-        /* LOADER */
-        #loader { background: var(--st-bg); z-index: 10000; transition: 0.5s; }
+        /* LOGIN OVERLAY */
+        #auth-view { background: rgba(15, 33, 46, 0.98); z-index: 5000; }
+        .input-group { background: var(--st-blue-dark); border-radius: 8px; padding: 12px 16px; border: 2px solid transparent; }
+        .input-group:focus-within { border-color: var(--st-card); }
     </style>
 </head>
 <body>
 
-    <div id="loader" class="fixed inset-0 flex flex-col items-center justify-center">
-        <div class="mb-4 text-4xl font-black italic text-white animate-pulse">Win<span class="text-[#00e701]">MX</span></div>
-        <div class="w-48 h-1 bg-gray-800 rounded-full overflow-hidden">
-            <div id="p-bar" class="h-full bg-[#00e701] transition-all duration-300" style="width: 0%"></div>
+    <div id="loading-screen" class="fixed inset-0 z-[10000] bg-[#0f212e] flex flex-col items-center justify-center transition-opacity duration-700">
+        <div class="text-5xl font-black italic mb-6 animate-pulse">Win<span class="text-[#00e701]">MX</span></div>
+        <div class="w-64 h-1.5 bg-gray-900 rounded-full overflow-hidden">
+            <div id="load-bar" class="h-full bg-[#00e701] transition-all duration-300" style="width: 0%"></div>
+        </div>
+        <p class="mt-4 text-[10px] uppercase tracking-[0.5em] text-gray-500 font-bold">Verificando Infraestructura...</p>
+    </div>
+
+    <div id="auth-view" class="fixed inset-0 flex items-center justify-center p-6 hidden">
+        <div class="bg-[#1a2c38] w-full max-w-md p-10 rounded-2xl shadow-2xl animate__animated animate__zoomIn">
+            <h2 class="text-3xl font-black italic mb-8 text-center">Acceso <span class="text-[#00e701]">WinMX</span></h2>
+            <div class="space-y-6">
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase ml-2 mb-2 block">Correo Electrónico</label>
+                    <input id="auth-email" type="email" class="w-full bg-[#0f212e] p-5 rounded-xl border-none outline-none font-bold text-white">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase ml-2 mb-2 block">Contraseña</label>
+                    <input id="auth-pass" type="password" class="w-full bg-[#0f212e] p-5 rounded-xl border-none outline-none font-bold text-white">
+                </div>
+                <button onclick="DataBridge.login()" class="w-full py-5 bg-[#00e701] text-black font-black rounded-xl hover:scale-[1.02] transition-all shadow-lg">INGRESAR AL CASINO</button>
+            </div>
+            <p class="mt-8 text-center text-xs text-gray-500 font-medium">¿Problemas con el acceso? Contacta a soporte.</p>
         </div>
     </div>
 
     <header>
         <div class="flex items-center gap-6">
-            <i onclick="UI.toggleSidebar()" class="fas fa-bars text-xl cursor-pointer text-gray-400 hover:text-white"></i>
-            <div class="text-2xl font-black italic tracking-tighter">Win<span class="text-[#00e701]">MX</span></div>
+            <i onclick="UI.toggleSidebar()" class="fas fa-bars text-xl cursor-pointer text-gray-400 hover:text-white transition-colors"></i>
+            <div class="text-2xl font-black italic tracking-tighter cursor-pointer">Win<span class="text-[#00e701]">MX</span></div>
         </div>
 
-        <div class="flex items-center gap-4">
-            <div class="monedero-mx">
-                <span id="u-balance" class="px-3 font-bold text-sm">MX$0.00</span>
-                <button onclick="UI.showCashier()" class="btn-deposit hover:brightness-110">Monedero</button>
+        <div id="user-controls" class="flex items-center gap-4 hidden">
+            <div class="monedero-container">
+                <span id="display-balance" class="px-4 font-black text-sm tracking-tight">MX$0.00</span>
+                <button onclick="UI.toggleCashier(true)" class="bg-[#007aff] px-5 py-2 rounded font-bold text-sm hover:brightness-110 transition-all">Cartera</button>
             </div>
-            <div class="flex items-center gap-4 text-gray-400 ml-4">
-                <i class="fas fa-search cursor-pointer"></i>
-                <i class="fas fa-user-circle text-2xl cursor-pointer text-white"></i>
+            <div class="flex items-center gap-4 ml-2 border-l border-gray-700 pl-4">
+                <i class="fas fa-user-circle text-2xl text-gray-400 cursor-pointer hover:text-white"></i>
+                <i onclick="DataBridge.logout()" class="fas fa-sign-out-alt text-gray-500 cursor-pointer hover:text-red-500"></i>
             </div>
         </div>
     </header>
 
-    <div class="app-wrapper" id="app-grid">
+    <div class="app-container" id="main-layout">
         <aside id="sidebar">
-            <div class="py-4">
-                <div class="nav-item active"><i class="fas fa-star"></i> <span>Favoritos</span></div>
-                <div class="nav-item"><i class="fas fa-history"></i> <span>Reciente</span></div>
-                <div class="nav-item"><i class="fas fa-trophy"></i> <span>Desafíos</span></div>
-                <div class="nav-item"><i class="fas fa-file-invoice-dollar"></i> <span>Mis Apuestas</span></div>
+            <div class="p-4 space-y-1">
+                <div class="nav-link active"><i class="fas fa-home"></i> <span>Inicio</span></div>
+                <div class="nav-link"><i class="fas fa-star text-yellow-500"></i> <span>Favoritos</span></div>
+                <div class="nav-link"><i class="fas fa-history"></i> <span>Recientes</span></div>
             </div>
-            
-            <div class="border-t border-gray-800 my-2"></div>
-            
-            <div class="px-5 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest">Juegos</div>
-            <div class="nav-item"><i class="fas fa-gem text-blue-400"></i> <span>Solo en WinMX</span></div>
-            <div class="nav-item"><i class="fas fa-rocket text-purple-400"></i> <span>Lanzamientos</span></div>
-            <div class="nav-item"><i class="fas fa-dice text-green-400"></i> <span>Originales</span></div>
-            <div class="nav-item"><i class="fas fa-bolt text-yellow-400"></i> <span>Tragamonedas</span></div>
-            <div class="nav-item"><i class="fas fa-video text-red-400"></i> <span>Casino en Vivo</span></div>
+            <div class="mt-4 px-6 text-[10px] font-black text-gray-600 uppercase tracking-widest">Categorías</div>
+            <div class="p-4 space-y-1">
+                <div class="nav-link"><i class="fas fa-dice text-emerald-500"></i> <span>WinMX Originals</span></div>
+                <div class="nav-link"><i class="fas fa-bolt text-blue-400"></i> <span>Tragamonedas</span></div>
+                <div class="nav-link"><i class="fas fa-video text-red-500"></i> <span>Casino Vivo</span></div>
+                <div class="nav-link"><i class="fas fa-futbol text-emerald-400"></i> <span>Deportes</span></div>
+            </div>
         </aside>
 
-        <main class="main-content">
-            <h1 class="text-2xl font-bold mb-8 flex items-center gap-3">
-                <i class="fas fa-dice text-[#00e701]"></i> Originales De WinMX
-            </h1>
-
-            <div class="search-container mb-10">
-                <i class="fas fa-search text-gray-500"></i>
-                <input type="text" placeholder="Busca tu juego..." id="game-search">
+        <main class="p-8 md:p-14 max-w-[1600px] mx-auto w-full">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-10 gap-6">
+                <div>
+                    <h1 class="text-3xl font-black mb-2">Originales de Stake</h1>
+                    <p class="text-gray-500 text-sm font-medium">Juegos con equidad demostrable y RTP del 99%</p>
+                </div>
+                <div class="search-wrapper w-full md:w-96 mb-0">
+                    <i class="fas fa-search text-gray-600"></i>
+                    <input type="text" placeholder="Busca tu juego favorito..." id="game-filter">
+                </div>
             </div>
 
-            <div class="game-grid" id="grid-container">
+            <div class="game-grid" id="game-render-area">
                 </div>
         </main>
     </div>
 
-    <div id="modal-cajero" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[2000] hidden items-center justify-center p-4">
-        <div class="bg-[#1a2c38] w-full max-w-md rounded-xl p-8 shadow-2xl animate__animated animate__fadeInUp">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold">Depositar MXN</h2>
-                <i onclick="UI.hideCashier()" class="fas fa-times cursor-pointer text-gray-500 hover:text-white"></i>
-            </div>
+    <div id="modal-cashier" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[6000] hidden items-center justify-center p-4">
+        <div class="bg-[#1a2c38] w-full max-w-lg rounded-2xl p-10 relative animate__animated animate__zoomIn">
+            <i onclick="UI.toggleCashier(false)" class="fas fa-times absolute top-6 right-6 text-gray-500 hover:text-white cursor-pointer text-xl"></i>
+            
+            <h3 class="text-2xl font-black mb-2">Monedero <span class="text-[#00e701]">SPEI</span></h3>
+            <p class="text-gray-500 text-xs font-bold uppercase tracking-widest mb-8">Depósitos inmediatos 24/7</p>
+            
             <div class="space-y-6">
-                <div class="bg-[#0f212e] p-4 rounded-lg">
-                    <label class="text-xs text-gray-500 font-bold uppercase block mb-2">Monto del Depósito</label>
-                    <input id="dep-amount" type="number" value="100" class="bg-transparent border-none text-2xl font-bold text-white w-full outline-none">
+                <div class="bg-[#0f212e] p-6 rounded-xl border border-white/5">
+                    <label class="text-[10px] font-black text-gray-500 uppercase block mb-3">Monto a depositar (MXN)</label>
+                    <input id="deposit-value" type="number" value="100.00" class="bg-transparent border-none text-4xl font-black text-white w-full outline-none">
                 </div>
-                <button onclick="Core.processDeposit()" class="w-full py-4 bg-[#00e701] text-black font-extrabold rounded-lg hover:scale-[1.02] transition-all">Confirmar en Cajero</button>
+                
+                <div class="grid grid-cols-3 gap-3">
+                    <button onclick="document.getElementById('deposit-value').value=500" class="bg-[#213743] py-3 rounded-lg font-bold text-xs">+500</button>
+                    <button onclick="document.getElementById('deposit-value').value=1000" class="bg-[#213743] py-3 rounded-lg font-bold text-xs">+1000</button>
+                    <button onclick="document.getElementById('deposit-value').value=5000" class="bg-[#213743] py-3 rounded-lg font-bold text-xs">+5000</button>
+                </div>
+
+                <button id="confirm-dep-btn" onclick="DataBridge.processDeposit()" class="w-full py-5 bg-[#00e701] text-black font-black rounded-xl text-lg hover:brightness-110 transition-all">NOTIFICAR PAGO</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- CONFIGURACIÓN DE DATOS ---
-        const GAMES_DB = [
-            { id: 'mines', name: 'MINES', img: 'https://stake.com/games/mines.png', players: '3,427', color: 'bg-blue-600' },
-            { id: 'dice', name: 'DICE', img: 'https://stake.com/games/dice.png', players: '2,735', color: 'bg-red-600' },
-            { id: 'plinko', name: 'PLINKO', img: 'https://stake.com/games/plinko.png', players: '1,463', color: 'bg-pink-600' },
-            { id: 'limbo', name: 'LIMBO', img: 'https://stake.com/games/limbo.png', players: '2,038', color: 'bg-orange-500' },
-            { id: 'crash', name: 'CRASH', img: 'https://stake.com/games/crash.png', players: '5,102', color: 'bg-emerald-500' },
-            { id: 'hilo', name: 'HILO', img: 'https://stake.com/games/hilo.png', players: '890', color: 'bg-indigo-600' },
-            { id: 'keno', name: 'KENO', img: 'https://stake.com/games/keno.png', players: '1,120', color: 'bg-yellow-600' },
-            { id: 'blackjack', name: 'BLACKJACK', img: 'https://stake.com/games/blackjack.png', players: '1,069', color: 'bg-blue-900' }
-        ];
+        // --- NÚCLEO DE CONEXIÓN SUPABASE ---
+        const SUPABASE_URL = "https://dakhnqriwbzihlzhtfcb.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs";
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const Core = {
+        const APP_STATE = {
+            user: null,
             balance: 0.00,
-            
-            init() {
-                this.loadGames();
-                this.animateLoader();
+            games: [
+                { id: 'mines', name: 'MINES', img: 'https://stake.com/games/mines.png', pop: '3.4k' },
+                { id: 'dice', name: 'DICE', img: 'https://stake.com/games/dice.png', pop: '2.7k' },
+                { id: 'plinko', name: 'PLINKO', img: 'https://stake.com/games/plinko.png', pop: '1.4k' },
+                { id: 'limbo', name: 'LIMBO', img: 'https://stake.com/games/limbo.png', pop: '2.0k' },
+                { id: 'crash', name: 'CRASH', img: 'https://stake.com/games/crash.png', pop: '5.1k' },
+                { id: 'hilo', name: 'HILO', img: 'https://stake.com/games/hilo.png', pop: '890' },
+                { id: 'keno', name: 'KENO', img: 'https://stake.com/games/keno.png', pop: '1.1k' },
+                { id: 'bj', name: 'BLACKJACK', img: 'https://stake.com/games/blackjack.png', pop: '1.0k' }
+            ]
+        };
+
+        const DataBridge = {
+            // LOGIN PERSISTENTE
+            async login() {
+                const email = document.getElementById('auth-email').value;
+                const pass = document.getElementById('auth-pass').value;
+
+                const { data, error } = await sb.from('usuarios').select('*').eq('email', email).eq('password', pass).single();
+
+                if (data) {
+                    APP_STATE.user = data;
+                    localStorage.setItem('winmx_session', JSON.stringify(data));
+                    this.initSession();
+                } else {
+                    alert("Error: Usuario o contraseña incorrectos.");
+                }
             },
 
-            animateLoader() {
+            // CARGA DE SESIÓN
+            async initSession() {
+                document.getElementById('auth-view').style.display = 'none';
+                document.getElementById('user-controls').classList.remove('hidden');
+                await this.syncBalance();
+            },
+
+            // ACTUALIZACIÓN DE SALDO EN TIEMPO REAL
+            async syncBalance() {
+                if(!APP_STATE.user) return;
+                const { data } = await sb.from('usuarios').select('saldo').eq('id', APP_STATE.user.id).single();
+                if(data) {
+                    APP_STATE.balance = data.saldo;
+                    document.getElementById('display-balance').innerText = `MX$${APP_STATE.balance.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
+                }
+            },
+
+            // PROCESAR DEPÓSITO PERSISTENTE
+            async processDeposit() {
+                const amt = parseFloat(document.getElementById('deposit-value').value);
+                if(amt <= 0) return;
+
+                const btn = document.getElementById('confirm-dep-btn');
+                btn.innerText = "VERIFICANDO...";
+                btn.disabled = true;
+
+                try {
+                    const newBal = APP_STATE.balance + amt;
+                    // Update en DB
+                    await sb.from('usuarios').update({ saldo: newBal }).eq('id', APP_STATE.user.id);
+                    // Insert en Historial
+                    await sb.from('historial').insert([{ user_id: APP_STATE.user.id, monto: amt, tipo: 'DEPOSITO_AUTO' }]);
+                    
+                    await this.syncBalance();
+                    UI.toggleCashier(false);
+                    alert("¡Depósito acreditado instantáneamente!");
+                } catch(e) {
+                    alert("Error en transacción");
+                } finally {
+                    btn.innerText = "NOTIFICAR PAGO";
+                    btn.disabled = false;
+                }
+            },
+
+            logout() {
+                localStorage.removeItem('winmx_session');
+                location.reload();
+            }
+        };
+
+        const UI = {
+            init() {
+                this.renderGames();
+                this.handleLoading();
+                
+                // Auto-login si hay sesión
+                const session = localStorage.getItem('winmx_session');
+                if(session) {
+                    APP_STATE.user = JSON.parse(session);
+                    DataBridge.initSession();
+                } else {
+                    document.getElementById('auth-view').style.display = 'flex';
+                }
+            },
+
+            handleLoading() {
                 let p = 0;
+                const bar = document.getElementById('load-bar');
                 const int = setInterval(() => {
-                    p += Math.random() * 30;
-                    document.getElementById('p-bar').style.width = p + '%';
+                    p += Math.random() * 25;
+                    bar.style.width = p + '%';
                     if(p >= 100) {
                         clearInterval(int);
-                        document.getElementById('loader').style.opacity = '0';
-                        setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+                        const screen = document.getElementById('loading-screen');
+                        screen.style.opacity = '0';
+                        setTimeout(() => screen.style.display = 'none', 700);
                     }
-                }, 200);
+                }, 150);
             },
 
-            loadGames() {
-                const container = document.getElementById('grid-container');
-                container.innerHTML = GAMES_DB.map(game => `
-                    <div class="game-card animate__animated animate__fadeIn">
-                        <div class="absolute inset-0 ${game.color} opacity-20"></div>
-                        <img src="${game.img}" alt="${game.name}" onerror="this.src='https://placehold.co/400x600/213743/white?text=${game.name}'">
-                        <div class="game-overlay">
-                            <button class="bg-[#00e701] text-black w-12 h-12 rounded-full flex items-center justify-center">
-                                <i class="fas fa-play"></i>
-                            </button>
-                        </div>
-                        <div class="live-tag">
-                            <div class="dot"></div>
-                            <span>${game.players}</span>
+            renderGames() {
+                const container = document.getElementById('game-render-area');
+                container.innerHTML = APP_STATE.games.map(game => `
+                    <div class="game-card animate__animated animate__fadeInUp">
+                        <img src="${game.img}" onerror="this.src='https://placehold.co/400x600/213743/white?text=${game.name}'">
+                        <div class="game-info">
+                            <div class="w-2 h-2 rounded-full bg-[#00e701] animate-pulse"></div>
+                            <span class="font-bold text-gray-200">${game.pop} Jugando</span>
                         </div>
                     </div>
                 `).join('');
             },
 
-            processDeposit() {
-                const amt = parseFloat(document.getElementById('dep-amount').value);
-                this.balance += amt;
-                document.getElementById('u-balance').innerText = `MX$${this.balance.toFixed(2)}`;
-                UI.hideCashier();
-                alert(`¡Depósito de MX$${amt} exitoso!`);
-            }
-        };
-
-        const UI = {
             toggleSidebar() {
-                document.getElementById('app-grid').classList.toggle('sidebar-collapsed');
+                document.getElementById('main-layout').classList.toggle('sidebar-hidden');
             },
-            showCashier() {
-                document.getElementById('modal-cajero').style.display = 'flex';
-            },
-            hideCashier() {
-                document.getElementById('modal-cajero').style.display = 'none';
+
+            toggleCashier(show) {
+                document.getElementById('modal-cashier').style.display = show ? 'flex' : 'none';
             }
         };
 
-        window.onload = () => Core.init();
+        window.onload = () => UI.init();
     </script>
 </body>
 </html>
