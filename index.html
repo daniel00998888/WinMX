@@ -17,8 +17,9 @@
         .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
         .glass-panel { background: rgba(18, 18, 18, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.07); }
         
-        .slot-box { height: 140px; overflow: hidden; background: linear-gradient(180deg, #000 0%, #0a0a0a 50%, #000 100%); border: 3px solid #1a1a1a; border-radius: 1.5rem; }
-        .slot-reel { transition: transform 3.5s cubic-bezier(0.15, 0, 0.05, 1); }
+        /* Contenedor de rodillos */
+        .slot-box { height: 140px; overflow: hidden; background: linear-gradient(180deg, #000 0%, #0a0a0a 50%, #000 100%); border: 3px solid #1a1a1a; border-radius: 1.5rem; position: relative; }
+        .slot-reel { transition: transform 3.5s cubic-bezier(0.15, 0, 0.05, 1); will-change: transform; }
         .slot-item { height: 140px; display: flex; align-items: center; justify-content: center; font-size: 4rem; }
 
         .btn-action { background: var(--mx-green); color: black; font-weight: 900; transition: all 0.3s ease; }
@@ -32,6 +33,10 @@
         .toggle-pass { position: absolute; right: 1.5rem; top: 50%; transform: translateY(-50%); color: #444; cursor: pointer; }
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+
+        /* Efecto de ganar */
+        .win-glow { animation: glow 0.5s ease infinite alternate; }
+        @keyframes glow { from { box-shadow: 0 0 10px var(--mx-green); } to { box-shadow: 0 0 30px var(--mx-green); } }
     </style>
 </head>
 <body class="antialiased">
@@ -81,7 +86,7 @@
 
         <main class="max-w-7xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div class="lg:col-span-8 space-y-6">
-                <div class="glass-panel p-8 md:p-14 rounded-[3rem]">
+                <div id="game-panel" class="glass-panel p-8 md:p-14 rounded-[3rem]">
                     <div class="grid grid-cols-3 gap-4 mb-12">
                         <div class="slot-box"><div id="reel-1" class="slot-reel"></div></div>
                         <div class="slot-box"><div id="reel-2" class="slot-reel"></div></div>
@@ -170,14 +175,11 @@
                 const email = document.getElementById('auth-email').value;
                 const password = document.getElementById('auth-password').value;
                 const btn = document.getElementById('reg-btn');
-                
-                if(!email || !password) return UI.notify("Completa los datos", "error");
+                if(!email || !password) return UI.notify("Datos incompletos", "error");
                 btn.disabled = true; btn.innerText = "ESPERA...";
-
-                const { data, error } = await sb.auth.signUp({ email, password });
+                const { error } = await sb.auth.signUp({ email, password });
                 if (error) { btn.disabled = false; btn.innerText = "Registro"; return UI.notify(error.message, "error"); }
-
-                UI.notify("¡Registro exitoso! Ya puedes entrar.", "success");
+                UI.notify("¡Registro exitoso!", "success");
                 btn.disabled = false; btn.innerText = "Registro";
             },
             async logout() { await sb.auth.signOut(); location.reload(); }
@@ -195,7 +197,6 @@
                 const { data: { session } } = await sb.auth.getSession();
                 document.getElementById('boot-loader').classList.add('opacity-0');
                 setTimeout(() => { if(document.getElementById('boot-loader')) document.getElementById('boot-loader').remove(); }, 700);
-
                 if (session) { 
                     State.user = session.user; 
                     document.getElementById('main-app').classList.remove('hidden-view');
@@ -205,14 +206,13 @@
             },
             async loadData() {
                 try {
-                    let { data, error } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle();
+                    let { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle();
                     if (!data) {
-                        const { error: insErr } = await sb.from('usuarios').insert([{ id: State.user.id, email: State.user.email, saldo: 0 }]);
-                        if(insErr) throw insErr;
+                        await sb.from('usuarios').insert([{ id: State.user.id, email: State.user.email, saldo: 0 }]);
                         State.balance = 0;
                     } else { State.balance = data.saldo || 0; }
                     UI.updateBalance(); Game.initReels(); this.fetchHistory();
-                } catch (e) { console.error("Error cargando perfil:", e); }
+                } catch (e) { console.error(e); }
             },
             async fetchHistory() {
                 const { data } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', State.currentTab).order('created_at', { ascending: false });
@@ -221,103 +221,87 @@
             async confirmDeposit() {
                 const amt = parseFloat(document.getElementById('dep-amount').value);
                 const file = document.getElementById('receipt-input').files[0];
-                if(!amt || !file) return UI.notify("Sube el comprobante", "error");
-
+                if(!amt || !file) return UI.notify("Datos incompletos", "error");
                 const btn = document.getElementById('final-dep-btn');
                 btn.disabled = true; btn.innerText = "PROCESANDO...";
-
                 try {
                     const fileName = `${Date.now()}-${State.user.id}.png`;
                     const path = `evidence/${State.user.id}/${fileName}`;
                     await sb.storage.from('comprobantes').upload(path, file);
                     const { data: { publicUrl } } = sb.storage.from('comprobantes').getPublicUrl(path);
-
-                    const { error } = await sb.from('history').insert([{
-                        user_id: State.user.id, type: 'deposits', amount: amt, label: 'DEPÓSITO', status: 'pending', evidence_url: publicUrl
-                    }]);
-
-                    if(error) throw error;
-                    UI.notify("Depósito enviado a revisión", "success");
+                    await sb.from('history').insert([{ user_id: State.user.id, type: 'deposits', amount: amt, label: 'DEPÓSITO', status: 'pending', evidence_url: publicUrl }]);
+                    UI.notify("Depósito enviado", "success");
                     UI.closeModal('modal-deposit');
                     this.fetchHistory();
-                } catch (e) { UI.notify("Error al enviar depósito", "error"); console.error(e); }
+                } catch (e) { UI.notify("Error en depósito", "error"); }
                 finally { btn.disabled = false; btn.innerText = "Validar Depósito"; }
             }
         };
 
         const Game = {
+            totalSpins: 0,
             initReels() {
                 [1,2,3].forEach(id => {
                     const r = document.getElementById(`reel-${id}`);
                     r.innerHTML = '';
-                    [...State.symbols, ...State.symbols, ...State.symbols].forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`);
+                    // Generamos una tira muy larga de frutas para simular infinito
+                    const bigStrip = Array(50).fill(State.symbols).flat();
+                    bigStrip.forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`);
                 });
             },
             changeBet(v) { State.currentBet = Math.max(10, State.currentBet + v); document.getElementById('bet-display').innerText = `$${State.currentBet}`; },
             async spin() {
-                // 1. DESCUENTO INSTANTÁNEO
                 if(State.isSpinning || State.balance < State.currentBet) return UI.notify("Saldo insuficiente", "error");
                 
                 State.isSpinning = true;
                 const btn = document.getElementById('spin-btn');
                 btn.disabled = true;
+                document.getElementById('game-panel').classList.remove('win-glow');
 
-                // Restar visual y en DB antes de la animación
+                // DESCUENTO INSTANTÁNEO
                 State.balance -= State.currentBet;
                 UI.updateBalance();
                 await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
 
-                // 2. CALCULAR RESULTADO
+                // LOGICA DE GIRO
+                this.totalSpins++;
                 const results = [State.symbols[Math.floor(Math.random()*6)], State.symbols[Math.floor(Math.random()*6)], State.symbols[Math.floor(Math.random()*6)]];
                 const combo = results.join('');
                 const winMult = PAYTABLE[combo] || 0;
                 const winAmt = State.currentBet * winMult;
 
-                // 3. ANIMAR
                 [1,2,3].forEach((id, i) => {
                     const reel = document.getElementById(`reel-${id}`);
                     const idx = State.symbols.indexOf(results[i]);
-                    reel.style.transform = `translateY(-${(idx * 140) + (140 * 6)}px)`;
+                    // Se suma el desplazamiento actual para que nunca retroceda
+                    const offset = (this.totalSpins * 140 * 12) + (idx * 140);
+                    reel.style.transform = `translateY(-${offset}px)`;
                 });
 
-                // 4. ENTREGAR PREMIO
                 setTimeout(async () => {
                     if (winMult > 0) {
                         State.balance += winAmt;
                         await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                         UI.notify(`¡GANASTE $${winAmt}!`, "success");
                         UI.updateBalance();
+                        document.getElementById('game-panel').classList.add('win-glow');
                     }
-
-                    // Guardar en historial
                     await sb.from('history').insert([{ 
-                        user_id: State.user.id, 
-                        type: 'bets', 
+                        user_id: State.user.id, type: 'bets', 
                         amount: winMult > 0 ? (winAmt - State.currentBet) : -State.currentBet, 
-                        label: winMult > 0 ? `PREMIO X${winMult}` : 'APUESTA', 
-                        status: 'completed' 
+                        label: winMult > 0 ? `PREMIO X${winMult}` : 'APUESTA', status: 'completed' 
                     }]);
-
                     Core.fetchHistory();
                     State.isSpinning = false; btn.disabled = false;
-                    this.resetReels();
                 }, 3500);
-            },
-            resetReels() {
-                [1,2,3].forEach(id => {
-                    const r = document.getElementById(`reel-${id}`);
-                    r.style.transition = 'none'; r.style.transform = 'translateY(0)';
-                    setTimeout(() => r.style.transition = 'transform 3.5s cubic-bezier(0.15, 0, 0.05, 1)', 50);
-                });
             }
         };
 
         const UI = {
             togglePassword(id, icon) {
                 const input = document.getElementById(id);
-                const isPass = input.type === "password";
-                input.type = isPass ? "text" : "password";
-                icon.className = isPass ? "fas fa-eye-slash toggle-pass" : "fas fa-eye toggle-pass";
+                input.type = input.type === "password" ? "text" : "password";
+                icon.className = input.type === "text" ? "fas fa-eye-slash toggle-pass" : "fas fa-eye toggle-pass";
             },
             handleFile(input) { if(input.files[0]) document.getElementById('file-label').innerText = "RECIBO LISTO ✅"; },
             updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toLocaleString()}`; },
@@ -329,11 +313,7 @@
                 setTimeout(() => { n.classList.replace('animate__fadeInUp', 'animate__fadeOutDown'); setTimeout(()=>n.remove(), 500); }, 3000);
             },
             openModal(id) { document.getElementById(id).classList.remove('hidden'); },
-            closeModal(id) { 
-                document.getElementById(id).classList.add('hidden');
-                document.getElementById('dep-step-1').classList.remove('hidden');
-                document.getElementById('dep-step-2').classList.add('hidden');
-            },
+            closeModal(id) { document.getElementById(id).classList.add('hidden'); },
             setDep(v) { document.getElementById('dep-amount').value = v; },
             depNextStep() { 
                 const amt = document.getElementById('dep-amount').value;
