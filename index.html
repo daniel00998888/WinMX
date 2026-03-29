@@ -16,18 +16,11 @@
         body { background-color: var(--mx-dark); color: white; font-family: 'Inter', sans-serif; min-height: 100vh; overflow-x: hidden; }
         .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
         .glass-panel { background: rgba(18, 18, 18, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.07); }
-        
-        /* Reels */
         .slot-box { height: 140px; overflow: hidden; background: linear-gradient(180deg, #000 0%, #0a0a0a 50%, #000 100%); border: 3px solid #1a1a1a; border-radius: 1.5rem; }
         .slot-reel { transition: transform 3.5s cubic-bezier(0.15, 0, 0.05, 1); }
         .slot-item { height: 140px; display: flex; align-items: center; justify-content: center; font-size: 4rem; }
-
         .btn-action { background: var(--mx-green); color: black; font-weight: 900; transition: all 0.3s ease; }
-        .btn-action:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4); }
         .tab-btn.active { color: var(--mx-green); border-bottom: 3px solid var(--mx-green); }
-        
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
 <body class="antialiased">
@@ -43,13 +36,12 @@
         <nav class="glass-panel sticky top-0 z-[100] px-6 md:px-12 py-4 border-b border-white/5">
             <div class="max-w-7xl mx-auto flex justify-between items-center">
                 <h1 class="text-3xl font-casino italic">Win<span class="text-emerald-500">MX</span></h1>
-                
                 <div class="flex items-center gap-4 md:gap-8">
                     <div class="text-right">
                         <span class="text-[10px] text-zinc-500 font-black uppercase tracking-widest">Balance Total</span>
                         <div id="balance-display" class="text-xl md:text-3xl font-casino text-white leading-none">$0.00</div>
                     </div>
-                    <button onclick="Core.logout()" class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-xl bg-red-500/10 text-red-500 hover:bg-red-600 hover:text-white transition-all duration-300">
+                    <button onclick="Core.logout()" class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-xl bg-red-500/10 text-red-500 hover:bg-red-600 hover:text-white transition-all">
                         <i class="fas fa-power-off"></i>
                     </button>
                 </div>
@@ -82,60 +74,38 @@
                 <div class="glass-panel p-8 rounded-[3rem] min-h-[500px] flex flex-col">
                     <div class="grid grid-cols-2 gap-4 mb-8">
                         <button onclick="UI.openModal('modal-deposit')" class="py-4 bg-emerald-500 text-black font-black rounded-2xl text-[11px] uppercase tracking-wider">Depositar</button>
-                        <button class="py-4 bg-zinc-800 text-zinc-500 font-black rounded-2xl text-[11px] uppercase cursor-not-allowed italic">Retirar</button>
+                        <button class="py-4 bg-zinc-800 text-zinc-500 font-black rounded-2xl text-[11px] uppercase italic">Retirar</button>
                     </div>
                     <div class="flex gap-6 mb-6 border-b border-white/5">
                         <button onclick="UI.switchTab('bets')" id="tab-bets-btn" class="pb-3 text-[10px] font-bold uppercase tracking-widest tab-btn active">Actividad</button>
                         <button onclick="UI.switchTab('deposits')" id="tab-deps-btn" class="pb-3 text-[10px] font-bold uppercase tracking-widest tab-btn">Depósitos</button>
                     </div>
-                    <div id="history-content" class="flex-grow space-y-3 overflow-y-auto max-h-[450px] custom-scroll pr-2"></div>
+                    <div id="history-content" class="flex-grow space-y-3 overflow-y-auto max-h-[450px]"></div>
                 </div>
             </div>
         </main>
     </div>
 
     <div id="modal-deposit" class="fixed inset-0 bg-black/95 backdrop-blur-xl z-[1000] flex items-center justify-center hidden p-4">
-        <div class="glass-panel p-10 md:p-14 rounded-[3.5rem] w-full max-w-lg animate__animated animate__zoomIn">
+        <div class="glass-panel p-10 md:p-14 rounded-[3.5rem] w-full max-w-lg">
             <div id="dep-step-1">
                 <h2 class="font-casino text-3xl text-center mb-8 italic">Monto a <span class="text-emerald-500">Recargar</span></h2>
-                <input id="dep-amount" type="number" placeholder="0.00" class="w-full bg-transparent text-center text-6xl md:text-8xl font-casino border-b-2 border-zinc-900 focus:border-emerald-500 outline-none py-4 text-white mb-10">
-                <div class="grid grid-cols-3 gap-3 mb-10">
-                    <button onclick="UI.setDep(100)" class="py-4 bg-white/5 rounded-2xl text-[11px] font-black hover:bg-emerald-500 hover:text-black">+$100</button>
-                    <button onclick="UI.setDep(500)" class="py-4 bg-white/5 rounded-2xl text-[11px] font-black hover:bg-emerald-500 hover:text-black">+$500</button>
-                    <button onclick="UI.setDep(1000)" class="py-4 bg-white/5 rounded-2xl text-[11px] font-black hover:bg-emerald-500 hover:text-black">+$1000</button>
-                </div>
+                <input id="dep-amount" type="number" placeholder="100" class="w-full bg-transparent text-center text-6xl font-casino border-b-2 border-zinc-900 focus:border-emerald-500 outline-none py-4 text-white mb-10">
                 <button onclick="UI.depNextStep()" class="btn-action w-full py-7 rounded-3xl font-casino text-xl">Continuar</button>
             </div>
-
             <div id="dep-step-2" class="hidden">
-                <h2 class="font-casino text-2xl text-center mb-4 italic">Instrucciones de <span class="text-emerald-500">Pago</span></h2>
+                <h2 class="font-casino text-2xl text-center mb-4 italic text-emerald-500">Instrucciones</h2>
                 <div class="bg-emerald-500/5 p-6 rounded-3xl border border-emerald-500/10 mb-6 text-center">
-                    <p class="text-[9px] font-black text-emerald-500 uppercase mb-2">Total a Transferir:</p>
                     <p id="dep-final-amount" class="text-4xl font-casino text-white mb-4">$0.00</p>
-                    <hr class="border-white/5 mb-4">
-                    <p class="text-[9px] font-black text-zinc-500 uppercase mb-1">CLAVE INTERBANCARIA (STP):</p>
-                    <p class="text-xl md:text-2xl font-mono font-bold text-white tracking-tighter">722 969 020 533 491 161</p>
+                    <p class="text-xl font-mono text-white">722 969 020 533 491 161</p>
                 </div>
-
-                <div class="space-y-3 mb-6">
-                    <div class="flex items-start gap-3 text-[10px] text-zinc-400">
-                        <span class="w-5 h-5 bg-emerald-500/10 text-emerald-500 rounded flex items-center justify-center font-bold">1</span>
-                        <p>Transfiere desde tu banco a la CLAVE arriba indicada.</p>
-                    </div>
-                    <div class="flex items-start gap-3 text-[10px] text-zinc-400">
-                        <span class="w-5 h-5 bg-emerald-500/10 text-emerald-500 rounded flex items-center justify-center font-bold">2</span>
-                        <p>Sube la captura de pantalla de tu comprobante exitoso.</p>
-                    </div>
-                </div>
-
-                <input type="file" id="receipt-input" class="hidden" accept="image/*">
-                <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-3xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500">
-                    <i class="fas fa-camera text-3xl text-zinc-700 mb-2"></i>
+                <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="document.getElementById('file-label').innerText = 'Archivo cargado ✓'">
+                <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-3xl p-8 flex flex-col items-center cursor-pointer">
                     <p id="file-label" class="text-[10px] font-black text-zinc-500 uppercase">Subir Comprobante</p>
                 </label>
                 <button id="final-dep-btn" onclick="Core.confirmDeposit()" class="btn-action w-full py-6 rounded-2xl font-casino text-xl mt-6">Validar Depósito</button>
             </div>
-            <button onclick="UI.closeModal('modal-deposit')" class="mt-8 block mx-auto text-[10px] font-black text-zinc-700 uppercase">Cancelar</button>
+            <button onclick="UI.closeModal('modal-deposit')" class="mt-8 block mx-auto text-[10px] font-black text-zinc-700 uppercase">Cerrar</button>
         </div>
     </div>
 
@@ -149,11 +119,12 @@
         const PAYTABLE = { '🍒🍒🍒': 5, '🍋🍋🍋': 10, '🔔🔔🔔': 20, '⭐️⭐️⭐️': 50, '💎💎💎': 100, '7️⃣7️⃣7️⃣': 500 };
 
         const Core = {
-            async init() {
+            init() {
+                Game.initReels(); // Cargar frutas primero sí o sí
                 let p = 0;
                 const int = setInterval(() => {
-                    p += 10;
-                    document.getElementById('boot-bar').style.width = `${p}%`;
+                    p += 20;
+                    document.getElementById('boot-bar').style.width = p + "%";
                     if(p >= 100) { clearInterval(int); this.checkSession(); }
                 }, 30);
             },
@@ -163,50 +134,40 @@
                     if (session) { 
                         State.user = session.user; 
                         await this.loadData(); 
-                    } else { this.hideLoader(); }
-                } catch (e) { this.hideLoader(); }
+                    }
+                } catch (e) {} finally { this.showApp(); }
             },
             async loadData() {
-                const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                if (data) { State.balance = data.saldo; UI.updateBalance(); Game.initReels(); this.fetchHistory(); }
-                this.hideLoader();
+                try {
+                    const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
+                    if (data) { State.balance = data.saldo; UI.updateBalance(); }
+                    this.fetchHistory();
+                } catch (e) {}
             },
-            hideLoader() {
+            showApp() {
                 document.getElementById('boot-loader').classList.add('opacity-0');
                 setTimeout(() => { 
                     document.getElementById('boot-loader').remove(); 
                     document.getElementById('main-app').classList.add('opacity-100'); 
-                }, 700);
+                }, 500);
             },
             async fetchHistory() {
+                if(!State.user) return;
                 const { data } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', State.currentTab).order('created_at', { ascending: false });
-                UI.renderHistory(data);
+                UI.renderHistory(data || []);
             },
             async confirmDeposit() {
                 const amt = parseFloat(document.getElementById('dep-amount').value);
                 const file = document.getElementById('receipt-input').files[0];
-                if(!amt || !file) return UI.notify("Faltan datos", "error");
-
-                const btn = document.getElementById('final-dep-btn');
-                btn.disabled = true; btn.innerText = "ENVIANDO...";
-
+                if(!amt || !file) return alert("Sube el comprobante");
                 const path = `evidence/${State.user.id}/${Date.now()}.png`;
                 await sb.storage.from('comprobantes').upload(path, file);
                 const { data: { publicUrl } } = sb.storage.from('comprobantes').getPublicUrl(path);
-
-                await sb.from('history').insert({
-                    user_id: State.user.id, type: 'deposits', amount: amt, label: 'DEPÓSITO', status: 'pending', evidence_url: publicUrl
-                });
-
-                UI.notify("Depósito en revisión", "success");
+                await sb.from('history').insert({ user_id: State.user.id, type: 'deposits', amount: amt, label: 'DEPÓSITO', status: 'pending', evidence_url: publicUrl });
                 UI.closeModal('modal-deposit');
                 this.fetchHistory();
-                btn.disabled = false; btn.innerText = "Validar Depósito";
             },
-            async logout() {
-                await sb.auth.signOut();
-                window.location.reload();
-            }
+            async logout() { await sb.auth.signOut(); window.location.reload(); }
         };
 
         const Game = {
@@ -219,11 +180,8 @@
             },
             changeBet(v) { State.currentBet = Math.max(10, State.currentBet + v); document.getElementById('bet-display').innerText = `$${State.currentBet}`; },
             async spin() {
-                if(State.isSpinning || State.balance < State.currentBet) return UI.notify("Saldo insuficiente", "error");
+                if(State.isSpinning || State.balance < State.currentBet) return;
                 State.isSpinning = true;
-                const btn = document.getElementById('spin-btn');
-                btn.disabled = true;
-
                 const res = [State.symbols[Math.floor(Math.random()*6)], State.symbols[Math.floor(Math.random()*6)], State.symbols[Math.floor(Math.random()*6)]];
                 const mult = PAYTABLE[res.join('')] || 0;
                 const win = State.currentBet * mult;
@@ -235,11 +193,11 @@
 
                 setTimeout(async () => {
                     State.balance += (win - State.currentBet);
-                    await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                    await sb.from('history').insert({ user_id: State.user.id, type: 'bets', amount: win - State.currentBet, label: mult > 0 ? 'PREMIO' : 'JUEGO', status: 'completed' });
-                    UI.updateBalance(); Core.fetchHistory();
-                    State.isSpinning = false; btn.disabled = false;
+                    if(State.user) await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+                    UI.updateBalance();
+                    State.isSpinning = false;
                     this.resetReels();
+                    Core.fetchHistory();
                 }, 3500);
             },
             resetReels() {
@@ -253,24 +211,11 @@
 
         const UI = {
             updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toLocaleString()}`; },
-            notify(m, t) {
-                const c = document.getElementById('notif-container');
-                const n = document.createElement('div');
-                n.className = `p-5 rounded-2xl text-[10px] font-black uppercase ${t==='success'?'bg-emerald-500 text-black':'bg-red-600 text-white'} animate__animated animate__fadeInUp`;
-                n.innerText = m; c.appendChild(n);
-                setTimeout(() => { n.classList.replace('animate__fadeInUp', 'animate__fadeOutDown'); setTimeout(()=>n.remove(), 500); }, 3000);
-            },
             openModal(id) { document.getElementById(id).classList.remove('hidden'); },
-            closeModal(id) { 
-                document.getElementById(id).classList.add('hidden');
-                document.getElementById('dep-step-1').classList.remove('hidden');
-                document.getElementById('dep-step-2').classList.add('hidden');
-            },
-            setDep(v) { document.getElementById('dep-amount').value = v; },
+            closeModal(id) { document.getElementById(id).classList.add('hidden'); },
             depNextStep() {
                 const a = document.getElementById('dep-amount').value;
-                if(!a || a <= 0) return UI.notify("Monto inválido", "error");
-                document.getElementById('dep-final-amount').innerText = `$${parseFloat(a).toLocaleString()}`;
+                document.getElementById('dep-final-amount').innerText = `$${a}`;
                 document.getElementById('dep-step-1').classList.add('hidden');
                 document.getElementById('dep-step-2').classList.remove('hidden');
             },
@@ -283,17 +228,14 @@
             renderHistory(data) {
                 const c = document.getElementById('history-content');
                 c.innerHTML = data.length ? data.map(i => {
-                    let color = 'text-zinc-500'; let txt = i.label;
-                    if (i.type === 'deposits') {
-                        if (i.status === 'pending') { color = 'text-amber-500'; txt = 'PENDIENTE ⏳'; }
-                        else if (i.status === 'completed') { color = 'text-emerald-500'; txt = 'APROBADO ✅'; }
-                        else if (i.status === 'rejected') { color = 'text-red-500'; txt = 'RECHAZADO ❌'; }
-                    } else if (i.amount > 0) { color = 'text-emerald-500'; }
-                    return `<div class="p-5 bg-white/5 rounded-3xl flex justify-between items-center border border-white/5">
-                        <div><p class="text-[9px] font-black uppercase mb-1 ${color}">${txt}</p>
-                        <p class="text-[11px] font-bold text-zinc-600">${new Date(i.created_at).toLocaleTimeString()}</p></div>
-                        <p class="font-casino ${color}">${i.amount >= 0 ? '+' : ''}$${Math.abs(i.amount)}</p></div>`;
-                }).join('') : '<p class="text-center text-zinc-800 font-bold text-[10px] py-10">SIN MOVIMIENTOS</p>';
+                    let color = 'text-zinc-500';
+                    if (i.status === 'pending') color = 'text-amber-500';
+                    else if (i.status === 'completed') color = 'text-emerald-500';
+                    else if (i.status === 'rejected') color = 'text-red-500';
+                    return `<div class="p-4 bg-white/5 rounded-2xl flex justify-between items-center">
+                        <div><p class="${color} text-[10px] font-black">${i.label} ${i.status === 'pending' ? '⏳' : ''}</p></div>
+                        <p class="font-casino ${color}">$${Math.abs(i.amount)}</p></div>`;
+                }).join('') : '<p class="text-center py-10 opacity-20">VACÍO</p>';
             }
         };
 
