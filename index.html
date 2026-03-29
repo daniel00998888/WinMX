@@ -27,10 +27,13 @@
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
 
-        /* Estilos para la nueva pantalla de Auth */
-        .input-auth { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 1.2rem; border-radius: 1.5rem; width: 100%; outline: none; transition: all 0.3s; color: white; }
+        /* Estilos para Auth e inputs con ojo */
+        .input-auth { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 1.2rem; padding-right: 3.5rem; border-radius: 1.5rem; width: 100%; outline: none; transition: all 0.3s; color: white; }
         .input-auth:focus { border-color: var(--mx-green); background: rgba(255,255,255,0.05); }
         .hidden-view { display: none !important; }
+        .pass-wrapper { position: relative; width: 100%; }
+        .toggle-pass { position: absolute; right: 1.5rem; top: 50%; transform: translateY(-50%); color: #444; cursor: pointer; transition: color 0.3s; }
+        .toggle-pass:hover { color: var(--mx-green); }
     </style>
 </head>
 <body class="antialiased">
@@ -50,7 +53,12 @@
             </div>
             <div class="space-y-4">
                 <input id="auth-email" type="email" placeholder="Correo electrónico" class="input-auth">
-                <input id="auth-password" type="password" placeholder="Contraseña" class="input-auth">
+                
+                <div class="pass-wrapper">
+                    <input id="auth-password" type="password" placeholder="Contraseña" class="input-auth">
+                    <i class="fas fa-eye toggle-pass" onclick="UI.togglePassword('auth-password', this)"></i>
+                </div>
+
                 <div class="grid grid-cols-2 gap-4 pt-6">
                     <button onclick="AuthManager.login()" class="btn-action py-5 rounded-2xl font-casino text-lg text-black">Entrar</button>
                     <button onclick="AuthManager.register()" class="bg-zinc-800 hover:bg-zinc-700 py-5 rounded-2xl font-casino text-sm">Registro</button>
@@ -92,7 +100,7 @@
                             </div>
                             <button onclick="Game.changeBet(10)" class="w-14 h-14 rounded-2xl bg-zinc-800 flex items-center justify-center hover:bg-emerald-500 hover:text-black transition-all text-xl"><i class="fas fa-plus"></i></button>
                         </div>
-                        <button id="spin-btn" onclick="Game.spin()" class="btn-action w-full md:w-auto px-20 py-8 rounded-[2.5rem] font-casino text-4xl italic">GIRAR</button>
+                        <button id="spin-btn" onclick="Game.spin()" class="btn-action w-full md:w-auto px-20 py-8 rounded-[2.5rem] font-casino text-4xl italic text-black">GIRAR</button>
                     </div>
                 </div>
             </div>
@@ -161,7 +169,6 @@
         let State = { user: null, balance: 0, currentBet: 10, isSpinning: false, currentTab: 'bets', symbols: ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'] };
         const PAYTABLE = { '🍒🍒🍒': 5, '🍋🍋🍋': 10, '🔔🔔🔔': 20, '⭐️⭐️⭐️': 50, '💎💎💎': 100, '7️⃣7️⃣7️⃣': 500 };
 
-        /* NUEVA LOGICA DE AUTH (Agregada sin romper lo demás) */
         const AuthManager = {
             async login() {
                 const email = document.getElementById('auth-email').value;
@@ -194,8 +201,6 @@
             },
             async checkSession() {
                 const { data: { session } } = await sb.auth.getSession();
-                
-                // Animación de salida del cargador
                 document.getElementById('boot-loader').classList.add('opacity-0');
                 setTimeout(() => document.getElementById('boot-loader').remove(), 700);
 
@@ -285,6 +290,16 @@
         };
 
         const UI = {
+            togglePassword(inputId, icon) {
+                const input = document.getElementById(inputId);
+                if (input.type === "password") {
+                    input.type = "text";
+                    icon.classList.replace('fa-eye', 'fa-eye-slash');
+                } else {
+                    input.type = "password";
+                    icon.classList.replace('fa-eye-slash', 'fa-eye');
+                }
+            },
             updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toLocaleString()}`; },
             notify(m, t) {
                 const c = document.getElementById('notif-container');
