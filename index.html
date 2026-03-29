@@ -27,7 +27,6 @@
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
 
-        /* Estilos para Auth e inputs con ojo */
         .input-auth { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 1.2rem; padding-right: 3.5rem; border-radius: 1.5rem; width: 100%; outline: none; transition: all 0.3s; color: white; }
         .input-auth:focus { border-color: var(--mx-green); background: rgba(255,255,255,0.05); }
         .hidden-view { display: none !important; }
@@ -53,15 +52,13 @@
             </div>
             <div class="space-y-4">
                 <input id="auth-email" type="email" placeholder="Correo electrónico" class="input-auth">
-                
                 <div class="pass-wrapper">
                     <input id="auth-password" type="password" placeholder="Contraseña" class="input-auth">
                     <i class="fas fa-eye toggle-pass" onclick="UI.togglePassword('auth-password', this)"></i>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4 pt-6">
                     <button onclick="AuthManager.login()" class="btn-action py-5 rounded-2xl font-casino text-lg text-black">Entrar</button>
-                    <button onclick="AuthManager.register()" class="bg-zinc-800 hover:bg-zinc-700 py-5 rounded-2xl font-casino text-sm">Registro</button>
+                    <button id="reg-btn" onclick="AuthManager.register()" class="bg-zinc-800 hover:bg-zinc-700 py-5 rounded-2xl font-casino text-sm">Registro</button>
                 </div>
             </div>
         </div>
@@ -100,7 +97,7 @@
                             </div>
                             <button onclick="Game.changeBet(10)" class="w-14 h-14 rounded-2xl bg-zinc-800 flex items-center justify-center hover:bg-emerald-500 hover:text-black transition-all text-xl"><i class="fas fa-plus"></i></button>
                         </div>
-                        <button id="spin-btn" onclick="Game.spin()" class="btn-action w-full md:w-auto px-20 py-8 rounded-[2.5rem] font-casino text-4xl italic text-black">GIRAR</button>
+                        <button id="spin-btn" onclick="Game.spin()" class="btn-action w-full md:w-auto px-20 py-8 rounded-[2.5rem] font-casino text-4xl italic">GIRAR</button>
                     </div>
                 </div>
             </div>
@@ -133,7 +130,7 @@
                     <button onclick="UI.setDep(500)" class="py-4 bg-white/5 rounded-2xl text-[11px] font-black hover:bg-emerald-500 hover:text-black transition-all">+$500</button>
                     <button onclick="UI.setDep(1000)" class="py-4 bg-white/5 rounded-2xl text-[11px] font-black hover:bg-emerald-500 hover:text-black transition-all">+$1000</button>
                 </div>
-                <button onclick="UI.depNextStep()" class="btn-action w-full py-7 rounded-3xl font-casino text-xl text-black">Continuar</button>
+                <button onclick="UI.depNextStep()" class="btn-action w-full py-7 rounded-3xl font-casino text-xl">Continuar</button>
             </div>
 
             <div id="dep-step-2" class="hidden">
@@ -145,16 +142,12 @@
                     <p class="text-[9px] font-black text-zinc-500 uppercase mb-1">CLAVE INTERBANCARIA (STP):</p>
                     <p class="text-xl md:text-2xl font-mono font-bold text-white tracking-tighter">722 969 020 533 491 161</p>
                 </div>
-                <div class="space-y-3 mb-6 text-zinc-400 text-[10px]">
-                    <div class="flex gap-3"><span class="w-5 h-5 bg-emerald-500/10 text-emerald-500 rounded flex items-center justify-center">1</span><p>Transfiere el monto exacto.</p></div>
-                    <div class="flex gap-3"><span class="w-5 h-5 bg-emerald-500/10 text-emerald-500 rounded flex items-center justify-center">2</span><p>Toma captura de tu comprobante.</p></div>
-                </div>
-                <input type="file" id="receipt-input" class="hidden" accept="image/*">
+                <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
                 <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-3xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500 transition-all">
                     <i class="fas fa-camera text-3xl text-zinc-700 mb-2"></i>
                     <p id="file-label" class="text-[10px] font-black text-zinc-500 uppercase">Click para subir comprobante</p>
                 </label>
-                <button id="final-dep-btn" onclick="Core.confirmDeposit()" class="btn-action w-full py-6 rounded-2xl font-casino text-xl mt-6 text-black">Validar Depósito</button>
+                <button id="final-dep-btn" onclick="Core.confirmDeposit()" class="btn-action w-full py-6 rounded-2xl font-casino text-xl mt-6">Validar Depósito</button>
             </div>
             <button onclick="UI.closeModal('modal-deposit')" class="mt-8 block mx-auto text-[10px] font-black text-zinc-700 uppercase hover:text-white transition-colors">Cancelar depósito</button>
         </div>
@@ -180,9 +173,18 @@
             async register() {
                 const email = document.getElementById('auth-email').value;
                 const password = document.getElementById('auth-password').value;
-                const { error } = await sb.auth.signUp({ email, password });
-                if (error) return UI.notify(error.message, "error");
-                UI.notify("Cuenta creada. ¡Ya puedes entrar!", "success");
+                const btn = document.getElementById('reg-btn');
+                
+                btn.disabled = true; btn.innerText = "REGISTRANDO...";
+                
+                const { data, error } = await sb.auth.signUp({ email, password });
+                if (error) { btn.disabled = false; btn.innerText = "Registro"; return UI.notify(error.message, "error"); }
+
+                if (data.user) {
+                    await sb.from('usuarios').insert([{ id: data.user.id, email: email, saldo: 0 }]);
+                    UI.notify("Cuenta creada. ¡Ya puedes entrar!", "success");
+                    btn.disabled = false; btn.innerText = "Registro";
+                }
             },
             async logout() {
                 await sb.auth.signOut();
@@ -214,12 +216,22 @@
                 }
             },
             async loadData() {
-                const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                if (data) { State.balance = data.saldo; UI.updateBalance(); Game.initReels(); this.fetchHistory(); }
+                let { data, error } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
+                
+                if (error && error.code === 'PGRST116') {
+                    await sb.from('usuarios').insert([{ id: State.user.id, email: State.user.email, saldo: 0 }]);
+                    State.balance = 0;
+                } else if (data) {
+                    State.balance = data.saldo;
+                }
+
+                UI.updateBalance(); 
+                Game.initReels(); 
+                this.fetchHistory();
             },
             async fetchHistory() {
                 const { data } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', State.currentTab).order('created_at', { ascending: false });
-                UI.renderHistory(data);
+                UI.renderHistory(data || []);
             },
             async confirmDeposit() {
                 const amt = parseFloat(document.getElementById('dep-amount').value);
@@ -227,20 +239,28 @@
                 if(!amt || !file) return UI.notify("Sube el comprobante primero", "error");
 
                 const btn = document.getElementById('final-dep-btn');
-                btn.disabled = true; btn.innerText = "VALIDANDO...";
+                btn.disabled = true; btn.innerText = "ENVIANDO...";
 
-                const path = `evidence/${State.user.id}/${Date.now()}.png`;
-                await sb.storage.from('comprobantes').upload(path, file);
-                const { data: { publicUrl } } = sb.storage.from('comprobantes').getPublicUrl(path);
+                try {
+                    const path = `evidence/${State.user.id}/${Date.now()}.png`;
+                    await sb.storage.from('comprobantes').upload(path, file);
+                    const { data: { publicUrl } } = sb.storage.from('comprobantes').getPublicUrl(path);
 
-                await sb.from('history').insert({
-                    user_id: State.user.id, type: 'deposits', amount: amt, label: 'DEPÓSITO', status: 'pending', evidence_url: publicUrl
-                });
+                    const { error } = await sb.from('history').insert({
+                        user_id: State.user.id, type: 'deposits', amount: amt, label: 'DEPÓSITO', status: 'pending', evidence_url: publicUrl
+                    });
 
-                UI.notify("Depósito enviado a revisión", "success");
-                UI.closeModal('modal-deposit');
-                this.fetchHistory();
-                btn.disabled = false; btn.innerText = "Validar Depósito";
+                    if(error) throw error;
+
+                    UI.notify("Depósito enviado a revisión", "success");
+                    UI.closeModal('modal-deposit');
+                    this.fetchHistory();
+                } catch (e) {
+                    UI.notify("Error al enviar depósito", "error");
+                    console.error(e);
+                } finally {
+                    btn.disabled = false; btn.innerText = "Validar Depósito";
+                }
             }
         };
 
@@ -290,15 +310,14 @@
         };
 
         const UI = {
-            togglePassword(inputId, icon) {
-                const input = document.getElementById(inputId);
-                if (input.type === "password") {
-                    input.type = "text";
-                    icon.classList.replace('fa-eye', 'fa-eye-slash');
-                } else {
-                    input.type = "password";
-                    icon.classList.replace('fa-eye-slash', 'fa-eye');
-                }
+            togglePassword(id, icon) {
+                const input = document.getElementById(id);
+                const isPass = input.type === "password";
+                input.type = isPass ? "text" : "password";
+                icon.className = isPass ? "fas fa-eye-slash toggle-pass" : "fas fa-eye toggle-pass";
+            },
+            handleFile(input) {
+                if(input.files[0]) document.getElementById('file-label').innerText = "Imagen cargada ✅";
             },
             updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toLocaleString()}`; },
             notify(m, t) {
@@ -313,6 +332,7 @@
                 document.getElementById(id).classList.add('hidden');
                 document.getElementById('dep-step-1').classList.remove('hidden');
                 document.getElementById('dep-step-2').classList.add('hidden');
+                document.getElementById('file-label').innerText = "Click para subir comprobante";
             },
             setDep(v) { document.getElementById('dep-amount').value = v; },
             depNextStep() { 
@@ -331,13 +351,12 @@
             renderHistory(data) {
                 const c = document.getElementById('history-content');
                 c.innerHTML = data.length ? data.map(i => {
-                    let colorClass = 'text-zinc-500';
-                    let statusText = i.label;
+                    let colorClass = 'text-zinc-500', statusText = i.label;
                     if (i.type === 'deposits') {
                         if (i.status === 'pending') { colorClass = 'text-amber-500'; statusText = 'DEPOSITO PENDIENTE ⏳'; }
                         else if (i.status === 'completed') { colorClass = 'text-emerald-500'; statusText = 'DEPOSITO APROBADO ✅'; }
                         else if (i.status === 'rejected') { colorClass = 'text-red-500'; statusText = 'DEPOSITO RECHAZADO ❌'; }
-                    } else if (i.amount > 0) { colorClass = 'text-emerald-500'; }
+                    } else if (i.amount > 0) colorClass = 'text-emerald-500';
                     return `<div class="p-5 bg-white/5 rounded-3xl flex justify-between items-center border border-white/5">
                         <div><p class="text-[9px] font-black uppercase mb-1 ${colorClass}">${statusText}</p>
                         <p class="text-[11px] font-bold text-zinc-600">${new Date(i.created_at).toLocaleTimeString()}</p></div>
