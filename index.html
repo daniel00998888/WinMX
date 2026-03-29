@@ -224,19 +224,34 @@
         };
 
         const DataBridge = {
-            // LOGIN PERSISTENTE
+// LOGIN CORREGIDO CON CODIFICACIÓN DE CARACTERES
             async login() {
-                const email = document.getElementById('auth-email').value;
-                const pass = document.getElementById('auth-pass').value;
+                const email = document.getElementById('auth-email').value.trim();
+                const pass = document.getElementById('auth-pass').value.trim();
 
-                const { data, error } = await sb.from('usuarios').select('*').eq('email', email).eq('password', pass).single();
+                if (!email || !pass) {
+                    alert("Por favor rellena todos los campos.");
+                    return;
+                }
+
+                // Usamos la sintaxis de filtrado de Supabase JS que maneja la codificación automáticamente
+                const { data, error } = await sb
+                    .from('usuarios')
+                    .select('*')
+                    .eq('email', email)
+                    .eq('password', pass) // Aquí el SDK de Supabase ya limpia el "?"
+                    .single();
+
+                if (error) {
+                    console.error("Detalle del error:", error);
+                    alert("Error de acceso: Usuario no encontrado o credenciales inválidas.");
+                    return;
+                }
 
                 if (data) {
                     APP_STATE.user = data;
                     localStorage.setItem('winmx_session', JSON.stringify(data));
                     this.initSession();
-                } else {
-                    alert("Error: Usuario o contraseña incorrectos.");
                 }
             },
 
