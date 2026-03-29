@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WinMX | FinTech Casino Edition</title>
+    <title>WinMX | Casino Real</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
@@ -14,46 +14,51 @@
         .font-casino { font-family: 'Archivo Black', sans-serif; }
         .glass { background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.05); }
         .slot-box { height: 150px; overflow: hidden; background: #000; border: 3px solid #151515; border-radius: 2.5rem; }
-        .slot-item { height: 150px; min-height: 150px; display: flex; align-items: center; justify-content: center; font-size: 4.5rem; }
+        .slot-item { height: 150px; display: flex; align-items: center; justify-content: center; font-size: 4.5rem; }
+        .btn-primary { background: var(--mx-green); color: black; font-weight: 900; transition: 0.3s; cursor: pointer; border:none; }
+        .btn-primary:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(16, 185, 129, 0.4); }
         .tab-btn { padding: 14px; font-size: 10px; font-weight: 900; color: #444; border-bottom: 2px solid transparent; text-transform: uppercase; }
         .tab-btn.active { color: var(--mx-green); border-bottom: 2px solid var(--mx-green); }
-        .btn-primary { background: var(--mx-green); color: black; font-weight: 900; transition: 0.3s; cursor: pointer; }
-        .btn-primary:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(16, 185, 129, 0.4); }
-        
-        /* Animación de carga tipo Pasarela */
-        .gateway-loader { border: 4px solid rgba(16, 185, 129, 0.1); border-left-color: #10b981; border-radius: 50%; width: 40px; height: 40px; animation: spin-loader 1s linear infinite; }
-        @keyframes spin-loader { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="antialiased">
 
-    <div id="main-app" class="min-h-screen">
+    <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="glass p-12 rounded-[4rem] w-full max-w-md text-center border-b-[12px] border-emerald-600">
+            <h2 class="text-7xl font-casino italic mb-8 tracking-tighter">Win<span class="text-emerald-500">MX</span></h2>
+            <input id="auth-email" type="email" placeholder="EMAIL" class="w-full bg-black/50 p-6 rounded-3xl border border-white/5 mb-4 text-center outline-none focus:border-emerald-500">
+            <input id="auth-password" type="password" placeholder="CONTRASEÑA" class="w-full bg-black/50 p-6 rounded-3xl border border-white/5 mb-6 text-center outline-none focus:border-emerald-500">
+            <button onclick="handleAuth()" class="btn-primary w-full py-6 rounded-3xl font-black uppercase italic tracking-widest text-xl">Entrar / Registro</button>
+        </div>
+    </div>
+
+    <div id="main-app" class="hidden min-h-screen">
         <nav class="p-6 flex justify-between items-center glass sticky top-0 z-50 px-10">
             <h1 class="text-4xl font-casino italic tracking-tighter">Win<span class="text-emerald-500">MX</span></h1>
             <div class="flex items-center gap-8">
                 <div class="flex flex-col items-end">
-                    <span class="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Saldo Disponible</span>
+                    <span class="text-[9px] text-zinc-500 font-black uppercase">Balance</span>
                     <span id="balance-display" class="text-4xl font-casino text-emerald-400">$0.00</span>
                 </div>
-                <button onclick="logout()" class="w-12 h-12 rounded-2xl bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 transition-all"><i class="fas fa-power-off"></i></button>
+                <button onclick="logout()" class="w-12 h-12 rounded-2xl bg-red-500/10 text-red-500 border border-red-500/20"><i class="fas fa-power-off"></i></button>
             </div>
         </nav>
 
         <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 pt-10">
             <div class="lg:col-span-7">
-                <div class="glass p-10 rounded-[4rem] border border-white/5 shadow-2xl">
+                <div class="glass p-10 rounded-[4rem] border border-white/5">
                     <div class="grid grid-cols-3 gap-6 mb-12">
                         <div class="slot-box"><div id="reel-1" class="slot-reel"></div></div>
                         <div class="slot-box"><div id="reel-2" class="slot-reel"></div></div>
                         <div class="slot-box"><div id="reel-3" class="slot-reel"></div></div>
                     </div>
                     <div class="flex flex-col items-center gap-10">
-                        <div class="flex items-center gap-10 bg-black p-5 rounded-full border border-white/10 px-10 shadow-inner">
-                            <button onclick="changeBet(-50)" class="text-zinc-600 hover:text-white text-2xl transition"><i class="fas fa-minus-circle"></i></button>
+                        <div class="flex items-center gap-10 bg-black p-5 rounded-full border border-white/10 px-10">
+                            <button onclick="changeBet(-50)" class="text-zinc-600 text-2xl"><i class="fas fa-minus-circle"></i></button>
                             <span id="bet-display" class="text-5xl font-casino">$10</span>
-                            <button onclick="changeBet(50)" class="text-zinc-600 hover:text-white text-2xl transition"><i class="fas fa-plus-circle"></i></button>
+                            <button onclick="changeBet(50)" class="text-zinc-600 text-2xl"><i class="fas fa-plus-circle"></i></button>
                         </div>
-                        <button id="spin-btn" onclick="spin()" class="btn-primary w-full py-10 rounded-[3rem] font-casino text-5xl uppercase italic tracking-tighter">Jugar Ahora</button>
+                        <button id="spin-btn" onclick="spin()" class="btn-primary w-full py-10 rounded-[3rem] font-casino text-5xl uppercase italic italic tracking-tighter">Jugar</button>
                     </div>
                 </div>
             </div>
@@ -61,22 +66,16 @@
             <div class="lg:col-span-5 flex flex-col gap-6">
                 <div class="glass p-8 rounded-[3.5rem] flex-grow border border-white/5 flex flex-col shadow-2xl">
                     <div class="grid grid-cols-2 gap-4 mb-8">
-                        <button onclick="openCashier()" class="p-5 bg-emerald-500/10 border border-emerald-500/20 rounded-3xl text-emerald-500 font-black text-[11px] uppercase tracking-widest hover:bg-emerald-500 hover:text-black transition-all">
-                            <i class="fas fa-shield-alt block text-xl mb-2"></i> Depósito Seguro
-                        </button>
-                        <button onclick="showWithdrawModal()" class="p-5 bg-red-500/10 border border-red-500/20 rounded-3xl text-red-500 font-black text-[11px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">
-                            <i class="fas fa-university block text-xl mb-2"></i> Retiro Directo
-                        </button>
+                        <button onclick="openDeposit()" class="p-5 bg-emerald-500/10 border border-emerald-500/20 rounded-3xl text-emerald-500 font-black text-[11px] uppercase tracking-widest hover:bg-emerald-500 hover:text-black transition-all">Depósito</button>
+                        <button onclick="alert('Retiros en mantenimiento')" class="p-5 bg-red-500/10 border border-red-500/20 rounded-3xl text-red-500 font-black text-[11px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">Retiro</button>
                     </div>
                     <div class="flex border-b border-white/5 mb-6">
                         <button onclick="switchTab('tab-bets')" id="btn-tab-bets" class="tab-btn active">Apuestas</button>
                         <button onclick="switchTab('tab-deposits')" id="btn-tab-deposits" class="tab-btn">Cajero</button>
-                        <button onclick="switchTab('tab-withdraws')" id="btn-tab-withdraws" class="tab-btn">Retiros</button>
                     </div>
-                    <div class="flex-grow overflow-y-auto max-h-[420px] pr-2 space-y-3">
+                    <div class="flex-grow overflow-y-auto max-h-[400px] pr-2 space-y-3">
                         <div id="tab-bets" class="tab-content"></div>
                         <div id="tab-deposits" class="tab-content hidden"></div>
-                        <div id="tab-withdraws" class="tab-content hidden"></div>
                     </div>
                 </div>
             </div>
@@ -84,170 +83,66 @@
     </div>
 
     <div id="modal-bank" class="fixed inset-0 bg-black/98 flex items-center justify-center z-[100] hidden p-6">
-        <div class="glass p-10 rounded-[3.5rem] w-full max-w-sm text-center border border-white/10 shadow-2xl">
+        <div class="glass p-10 rounded-[3rem] w-full max-w-sm text-center border border-white/10">
             
-            <div id="cashier-step-1">
-                <i class="fas fa-wallet text-emerald-500 text-4xl mb-6"></i>
-                <h2 class="font-casino text-3xl mb-2 text-white uppercase">Cajero Seguro</h2>
-                <p class="text-[9px] text-zinc-500 font-black mb-10 tracking-[0.2em] uppercase text-center">Protocolo de Encriptación PCI-DSS</p>
-                <div class="relative mb-12">
-                    <span class="absolute left-0 top-1/2 -translate-y-1/2 text-emerald-500 font-casino text-2xl">$</span>
-                    <input id="modal-amount" type="number" placeholder="0.00" class="w-full bg-transparent text-center text-6xl font-casino border-b border-zinc-800 py-4 outline-none text-white focus:border-emerald-500 transition">
-                </div>
-                <button onclick="processToGateway()" class="btn-primary w-full py-6 rounded-3xl font-black uppercase italic tracking-widest text-lg">Validar Operación</button>
+            <div id="step-1">
+                <h2 class="font-casino text-3xl mb-10 text-emerald-500">DEPOSITAR</h2>
+                <input id="modal-amount" type="number" placeholder="$0.00" class="w-full bg-transparent text-center text-6xl font-casino border-b border-zinc-800 py-4 outline-none text-white mb-10">
+                <button onclick="goToStep2()" class="btn-primary w-full py-6 rounded-3xl font-black uppercase text-xl">Siguiente</button>
             </div>
 
-            <div id="cashier-step-2" class="hidden">
-                <div class="flex items-center justify-center gap-3 mb-6">
-                    <div class="gateway-loader"></div>
-                    <span class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Gateway Conectado</span>
-                </div>
-                
-                <div class="space-y-3 text-left">
+            <div id="step-2" class="hidden text-left">
+                <h3 class="font-casino text-xl mb-6 text-emerald-500 text-center uppercase">Datos de Pago</h3>
+                <div class="space-y-3 mb-6 text-[11px]">
                     <div class="bg-zinc-950 p-4 rounded-2xl border border-white/5">
-                        <span class="text-[8px] text-zinc-500 font-black uppercase block mb-1">Total a Dispersar</span>
-                        <span id="display-final-amount" class="text-3xl font-casino text-white tracking-tighter">$0.00</span>
+                        <span class="text-zinc-500 block">CLAVE (STP)</span>
+                        <span class="text-white font-mono font-bold text-lg">722969020533491161</span>
                     </div>
-
-                    <div class="bg-zinc-950 p-4 rounded-2xl border border-white/5 flex justify-between items-center group">
-                        <div>
-                            <span class="text-[8px] text-zinc-500 font-black uppercase block mb-1">CLAVE DE DESTINO (STP)</span>
-                            <span class="text-emerald-400 font-mono text-sm font-bold">722969020533491161</span>
-                        </div>
-                        <button onclick="copyData('722969020533491161')" class="w-10 h-10 bg-emerald-500/10 text-emerald-500 rounded-xl hover:bg-emerald-500 transition-all">
-                            <i class="fas fa-copy"></i>
-                        </button>
-                    </div>
-
-                    <div class="bg-zinc-950 p-4 rounded-2xl border border-white/5 flex justify-between items-center">
-                        <div>
-                            <span class="text-[8px] text-zinc-500 font-black uppercase block mb-1">Token / Concepto Único</span>
-                            <span id="display-token" class="text-white font-bold text-sm tracking-widest uppercase font-mono">---</span>
-                        </div>
-                        <button onclick="copyData(document.getElementById('display-token').innerText)" class="w-10 h-10 bg-white/5 text-zinc-400 rounded-xl hover:bg-white/10 transition-all">
-                            <i class="fas fa-copy"></i>
-                        </button>
+                    <div class="bg-zinc-950 p-4 rounded-2xl border border-white/5">
+                        <span class="text-zinc-500 block">CONCEPTO</span>
+                        <span id="display-token" class="text-white font-bold text-lg tracking-widest uppercase font-mono">---</span>
                     </div>
                 </div>
 
-                <div class="mt-6 p-4 bg-zinc-900/50 rounded-2xl border border-white/5">
-                    <p class="text-[8px] text-zinc-500 leading-tight font-bold uppercase text-center">
-                        El sistema monitorea la red STP en tiempo real. Al completar la transferencia, el balance se reflejará en su cuenta.
-                    </p>
+                <div class="border-2 border-dashed border-zinc-800 rounded-3xl p-6 text-center bg-black/40">
+                    <input type="file" id="receipt-upload" accept="image/*" class="hidden">
+                    <label for="receipt-upload" class="cursor-pointer">
+                        <i class="fas fa-camera text-2xl text-zinc-600 mb-2"></i>
+                        <p id="file-name" class="text-[9px] font-bold text-zinc-400 uppercase">Subir Comprobante</p>
+                    </label>
                 </div>
-                <button onclick="verifyTransaction()" class="btn-primary w-full py-6 rounded-3xl font-black uppercase italic tracking-widest text-lg mt-6">Confirmar Transferencia</button>
+
+                <button id="confirm-btn" onclick="verifyAndUpload()" class="btn-primary w-full py-6 rounded-3xl font-black uppercase italic tracking-widest text-lg mt-6">Confirmar Pago</button>
             </div>
 
-            <div id="cashier-step-3" class="hidden">
-                <div class="flex flex-col items-center justify-center py-10">
-                    <div class="gateway-loader mb-6"></div>
-                    <h3 class="font-casino text-xl text-white mb-2">VALIDANDO...</h3>
-                    <p class="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Sincronizando con el Banco</p>
-                </div>
-            </div>
-
-            <button onclick="closeModal()" class="text-zinc-700 text-[10px] font-black uppercase mt-8 block mx-auto underline tracking-[0.2em]">Cerrar Cajero</button>
+            <button onclick="closeModal()" class="text-zinc-700 text-[10px] font-black uppercase mt-8 block mx-auto underline">Cerrar</button>
         </div>
     </div>
 
     <script>
-        const sb = window.supabase.createClient("https://dakhnqriwbzihlzhtfcb.supabase.co", "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs");
+        const sb = window.supabase.createClient("https://tu-url.supabase.co", "tu-key-publica");
         let userId = null; let balance = 0; let currentBet = 10;
         const symbols = ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'];
 
-        // --- SISTEMA DE CAJERO (CASHIER & GATEWAY) ---
-        function openCashier() {
-            document.getElementById('cashier-step-1').classList.remove('hidden');
-            document.getElementById('cashier-step-2').classList.add('hidden');
-            document.getElementById('cashier-step-3').classList.add('hidden');
-            document.getElementById('modal-bank').classList.remove('hidden');
-        }
-
-        function processToGateway() {
-            const amt = document.getElementById('modal-amount').value;
-            if(!amt || amt < 50) return alert("El depósito mínimo es de $50");
-            
-            // Simulación de Tokenización de Gemini
-            const token = `TK-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-            
-            document.getElementById('display-final-amount').innerText = `$${parseFloat(amt).toLocaleString()}`;
-            document.getElementById('display-token').innerText = token;
-            
-            document.getElementById('cashier-step-1').classList.add('hidden');
-            document.getElementById('cashier-step-2').classList.remove('hidden');
-        }
-
-        function verifyTransaction() {
-            // Paso de validación en tiempo real
-            document.getElementById('cashier-step-2').classList.add('hidden');
-            document.getElementById('cashier-step-3').classList.remove('hidden');
-
-            setTimeout(() => {
-                executeFinalDeposit();
-            }, 3000); // Simulamos 3 segundos de validación de red
-        }
-
-        async function executeFinalDeposit() {
-            const amt = parseFloat(document.getElementById('modal-amount').value);
-            const newSaldo = balance + amt;
-            const token = document.getElementById('display-token').innerText;
-
-            const { error } = await sb.from('usuarios').update({ saldo: newSaldo }).eq('id', userId);
-            if(!error) {
-                // El log ahora incluye el Token del Gateway
-                await sb.from('history').insert({ user_id: userId, type: 'deposits', amount: amt, label: `DEPÓSITO GATEWAY: ${token}` });
-                balance = newSaldo; updateUI(); loadHistory();
-                alert("¡Transferencia validada y saldo acreditado!");
-                closeModal();
+        async function handleAuth() {
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            const { data, error } = await sb.auth.signInWithPassword({ email, password });
+            if(error) {
+                const { data: up, error: errUp } = await sb.auth.signUp({ email, password });
+                if(up.user) await sb.from('usuarios').insert({ id: up.user.id, saldo: 0 });
             }
+            checkUser();
         }
 
-        function copyData(txt) {
-            navigator.clipboard.writeText(txt);
-            alert("Dato copiado al portapapeles");
-        }
-
-        // --- MANTENER RESTO DE LÓGICA (SLOTS, SYNC, ETC) ---
         async function checkUser() {
             const { data: { session } } = await sb.auth.getSession();
             if (session) {
                 userId = session.user.id;
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
                 syncData(); setupReels();
-            } else {
-                // Aquí iría tu lógica de Auth que ya tienes funcionando
             }
-        }
-
-        async function spin() {
-            if (balance < currentBet) return alert("Saldo insuficiente");
-            const res = calculateProbability(); 
-            const win = currentBet * res.mult;
-            const newSaldo = (balance - currentBet) + win;
-            document.getElementById('spin-btn').disabled = true;
-
-            [1,2,3].forEach((id, i) => {
-                const reel = document.getElementById(`reel-${id}`);
-                const finalPos = (symbols.indexOf(res.icons[i]) * 150) + 4500;
-                reel.style.transition = `transform ${3 + (i*0.5)}s cubic-bezier(0.1, 0, 0.1, 1)`;
-                reel.style.transform = `translateY(-${finalPos}px)`;
-            });
-
-            setTimeout(async () => {
-                const { error } = await sb.from('usuarios').update({ saldo: newSaldo }).eq('id', userId);
-                if (!error) {
-                    balance = newSaldo;
-                    await sb.from('history').insert({ user_id: userId, type: 'bets', amount: win > 0 ? win : -currentBet, label: res.type });
-                    loadHistory(); updateUI();
-                }
-                document.getElementById('spin-btn').disabled = false;
-            }, 4500);
-        }
-
-        function calculateProbability() {
-            const rng = Math.random() * 100;
-            if (rng <= 0.2) return { type: 'JACKPOT', icons: ['7️⃣','7️⃣','7️⃣'], mult: 200 };
-            if (rng <= 15.0) return { type: 'WIN', icons: ['🍒','🍒','🍋'], mult: 2 };
-            return { type: 'LOSE', icons: ['🍋','🔔','🍒'], mult: 0 };
         }
 
         async function syncData() {
@@ -255,27 +150,94 @@
             if (data) { balance = data.saldo; updateUI(); loadHistory(); }
         }
 
-        async function loadHistory() {
-            const { data: logs } = await sb.from('history').select('*').eq('user_id', userId).order('created_at', { ascending: false });
-            ['tab-bets', 'tab-deposits', 'tab-withdraws'].forEach(id => document.getElementById(id).innerHTML = '');
-            logs?.forEach(log => {
-                const container = document.getElementById(`tab-${log.type}`);
-                if(container) container.innerHTML += `<div class="bg-black/40 p-4 rounded-2xl flex justify-between items-center border border-white/5 mb-2"><span class="text-[9px] font-bold text-zinc-400 uppercase">${log.label}</span><span class="font-casino text-emerald-500 text-lg">$${Math.abs(log.amount).toLocaleString()}</span></div>`;
+        // --- CAJERO REAL ---
+        function openDeposit() {
+            document.getElementById('step-1').classList.remove('hidden');
+            document.getElementById('step-2').classList.add('hidden');
+            document.getElementById('modal-bank').classList.remove('hidden');
+        }
+
+        function goToStep2() {
+            const amt = document.getElementById('modal-amount').value;
+            if(!amt || amt < 10) return alert("Monto mínimo $10");
+            document.getElementById('display-token').innerText = `WMX-${userId.substring(0,5).toUpperCase()}`;
+            document.getElementById('step-1').classList.add('hidden');
+            document.getElementById('step-2').classList.remove('hidden');
+        }
+
+        document.getElementById('receipt-upload')?.addEventListener('change', (e) => {
+            const name = e.target.files[0]?.name;
+            if(name) document.getElementById('file-name').innerText = "ARCHIVO CARGADO ✅";
+        });
+
+        async function verifyAndUpload() {
+            const fileInput = document.getElementById('receipt-upload');
+            const amt = parseFloat(document.getElementById('modal-amount').value);
+            if (fileInput.files.length === 0) return alert("Sube el comprobante");
+
+            const btn = document.getElementById('confirm-btn');
+            btn.innerText = "SUBIENDO..."; btn.disabled = true;
+
+            const file = fileInput.files[0];
+            const filePath = `${userId}-${Date.now()}.png`;
+
+            const { error: uploadError } = await sb.storage.from('comprobantes').upload(filePath, file);
+            if (uploadError) return alert("Error al subir foto");
+
+            const { data: { publicUrl } } = sb.storage.from('comprobantes').getPublicUrl(filePath);
+
+            await sb.from('history').insert({
+                user_id: userId, type: 'deposits', amount: amt, 
+                label: 'DEPÓSITO PENDIENTE', status: 'pending', evidence_url: publicUrl
             });
+
+            alert("Depósito enviado. Se acreditará cuando el admin lo apruebe.");
+            closeModal(); loadHistory();
+        }
+
+        // --- MOTOR JUEGO ---
+        function spin() {
+            if (balance < currentBet) return alert("Sin saldo");
+            const res = { type: 'LOSE', icons: ['🍋','🔔','🍒'], mult: 0 };
+            const rng = Math.random() * 100;
+            if(rng <= 0.2) { res.type = 'JACKPOT'; res.icons = ['7️⃣','7️⃣','7️⃣']; res.mult = 200; }
+            else if(rng <= 20) { res.type = 'WIN'; res.icons = ['🍒','🍒','🍋']; res.mult = 2; }
+
+            const newSaldo = (balance - currentBet) + (currentBet * res.mult);
+            document.getElementById('spin-btn').disabled = true;
+
+            [1,2,3].forEach((id, i) => {
+                const reel = document.getElementById(`reel-${id}`);
+                const finalPos = (symbols.indexOf(res.icons[i]) * 150) + 3000;
+                reel.style.transition = `transform ${2 + i}s cubic-bezier(0.1, 0, 0.1, 1)`;
+                reel.style.transform = `translateY(-${finalPos}px)`;
+            });
+
+            setTimeout(async () => {
+                await sb.from('usuarios').update({ saldo: newSaldo }).eq('id', userId);
+                await sb.from('history').insert({ user_id: userId, type: 'bets', amount: (currentBet*res.mult)-currentBet, label: res.type });
+                balance = newSaldo; updateUI(); loadHistory();
+                document.getElementById('spin-btn').disabled = false;
+            }, 4500);
         }
 
         function updateUI() { document.getElementById('balance-display').innerText = `$${balance.toLocaleString()}`; }
-        function setupReels() {
-            [1,2,3].forEach(id => {
-                const reel = document.getElementById(`reel-${id}`);
-                reel.innerHTML = '';
-                [...symbols, ...symbols, ...symbols, ...symbols, ...symbols, ...symbols].forEach(s => {
-                    const d = document.createElement('div'); d.className = 'slot-item'; d.innerText = s; reel.appendChild(d);
-                });
-            });
-        }
+        function setupReels() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); r.innerHTML = ''; [...symbols, ...symbols, ...symbols, ...symbols].forEach(s => { r.innerHTML += `<div class="slot-item">${s}</div>`; }); }); }
+        function switchTab(id) { document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
         function closeModal() { document.getElementById('modal-bank').classList.add('hidden'); }
         function changeBet(v) { currentBet = Math.max(10, currentBet + v); document.getElementById('bet-display').innerText = `$${currentBet}`; }
+        async function loadHistory() {
+            const { data } = await sb.from('history').select('*').eq('user_id', userId).order('created_at', {ascending: false});
+            document.getElementById('tab-bets').innerHTML = ''; document.getElementById('tab-deposits').innerHTML = '';
+            data?.forEach(h => {
+                const color = h.status === 'pending' ? 'text-yellow-500' : (h.amount >= 0 ? 'text-emerald-500' : 'text-red-500');
+                const div = `<div class="bg-black/40 p-4 rounded-2xl border border-white/5 flex justify-between items-center mb-2">
+                    <span class="text-[9px] font-bold text-zinc-400 uppercase">${h.label}</span>
+                    <span class="font-casino ${color}">$${Math.abs(h.amount)}</span>
+                </div>`;
+                h.type === 'bets' ? document.getElementById('tab-bets').innerHTML += div : document.getElementById('tab-deposits').innerHTML += div;
+            });
+        }
         window.onload = checkUser;
     </script>
 </body>
