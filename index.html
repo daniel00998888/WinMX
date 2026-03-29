@@ -26,6 +26,11 @@
         .tab-btn.active { color: var(--mx-green); border-bottom: 3px solid var(--mx-green); }
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+
+        /* Estilos para la nueva pantalla de Auth */
+        .input-auth { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 1.2rem; border-radius: 1.5rem; width: 100%; outline: none; transition: all 0.3s; color: white; }
+        .input-auth:focus { border-color: var(--mx-green); background: rgba(255,255,255,0.05); }
+        .hidden-view { display: none !important; }
     </style>
 </head>
 <body class="antialiased">
@@ -37,7 +42,24 @@
         </div>
     </div>
 
-    <div id="main-app" class="opacity-0 transition-opacity duration-1000">
+    <div id="auth-view" class="hidden-view min-h-screen flex items-center justify-center p-6 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-emerald-900/20 via-black to-black">
+        <div class="glass-panel p-10 md:p-14 rounded-[3.5rem] w-full max-w-md animate__animated animate__fadeInUp">
+            <div class="text-center mb-10">
+                <h2 class="text-4xl font-casino italic mb-2">Win<span class="text-emerald-500">MX</span></h2>
+                <p class="text-zinc-500 text-[10px] font-black uppercase tracking-[0.3em]">Acceso Exclusivo</p>
+            </div>
+            <div class="space-y-4">
+                <input id="auth-email" type="email" placeholder="Correo electrónico" class="input-auth">
+                <input id="auth-password" type="password" placeholder="Contraseña" class="input-auth">
+                <div class="grid grid-cols-2 gap-4 pt-6">
+                    <button onclick="AuthManager.login()" class="btn-action py-5 rounded-2xl font-casino text-lg text-black">Entrar</button>
+                    <button onclick="AuthManager.register()" class="bg-zinc-800 hover:bg-zinc-700 py-5 rounded-2xl font-casino text-sm">Registro</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-app" class="opacity-0 transition-opacity duration-1000 hidden-view">
         <nav class="glass-panel sticky top-0 z-[100] px-6 md:px-12 py-4 border-b border-white/5">
             <div class="max-w-7xl mx-auto flex justify-between items-center">
                 <h1 class="text-3xl font-casino italic">Win<span class="text-emerald-500">MX</span></h1>
@@ -46,6 +68,9 @@
                         <span class="text-[10px] text-zinc-500 font-black uppercase tracking-widest">Balance Total</span>
                         <div id="balance-display" class="text-2xl md:text-4xl font-casino text-white leading-none">$0.00</div>
                     </div>
+                    <button onclick="AuthManager.logout()" class="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
+                        <i class="fas fa-power-off"></i>
+                    </button>
                 </div>
             </div>
         </nav>
@@ -100,7 +125,7 @@
                     <button onclick="UI.setDep(500)" class="py-4 bg-white/5 rounded-2xl text-[11px] font-black hover:bg-emerald-500 hover:text-black transition-all">+$500</button>
                     <button onclick="UI.setDep(1000)" class="py-4 bg-white/5 rounded-2xl text-[11px] font-black hover:bg-emerald-500 hover:text-black transition-all">+$1000</button>
                 </div>
-                <button onclick="UI.depNextStep()" class="btn-action w-full py-7 rounded-3xl font-casino text-xl">Continuar</button>
+                <button onclick="UI.depNextStep()" class="btn-action w-full py-7 rounded-3xl font-casino text-xl text-black">Continuar</button>
             </div>
 
             <div id="dep-step-2" class="hidden">
@@ -112,28 +137,16 @@
                     <p class="text-[9px] font-black text-zinc-500 uppercase mb-1">CLAVE INTERBANCARIA (STP):</p>
                     <p class="text-xl md:text-2xl font-mono font-bold text-white tracking-tighter">722 969 020 533 491 161</p>
                 </div>
-
-                <div class="space-y-3 mb-6">
-                    <div class="flex items-start gap-3 text-[10px] text-zinc-400 leading-tight">
-                        <span class="w-5 h-5 bg-emerald-500/10 text-emerald-500 rounded flex items-center justify-center font-bold">1</span>
-                        <p>Transfiere el monto exacto a la CLAVE arriba mencionada.</p>
-                    </div>
-                    <div class="flex items-start gap-3 text-[10px] text-zinc-400 leading-tight">
-                        <span class="w-5 h-5 bg-emerald-500/10 text-emerald-500 rounded flex items-center justify-center font-bold">2</span>
-                        <p>Toma captura de tu comprobante de pago exitoso.</p>
-                    </div>
-                    <div class="flex items-start gap-3 text-[10px] text-zinc-400 leading-tight">
-                        <span class="w-5 h-5 bg-emerald-500/10 text-emerald-500 rounded flex items-center justify-center font-bold">3</span>
-                        <p>Sube el archivo y presiona "Validar" para procesar tu saldo.</p>
-                    </div>
+                <div class="space-y-3 mb-6 text-zinc-400 text-[10px]">
+                    <div class="flex gap-3"><span class="w-5 h-5 bg-emerald-500/10 text-emerald-500 rounded flex items-center justify-center">1</span><p>Transfiere el monto exacto.</p></div>
+                    <div class="flex gap-3"><span class="w-5 h-5 bg-emerald-500/10 text-emerald-500 rounded flex items-center justify-center">2</span><p>Toma captura de tu comprobante.</p></div>
                 </div>
-
                 <input type="file" id="receipt-input" class="hidden" accept="image/*">
                 <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-3xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500 transition-all">
                     <i class="fas fa-camera text-3xl text-zinc-700 mb-2"></i>
                     <p id="file-label" class="text-[10px] font-black text-zinc-500 uppercase">Click para subir comprobante</p>
                 </label>
-                <button id="final-dep-btn" onclick="Core.confirmDeposit()" class="btn-action w-full py-6 rounded-2xl font-casino text-xl mt-6">Validar Depósito</button>
+                <button id="final-dep-btn" onclick="Core.confirmDeposit()" class="btn-action w-full py-6 rounded-2xl font-casino text-xl mt-6 text-black">Validar Depósito</button>
             </div>
             <button onclick="UI.closeModal('modal-deposit')" class="mt-8 block mx-auto text-[10px] font-black text-zinc-700 uppercase hover:text-white transition-colors">Cancelar depósito</button>
         </div>
@@ -148,6 +161,28 @@
         let State = { user: null, balance: 0, currentBet: 10, isSpinning: false, currentTab: 'bets', symbols: ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'] };
         const PAYTABLE = { '🍒🍒🍒': 5, '🍋🍋🍋': 10, '🔔🔔🔔': 20, '⭐️⭐️⭐️': 50, '💎💎💎': 100, '7️⃣7️⃣7️⃣': 500 };
 
+        /* NUEVA LOGICA DE AUTH (Agregada sin romper lo demás) */
+        const AuthManager = {
+            async login() {
+                const email = document.getElementById('auth-email').value;
+                const password = document.getElementById('auth-password').value;
+                const { error } = await sb.auth.signInWithPassword({ email, password });
+                if (error) return UI.notify(error.message, "error");
+                location.reload();
+            },
+            async register() {
+                const email = document.getElementById('auth-email').value;
+                const password = document.getElementById('auth-password').value;
+                const { error } = await sb.auth.signUp({ email, password });
+                if (error) return UI.notify(error.message, "error");
+                UI.notify("Cuenta creada. ¡Ya puedes entrar!", "success");
+            },
+            async logout() {
+                await sb.auth.signOut();
+                location.reload();
+            }
+        };
+
         const Core = {
             async init() {
                 let p = 0;
@@ -159,13 +194,23 @@
             },
             async checkSession() {
                 const { data: { session } } = await sb.auth.getSession();
-                if (session) { State.user = session.user; this.loadData(); }
+                
+                // Animación de salida del cargador
+                document.getElementById('boot-loader').classList.add('opacity-0');
+                setTimeout(() => document.getElementById('boot-loader').remove(), 700);
+
+                if (session) { 
+                    State.user = session.user; 
+                    document.getElementById('main-app').classList.remove('hidden-view');
+                    setTimeout(() => document.getElementById('main-app').classList.add('opacity-100'), 50);
+                    this.loadData(); 
+                } else {
+                    document.getElementById('auth-view').classList.remove('hidden-view');
+                }
             },
             async loadData() {
                 const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
                 if (data) { State.balance = data.saldo; UI.updateBalance(); Game.initReels(); this.fetchHistory(); }
-                document.getElementById('boot-loader').classList.add('opacity-0');
-                setTimeout(() => { document.getElementById('boot-loader').remove(); document.getElementById('main-app').classList.add('opacity-100'); }, 700);
             },
             async fetchHistory() {
                 const { data } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', State.currentTab).order('created_at', { ascending: false });
@@ -273,24 +318,16 @@
                 c.innerHTML = data.length ? data.map(i => {
                     let colorClass = 'text-zinc-500';
                     let statusText = i.label;
-                    
                     if (i.type === 'deposits') {
                         if (i.status === 'pending') { colorClass = 'text-amber-500'; statusText = 'DEPOSITO PENDIENTE ⏳'; }
                         else if (i.status === 'completed') { colorClass = 'text-emerald-500'; statusText = 'DEPOSITO APROBADO ✅'; }
                         else if (i.status === 'rejected') { colorClass = 'text-red-500'; statusText = 'DEPOSITO RECHAZADO ❌'; }
-                    } else if (i.amount > 0) {
-                        colorClass = 'text-emerald-500';
-                    }
-
-                    return `
-                    <div class="p-5 bg-white/5 rounded-3xl flex justify-between items-center border border-white/5">
-                        <div>
-                            <p class="text-[9px] font-black uppercase mb-1 ${colorClass}">${statusText}</p>
-                            <p class="text-[11px] font-bold text-zinc-600">${new Date(i.created_at).toLocaleTimeString()}</p>
-                        </div>
-                        <p class="font-casino ${colorClass}">${i.amount >= 0 ? '+' : ''}$${Math.abs(i.amount)}</p>
-                    </div>`;
-                }).join('') : '<p class="text-center text-zinc-800 font-bold uppercase text-[10px] py-10 italic">Sin depósitos</p>';
+                    } else if (i.amount > 0) { colorClass = 'text-emerald-500'; }
+                    return `<div class="p-5 bg-white/5 rounded-3xl flex justify-between items-center border border-white/5">
+                        <div><p class="text-[9px] font-black uppercase mb-1 ${colorClass}">${statusText}</p>
+                        <p class="text-[11px] font-bold text-zinc-600">${new Date(i.created_at).toLocaleTimeString()}</p></div>
+                        <p class="font-casino ${colorClass}">${i.amount >= 0 ? '+' : ''}$${Math.abs(i.amount)}</p></div>`;
+                }).join('') : '<p class="text-center text-zinc-800 font-bold uppercase text-[10px] py-10 italic">Sin actividad</p>';
             }
         };
 
