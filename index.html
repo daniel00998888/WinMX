@@ -13,13 +13,13 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@300;400;600;800;900&display=swap');
         :root { --mx-green: #10b981; --mx-yellow: #f59e0b; --mx-red: #ef4444; --mx-dark: #070707; }
-        body { background-color: var(--mx-dark); color: white; font-family: 'Inter', sans-serif; min-height: 100vh; }
+        body { background-color: var(--mx-dark); color: white; font-family: 'Inter', sans-serif; min-height: 100vh; overflow-x: hidden; }
         .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
         .glass-panel { background: rgba(18, 18, 18, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.07); }
         
         .slot-box { height: 140px; overflow: hidden; background: linear-gradient(180deg, #000 0%, #0a0a0a 50%, #000 100%); border: 3px solid #1a1a1a; border-radius: 1.5rem; }
         .slot-reel { transition: transform 3.5s cubic-bezier(0.15, 0, 0.05, 1); }
-        .slot-item { height: 140px; display: flex; items-center justify-content: center; font-size: 4rem; }
+        .slot-item { height: 140px; display: flex; align-items: center; justify-content: center; font-size: 4rem; }
 
         .btn-action { background: var(--mx-green); color: black; font-weight: 900; transition: all 0.3s ease; }
         .btn-action:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4); }
@@ -80,7 +80,7 @@
                     </div>
                     <div class="flex gap-6 mb-6 border-b border-white/5">
                         <button onclick="UI.switchTab('bets')" id="tab-bets-btn" class="pb-3 text-[10px] font-bold uppercase tracking-widest tab-btn active">Actividad</button>
-                        <button onclick="UI.switchTab('deposits')" id="tab-deps-btn" class="pb-3 text-[10px] font-bold uppercase tracking-widest tab-btn">Pagos</button>
+                        <button onclick="UI.switchTab('deposits')" id="tab-deps-btn" class="pb-3 text-[10px] font-bold uppercase tracking-widest tab-btn">Depósitos</button>
                     </div>
                     <div id="history-content" class="flex-grow space-y-3 overflow-y-auto max-h-[450px] custom-scroll pr-2"></div>
                 </div>
@@ -116,15 +116,15 @@
                 <div class="space-y-3 mb-6">
                     <div class="flex items-start gap-3 text-[10px] text-zinc-400 leading-tight">
                         <span class="w-5 h-5 bg-emerald-500/10 text-emerald-500 rounded flex items-center justify-center font-bold">1</span>
-                        <p>Realiza la transferencia desde tu banca móvil a la CLAVE arriba mencionada.</p>
+                        <p>Transfiere el monto exacto a la CLAVE arriba mencionada.</p>
                     </div>
                     <div class="flex items-start gap-3 text-[10px] text-zinc-400 leading-tight">
                         <span class="w-5 h-5 bg-emerald-500/10 text-emerald-500 rounded flex items-center justify-center font-bold">2</span>
-                        <p>Toma una captura de pantalla del comprobante de pago exitoso.</p>
+                        <p>Toma captura de tu comprobante de pago exitoso.</p>
                     </div>
                     <div class="flex items-start gap-3 text-[10px] text-zinc-400 leading-tight">
                         <span class="w-5 h-5 bg-emerald-500/10 text-emerald-500 rounded flex items-center justify-center font-bold">3</span>
-                        <p>Sube la captura abajo y dale en "Validar Depósito" para que un agente lo apruebe.</p>
+                        <p>Sube el archivo y presiona "Validar" para procesar tu saldo.</p>
                     </div>
                 </div>
 
@@ -152,7 +152,7 @@
             async init() {
                 let p = 0;
                 const int = setInterval(() => {
-                    p += 15;
+                    p += 20;
                     document.getElementById('boot-bar').style.width = `${Math.min(p, 100)}%`;
                     if(p >= 100) { clearInterval(int); this.checkSession(); }
                 }, 50);
@@ -177,7 +177,7 @@
                 if(!amt || !file) return UI.notify("Sube el comprobante primero", "error");
 
                 const btn = document.getElementById('final-dep-btn');
-                btn.disabled = true; btn.innerText = "ENVIANDO...";
+                btn.disabled = true; btn.innerText = "VALIDANDO...";
 
                 const path = `evidence/${State.user.id}/${Date.now()}.png`;
                 await sb.storage.from('comprobantes').upload(path, file);
@@ -187,7 +187,7 @@
                     user_id: State.user.id, type: 'deposits', amount: amt, label: 'DEPÓSITO', status: 'pending', evidence_url: publicUrl
                 });
 
-                UI.notify("Depósito en revisión (Color Amarillo)", "success");
+                UI.notify("Depósito enviado a revisión", "success");
                 UI.closeModal('modal-deposit');
                 this.fetchHistory();
                 btn.disabled = false; btn.innerText = "Validar Depósito";
@@ -271,13 +271,13 @@
             renderHistory(data) {
                 const c = document.getElementById('history-content');
                 c.innerHTML = data.length ? data.map(i => {
-                    let colorClass = 'text-zinc-500'; // Default para apuestas perdidas
+                    let colorClass = 'text-zinc-500';
                     let statusText = i.label;
                     
                     if (i.type === 'deposits') {
-                        if (i.status === 'pending') { colorClass = 'text-amber-500'; statusText = 'PAGO PENDIENTE ⏳'; }
-                        else if (i.status === 'completed') { colorClass = 'text-emerald-500'; statusText = 'PAGO APROBADO ✅'; }
-                        else if (i.status === 'rejected') { colorClass = 'text-red-500'; statusText = 'PAGO RECHAZADO ❌'; }
+                        if (i.status === 'pending') { colorClass = 'text-amber-500'; statusText = 'DEPOSITO PENDIENTE ⏳'; }
+                        else if (i.status === 'completed') { colorClass = 'text-emerald-500'; statusText = 'DEPOSITO APROBADO ✅'; }
+                        else if (i.status === 'rejected') { colorClass = 'text-red-500'; statusText = 'DEPOSITO RECHAZADO ❌'; }
                     } else if (i.amount > 0) {
                         colorClass = 'text-emerald-500';
                     }
@@ -290,7 +290,7 @@
                         </div>
                         <p class="font-casino ${colorClass}">${i.amount >= 0 ? '+' : ''}$${Math.abs(i.amount)}</p>
                     </div>`;
-                }).join('') : '<p class="text-center text-zinc-800 font-bold uppercase text-[10px] py-10 italic">Sin movimientos</p>';
+                }).join('') : '<p class="text-center text-zinc-800 font-bold uppercase text-[10px] py-10 italic">Sin depósitos</p>';
             }
         };
 
