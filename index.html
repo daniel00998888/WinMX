@@ -270,6 +270,8 @@
         }
         async function logout() { await sb.auth.signOut(); location.reload(); }
         window.onload = checkUser;
+        loadPending();
+        setInterval(loadPending, 10000); // Recarga cada 10 segundos
     </script>
 </body>
 </html>
