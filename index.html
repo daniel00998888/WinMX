@@ -649,10 +649,26 @@
         };
 
         // INICIALIZACIÓN DE SISTEMA
+        // INICIALIZACIÓN DE SISTEMA CORREGIDA
         window.onload = () => {
+            // Fase 1: Inicio
             setTimeout(() => InterfaceManager.updateLoader(20, "Iniciando Protocolos..."), 500);
+            
+            // Fase 2: Audio
             setTimeout(() => InterfaceManager.updateLoader(60, "Cargando Módulos de Audio..."), 1200);
+            
+            // Fase 3: Seguridad
             setTimeout(() => InterfaceManager.updateLoader(90, "Verificando Seguridad..."), 2000);
+
+            // FASE FINAL: ELIMINAR LOADER Y MOSTRAR LOGIN
+            setTimeout(() => {
+                InterfaceManager.updateLoader(100, "Sistema Listo");
+                const loader = document.getElementById('sys-loader');
+                loader.style.opacity = '0';
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                }, 500); // Espera a que termine la transición de opacidad
+            }, 3000);
         };
     </script>
 </body>
