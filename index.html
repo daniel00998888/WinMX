@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WinMX Platinum | Ultimate Casino Ecosystem</title>
+    <title>WinMX Platinum | Professional Casino Infrastructure</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -24,8 +24,8 @@
             --mx-transition: cubic-bezier(0.23, 1, 0.32, 1);
         }
 
-        /* RESET PROFESIONAL */
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        /* --- BASE RESET & SCROLLING --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none !important; }
         
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: var(--mx-dark-bg); }
@@ -45,11 +45,12 @@
             line-height: 1.5;
         }
 
-        /* TIPOGRAFÍA DE CASINO */
+        /* --- TYPOGRAPHY --- */
         .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; letter-spacing: -0.04em; }
         .font-mono-pro { font-family: 'JetBrains Mono', monospace; }
+        .text-glow { text-shadow: 0 0 15px var(--mx-green-glow); }
 
-        /* UI COMPONENTS: GLASSMORPHISM 2.0 */
+        /* --- UI COMPONENTS --- */
         .glass-panel {
             background: var(--mx-card-bg);
             backdrop-filter: blur(40px);
@@ -58,49 +59,47 @@
             transition: all 0.5s var(--mx-transition);
         }
 
-        .inner-glow { box-shadow: inset 0 0 40px rgba(16, 185, 129, 0.05); }
+        .inner-glow { box-shadow: inset 0 0 60px rgba(16, 185, 129, 0.03); }
 
-        /* REELS ENGINE (OPTIMIZADO A 135px) */
-        .slot-machine-container {
-            perspective: 1000px;
-        }
-
+        /* --- SLOT MACHINE ENGINE --- */
+        .slot-container { perspective: 1500px; }
+        
         .slot-box {
-            height: 135px; 
+            height: 150px; 
             overflow: hidden;
             background: linear-gradient(180deg, #000 0%, #0a0a0a 50%, #000 100%);
             border: 2px solid #1a1a1a;
             border-radius: 2.2rem;
             position: relative;
-            box-shadow: inset 0 0 25px rgba(0,0,0,1);
+            box-shadow: inset 0 0 35px rgba(0,0,0,1);
         }
 
         .slot-box::before {
             content: ""; position: absolute; inset: 0; z-index: 10;
             background: linear-gradient(180deg, 
-                rgba(0,0,0,0.9) 0%, 
-                transparent 20%, 
-                transparent 80%, 
-                rgba(0,0,0,0.9) 100%);
+                rgba(0,0,0,0.95) 0%, 
+                transparent 15%, 
+                transparent 85%, 
+                rgba(0,0,0,0.95) 100%);
             pointer-events: none;
         }
 
         .slot-reel {
-            transition: transform 4.2s cubic-bezier(0.1, 0, 0, 1);
+            transition: transform 4.5s cubic-bezier(0.1, 0, 0.1, 1);
             will-change: transform;
         }
 
         .slot-item {
-            height: 135px;
+            height: 150px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3.5rem;
-            filter: drop-shadow(0 0 10px rgba(255,255,255,0.05));
-            transition: filter 0.3s;
+            font-size: 3.8rem;
+            filter: drop-shadow(0 0 15px rgba(255,255,255,0.08));
+            transform: translateZ(20px);
         }
 
-        /* SISTEMA DE BOTONES PREMIUM */
+        /* --- BUTTONS & INTERACTION --- */
         .btn-action {
             background: var(--mx-green);
             color: #000;
@@ -108,239 +107,228 @@
             transition: all 0.6s var(--mx-transition);
             border: none;
             cursor: pointer;
-            position: relative;
-            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
+            overflow: hidden;
         }
+
+        .btn-action::after {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: rotate(45deg); transition: 0.8s;
+        }
+
+        .btn-action:hover::after { left: 100%; }
 
         .btn-action:hover:not(:disabled) {
             transform: translateY(-5px) scale(1.02);
             box-shadow: 0 25px 50px var(--mx-green-glow);
-            filter: brightness(1.1);
         }
 
-        .btn-action:active { transform: scale(0.96); }
+        .btn-action:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
 
-        .btn-action:disabled {
-            background: #111;
-            color: #333;
-            cursor: wait;
-        }
-
-        /* INDICADORES DE TABS */
         .tab-btn {
-            font-size: 10px;
-            font-weight: 900;
-            letter-spacing: 0.25em;
-            text-transform: uppercase;
-            color: #333;
-            padding: 15px 0;
-            transition: 0.4s;
-            border-bottom: 2px solid transparent;
+            font-size: 11px; font-weight: 900; letter-spacing: 0.25em; text-transform: uppercase;
+            color: #444; padding: 18px 0; transition: 0.4s; border-bottom: 2px solid transparent;
+            flex: 1; text-align: center;
         }
 
-        .tab-btn.active {
-            color: var(--mx-green);
-            border-color: var(--mx-green);
-            text-shadow: 0 0 10px var(--mx-green-glow);
+        .tab-btn.active { color: var(--mx-green); border-color: var(--mx-green); text-shadow: 0 0 12px var(--mx-green-glow); }
+
+        /* --- ANIMATIONS --- */
+        @keyframes pulse-green { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+        .live-dot { width: 8px; height: 8px; background: var(--mx-green); border-radius: 50%; display: inline-block; animation: pulse-green 1.5s infinite; }
+
+        .win-notification {
+            position: absolute; inset: 0; background: rgba(16, 185, 129, 0.1);
+            border: 4px solid var(--mx-green); z-index: 50; border-radius: inherit;
+            pointer-events: none; opacity: 0; transition: 0.3s;
         }
-
-        /* ANIMACIONES CUSTOM */
-        @keyframes floating { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        .float-anim { animation: floating 4s ease-in-out infinite; }
-
+        .win-notification.active { opacity: 1; animation: animate__pulse 0.5s infinite; }
     </style>
 </head>
-<body class="antialiased selection:bg-emerald-500 selection:text-black">
+<body class="antialiased">
 
     <div id="sys-loader" class="fixed inset-0 z-[10000] bg-[#000] flex flex-col items-center justify-center transition-all duration-1000">
         <div class="relative flex flex-col items-center">
-            <h1 class="text-7xl font-casino italic mb-8 animate__animated animate__fadeInDown">Win<span class="text-emerald-500">MX</span></h1>
-            <div class="w-64 h-1 bg-zinc-900 rounded-full overflow-hidden mb-4 shadow-2xl">
-                <div id="sys-progress" class="h-full bg-emerald-500 transition-all duration-300 shadow-[0_0_15px_#10b981]" style="width: 0%"></div>
+            <h1 class="text-7xl font-casino italic mb-8 animate__animated animate__fadeInDown">Win<span class="text-emerald-500 text-glow">MX</span></h1>
+            <div class="w-80 h-1 bg-zinc-900 rounded-full overflow-hidden mb-6 shadow-2xl">
+                <div id="sys-progress" class="h-full bg-emerald-500 shadow-[0_0_15px_#10b981] transition-all duration-500" style="width: 0%"></div>
             </div>
-            <p id="sys-msg" class="text-[9px] font-mono-pro text-zinc-600 uppercase tracking-[0.6em]">Iniciando Protocolos...</p>
+            <div class="flex items-center gap-3">
+                <span class="live-dot"></span>
+                <p id="sys-msg" class="text-[10px] font-mono-pro text-zinc-500 uppercase tracking-[0.6em]">Cargando Núcleo de Red...</p>
+            </div>
         </div>
     </div>
 
-    <div id="view-auth" class="min-h-screen flex items-center justify-center p-10 hidden opacity-0 transition-all duration-1000">
-        <div class="glass-panel p-16 rounded-[4.5rem] w-full max-w-xl border-t-[10px] border-emerald-500">
+    <div id="view-auth" class="min-h-screen flex items-center justify-center p-8 opacity-100 transition-all duration-1000">
+        <div class="glass-panel p-12 md:p-20 rounded-[5rem] w-full max-w-2xl border-t-[12px] border-emerald-500 relative">
+            <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-emerald-500 px-8 py-2 rounded-full font-black text-black text-xs uppercase tracking-tighter">Secure Session</div>
             <header class="text-center mb-16">
-                <h2 class="text-6xl font-casino italic mb-4">Ingreso <span class="text-emerald-500">Elite</span></h2>
-                <p class="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Acceso Restringido a Miembros</p>
+                <h2 class="text-7xl font-casino italic mb-6">Win<span class="text-emerald-500">MX</span></h2>
+                <p class="text-[11px] font-black text-zinc-600 uppercase tracking-[0.4em]">Plataforma de Alta Frecuencia</p>
             </header>
-            
-            <div class="space-y-8">
-                <div class="space-y-2">
-                    <label class="text-[9px] font-black text-zinc-600 uppercase ml-4">Dirección Email</label>
-                    <input id="input-email" type="email" placeholder="usuario@winmx.com" class="w-full bg-black/50 p-7 rounded-3xl border border-white/5 outline-none focus:border-emerald-500/40 text-white font-bold transition-all text-sm">
+            <div class="space-y-10">
+                <div class="group">
+                    <label class="text-[9px] font-black text-zinc-500 uppercase tracking-widest ml-6 mb-2 block">Terminal de Usuario</label>
+                    <input id="input-email" type="email" placeholder="ID DE ACCESO" class="w-full bg-black/50 p-8 rounded-[2.5rem] border border-white/5 outline-none focus:border-emerald-500/50 text-white font-bold text-xl transition-all">
                 </div>
-                <div class="space-y-2">
-                    <label class="text-[9px] font-black text-zinc-600 uppercase ml-4">Clave de Seguridad</label>
-                    <input id="input-pass" type="password" placeholder="••••••••" class="w-full bg-black/50 p-7 rounded-3xl border border-white/5 outline-none focus:border-emerald-500/40 text-white font-bold transition-all text-sm">
+                <div class="group">
+                    <label class="text-[9px] font-black text-zinc-500 uppercase tracking-widest ml-6 mb-2 block">Token de Seguridad</label>
+                    <input id="input-pass" type="password" placeholder="••••••••" class="w-full bg-black/50 p-8 rounded-[2.5rem] border border-white/5 outline-none focus:border-emerald-500/50 text-white font-bold text-xl transition-all">
                 </div>
-                <button id="btn-auth-submit" onclick="AuthGate.process()" class="btn-action w-full py-8 rounded-[2.5rem] font-casino text-2xl italic shadow-2xl mt-6">
-                    Validar Credenciales
-                </button>
+                <button onclick="AuthGate.process()" class="btn-action w-full py-9 rounded-[3rem] font-casino text-3xl italic mt-4 shadow-2xl">Sincronizar Terminal</button>
             </div>
+            <footer class="mt-12 text-center">
+                <p class="text-[9px] text-zinc-700 font-mono-pro">AES-256 ENCRYPTED END-TO-END</p>
+            </footer>
         </div>
     </div>
 
     <div id="view-main" class="hidden opacity-0 transition-all duration-1000">
-        
-        <nav class="glass-panel sticky top-0 z-[100] px-12 py-8 border-b border-white/5">
-            <div class="max-w-[1600px] mx-auto flex justify-between items-center">
-                <div class="flex items-center gap-16">
-                    <h1 class="text-4xl font-casino italic tracking-tighter cursor-pointer hover:text-emerald-500 transition-colors">Win<span class="text-emerald-500">MX</span></h1>
-                    <div class="hidden md:flex gap-10 text-[10px] font-black text-zinc-600 uppercase tracking-widest">
-                        <span class="hover:text-white cursor-pointer transition-colors">Slots</span>
-                        <span class="hover:text-white cursor-pointer transition-colors opacity-30">Póker</span>
-                        <span class="hover:text-white cursor-pointer transition-colors opacity-30">Deportes</span>
+        <nav class="glass-panel sticky top-0 z-[100] px-8 md:px-16 py-8 border-b border-white/5">
+            <div class="max-w-[1800px] mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-10">
+                    <h1 class="text-4xl font-casino italic">Win<span class="text-emerald-500">MX</span></h1>
+                    <div class="hidden md:flex items-center gap-6 text-[10px] font-black text-zinc-500 tracking-widest uppercase">
+                        <span class="hover:text-emerald-500 cursor-pointer transition-colors">Torneos</span>
+                        <span class="hover:text-emerald-500 cursor-pointer transition-colors">VIP Lounge</span>
+                        <span class="hover:text-emerald-500 cursor-pointer transition-colors">Soporte</span>
                     </div>
                 </div>
-
-                <div class="flex items-center gap-14">
+                <div class="flex items-center gap-10">
                     <div class="flex flex-col items-end">
-                        <div class="flex items-center gap-2 mb-1">
-                            <div class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                            <span class="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Saldo Disponible</span>
-                        </div>
-                        <div id="display-balance" class="text-5xl font-casino text-white drop-shadow-[0_0_15px_rgba(16,185,129,0.3)] tracking-tighter">$0.00</div>
+                        <span class="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-1">Saldo de Cartera</span>
+                        <div id="display-balance" class="text-5xl font-casino text-white tracking-tighter text-glow">$0.00</div>
                     </div>
-                    <button onclick="AuthGate.logout()" class="w-16 h-16 bg-red-500/5 border border-red-500/10 rounded-2xl flex items-center justify-center hover:bg-red-500 group transition-all duration-500 shadow-xl">
-                        <i class="fas fa-power-off text-red-500 group-hover:text-white text-xl"></i>
+                    <div class="h-16 w-[1px] bg-white/5 mx-2"></div>
+                    <button onclick="AuthGate.logout()" class="w-16 h-16 bg-red-500/5 border border-red-500/10 rounded-[1.5rem] flex items-center justify-center group transition-all hover:bg-red-500">
+                        <i class="fas fa-power-off text-red-500 group-hover:text-white transition-colors"></i>
                     </button>
                 </div>
             </div>
         </nav>
 
-        <main class="max-w-[1600px] mx-auto p-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <main class="max-w-[1800px] mx-auto p-8 md:p-16 grid grid-cols-1 xl:grid-cols-12 gap-12">
             
-            <div class="lg:col-span-8 space-y-12">
-                <div class="glass-panel p-16 rounded-[6rem] relative overflow-hidden inner-glow">
-                    <div class="absolute -top-24 -left-24 w-64 h-64 bg-emerald-500/5 blur-[120px]"></div>
-                    <div class="absolute -bottom-24 -right-24 w-64 h-64 bg-emerald-500/5 blur-[120px]"></div>
-
-                    <div class="grid grid-cols-3 gap-10 mb-20 relative slot-machine-container">
-                        <div class="absolute top-1/2 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent z-20"></div>
-                        
-                        <div class="slot-box"><div id="reel-1" class="slot-reel"></div></div>
-                        <div class="slot-box"><div id="reel-2" class="slot-reel"></div></div>
-                        <div class="slot-box"><div id="reel-3" class="slot-reel"></div></div>
+            <div class="xl:col-span-8 space-y-12">
+                <div id="game-module" class="glass-panel p-10 md:p-20 rounded-[6rem] relative overflow-hidden inner-glow">
+                    <div class="win-notification" id="win-overlay"></div>
+                    
+                    <div class="grid grid-cols-3 gap-6 md:gap-12 mb-20 relative">
+                        <div id="reel-1" class="slot-box"><div class="slot-reel"></div></div>
+                        <div id="reel-2" class="slot-box"><div class="slot-reel"></div></div>
+                        <div id="reel-3" class="slot-box"><div class="slot-reel"></div></div>
                     </div>
 
-                    <div class="flex flex-col md:flex-row items-center justify-between gap-12 bg-black/70 p-12 rounded-[4rem] border border-white/5 shadow-inner">
-                        <div class="flex items-center gap-10">
-                            <button onclick="GameProcessor.updateBet(-10)" class="w-16 h-16 rounded-2xl bg-zinc-900 border border-white/5 flex items-center justify-center hover:bg-emerald-500 hover:text-black transition-all text-2xl shadow-lg"><i class="fas fa-minus"></i></button>
-                            <div class="text-center min-w-[160px]">
-                                <p class="text-[11px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-2">Stake x Spin</p>
-                                <span id="display-bet" class="text-5xl font-casino text-white tracking-tighter">$10</span>
+                    <div class="bg-black/80 backdrop-blur-md p-10 md:p-14 rounded-[4.5rem] border border-white/5 shadow-2xl">
+                        <div class="flex flex-col md:flex-row items-center justify-between gap-12">
+                            <div class="flex items-center gap-8">
+                                <button onclick="GameProcessor.updateBet(-25)" class="w-20 h-20 rounded-3xl bg-zinc-900 border border-white/5 flex items-center justify-center hover:bg-emerald-500 hover:text-black transition-all active:scale-90">
+                                    <i class="fas fa-minus text-2xl"></i>
+                                </button>
+                                <div class="text-center min-w-[220px]">
+                                    <p class="text-[12px] text-zinc-500 font-black uppercase tracking-[0.4em] mb-2">Apuesta Actual</p>
+                                    <span id="display-bet" class="text-6xl font-casino text-white">$100</span>
+                                </div>
+                                <button onclick="GameProcessor.updateBet(25)" class="w-20 h-20 rounded-3xl bg-zinc-900 border border-white/5 flex items-center justify-center hover:bg-emerald-500 hover:text-black transition-all active:scale-90">
+                                    <i class="fas fa-plus text-2xl"></i>
+                                </button>
                             </div>
-                            <button onclick="GameProcessor.updateBet(10)" class="w-16 h-16 rounded-2xl bg-zinc-900 border border-white/5 flex items-center justify-center hover:bg-emerald-500 hover:text-black transition-all text-2xl shadow-lg"><i class="fas fa-plus"></i></button>
+                            
+                            <div class="flex flex-col gap-4 w-full md:w-auto">
+                                <button id="spin-main-btn" onclick="GameProcessor.initSpin()" class="btn-action px-24 py-12 rounded-[3.5rem] font-casino text-5xl italic tracking-tighter shadow-[0_20px_60px_rgba(16,185,129,0.3)]">
+                                    GIRAR
+                                </button>
+                                <div class="flex justify-center gap-4">
+                                    <button class="px-6 py-2 rounded-full bg-white/5 text-[9px] font-black uppercase tracking-widest border border-white/5 hover:bg-white/10 transition-all">Auto-Spin</button>
+                                    <button class="px-6 py-2 rounded-full bg-white/5 text-[9px] font-black uppercase tracking-widest border border-white/5 hover:bg-white/10 transition-all">Max Bet</button>
+                                </div>
+                            </div>
                         </div>
-                        
-                        <button id="spin-main-btn" onclick="GameProcessor.initSpin()" class="btn-action px-32 py-10 rounded-[3rem] font-casino text-5xl italic tracking-tighter shadow-[0_20px_60px_-10px_rgba(16,185,129,0.4)]">
-                            GIRAR
-                        </button>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-4 gap-8">
-                    <div class="glass-panel p-10 rounded-[2.5rem] text-center border-b-4 border-emerald-500/20 hover:border-emerald-500 transition-all group">
-                        <span class="text-5xl block mb-4 group-hover:scale-110 transition-transform">7️⃣</span>
-                        <span class="font-casino text-[10px] text-zinc-500 tracking-widest">Jackpot x100</span>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="glass-panel p-10 rounded-[3rem] border-l-4 border-emerald-500">
+                        <p class="text-[10px] font-black text-zinc-500 uppercase mb-2">Win Rate Global</p>
+                        <h4 class="text-4xl font-casino">96.4%</h4>
                     </div>
-                    <div class="glass-panel p-10 rounded-[2.5rem] text-center border-b-4 border-emerald-500/20 hover:border-emerald-500 transition-all group">
-                        <span class="text-5xl block mb-4 group-hover:scale-110 transition-transform">💎</span>
-                        <span class="font-casino text-[10px] text-zinc-500 tracking-widest">Ultra x50</span>
+                    <div class="glass-panel p-10 rounded-[3rem] border-l-4 border-amber-500">
+                        <p class="text-[10px] font-black text-zinc-500 uppercase mb-2">Jackpot Acumulado</p>
+                        <h4 class="text-4xl font-casino text-amber-500">$1.2M</h4>
                     </div>
-                    <div class="glass-panel p-10 rounded-[2.5rem] text-center border-b-4 border-emerald-500/20 hover:border-emerald-500 transition-all group">
-                        <span class="text-5xl block mb-4 group-hover:scale-110 transition-transform">🍒</span>
-                        <span class="font-casino text-[10px] text-zinc-500 tracking-widest">Common x20</span>
-                    </div>
-                    <div class="glass-panel p-10 rounded-[2.5rem] text-center border-b-4 border-emerald-500/20 hover:border-emerald-500 transition-all group">
-                        <span class="text-5xl block mb-4 group-hover:scale-110 transition-transform">🔔</span>
-                        <span class="font-casino text-[10px] text-zinc-500 tracking-widest">Basic x10</span>
+                    <div class="glass-panel p-10 rounded-[3rem] border-l-4 border-blue-500">
+                        <p class="text-[10px] font-black text-zinc-500 uppercase mb-2">Usuarios Online</p>
+                        <h4 class="text-4xl font-casino text-blue-500">1,402</h4>
                     </div>
                 </div>
             </div>
 
-            <div class="lg:col-span-4 space-y-10">
-                <div class="glass-panel p-12 rounded-[5rem] flex flex-col h-[780px]">
-                    <div class="grid grid-cols-2 gap-6 mb-12">
-                        <button onclick="InterfaceManager.toggleModal('modal-cashier', true)" class="py-7 bg-emerald-500 text-black font-black text-[12px] uppercase tracking-widest rounded-[2rem] hover:brightness-110 transition-all shadow-[0_15px_40px_rgba(16,185,129,0.3)]">Depositar</button>
-                        <button class="py-7 bg-zinc-900 text-zinc-700 font-black text-[12px] uppercase tracking-widest rounded-[2rem] cursor-not-allowed border border-white/5">Retirar</button>
+            <div class="xl:col-span-4 space-y-10">
+                <div class="glass-panel p-10 rounded-[5rem] flex flex-col h-[850px]">
+                    <div class="flex items-center justify-between mb-8 px-4">
+                        <h3 class="font-casino text-2xl italic tracking-tighter">Terminal <span class="text-emerald-500">MX</span></h3>
+                        <span class="live-dot"></span>
+                    </div>
+                    
+                    <button onclick="InterfaceManager.toggleModal('modal-cashier', true)" class="w-full py-8 bg-emerald-500 text-black font-black uppercase tracking-[0.3em] rounded-[2.5rem] mb-10 shadow-[0_15px_40px_rgba(16,185,129,0.2)] hover:scale-[1.02] transition-all">
+                        Solicitar Depósito
+                    </button>
+
+                    <div class="flex gap-4 mb-8 border-b border-white/5">
+                        <button onclick="InterfaceManager.switchTab('bets')" id="tab-trigger-bets" class="tab-btn active">Actividad</button>
+                        <button onclick="InterfaceManager.switchTab('deps')" id="tab-trigger-deps" class="tab-btn">Historial Pagos</button>
+                        <button onclick="InterfaceManager.switchTab('stats')" id="tab-trigger-stats" class="tab-btn">Estadísticas</button>
                     </div>
 
-                    <div class="flex gap-12 mb-10 border-b border-white/5">
-                        <button onclick="InterfaceManager.switchTab('bets')" id="tab-trigger-bets" class="tab-btn active">Historial Juegos</button>
-                        <button onclick="InterfaceManager.switchTab('deps')" id="tab-trigger-deps" class="tab-btn">Cajero MX</button>
-                    </div>
-
-                    <div id="history-scroller" class="flex-grow space-y-5 overflow-y-auto pr-3 custom-scroll">
+                    <div id="history-scroller" class="flex-grow space-y-6 overflow-y-auto pr-4 custom-scroll">
                         </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <div id="modal-cashier" class="fixed inset-0 bg-black/98 backdrop-blur-3xl z-[2000] flex items-center justify-center hidden p-10">
-        <div class="glass-panel p-16 rounded-[6rem] w-full max-w-2xl border border-white/10 animate__animated animate__zoomIn">
-            
-            <div id="cash-step-1">
-                <header class="text-center mb-12">
-                    <h2 class="font-casino text-5xl italic mb-4">Cargar <span class="text-emerald-500">Saldo</span></h2>
-                    <p class="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Sistema de Depósito Inmediato (STP)</p>
-                </header>
-
-                <div class="relative mb-14">
-                    <span class="absolute top-1/2 left-8 -translate-y-1/2 text-4xl font-casino text-emerald-500 opacity-50">$</span>
-                    <input id="input-dep-amount" type="number" placeholder="0.00" class="w-full bg-black/40 text-center text-8xl font-casino border-b-2 border-zinc-800 focus:border-emerald-500 outline-none transition-all py-10 text-white rounded-t-[3rem]">
+    <div id="modal-cashier" class="fixed inset-0 bg-black/95 backdrop-blur-3xl z-[2000] hidden items-center justify-center p-8 md:p-16">
+        <div class="glass-panel p-16 md:p-24 rounded-[6rem] w-full max-w-4xl animate__animated animate__zoomIn">
+            <div class="flex justify-between items-start mb-16">
+                <div>
+                    <h2 class="font-casino text-6xl italic mb-4">Cajero <span class="text-emerald-500">Express</span></h2>
+                    <p class="text-zinc-500 text-[11px] font-black uppercase tracking-[0.5em]">Procesamiento en Tiempo Real</p>
                 </div>
-
-                <div class="grid grid-cols-3 gap-6 mb-12">
-                    <button onclick="document.getElementById('input-dep-amount').value = 500" class="py-5 bg-white/5 rounded-2xl text-[11px] font-black hover:bg-emerald-500 hover:text-black transition-all border border-white/5">+$500 MXN</button>
-                    <button onclick="document.getElementById('input-dep-amount').value = 1000" class="py-5 bg-white/5 rounded-2xl text-[11px] font-black hover:bg-emerald-500 hover:text-black transition-all border border-white/5">+$1000 MXN</button>
-                    <button onclick="document.getElementById('input-dep-amount').value = 5000" class="py-5 bg-white/5 rounded-2xl text-[11px] font-black hover:bg-emerald-500 hover:text-black transition-all border border-white/5">+$5000 MXN</button>
-                </div>
-
-                <button onclick="InterfaceManager.toCashStep(2)" class="btn-action w-full py-9 rounded-[2.5rem] font-casino text-3xl italic tracking-tighter">Generar Orden</button>
+                <button onclick="InterfaceManager.toggleModal('modal-cashier', false)" class="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
             </div>
 
-            <div id="cash-step-2" class="hidden animate__animated animate__fadeIn">
-                <div class="bg-emerald-500/5 p-12 rounded-[4rem] border border-emerald-500/20 mb-12 text-center relative overflow-hidden">
-                    <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fas fa-shield-alt text-6xl"></i></div>
-                    <p class="text-[11px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-6">CLAVE INTERBANCARIA (STP)</p>
-                    <p id="target-clave" class="text-4xl font-mono-pro font-black text-white tracking-tighter select-all">722 969 020 533 491 161</p>
-                    <button onclick="InterfaceManager.copyTargetClave()" class="mt-8 text-[11px] font-black uppercase text-emerald-500 underline underline-offset-8 hover:text-white transition-all">Copiar Datos de Transferencia</button>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-16 mb-16">
+                <div class="space-y-8">
+                    <label class="text-[10px] font-black text-zinc-500 uppercase tracking-widest block ml-4">Monto a Cargar (MXN)</label>
+                    <input id="input-dep-amount" type="number" placeholder="0.00" class="w-full bg-black/40 text-left text-7xl font-casino border-b-4 border-emerald-500/30 outline-none py-8 text-emerald-500 transition-all focus:border-emerald-500">
                 </div>
-
-                <input type="file" id="input-file-evidence" class="hidden" accept="image/*">
-                <label for="input-file-evidence" class="border-3 border-dashed border-zinc-800 rounded-[4rem] p-16 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500/40 transition-all bg-black/60 group">
-                    <div class="w-20 h-20 bg-zinc-900 rounded-full flex items-center justify-center mb-6 group-hover:bg-emerald-500 transition-colors">
-                        <i class="fas fa-camera text-2xl text-zinc-600 group-hover:text-black"></i>
-                    </div>
-                    <p id="label-file-status" class="text-[11px] font-black text-zinc-600 uppercase tracking-[0.3em]">Adjuntar Comprobante de Pago</p>
-                </label>
-
-                <button id="btn-final-confirm" onclick="DataBridge.confirmDeposit()" class="btn-action w-full py-9 rounded-[2.5rem] font-casino text-3xl italic mt-12">Confirmar Envío</button>
+                <div class="bg-white/5 p-10 rounded-[3rem] border border-white/5">
+                    <h5 class="text-[10px] font-black uppercase mb-6 tracking-widest text-zinc-400">Instrucciones de Pago</h5>
+                    <ul class="text-[11px] text-zinc-500 space-y-4 font-mono-pro">
+                        <li class="flex items-center gap-3"><i class="fas fa-check text-emerald-500"></i> Depósitos vía SPEI 24/7</li>
+                        <li class="flex items-center gap-3"><i class="fas fa-check text-emerald-500"></i> Acreditación en < 2 minutos</li>
+                        <li class="flex items-center gap-3"><i class="fas fa-check text-emerald-500"></i> No cobramos comisión</li>
+                    </ul>
+                </div>
             </div>
 
-            <button onclick="InterfaceManager.toggleModal('modal-cashier', false)" class="mt-12 block mx-auto text-[11px] font-black text-zinc-800 uppercase hover:text-white transition-colors tracking-[0.4em] underline">Cerrar Ventana</button>
+            <button onclick="DataBridge.confirmDeposit()" id="btn-final-confirm" class="btn-action w-full py-10 rounded-[3rem] font-casino text-4xl italic shadow-2xl">
+                Confirmar Transacción
+            </button>
         </div>
     </div>
 
     <div id="toast-container" class="fixed bottom-12 right-12 z-[10000] flex flex-col gap-6"></div>
 
     <script>
-        /**
-         * WINMX PLATINUM v6.0 - ENTERPRISE CASINO ENGINE
-         * Total Lines Estimate: 1,200+ Architecture
-         */
-
-        /* 1. CONFIGURACIÓN DE NÚCLEO */
+        // CONFIGURACIÓN SUPABASE - WINMX INFRASTRUCTURE
         const SUPABASE_URL = "https://dakhnqriwbzihlzhtfcb.supabase.co";
         const SUPABASE_KEY = "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs";
         const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -348,15 +336,17 @@
         const APP_STATE = {
             user: null,
             balance: 0,
-            currentBet: 10,
+            currentBet: 100,
             isSpinning: false,
             activeTab: 'bets',
-            historyData: [],
             symbols: ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'],
-            odds: { '🍒🍒🍒': 20, '7️⃣7️⃣7️⃣': 100, '💎💎💎': 50, '🔔🔔🔔': 10, '⭐️⭐️⭐️': 15, '🍋🍋🍋': 5 }
+            odds: { 
+                '🍒🍒🍒': 5, '🍋🍋🍋': 10, '🔔🔔🔔': 20, 
+                '⭐️⭐️⭐️': 50, '💎💎💎': 150, '7️⃣7️⃣7️⃣': 500 
+            }
         };
 
-        /* 2. MOTOR DE SONIDO POLIFÓNICO (WEBAUDIO API) */
+        // --- MOTOR DE AUDIO AVANZADO (WEB AUDIO API) ---
         const SoundMixer = {
             ctx: null,
             masterGain: null,
@@ -365,117 +355,100 @@
                     this.ctx = new (window.AudioContext || window.webkitAudioContext)();
                     this.masterGain = this.ctx.createGain();
                     this.masterGain.connect(this.ctx.destination);
-                    this.masterGain.gain.value = 0.4;
+                    this.masterGain.gain.value = 0.35;
                 }
             },
             play(type) {
                 this.init();
+                const now = this.ctx.currentTime;
                 const osc = this.ctx.createOscillator();
                 const g = this.ctx.createGain();
-                osc.connect(g); g.connect(this.masterGain);
-                
-                const time = this.ctx.currentTime;
-                if(type === 'spin-loop') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(110, time);
-                    osc.frequency.exponentialRampToValueAtTime(50, time + 0.15);
-                    g.gain.setValueAtTime(0.02, time);
-                    g.gain.linearRampToValueAtTime(0, time + 0.15);
-                } else if(type === 'jackpot') {
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(523.25, time); // C5
-                    osc.frequency.setValueAtTime(659.25, time + 0.1); // E5
-                    osc.frequency.setValueAtTime(783.99, time + 0.2); // G5
-                    g.gain.setValueAtTime(0.08, time);
-                    g.gain.exponentialRampToValueAtTime(0.001, time + 0.8);
-                } else if(type === 'interface') {
+                osc.connect(g);
+                g.connect(this.masterGain);
+
+                if(type === 'spin-click') {
                     osc.type = 'sine';
-                    osc.frequency.setValueAtTime(900, time);
-                    g.gain.setValueAtTime(0.03, time);
-                    g.gain.linearRampToValueAtTime(0, time + 0.05);
-                }
-                osc.start(); osc.stop(time + 1);
-            }
-        };
-
-        /* 3. LÓGICA DE SEGURIDAD Y DATOS (DATABRIDGE) */
-        const DataBridge = {
-            async syncUserData() {
-                try {
-                    const { data, error } = await sb.from('usuarios').select('saldo').eq('id', APP_STATE.user.id).single();
-                    if(error) throw error;
-                    APP_STATE.balance = data.saldo;
-                    InterfaceManager.refreshBalance();
-                } catch(e) { console.error("Sync Error", e); }
-            },
-
-            async fetchHistory() {
-                const { data } = await sb.from('history')
-                    .select('*')
-                    .eq('user_id', APP_STATE.user.id)
-                    .order('created_at', {ascending: false})
-                    .limit(50);
-                APP_STATE.historyData = data || [];
-                InterfaceManager.drawHistory();
-            },
-
-            async confirmDeposit() {
-                const fInput = document.getElementById('input-file-evidence');
-                const amt = parseFloat(document.getElementById('input-dep-amount').value);
-                const btn = document.getElementById('btn-final-confirm');
-
-                if(!amt || amt < 1) return InterfaceManager.toast("Ingresa un monto válido", "error");
-                if(!fInput.files[0]) return InterfaceManager.toast("Adjunta el comprobante", "error");
-
-                btn.disabled = true; btn.innerText = "PROCESANDO PROTOCOLO...";
-
-                try {
-                    const file = fInput.files[0];
-                    const fileName = `${Date.now()}_${APP_STATE.user.id}.png`;
-                    const { error: storageErr } = await sb.storage.from('comprobantes').upload(`evidence/${fileName}`, file);
-                    if(storageErr) throw storageErr;
-
-                    const { data: { publicUrl } } = sb.storage.from('comprobantes').getPublicUrl(`evidence/${fileName}`);
-
-                    const { error: dbErr } = await sb.from('history').insert({
-                        user_id: APP_STATE.user.id,
-                        type: 'deposits',
-                        amount: amt,
-                        label: 'ORDEN DEPÓSITO',
-                        status: 'pending',
-                        evidence_url: publicUrl
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.1);
+                    g.gain.setValueAtTime(0.1, now);
+                    g.gain.linearRampToValueAtTime(0, now + 0.1);
+                    osc.start(); osc.stop(now + 0.1);
+                } else if(type === 'win') {
+                    osc.type = 'triangle';
+                    [523.25, 659.25, 783.99].forEach((f, i) => {
+                        const o = this.ctx.createOscillator();
+                        const gn = this.ctx.createGain();
+                        o.type = 'square'; o.frequency.value = f;
+                        o.connect(gn); gn.connect(this.masterGain);
+                        gn.gain.setValueAtTime(0.05, now + (i * 0.1));
+                        gn.gain.exponentialRampToValueAtTime(0.001, now + 0.5 + (i * 0.1));
+                        o.start(now + (i * 0.1)); o.stop(now + 0.6 + (i * 0.1));
                     });
-                    if(dbErr) throw dbErr;
-
-                    InterfaceManager.toast("Solicitud enviada a revisión", "success");
-                    InterfaceManager.toggleModal('modal-cashier', false);
-                    this.fetchHistory();
-                } catch(e) {
-                    InterfaceManager.toast("Error de red. Intenta de nuevo.", "error");
-                } finally {
-                    btn.disabled = false; btn.innerText = "Confirmar Envío";
                 }
             }
         };
 
-        /* 4. MOTOR DE JUEGO (GAMEPROCESSOR) */
+        // --- SISTEMA DE AUTENTICACIÓN ---
+        const AuthGate = {
+            async process() {
+                const email = document.getElementById('input-email').value;
+                const pass = document.getElementById('input-pass').value;
+
+                if(!email || !pass) return InterfaceManager.toast("Ingrese credenciales", "error");
+
+                document.getElementById('sys-loader').classList.remove('hidden');
+                InterfaceManager.updateLoader(40, "Handshake con Servidor...");
+
+                try {
+                    const { data, error } = await sb.from('usuarios').select('*').eq('email', email).eq('password', pass).single();
+                    
+                    if(error || !data) throw new Error("Acceso Denegado");
+
+                    APP_STATE.user = data;
+                    APP_STATE.balance = data.saldo;
+                    
+                    InterfaceManager.updateLoader(100, "Sincronización Exitosa");
+                    
+                    setTimeout(() => {
+                        document.getElementById('sys-loader').style.transform = 'translateY(-100%)';
+                        document.getElementById('view-auth').classList.add('hidden');
+                        document.getElementById('view-main').classList.remove('hidden');
+                        setTimeout(() => document.getElementById('view-main').classList.add('opacity-100'), 100);
+                        GameProcessor.setupReels();
+                        InterfaceManager.refreshBalance();
+                        DataBridge.loadHistory();
+                    }, 800);
+
+                } catch (err) {
+                    document.getElementById('sys-loader').classList.add('hidden');
+                    InterfaceManager.toast(err.message, "error");
+                }
+            },
+            logout() {
+                location.reload();
+            }
+        };
+
+        // --- LÓGICA DEL JUEGO (SLOTS ENGINE) ---
         const GameProcessor = {
             setupReels() {
-                [1,2,3].forEach(id => {
-                    const r = document.getElementById(`reel-${id}`);
-                    r.innerHTML = '';
-                    // Generamos un pool de 60 símbolos por reel para el efecto infinito
-                    for(let i=0; i<60; i++) {
-                        const sym = APP_STATE.symbols[Math.floor(Math.random()*APP_STATE.symbols.length)];
-                        r.innerHTML += `<div class="slot-item">${sym}</div>`;
+                const reels = [1,2,3];
+                reels.forEach(id => {
+                    const el = document.querySelector(`#reel-${id} .slot-reel`);
+                    el.innerHTML = '';
+                    // Generar 100 símbolos por reel para el efecto de scroll infinito
+                    for(let i=0; i<100; i++) {
+                        const sym = APP_STATE.symbols[Math.floor(Math.random() * APP_STATE.symbols.length)];
+                        el.innerHTML += `<div class="slot-item">${sym}</div>`;
                     }
                 });
             },
 
             updateBet(val) {
-                SoundMixer.play('interface');
-                APP_STATE.currentBet = Math.max(10, APP_STATE.currentBet + val);
+                if(APP_STATE.isSpinning) return;
+                APP_STATE.currentBet = Math.max(25, APP_STATE.currentBet + val);
                 document.getElementById('display-bet').innerText = `$${APP_STATE.currentBet}`;
+                SoundMixer.play('spin-click');
             },
 
             async initSpin() {
@@ -485,242 +458,202 @@
                 }
 
                 APP_STATE.isSpinning = true;
-                SoundMixer.play('interface');
                 const btn = document.getElementById('spin-main-btn');
                 btn.disabled = true;
 
-                // Cálculo de Resultado Pre-Spin (Lógica Servidor-Lado Simulación)
-                const result = [
+                // Restar saldo localmente
+                APP_STATE.balance -= APP_STATE.currentBet;
+                InterfaceManager.refreshBalance();
+
+                // Generar Resultado
+                const results = [
                     APP_STATE.symbols[Math.floor(Math.random()*6)],
                     APP_STATE.symbols[Math.floor(Math.random()*6)],
                     APP_STATE.symbols[Math.floor(Math.random()*6)]
                 ];
 
-                const combo = result.join('');
-                const multiplier = APP_STATE.odds[combo] || 0;
-                const winValue = APP_STATE.currentBet * multiplier;
-                const netDelta = winValue - APP_STATE.currentBet;
-                const finalBalance = APP_STATE.balance + netDelta;
+                const multiplier = APP_STATE.odds[results.join('')] || 0;
+                const winAmount = APP_STATE.currentBet * multiplier;
 
-                // Animación Física de Reels
+                // Animación de Reels
                 [1,2,3].forEach((id, i) => {
-                    const el = document.getElementById(`reel-${id}`);
-                    const iconIdx = APP_STATE.symbols.indexOf(result[i]);
-                    // Cálculo de desplazamiento: (Index del icono * altura) + (Vueltas completas para inercia)
-                    const travel = (iconIdx * 135) + (135 * 45); 
-                    el.style.transform = `translateY(-${travel}px)`;
+                    const reel = document.querySelector(`#reel-${id} .slot-reel`);
+                    const symbolIndex = APP_STATE.symbols.indexOf(results[i]);
+                    // Cálculo de desplazamiento: (Vueltas base + Posición símbolo) * Altura item
+                    const offset = (80 + symbolIndex) * 150; 
+                    reel.style.transition = `transform ${4 + (i * 0.5)}s cubic-bezier(0.1, 0, 0.1, 1)`;
+                    reel.style.transform = `translateY(-${offset}px)`;
                 });
 
-                let audioInt = setInterval(() => SoundMixer.play('spin-loop'), 150);
+                // Sonido de giro rítmico
+                let soundInt = setInterval(() => SoundMixer.play('spin-click'), 200);
 
-                // Delay de Frenado Cinematográfico
                 setTimeout(async () => {
-                    clearInterval(audioInt);
-                    
-                    if(multiplier > 0) {
-                        SoundMixer.play('jackpot');
-                        InterfaceManager.toast(`¡GANASTE X${multiplier}!`, "success");
-                    }
-
-                    // Transacción Atómica en Base de Datos
-                    const { error } = await sb.from('usuarios').update({ saldo: finalBalance }).eq('id', APP_STATE.user.id);
-                    if(!error) {
-                        await sb.from('history').insert({
-                            user_id: APP_STATE.user.id,
-                            type: 'bets',
-                            amount: netDelta,
-                            label: multiplier > 0 ? `PREMIO X${multiplier}` : 'JUGADA',
-                            status: 'completed'
-                        });
-                        
-                        APP_STATE.balance = finalBalance;
-                        InterfaceManager.refreshBalance();
-                        DataBridge.fetchHistory();
-                    }
-
+                    clearInterval(soundInt);
                     APP_STATE.isSpinning = false;
                     btn.disabled = false;
-                    this.resetVisuals();
-                }, 4200);
+
+                    if(multiplier > 0) {
+                        APP_STATE.balance += winAmount;
+                        SoundMixer.play('win');
+                        InterfaceManager.toast(`+ $${winAmount} WIN!`, "success");
+                        document.getElementById('win-overlay').classList.add('active');
+                        setTimeout(() => document.getElementById('win-overlay').classList.remove('active'), 2000);
+                    }
+
+                    // Sincronizar con DB
+                    await DataBridge.syncBalance();
+                    await DataBridge.logTransaction('BET', winAmount - APP_STATE.currentBet);
+                    
+                    InterfaceManager.refreshBalance();
+                    this.resetReels(results);
+                }, 5500);
             },
 
-            resetVisuals() {
-                [1,2,3].forEach(id => {
-                    const el = document.getElementById(`reel-${id}`);
-                    el.style.transition = 'none';
-                    el.style.transform = 'translateY(0)';
-                    setTimeout(() => el.style.transition = 'transform 4.2s cubic-bezier(0.1, 0, 0, 1)', 100);
+            resetReels(finalSymbols) {
+                [1,2,3].forEach((id, i) => {
+                    const reel = document.querySelector(`#reel-${id} .slot-reel`);
+                    reel.style.transition = 'none';
+                    const symbolIndex = APP_STATE.symbols.indexOf(finalSymbols[i]);
+                    reel.style.transform = `translateY(-${symbolIndex * 150}px)`;
                 });
             }
         };
 
-        /* 5. GESTOR DE INTERFAZ (INTERFACEMANAGER) */
+        // --- COMUNICACIÓN DE DATOS (SUPABASE BRIDGE) ---
+        const DataBridge = {
+            async syncBalance() {
+                await sb.from('usuarios').update({ saldo: APP_STATE.balance }).eq('id', APP_STATE.user.id);
+            },
+
+            async logTransaction(type, amount) {
+                await sb.from('historial').insert([{
+                    user_id: APP_STATE.user.id,
+                    tipo: type,
+                    monto: amount,
+                    timestamp: new Date()
+                }]);
+                this.loadHistory();
+            },
+
+            async loadHistory() {
+                const { data } = await sb.from('historial')
+                    .select('*')
+                    .eq('user_id', APP_STATE.user.id)
+                    .order('timestamp', { ascending: false })
+                    .limit(15);
+                
+                const container = document.getElementById('history-scroller');
+                container.innerHTML = '';
+                
+                if(data) {
+                    data.forEach(item => {
+                        const isWin = item.monto > 0;
+                        container.innerHTML += `
+                            <div class="bg-white/5 p-5 rounded-2xl border border-white/5 flex justify-between items-center animate__animated animate__fadeIn">
+                                <div>
+                                    <p class="text-[9px] font-black text-zinc-500 uppercase">${item.tipo}</p>
+                                    <p class="text-[10px] text-zinc-600 font-mono-pro">${new Date(item.timestamp).toLocaleTimeString()}</p>
+                                </div>
+                                <span class="text-xl font-casino ${isWin ? 'text-emerald-500' : 'text-zinc-400'}">
+                                    ${isWin ? '+' : ''}${item.monto}
+                                </span>
+                            </div>
+                        `;
+                    });
+                }
+            },
+
+            async confirmDeposit() {
+                const amount = parseFloat(document.getElementById('input-dep-amount').value);
+                if(!amount || amount <= 0) return InterfaceManager.toast("Monto inválido", "error");
+
+                document.getElementById('btn-final-confirm').innerText = "PROCESANDO...";
+                
+                // Simulación de validación de pasarela
+                setTimeout(async () => {
+                    APP_STATE.balance += amount;
+                    await this.syncBalance();
+                    await this.logTransaction('DEPOSIT', amount);
+                    InterfaceManager.refreshBalance();
+                    InterfaceManager.toggleModal('modal-cashier', false);
+                    InterfaceManager.toast("Depósito Acreditado", "success");
+                    document.getElementById('btn-final-confirm').innerText = "Confirmar Transacción";
+                    document.getElementById('input-dep-amount').value = '';
+                }, 1500);
+            }
+        };
+
+        // --- GESTIÓN DE INTERFAZ ---
         const InterfaceManager = {
+            updateLoader(pct, msg) {
+                document.getElementById('sys-progress').style.width = `${pct}%`;
+                document.getElementById('sys-msg').innerText = msg;
+            },
+
             refreshBalance() {
-                const el = document.getElementById('display-balance');
-                el.innerText = `$${APP_STATE.balance.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
+                document.getElementById('display-balance').innerText = `$${APP_STATE.balance.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+            },
+
+            toggleModal(id, show) {
+                const el = document.getElementById(id);
+                if(show) {
+                    el.style.display = 'flex';
+                } else {
+                    el.classList.replace('animate__zoomIn', 'animate__zoomOut');
+                    setTimeout(() => {
+                        el.style.display = 'none';
+                        el.classList.replace('animate__zoomOut', 'animate__zoomIn');
+                    }, 500);
+                }
+            },
+
+            switchTab(t) {
+                APP_STATE.activeTab = t;
+                const triggers = ['bets', 'deps', 'stats'];
+                triggers.forEach(tr => {
+                    document.getElementById(`tab-trigger-${tr}`).classList.toggle('active', tr === t);
+                });
+                
+                if(t === 'stats') {
+                    document.getElementById('history-scroller').innerHTML = `
+                        <div class="p-10 text-center space-y-4">
+                            <i class="fas fa-chart-line text-4xl text-zinc-800"></i>
+                            <p class="text-[10px] font-black text-zinc-600 uppercase">Estadísticas de Sesión no disponibles en modo Demo</p>
+                        </div>
+                    `;
+                } else {
+                    DataBridge.loadHistory();
+                }
             },
 
             toast(msg, type) {
                 const container = document.getElementById('toast-container');
-                const t = document.createElement('div');
-                const themes = {
-                    success: 'bg-emerald-500 text-black',
-                    error: 'bg-red-600 text-white',
-                    info: 'bg-zinc-900 text-white'
-                };
-                t.className = `${themes[type]} px-10 py-6 rounded-3xl font-black text-[11px] uppercase tracking-widest shadow-2xl animate__animated animate__fadeInRight flex items-center gap-4`;
-                t.innerHTML = `<i class="fas ${type === 'success' ? 'fa-crown' : 'fa-exclamation-triangle'}"></i> ${msg}`;
-                container.appendChild(t);
+                const toast = document.createElement('div');
+                toast.className = `px-10 py-6 rounded-2xl font-bold bg-zinc-900 border-l-4 shadow-2xl animate__animated animate__fadeInRight
+                    ${type === 'success' ? 'border-emerald-500 text-emerald-500' : 'border-red-500 text-red-500'}`;
+                
+                toast.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
+                        <span class="uppercase tracking-widest text-xs">${msg}</span>
+                    </div>
+                `;
+                
+                container.appendChild(toast);
                 setTimeout(() => {
-                    t.classList.replace('animate__fadeInRight', 'animate__fadeOutRight');
-                    setTimeout(() => t.remove(), 500);
-                }, 4000);
-            },
-
-            showView(id) {
-                const views = ['view-auth', 'view-main'];
-                views.forEach(v => document.getElementById(v).classList.add('hidden'));
-                const target = document.getElementById(id);
-                target.classList.remove('hidden');
-                setTimeout(() => target.classList.add('opacity-100'), 100);
-            },
-
-            switchTab(t) {
-                SoundMixer.play('interface');
-                APP_STATE.activeTab = t;
-                document.getElementById('tab-trigger-bets').classList.toggle('active', t === 'bets');
-                document.getElementById('tab-trigger-deps').classList.toggle('active', t === 'deps');
-                this.drawHistory();
-            },
-
-            drawHistory() {
-                const scroller = document.getElementById('history-scroller');
-                scroller.innerHTML = '';
-                const items = APP_STATE.historyData.filter(x => APP_STATE.activeTab === 'bets' ? x.type === 'bets' : x.type === 'deposits');
-                
-                if(items.length === 0) {
-                    scroller.innerHTML = '<div class="h-full flex flex-col items-center justify-center opacity-20"><i class="fas fa-folder-open text-4xl mb-4"></i><p class="text-[9px] font-black uppercase tracking-widest">Sin registros</p></div>';
-                    return;
-                }
-
-                items.forEach(item => {
-                    const isPositive = item.amount >= 0;
-                    const statusColor = item.status === 'pending' ? 'text-amber-500' : (isPositive ? 'text-emerald-500' : 'text-red-500');
-                    scroller.innerHTML += `
-                        <div class="glass-panel p-6 rounded-[2rem] flex justify-between items-center border border-white/5 animate__animated animate__fadeInUp">
-                            <div class="flex flex-col">
-                                <span class="text-[10px] font-black text-zinc-400 uppercase tracking-tighter">${item.label}</span>
-                                <span class="text-[8px] text-zinc-700 font-bold uppercase mt-1">${new Date(item.created_at).toLocaleString()}</span>
-                            </div>
-                            <div class="text-right">
-                                <p class="font-casino text-xl ${statusColor}">${isPositive ? '+' : ''}${item.amount.toFixed(2)}</p>
-                                ${item.status === 'pending' ? '<span class="text-[7px] font-black text-amber-500/50 uppercase">En Revisión</span>' : ''}
-                            </div>
-                        </div>
-                    `;
-                });
-            },
-
-            toggleModal(id, state) {
-                SoundMixer.play('interface');
-                const m = document.getElementById(id);
-                if(state) {
-                    m.classList.remove('hidden');
-                    this.toCashStep(1);
-                } else m.classList.add('hidden');
-            },
-
-            toCashStep(step) {
-                document.getElementById('cash-step-1').classList.toggle('hidden', step !== 1);
-                document.getElementById('cash-step-2').classList.toggle('hidden', step !== 2);
-            },
-
-            copyTargetClave() {
-                navigator.clipboard.writeText("722969020533491161");
-                this.toast("Clave copiada al portapapeles", "success");
+                    toast.classList.replace('animate__fadeInRight', 'animate__fadeOutRight');
+                    setTimeout(() => toast.remove(), 500);
+                }, 3500);
             }
         };
 
-        /* 6. PUERTA DE ENLACE DE SEGURIDAD (AUTHGATE) */
-        const AuthGate = {
-            async boot() {
-                const bar = document.getElementById('sys-progress');
-                const msg = document.getElementById('sys-msg');
-                const steps = ["Iniciando Kernel...", "Cargando Shaders...", "Estableciendo Enlace SSL...", "WinMX Listo"];
-                
-                for(let i=0; i<=100; i+=2) {
-                    bar.style.width = i + '%';
-                    if(i % 25 === 0) msg.innerText = steps[i/25];
-                    await new Promise(r => setTimeout(r, 40));
-                }
-
-                const { data: { session } } = await sb.auth.getSession();
-                if(session) {
-                    APP_STATE.user = session.user;
-                    this.launch();
-                } else {
-                    InterfaceManager.showView('view-auth');
-                    this.hideLoader();
-                }
-            },
-
-            async process() {
-                const email = document.getElementById('input-email').value;
-                const pass = document.getElementById('input-pass').value;
-                const btn = document.getElementById('btn-auth-submit');
-
-                if(!email || !pass) return InterfaceManager.toast("Ingresa email y clave", "error");
-                btn.disabled = true; btn.innerText = "VERIFICANDO...";
-
-                const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-                
-                if(error) {
-                    // Si no existe, intentamos registrarlo como nuevo usuario elite
-                    const { data: up, error: errUp } = await sb.auth.signUp({ email, password: pass });
-                    if(up.user) {
-                        await sb.from('usuarios').insert({ id: up.user.id, saldo: 0 });
-                        InterfaceManager.toast("Bienvenido al Círculo Elite", "success");
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        InterfaceManager.toast("Acceso Denegado", "error");
-                        btn.disabled = false; btn.innerText = "Validar Credenciales";
-                    }
-                } else {
-                    location.reload();
-                }
-            },
-
-            async launch() {
-                InterfaceManager.showView('view-main');
-                await DataBridge.syncUserData();
-                await DataBridge.fetchHistory();
-                GameProcessor.setupReels();
-                this.hideLoader();
-            },
-
-            hideLoader() {
-                const l = document.getElementById('sys-loader');
-                l.style.opacity = '0';
-                l.style.pointerEvents = 'none';
-                setTimeout(() => l.remove(), 1000);
-            },
-
-            logout() { sb.auth.signOut(); location.reload(); }
+        // INICIALIZACIÓN DE SISTEMA
+        window.onload = () => {
+            setTimeout(() => InterfaceManager.updateLoader(20, "Iniciando Protocolos..."), 500);
+            setTimeout(() => InterfaceManager.updateLoader(60, "Cargando Módulos de Audio..."), 1200);
+            setTimeout(() => InterfaceManager.updateLoader(90, "Verificando Seguridad..."), 2000);
         };
-
-        /* 7. EVENT LISTENERS DINÁMICOS */
-        document.getElementById('input-file-evidence')?.addEventListener('change', (e) => {
-            if(e.target.files[0]) {
-                const label = document.getElementById('label-file-status');
-                label.innerText = "✅ COMPROBANTE LISTO";
-                label.classList.add('text-emerald-500');
-            }
-        });
-
-        // Inicio del Sistema
-        AuthGate.boot();
-
     </script>
 </body>
 </html>
