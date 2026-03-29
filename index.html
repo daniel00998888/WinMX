@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WinMX | Premium Casino</title>
     
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@300;400;600;800;900&display=swap');
-        :root { --mx-green: #10b981; --mx-yellow: #f59e0b; --mx-red: #ef4444; --mx-dark: #070707; }
+        :root { --mx-green: #10b981; --mx-dark: #070707; }
         body { background-color: var(--mx-dark); color: white; font-family: 'Inter', sans-serif; min-height: 100vh; overflow-x: hidden; }
         .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
         .glass-panel { background: rgba(18, 18, 18, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.07); }
@@ -24,18 +24,17 @@
         .btn-action { background: var(--mx-green); color: black; font-weight: 900; transition: all 0.3s ease; }
         .btn-action:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4); }
         .tab-btn.active { color: var(--mx-green); border-bottom: 3px solid var(--mx-green); }
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-
+        
         .input-auth { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 1.2rem; padding-right: 3.5rem; border-radius: 1.5rem; width: 100%; outline: none; transition: all 0.3s; color: white; }
-        .input-auth:focus { border-color: var(--mx-green); background: rgba(255,255,255,0.05); }
+        .input-auth:focus { border-color: var(--mx-green); }
         .hidden-view { display: none !important; }
         .pass-wrapper { position: relative; width: 100%; }
-        .toggle-pass { position: absolute; right: 1.5rem; top: 50%; transform: translateY(-50%); color: #444; cursor: pointer; transition: color 0.3s; }
-        .toggle-pass:hover { color: var(--mx-green); }
+        .toggle-pass { position: absolute; right: 1.5rem; top: 50%; transform: translateY(-50%); color: #444; cursor: pointer; }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
-<body class="antialiased">
+<body>
 
     <div id="boot-loader" class="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center transition-opacity duration-700">
         <div class="text-6xl font-casino italic mb-6 animate-pulse text-emerald-500">WinMX</div>
@@ -48,54 +47,51 @@
         <div class="glass-panel p-10 md:p-14 rounded-[3.5rem] w-full max-w-md animate__animated animate__fadeInUp">
             <div class="text-center mb-10">
                 <h2 class="text-4xl font-casino italic mb-2">Win<span class="text-emerald-500">MX</span></h2>
-                <p class="text-zinc-500 text-[10px] font-black uppercase tracking-[0.3em]">Acceso Exclusivo</p>
+                <p class="text-zinc-500 text-[10px] font-black uppercase tracking-[0.3em]">Acceso de Usuario</p>
             </div>
             <div class="space-y-4">
-                <input id="auth-email" type="email" placeholder="Correo electrónico" class="input-auth">
+                <input id="auth-email" type="email" placeholder="Email" class="input-auth">
                 <div class="pass-wrapper">
                     <input id="auth-password" type="password" placeholder="Contraseña" class="input-auth">
                     <i class="fas fa-eye toggle-pass" onclick="UI.togglePassword('auth-password', this)"></i>
                 </div>
                 <div class="grid grid-cols-2 gap-4 pt-6">
-                    <button onclick="AuthManager.login()" class="btn-action py-5 rounded-2xl font-casino text-lg text-black">Entrar</button>
-                    <button id="reg-btn" onclick="AuthManager.register()" class="bg-zinc-800 hover:bg-zinc-700 py-5 rounded-2xl font-casino text-sm">Registro</button>
+                    <button onclick="AuthManager.login()" class="btn-action py-5 rounded-2xl font-casino text-lg">Entrar</button>
+                    <button id="reg-btn" onclick="AuthManager.register()" class="bg-zinc-800 py-5 rounded-2xl font-casino text-sm">Registro</button>
                 </div>
             </div>
         </div>
     </div>
 
     <div id="main-app" class="opacity-0 transition-opacity duration-1000 hidden-view">
-        <nav class="glass-panel sticky top-0 z-[100] px-6 md:px-12 py-4 border-b border-white/5">
+        <nav class="glass-panel sticky top-0 z-[100] px-6 py-4 border-b border-white/5">
             <div class="max-w-7xl mx-auto flex justify-between items-center">
                 <h1 class="text-3xl font-casino italic">Win<span class="text-emerald-500">MX</span></h1>
                 <div class="flex items-center gap-6">
                     <div class="text-right">
-                        <span class="text-[10px] text-zinc-500 font-black uppercase tracking-widest">Balance Total</span>
+                        <span class="text-[10px] text-zinc-500 font-black uppercase">Balance</span>
                         <div id="balance-display" class="text-2xl md:text-4xl font-casino text-white leading-none">$0.00</div>
                     </div>
-                    <button onclick="AuthManager.logout()" class="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
-                        <i class="fas fa-power-off"></i>
-                    </button>
+                    <button onclick="AuthManager.logout()" class="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center"><i class="fas fa-power-off"></i></button>
                 </div>
             </div>
         </nav>
 
         <main class="max-w-7xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div class="lg:col-span-8 space-y-6">
-                <div class="glass-panel p-8 md:p-14 rounded-[3rem] md:rounded-[4rem]">
-                    <div class="grid grid-cols-3 gap-4 md:gap-8 mb-12">
+                <div class="glass-panel p-8 md:p-14 rounded-[3rem]">
+                    <div class="grid grid-cols-3 gap-4 mb-12">
                         <div class="slot-box"><div id="reel-1" class="slot-reel"></div></div>
                         <div class="slot-box"><div id="reel-2" class="slot-reel"></div></div>
                         <div class="slot-box"><div id="reel-3" class="slot-reel"></div></div>
                     </div>
                     <div class="flex flex-col md:flex-row items-center justify-between gap-8 bg-black/40 p-8 rounded-[3rem]">
                         <div class="flex items-center gap-6">
-                            <button onclick="Game.changeBet(-10)" class="w-14 h-14 rounded-2xl bg-zinc-800 flex items-center justify-center hover:bg-emerald-500 hover:text-black transition-all text-xl"><i class="fas fa-minus"></i></button>
+                            <button onclick="Game.changeBet(-10)" class="w-14 h-14 rounded-2xl bg-zinc-800 flex items-center justify-center hover:bg-emerald-500 hover:text-black transition-all"><i class="fas fa-minus"></i></button>
                             <div class="text-center min-w-[100px]">
-                                <p class="text-[10px] text-zinc-500 font-black uppercase mb-1">Apuesta</p>
                                 <span id="bet-display" class="text-4xl font-casino text-white">$10</span>
                             </div>
-                            <button onclick="Game.changeBet(10)" class="w-14 h-14 rounded-2xl bg-zinc-800 flex items-center justify-center hover:bg-emerald-500 hover:text-black transition-all text-xl"><i class="fas fa-plus"></i></button>
+                            <button onclick="Game.changeBet(10)" class="w-14 h-14 rounded-2xl bg-zinc-800 flex items-center justify-center hover:bg-emerald-500 hover:text-black transition-all"><i class="fas fa-plus"></i></button>
                         </div>
                         <button id="spin-btn" onclick="Game.spin()" class="btn-action w-full md:w-auto px-20 py-8 rounded-[2.5rem] font-casino text-4xl italic">GIRAR</button>
                     </div>
@@ -105,14 +101,14 @@
             <div class="lg:col-span-4">
                 <div class="glass-panel p-8 rounded-[3rem] min-h-[500px] flex flex-col">
                     <div class="grid grid-cols-2 gap-4 mb-8">
-                        <button onclick="UI.openModal('modal-deposit')" class="py-4 bg-emerald-500 text-black font-black rounded-2xl text-[11px] uppercase tracking-wider">Depositar</button>
-                        <button class="py-4 bg-zinc-800 text-zinc-500 font-black rounded-2xl text-[11px] uppercase cursor-not-allowed italic">Retirar</button>
+                        <button onclick="UI.openModal('modal-deposit')" class="py-4 bg-emerald-500 text-black font-black rounded-2xl text-[11px] uppercase">Depositar</button>
+                        <button class="py-4 bg-zinc-800 text-zinc-500 font-black rounded-2xl text-[11px] uppercase cursor-not-allowed">Retirar</button>
                     </div>
                     <div class="flex gap-6 mb-6 border-b border-white/5">
-                        <button onclick="UI.switchTab('bets')" id="tab-bets-btn" class="pb-3 text-[10px] font-bold uppercase tracking-widest tab-btn active">Actividad</button>
-                        <button onclick="UI.switchTab('deposits')" id="tab-deps-btn" class="pb-3 text-[10px] font-bold uppercase tracking-widest tab-btn">Depósitos</button>
+                        <button onclick="UI.switchTab('bets')" id="tab-bets-btn" class="pb-3 text-[10px] font-bold tab-btn active uppercase">Actividad</button>
+                        <button onclick="UI.switchTab('deposits')" id="tab-deps-btn" class="pb-3 text-[10px] font-bold tab-btn uppercase">Depósitos</button>
                     </div>
-                    <div id="history-content" class="flex-grow space-y-3 overflow-y-auto max-h-[450px] custom-scroll pr-2"></div>
+                    <div id="history-content" class="flex-grow space-y-3 overflow-y-auto max-h-[400px] custom-scroll"></div>
                 </div>
             </div>
         </main>
@@ -121,35 +117,32 @@
     <div id="modal-deposit" class="fixed inset-0 bg-black/95 backdrop-blur-xl z-[1000] flex items-center justify-center hidden p-4">
         <div class="glass-panel p-10 md:p-14 rounded-[3.5rem] w-full max-w-lg animate__animated animate__zoomIn">
             <div id="dep-step-1">
-                <h2 class="font-casino text-3xl text-center mb-8 italic">Monto a <span class="text-emerald-500">Recargar</span></h2>
-                <div class="relative mb-10 text-center">
-                    <input id="dep-amount" type="number" placeholder="0.00" class="w-full bg-transparent text-center text-6xl md:text-8xl font-casino border-b-2 border-zinc-900 focus:border-emerald-500 outline-none py-4 text-white">
-                </div>
-                <div class="grid grid-cols-3 gap-3 mb-10 text-center">
-                    <button onclick="UI.setDep(100)" class="py-4 bg-white/5 rounded-2xl text-[11px] font-black hover:bg-emerald-500 hover:text-black transition-all">+$100</button>
-                    <button onclick="UI.setDep(500)" class="py-4 bg-white/5 rounded-2xl text-[11px] font-black hover:bg-emerald-500 hover:text-black transition-all">+$500</button>
-                    <button onclick="UI.setDep(1000)" class="py-4 bg-white/5 rounded-2xl text-[11px] font-black hover:bg-emerald-500 hover:text-black transition-all">+$1000</button>
+                <h2 class="font-casino text-3xl text-center mb-8 italic">Monto <span class="text-emerald-500">MXN</span></h2>
+                <input id="dep-amount" type="number" placeholder="0.00" class="w-full bg-transparent text-center text-7xl font-casino border-b-2 border-zinc-900 focus:border-emerald-500 outline-none py-4 text-white">
+                <div class="grid grid-cols-3 gap-3 my-10">
+                    <button onclick="UI.setDep(100)" class="py-4 bg-white/5 rounded-2xl hover:bg-emerald-500 hover:text-black">+$100</button>
+                    <button onclick="UI.setDep(500)" class="py-4 bg-white/5 rounded-2xl hover:bg-emerald-500 hover:text-black">+$500</button>
+                    <button onclick="UI.setDep(1000)" class="py-4 bg-white/5 rounded-2xl hover:bg-emerald-500 hover:text-black">+$1000</button>
                 </div>
                 <button onclick="UI.depNextStep()" class="btn-action w-full py-7 rounded-3xl font-casino text-xl">Continuar</button>
             </div>
 
-            <div id="dep-step-2" class="hidden">
-                <h2 class="font-casino text-2xl text-center mb-4 italic">Instrucciones de <span class="text-emerald-500">Pago</span></h2>
-                <div class="bg-emerald-500/5 p-6 rounded-3xl border border-emerald-500/10 mb-6 text-center">
-                    <p class="text-[9px] font-black text-emerald-500 uppercase mb-2">Total a Transferir:</p>
+            <div id="dep-step-2" class="hidden text-center">
+                <h2 class="font-casino text-2xl mb-4 italic">Confirmar <span class="text-emerald-500">Pago</span></h2>
+                <div class="bg-emerald-500/5 p-6 rounded-3xl border border-emerald-500/10 mb-6">
+                    <p class="text-[9px] text-emerald-500 uppercase mb-2">Total a Recargar:</p>
                     <p id="dep-final-amount" class="text-4xl font-casino text-white mb-4">$0.00</p>
-                    <hr class="border-white/5 mb-4">
-                    <p class="text-[9px] font-black text-zinc-500 uppercase mb-1">CLAVE INTERBANCARIA (STP):</p>
-                    <p class="text-xl md:text-2xl font-mono font-bold text-white tracking-tighter">722 969 020 533 491 161</p>
+                    <p class="text-[9px] text-zinc-500 uppercase mb-1">CLAVE STP:</p>
+                    <p class="text-xl font-mono font-bold text-white">722 969 020 533 491 161</p>
                 </div>
                 <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
-                <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-3xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500 transition-all">
+                <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-3xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500">
                     <i class="fas fa-camera text-3xl text-zinc-700 mb-2"></i>
-                    <p id="file-label" class="text-[10px] font-black text-zinc-500 uppercase">Click para subir comprobante</p>
+                    <p id="file-label" class="text-[10px] text-zinc-500 uppercase font-black">Subir Comprobante</p>
                 </label>
                 <button id="final-dep-btn" onclick="Core.confirmDeposit()" class="btn-action w-full py-6 rounded-2xl font-casino text-xl mt-6">Validar Depósito</button>
             </div>
-            <button onclick="UI.closeModal('modal-deposit')" class="mt-8 block mx-auto text-[10px] font-black text-zinc-700 uppercase hover:text-white transition-colors">Cancelar depósito</button>
+            <button onclick="UI.closeModal('modal-deposit')" class="mt-8 block mx-auto text-[10px] text-zinc-700 uppercase hover:text-white">Cancelar</button>
         </div>
     </div>
 
@@ -174,30 +167,25 @@
                 const email = document.getElementById('auth-email').value;
                 const password = document.getElementById('auth-password').value;
                 const btn = document.getElementById('reg-btn');
-                
-                btn.disabled = true; btn.innerText = "REGISTRANDO...";
-                
+                btn.disabled = true; btn.innerText = "ESPERA...";
+
                 const { data, error } = await sb.auth.signUp({ email, password });
                 if (error) { btn.disabled = false; btn.innerText = "Registro"; return UI.notify(error.message, "error"); }
 
                 if (data.user) {
-                    await sb.from('usuarios').insert([{ id: data.user.id, email: email, saldo: 0 }]);
-                    UI.notify("Cuenta creada. ¡Ya puedes entrar!", "success");
+                    await sb.from('usuarios').upsert({ id: data.user.id, email: email, saldo: 0 });
+                    UI.notify("¡Registro exitoso! Ya puedes entrar.", "success");
                     btn.disabled = false; btn.innerText = "Registro";
                 }
             },
-            async logout() {
-                await sb.auth.signOut();
-                location.reload();
-            }
+            async logout() { await sb.auth.signOut(); location.reload(); }
         };
 
         const Core = {
             async init() {
                 let p = 0;
                 const int = setInterval(() => {
-                    p += 20;
-                    document.getElementById('boot-bar').style.width = `${Math.min(p, 100)}%`;
+                    p += 25; document.getElementById('boot-bar').style.width = `${p}%`;
                     if(p >= 100) { clearInterval(int); this.checkSession(); }
                 }, 50);
             },
@@ -205,29 +193,22 @@
                 const { data: { session } } = await sb.auth.getSession();
                 document.getElementById('boot-loader').classList.add('opacity-0');
                 setTimeout(() => document.getElementById('boot-loader').remove(), 700);
-
                 if (session) { 
                     State.user = session.user; 
                     document.getElementById('main-app').classList.remove('hidden-view');
                     setTimeout(() => document.getElementById('main-app').classList.add('opacity-100'), 50);
                     this.loadData(); 
-                } else {
-                    document.getElementById('auth-view').classList.remove('hidden-view');
-                }
+                } else { document.getElementById('auth-view').classList.remove('hidden-view'); }
             },
             async loadData() {
-                let { data, error } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                
-                if (error && error.code === 'PGRST116') {
-                    await sb.from('usuarios').insert([{ id: State.user.id, email: State.user.email, saldo: 0 }]);
-                    State.balance = 0;
-                } else if (data) {
-                    State.balance = data.saldo;
-                }
-
-                UI.updateBalance(); 
-                Game.initReels(); 
-                this.fetchHistory();
+                try {
+                    const { data, error } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
+                    if (error && error.code === 'PGRST116') {
+                        await sb.from('usuarios').insert([{ id: State.user.id, email: State.user.email, saldo: 0 }]);
+                        State.balance = 0;
+                    } else if (data) { State.balance = data.saldo; }
+                    UI.updateBalance(); Game.initReels(); this.fetchHistory();
+                } catch (e) { console.error(e); }
             },
             async fetchHistory() {
                 const { data } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', State.currentTab).order('created_at', { ascending: false });
@@ -236,31 +217,27 @@
             async confirmDeposit() {
                 const amt = parseFloat(document.getElementById('dep-amount').value);
                 const file = document.getElementById('receipt-input').files[0];
-                if(!amt || !file) return UI.notify("Sube el comprobante primero", "error");
+                if(!amt || !file) return UI.notify("Sube el comprobante", "error");
 
                 const btn = document.getElementById('final-dep-btn');
                 btn.disabled = true; btn.innerText = "ENVIANDO...";
 
                 try {
-                    const path = `evidence/${State.user.id}/${Date.now()}.png`;
+                    const fileName = `${State.user.id}-${Date.now()}.png`;
+                    const path = `evidence/${State.user.id}/${fileName}`;
                     await sb.storage.from('comprobantes').upload(path, file);
                     const { data: { publicUrl } } = sb.storage.from('comprobantes').getPublicUrl(path);
 
-                    const { error } = await sb.from('history').insert({
+                    const { error } = await sb.from('history').insert([{
                         user_id: State.user.id, type: 'deposits', amount: amt, label: 'DEPÓSITO', status: 'pending', evidence_url: publicUrl
-                    });
+                    }]);
 
                     if(error) throw error;
-
-                    UI.notify("Depósito enviado a revisión", "success");
+                    UI.notify("Depósito en revisión", "success");
                     UI.closeModal('modal-deposit');
                     this.fetchHistory();
-                } catch (e) {
-                    UI.notify("Error al enviar depósito", "error");
-                    console.error(e);
-                } finally {
-                    btn.disabled = false; btn.innerText = "Validar Depósito";
-                }
+                } catch (e) { UI.notify("Error al enviar depósito", "error"); console.error(e); }
+                finally { btn.disabled = false; btn.innerText = "Validar Depósito"; }
             }
         };
 
@@ -294,7 +271,7 @@
                 setTimeout(async () => {
                     State.balance += netChange;
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                    await sb.from('history').insert({ user_id: State.user.id, type: 'bets', amount: netChange, label: winMult > 0 ? `PREMIO X${winMult}` : 'JUEGO', status: 'completed' });
+                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: netChange, label: winMult > 0 ? `PREMIO X${winMult}` : 'JUEGO', status: 'completed' }]);
                     UI.updateBalance(); Core.fetchHistory();
                     State.isSpinning = false; btn.disabled = false;
                     this.resetReels();
@@ -316,9 +293,7 @@
                 input.type = isPass ? "text" : "password";
                 icon.className = isPass ? "fas fa-eye-slash toggle-pass" : "fas fa-eye toggle-pass";
             },
-            handleFile(input) {
-                if(input.files[0]) document.getElementById('file-label').innerText = "Imagen cargada ✅";
-            },
+            handleFile(input) { if(input.files[0]) document.getElementById('file-label').innerText = "RECIBO CARGADO ✅"; },
             updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toLocaleString()}`; },
             notify(m, t) {
                 const c = document.getElementById('notif-container');
@@ -332,12 +307,11 @@
                 document.getElementById(id).classList.add('hidden');
                 document.getElementById('dep-step-1').classList.remove('hidden');
                 document.getElementById('dep-step-2').classList.add('hidden');
-                document.getElementById('file-label').innerText = "Click para subir comprobante";
             },
             setDep(v) { document.getElementById('dep-amount').value = v; },
             depNextStep() { 
                 const amt = document.getElementById('dep-amount').value;
-                if(!amt || amt <= 0) return UI.notify("Pon un monto válido", "error");
+                if(!amt || amt <= 0) return UI.notify("Monto inválido", "error");
                 document.getElementById('dep-final-amount').innerText = `$${parseFloat(amt).toLocaleString()}`;
                 document.getElementById('dep-step-1').classList.add('hidden'); 
                 document.getElementById('dep-step-2').classList.remove('hidden'); 
@@ -351,17 +325,16 @@
             renderHistory(data) {
                 const c = document.getElementById('history-content');
                 c.innerHTML = data.length ? data.map(i => {
-                    let colorClass = 'text-zinc-500', statusText = i.label;
+                    let color = 'text-zinc-500', label = i.label;
                     if (i.type === 'deposits') {
-                        if (i.status === 'pending') { colorClass = 'text-amber-500'; statusText = 'DEPOSITO PENDIENTE ⏳'; }
-                        else if (i.status === 'completed') { colorClass = 'text-emerald-500'; statusText = 'DEPOSITO APROBADO ✅'; }
-                        else if (i.status === 'rejected') { colorClass = 'text-red-500'; statusText = 'DEPOSITO RECHAZADO ❌'; }
-                    } else if (i.amount > 0) colorClass = 'text-emerald-500';
+                        if (i.status === 'pending') { color = 'text-amber-500'; label = 'PENDIENTE ⏳'; }
+                        else if (i.status === 'completed') { color = 'text-emerald-500'; label = 'APROBADO ✅'; }
+                    } else if (i.amount > 0) color = 'text-emerald-500';
                     return `<div class="p-5 bg-white/5 rounded-3xl flex justify-between items-center border border-white/5">
-                        <div><p class="text-[9px] font-black uppercase mb-1 ${colorClass}">${statusText}</p>
-                        <p class="text-[11px] font-bold text-zinc-600">${new Date(i.created_at).toLocaleTimeString()}</p></div>
-                        <p class="font-casino ${colorClass}">${i.amount >= 0 ? '+' : ''}$${Math.abs(i.amount)}</p></div>`;
-                }).join('') : '<p class="text-center text-zinc-800 font-bold uppercase text-[10px] py-10 italic">Sin actividad</p>';
+                        <div><p class="text-[9px] font-black ${color}">${label}</p>
+                        <p class="text-[11px] text-zinc-600">${new Date(i.created_at).toLocaleTimeString()}</p></div>
+                        <p class="font-casino ${color}">${i.amount >= 0 ? '+' : ''}$${Math.abs(i.amount)}</p></div>`;
+                }).join('') : '<p class="text-center text-zinc-800 font-bold uppercase text-[10px] py-10">Sin actividad</p>';
             }
         };
 
