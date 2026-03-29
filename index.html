@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WinMX Platinum | Professional Casino Interface</title>
+    <title>WinMX Platinum | Professional Casino Infrastructure</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -11,14 +11,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@300;400;600;700;800;900&display=swap');
 
         :root {
-            --stake-dark: #0f212e;
+            --stake-dark: #0f212e; /* El azul oscuro de Stake */
             --stake-bg: #1a2c38;
             --stake-card: #213743;
             --stake-green: #00e701;
             --stake-blue: #2f4553;
+            --stake-text: #b1bad3;
         }
 
         body {
@@ -28,16 +29,13 @@
             overflow-x: hidden;
         }
 
-        /* --- SIDEBAR --- */
+        /* --- STAKE SIDEBAR --- */
         .sidebar {
             width: 240px;
             background: var(--stake-dark);
-            border-right: 2px solid var(--stake-blue);
+            border-right: 1px solid var(--stake-blue);
             height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            transition: 0.3s;
+            position: fixed; left: 0; top: 0;
             z-index: 100;
         }
 
@@ -45,11 +43,11 @@
             display: flex;
             align-items: center;
             padding: 12px 20px;
-            color: #b1bad3;
-            font-weight: 600;
+            color: var(--stake-text);
+            font-weight: 700;
             font-size: 14px;
-            transition: 0.2s;
             cursor: pointer;
+            transition: 0.2s;
         }
 
         .nav-item:hover, .nav-item.active {
@@ -59,322 +57,315 @@
 
         .nav-item i { width: 25px; margin-right: 12px; }
 
-        /* --- MAIN CONTENT --- */
+        /* --- MAIN CONTENT AREA --- */
         .main-content {
             margin-left: 240px;
-            padding: 20px;
+            padding: 0;
             min-height: 100vh;
         }
 
-        /* --- STAKE STYLE CARDS --- */
-        .game-card {
-            background: var(--stake-card);
-            border-radius: 8px;
-            overflow: hidden;
-            transition: transform 0.2s;
-            cursor: pointer;
-            border-bottom: 4px solid transparent;
-        }
-
-        .game-card:hover {
-            transform: translateY(-5px);
-            border-bottom: 4px solid var(--stake-green);
-        }
-
-        .game-thumb {
-            height: 180px;
-            background-size: cover;
-            background-position: center;
-            position: relative;
-        }
-
-        /* --- SLOT REELS --- */
-        .slot-container {
-            background: var(--stake-bg);
-            border-radius: 12px;
-            padding: 40px;
-            border: 1px solid var(--stake-blue);
-        }
-
-        .reel {
-            height: 140px;
-            background: var(--stake-dark);
-            border-radius: 8px;
-            overflow: hidden;
-            border: 2px solid var(--stake-blue);
-        }
-
-        .reel-strip { transition: transform 3s cubic-bezier(0.1, 0, 0.1, 1); }
-        .symbol { height: 140px; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
-
-        /* --- NAVBAR TOP --- */
+        /* --- TOP NAVIGATION --- */
         .top-nav {
             background: var(--stake-bg);
-            padding: 12px 40px;
+            padding: 12px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 90;
+            position: sticky; top: 0; z-index: 90;
         }
 
         .balance-pill {
             background: var(--stake-dark);
-            padding: 8px 16px;
+            padding: 6px 12px;
             border-radius: 4px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-weight: 700;
+            gap: 12px;
             border: 1px solid var(--stake-blue);
         }
 
-        .btn-deposit {
-            background: #213743;
-            color: #fff;
-            padding: 10px 20px;
-            border-radius: 4px;
-            font-weight: 700;
-            transition: 0.2s;
+        /* --- CASINO CARDS --- */
+        .game-card {
+            background: var(--stake-card);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: 0.3s;
+            cursor: pointer;
         }
 
-        .btn-deposit:hover { background: #2f4553; }
+        .game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
 
-        .btn-spin {
+        .game-thumb {
+            height: 160px;
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* --- SLOT MACHINE ENGINE (Ajustado a Stake) --- */
+        .slot-container {
+            background: var(--stake-bg);
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid var(--stake-blue);
+        }
+
+        .slot-box {
+            height: 120px; 
+            overflow: hidden;
+            background: var(--stake-dark);
+            border: 2px solid var(--stake-blue);
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .slot-item {
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+
+        .btn-stake-green {
             background: var(--stake-green);
             color: #000;
-            width: 100%;
-            padding: 20px;
-            border-radius: 8px;
             font-weight: 800;
-            font-size: 1.2rem;
+            padding: 18px;
+            border-radius: 8px;
+            width: 100%;
+            transition: 0.2s;
             text-transform: uppercase;
         }
 
-        .btn-spin:disabled { opacity: 0.5; filter: grayscale(1); }
+        .btn-stake-green:hover { filter: brightness(1.1); }
+        .btn-stake-green:disabled { opacity: 0.5; filter: grayscale(1); }
+
     </style>
 </head>
 <body>
 
     <aside class="sidebar hidden md:block">
         <div class="p-6">
-            <h2 class="text-2xl font-black italic">Win<span class="text-emerald-500">MX</span></h2>
+            <h1 class="text-2xl font-black italic">Win<span class="text-emerald-500">MX</span></h1>
         </div>
-        <nav class="mt-4">
+        <nav class="mt-2">
             <div class="nav-item active"><i class="fas fa-star"></i> Favoritos</div>
             <div class="nav-item"><i class="fas fa-history"></i> Reciente</div>
             <div class="nav-item"><i class="fas fa-trophy"></i> Desafíos</div>
-            <div class="nav-item"><i class="fas fa-receipt"></i> Mis Apuestas</div>
-            <div class="px-6 py-4 text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Juegos</div>
-            <div class="nav-item"><i class="fas fa-gem"></i> Solo en Stake</div>
-            <div class="nav-item"><i class="fas fa-rocket"></i> Lanzamientos</div>
+            <div class="px-6 py-4 text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Casino</div>
             <div class="nav-item"><i class="fas fa-dice"></i> Slots</div>
-            <div class="nav-item"><i class="fas fa-fire"></i> Originales</div>
+            <div class="nav-item"><i class="fas fa-fire"></i> WinMX Originals</div>
+            <div class="nav-item"><i class="fas fa-gem"></i> Live Casino</div>
         </nav>
     </aside>
 
-    <div id="app-view" class="main-content">
-        
-        <nav class="top-nav rounded-xl mb-8">
-            <div class="flex items-center gap-4">
-                <button class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
-                <span class="font-bold text-zinc-400">MX$0.05 🇲🇽 <i class="fas fa-chevron-down text-[10px]"></i></span>
+    <div id="view-auth" class="fixed inset-0 z-[1000] bg-[#071620] flex items-center justify-center p-6">
+        <div class="w-full max-w-md space-y-8 text-center">
+            <h2 class="text-5xl font-black italic mb-12">Win<span class="text-emerald-500">MX</span></h2>
+            <div class="bg-[#1a2c38] p-8 rounded-xl border border-[#2f4553] space-y-4">
+                <input id="input-email" type="email" placeholder="Email" class="w-full bg-[#0f212e] p-4 rounded border border-[#2f4553] outline-none focus:border-emerald-500 text-white">
+                <input id="input-pass" type="password" placeholder="Password" class="w-full bg-[#0f212e] p-4 rounded border border-[#2f4553] outline-none focus:border-emerald-500 text-white">
+                <button onclick="AuthGate.process()" class="w-full bg-emerald-500 text-black font-bold py-4 rounded hover:bg-emerald-400 transition-all">Iniciar Sesión</button>
             </div>
+        </div>
+    </div>
+
+    <div id="view-main" class="main-content hidden">
+        <nav class="top-nav">
             <div class="flex items-center gap-4">
+                <button class="md:hidden text-xl"><i class="fas fa-bars"></i></button>
+                <div class="font-bold text-zinc-400 text-sm">WinMX Platinum</div>
+            </div>
+            
+            <div class="flex items-center gap-6">
                 <div class="balance-pill">
-                    <span id="display-balance" class="text-emerald-400">$0.00</span>
-                    <button class="bg-blue-600 px-3 py-1 rounded text-xs">Monedero</button>
+                    <span id="display-balance" class="font-bold text-white">$0.00</span>
+                    <button onclick="InterfaceManager.toggleModal('modal-cashier', true)" class="bg-blue-600 px-3 py-1 rounded text-[10px] font-bold">MONEDERO</button>
                 </div>
-                <i class="fas fa-search text-zinc-400"></i>
-                <i class="fas fa-user text-zinc-400"></i>
-                <i class="fas fa-bell text-zinc-400"></i>
+                <button onclick="AuthGate.logout()" class="text-zinc-500 hover:text-white"><i class="fas fa-sign-out-alt"></i></button>
             </div>
         </nav>
 
-        <div id="dashboard" class="animate__animated animate__fadeIn">
-            <h3 class="text-xl font-bold mb-6 flex items-center gap-3">
-                <i class="fas fa-fire text-orange-500"></i> Originales De WinMX
-            </h3>
-            
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                <div onclick="GameUI.loadGame('slots')" class="game-card">
-                    <div class="game-thumb" style="background-image: url('https://images.unsplash.com/photo-1596743444221-a379434863f6?q=80&w=500&auto=format&fit=crop');">
-                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                            <i class="fas fa-play text-4xl text-white"></i>
-                        </div>
+        <main class="p-6 md:p-12 max-w-6xl mx-auto">
+            <div id="dashboard">
+                <h3 class="font-bold text-lg mb-6 flex items-center gap-2">
+                    <i class="fas fa-rocket text-emerald-500"></i> Originales de WinMX
+                </h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    <div onclick="InterfaceManager.showGame()" class="game-card">
+                        <div class="game-thumb" style="background-image: url('https://images.unsplash.com/photo-1518133835878-5a93cc3f89e5?q=80&w=300');"></div>
+                        <div class="p-3 text-xs font-bold">PLATINUM SLOTS</div>
                     </div>
-                    <div class="p-3 text-center">
-                        <p class="font-bold text-sm">PLATINUM SLOTS</p>
-                        <p class="text-[10px] text-zinc-500">WINMX ORIGINAL</p>
-                    </div>
-                </div>
-                <div class="game-card opacity-50 grayscale">
-                    <div class="game-thumb" style="background-image: url('https://images.unsplash.com/photo-1518133835878-5a93cc3f89e5?q=80&w=500&auto=format&fit=crop');"></div>
-                    <div class="p-3 text-center"><p class="font-bold text-sm">MINES</p></div>
-                </div>
-                <div class="game-card opacity-50 grayscale">
-                    <div class="game-thumb" style="background-image: url('https://images.unsplash.com/photo-1596838132731-3301c3fd4317?q=80&w=500&auto=format&fit=crop');"></div>
-                    <div class="p-3 text-center"><p class="font-bold text-sm">DICE</p></div>
+                    <div class="game-card opacity-50"><div class="game-thumb" style="background-image: url('https://images.unsplash.com/photo-1596838132731-3301c3fd4317?q=80&w=300');"></div><div class="p-3 text-xs font-bold">DICE</div></div>
+                    <div class="game-card opacity-50"><div class="game-thumb" style="background-image: url('https://images.unsplash.com/photo-1596743444221-a379434863f6?q=80&w=300');"></div><div class="p-3 text-xs font-bold">MINES</div></div>
                 </div>
             </div>
-        </div>
 
-        <div id="game-window" class="hidden animate__animated animate__zoomIn">
-            <div class="max-w-4xl mx-auto">
-                <div class="flex justify-between items-center mb-6">
-                    <button onclick="GameUI.closeGame()" class="text-zinc-500 hover:text-white"><i class="fas fa-arrow-left"></i> Volver</button>
-                    <h2 class="font-bold">PLATINUM SLOTS</h2>
-                    <div></div>
-                </div>
-
+            <div id="game-window" class="hidden animate__animated animate__fadeIn">
+                <button onclick="InterfaceManager.hideGame()" class="mb-6 text-zinc-500 hover:text-white"><i class="fas fa-arrow-left"></i> Volver al Lobby</button>
+                
                 <div class="slot-container">
-                    <div class="grid grid-cols-3 gap-6 mb-10">
-                        <div class="reel"><div id="reel-1" class="reel-strip"></div></div>
-                        <div class="reel"><div id="reel-2" class="reel-strip"></div></div>
-                        <div class="reel"><div id="reel-3" class="reel-strip"></div></div>
+                    <div class="grid grid-cols-3 gap-4 mb-8">
+                        <div id="reel-1" class="slot-box"><div class="slot-reel"></div></div>
+                        <div id="reel-2" class="slot-box"><div class="slot-reel"></div></div>
+                        <div id="reel-3" class="slot-box"><div class="slot-reel"></div></div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
                         <div class="bg-stake-dark p-4 rounded-lg border border-stake-blue">
-                            <p class="text-[10px] text-zinc-500 font-bold mb-2">MONTO DE APUESTA</p>
-                            <div class="flex items-center justify-between">
-                                <span id="display-bet" class="font-bold">$100</span>
-                                <div class="flex gap-2">
-                                    <button onclick="GameEngine.changeBet(-25)" class="bg-stake-blue px-3 py-1 rounded">½</button>
-                                    <button onclick="GameEngine.changeBet(25)" class="bg-stake-blue px-3 py-1 rounded">2x</button>
+                            <p class="text-[10px] text-zinc-500 font-bold mb-2">APUESTA</p>
+                            <div class="flex justify-between items-center">
+                                <span id="display-bet" class="font-bold text-xl">$100</span>
+                                <div class="flex gap-1">
+                                    <button onclick="GameProcessor.updateBet(-25)" class="bg-stake-blue px-2 py-1 rounded text-[10px]">½</button>
+                                    <button onclick="GameProcessor.updateBet(25)" class="bg-stake-blue px-2 py-1 rounded text-[10px]">2x</button>
                                 </div>
                             </div>
                         </div>
                         <div class="md:col-span-2">
-                            <button id="spin-btn" onclick="GameEngine.spin()" class="btn-spin">Apostar</button>
+                            <button id="spin-main-btn" onclick="GameProcessor.initSpin()" class="btn-stake-green">Apostar</button>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-
+        </main>
     </div>
 
-    <div id="login-screen" class="fixed inset-0 z-[200] bg-black/90 backdrop-blur-md flex items-center justify-center p-6">
-        <div class="bg-stake-bg p-10 rounded-xl w-full max-w-md border border-stake-blue">
-            <h2 class="text-3xl font-black italic text-center mb-8">Win<span class="text-emerald-500">MX</span></h2>
-            <div class="space-y-4">
-                <input id="auth-email" type="email" placeholder="Correo electrónico" class="w-full bg-stake-dark p-4 rounded border border-stake-blue outline-none focus:border-emerald-500">
-                <input id="auth-pass" type="password" placeholder="Contraseña" class="w-full bg-stake-dark p-4 rounded border border-stake-blue outline-none focus:border-emerald-500">
-                <button onclick="System.login()" class="w-full bg-emerald-500 text-black font-bold py-4 rounded hover:bg-emerald-400 transition-all">Iniciar Sesión</button>
-            </div>
+    <div id="modal-cashier" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[2000] hidden items-center justify-center p-6">
+        <div class="bg-stake-bg p-8 rounded-xl border border-stake-blue w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-6">Depositar Fondos</h2>
+            <input id="input-dep-amount" type="number" placeholder="Monto MXN" class="w-full bg-stake-dark p-4 rounded border border-stake-blue outline-none mb-4">
+            <button onclick="DataBridge.confirmDeposit()" class="w-full bg-blue-600 text-white font-bold py-4 rounded">Confirmar</button>
+            <button onclick="InterfaceManager.toggleModal('modal-cashier', false)" class="w-full mt-2 text-zinc-500 text-sm">Cerrar</button>
         </div>
     </div>
 
     <script>
-        // CONFIGURACIÓN CENTRAL
-        const SB_URL = "https://dakhnqriwbzihlzhtfcb.supabase.co";
-        const SB_KEY = "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs"; 
-        const sb = window.supabase.createClient(SB_URL, SB_KEY);
+        // --- TU CONFIGURACIÓN QUE YA FUNCIONA ---
+        const SUPABASE_URL = "https://dakhnqriwbzihlzhtfcb.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs"; // Tu key original
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const STATE = {
+        const APP_STATE = {
             user: null,
             balance: 0,
-            bet: 100,
-            playing: false,
-            symbols: ['💎', '⭐️', '🔔', '🍋', '🍒', '7️⃣']
+            currentBet: 100,
+            isSpinning: false,
+            symbols: ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'],
+            odds: { '🍒🍒🍒': 5, '🍋🍋🍋': 10, '🔔🔔🔔': 20, '⭐️⭐️⭐️': 50, '💎💎💎': 150, '7️⃣7️⃣7️⃣': 500 }
         };
 
-        // GESTIÓN DE INTERFAZ
-        const GameUI = {
-            loadGame(game) {
-                document.getElementById('dashboard').classList.add('hidden');
-                document.getElementById('game-window').classList.remove('hidden');
-                GameEngine.initReels();
-            },
-            closeGame() {
-                document.getElementById('game-window').classList.add('hidden');
-                document.getElementById('dashboard').classList.remove('hidden');
-            },
-            updateBalance() {
-                document.getElementById('display-balance').innerText = `$${STATE.balance.toFixed(2)}`;
-            }
-        };
-
-        // MOTOR DE JUEGO
-        const GameEngine = {
-            initReels() {
-                for(let i=1; i<=3; i++) {
-                    const r = document.getElementById(`reel-${i}`);
-                    r.innerHTML = '';
-                    for(let s=0; s<50; s++) {
-                        const sym = STATE.symbols[Math.floor(Math.random()*STATE.symbols.length)];
-                        r.innerHTML += `<div class="symbol">${sym}</div>`;
-                    }
+        const AuthGate = {
+            async process() {
+                const email = document.getElementById('input-email').value;
+                const pass = document.getElementById('input-pass').value;
+                
+                // Usamos eq().eq() como en tu script original
+                const { data, error } = await sb.from('usuarios').select('*').eq('email', email).eq('password', pass).single();
+                
+                if(data) {
+                    APP_STATE.user = data;
+                    APP_STATE.balance = data.saldo;
+                    document.getElementById('view-auth').classList.add('hidden');
+                    document.getElementById('view-main').classList.remove('hidden');
+                    InterfaceManager.refreshBalance();
+                    GameProcessor.setupReels();
+                } else {
+                    alert("Error: Usuario no encontrado o clave incorrecta");
                 }
             },
-            changeBet(amt) {
-                STATE.bet = Math.max(25, STATE.bet + amt);
-                document.getElementById('display-bet').innerText = `$${STATE.bet}`;
+            logout() { location.reload(); }
+        };
+
+        const GameProcessor = {
+            setupReels() {
+                [1,2,3].forEach(id => {
+                    const el = document.querySelector(`#reel-${id} .slot-reel`);
+                    el.innerHTML = '';
+                    for(let i=0; i<100; i++) {
+                        const sym = APP_STATE.symbols[Math.floor(Math.random() * APP_STATE.symbols.length)];
+                        el.innerHTML += `<div class="slot-item">${sym}</div>`;
+                    }
+                });
             },
-            async spin() {
-                if(STATE.playing || STATE.balance < STATE.bet) return;
-                
-                STATE.playing = true;
-                document.getElementById('spin-btn').disabled = true;
-                STATE.balance -= STATE.bet;
-                GameUI.updateBalance();
+            updateBet(val) {
+                APP_STATE.currentBet = Math.max(25, APP_STATE.currentBet + val);
+                document.getElementById('display-bet').innerText = `$${APP_STATE.currentBet}`;
+            },
+            async initSpin() {
+                if(APP_STATE.isSpinning || APP_STATE.balance < APP_STATE.currentBet) return;
+
+                APP_STATE.isSpinning = true;
+                const btn = document.getElementById('spin-main-btn');
+                btn.disabled = true;
+
+                APP_STATE.balance -= APP_STATE.currentBet;
+                InterfaceManager.refreshBalance();
 
                 const results = [
-                    Math.floor(Math.random()*6),
-                    Math.floor(Math.random()*6),
-                    Math.floor(Math.random()*6)
+                    APP_STATE.symbols[Math.floor(Math.random()*6)],
+                    APP_STATE.symbols[Math.floor(Math.random()*6)],
+                    APP_STATE.symbols[Math.floor(Math.random()*6)]
                 ];
 
-                for(let i=1; i<=3; i++) {
-                    const r = document.getElementById(`reel-${i}`);
-                    r.style.transition = `transform ${2 + (i*0.5)}s cubic-bezier(0.1, 0, 0.1, 1)`;
-                    r.style.transform = `translateY(-${(40 + results[i-1]) * 140}px)`;
-                }
+                [1,2,3].forEach((id, i) => {
+                    const reel = document.querySelector(`#reel-${id} .slot-reel`);
+                    const symbolIndex = APP_STATE.symbols.indexOf(results[i]);
+                    const offset = (80 + symbolIndex) * 120; // 120 es la altura del item
+                    reel.style.transition = `transform ${3 + (i * 0.5)}s cubic-bezier(0.1, 0, 0.1, 1)`;
+                    reel.style.transform = `translateY(-${offset}px)`;
+                });
 
                 setTimeout(async () => {
-                    if(results[0] === results[1] && results[1] === results[2]) {
-                        const win = STATE.bet * 10;
-                        STATE.balance += win;
-                        alert(`¡GANASTE $${win}!`);
+                    const multiplier = APP_STATE.odds[results.join('')] || 0;
+                    if(multiplier > 0) {
+                        const win = APP_STATE.currentBet * multiplier;
+                        APP_STATE.balance += win;
+                        alert("¡GANASTE $" + win + "!");
                     }
-                    
-                    await System.syncBalance();
-                    STATE.playing = false;
-                    document.getElementById('spin-btn').disabled = false;
-                    this.resetReels(results);
+
+                    await DataBridge.syncBalance();
+                    InterfaceManager.refreshBalance();
+                    APP_STATE.isSpinning = false;
+                    btn.disabled = false;
                 }, 4000);
+            }
+        };
+
+        const DataBridge = {
+            async syncBalance() {
+                await sb.from('usuarios').update({ saldo: APP_STATE.balance }).eq('id', APP_STATE.user.id);
             },
-            resetReels(res) {
-                for(let i=1; i<=3; i++) {
-                    const r = document.getElementById(`reel-${i}`);
-                    r.style.transition = 'none';
-                    r.style.transform = `translateY(-${res[i-1] * 140}px)`;
+            async confirmDeposit() {
+                const amt = parseFloat(document.getElementById('input-dep-amount').value);
+                if(amt > 0) {
+                    APP_STATE.balance += amt;
+                    await this.syncBalance();
+                    InterfaceManager.refreshBalance();
+                    InterfaceManager.toggleModal('modal-cashier', false);
+                    alert("Depósito acreditado");
                 }
             }
         };
 
-        // SISTEMA CORE
-        const System = {
-            async login() {
-                const email = document.getElementById('auth-email').value;
-                const pass = document.getElementById('auth-pass').value;
-
-                const { data, error } = await sb.from('usuarios')
-                    .select('*').eq('email', email).eq('password', pass).maybeSingle();
-
-                if(data) {
-                    STATE.user = data;
-                    STATE.balance = data.saldo;
-                    document.getElementById('login-screen').classList.add('hidden');
-                    GameUI.updateBalance();
-                } else {
-                    alert("Error de acceso");
-                }
+        const InterfaceManager = {
+            refreshBalance() {
+                document.getElementById('display-balance').innerText = `$${APP_STATE.balance.toFixed(2)}`;
             },
-            async syncBalance() {
-                await sb.from('usuarios').update({ saldo: STATE.balance }).eq('id', STATE.user.id);
+            toggleModal(id, show) {
+                document.getElementById(id).classList.toggle('hidden', !show);
+                document.getElementById(id).classList.add('flex');
+            },
+            showGame() {
+                document.getElementById('dashboard').classList.add('hidden');
+                document.getElementById('game-window').classList.remove('hidden');
+            },
+            hideGame() {
+                document.getElementById('game-window').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
             }
         };
     </script>
