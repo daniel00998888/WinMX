@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WinMX | Premium Casino & Slots</title>
+    <title>WinMX | Plataforma Profesional v2.0</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -11,210 +11,205 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;700;900&display=swap');
-        :root { --mx-green: #00ff88; --mx-bg: #050505; --mx-surface: #0f0f0f; }
         
-        body { background-color: var(--mx-bg); color: white; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; }
+        :root { --mx-green: #00ff88; --mx-bg: #050505; --mx-surface: #0f0f0f; --mx-border: #1a1a1a; }
+        
+        body { background: var(--mx-bg); color: white; font-family: 'Inter', sans-serif; height: 100vh; display: flex; overflow: hidden; margin: 0; }
         .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
 
-        /* NAVBAR SUPERIOR */
-        .top-nav { background: rgba(10,10,10,0.9); border-bottom: 1px solid #1a1a1a; backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; }
-        
-        /* AREA DE JUEGO PRINCIPAL */
-        .arena {
-            max-width: 900px; margin: 20px auto; flex-grow: 1;
-            display: flex; flex-direction: column; background: #0c0c0c;
-            border-radius: 2.5rem; border: 1px solid #1a1a1a; overflow: hidden;
-            position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-        }
+        /* AUTH SCREEN */
+        #auth-screen { position: fixed; inset: 0; background: var(--mx-bg); z-index: 5000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .auth-card { background: var(--mx-surface); width: 100%; max-width: 400px; padding: 40px; border-radius: 2.5rem; border: 1px solid var(--mx-border); text-align: center; }
+        .auth-input { width: 100%; background: #000; border: 1px solid var(--mx-border); padding: 15px 20px; border-radius: 12px; margin-bottom: 12px; outline: none; color: white; }
+        .auth-input:focus { border-color: var(--mx-green); }
+
+        /* SIDEBAR */
+        aside { width: 260px; background: var(--mx-surface); border-right: 1px solid var(--mx-border); display: flex; flex-direction: column; flex-shrink: 0; z-index: 100; }
+        .nav-item { padding: 15px 25px; display: flex; align-items: center; gap: 12px; color: #555; cursor: pointer; transition: 0.2s; font-size: 13px; font-weight: 800; text-transform: uppercase; }
+        .nav-item:hover, .nav-item.active { color: var(--mx-green); background: rgba(0,255,136,0.05); }
+        .nav-item.active { border-right: 3px solid var(--mx-green); color: var(--mx-green); }
+
+        /* MAIN CONTENT */
+        main { flex-grow: 1; display: flex; flex-direction: column; position: relative; height: 100vh; }
+        header { height: 75px; background: var(--mx-surface); border-bottom: 1px solid var(--mx-border); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; }
+
+        /* GAME AREA */
+        #game-container { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; overflow-y: auto; background: radial-gradient(circle at center, #111 0%, #050505 100%); }
+        .game-frame { width: 100%; max-width: 850px; aspect-ratio: 16/9; background: #000; border-radius: 30px; border: 1px solid var(--mx-border); position: relative; overflow: hidden; display: flex; box-shadow: 0 40px 100px rgba(0,0,0,0.8); }
 
         /* SLOTS REELS */
-        .slot-reel { height: 160px; overflow: hidden; border-radius: 1.5rem; background: #000; border: 1px solid #222; position: relative; }
-        .reel-strip { transition: transform 3s cubic-bezier(0.1, 0, 0.1, 1); }
+        .reel-container { flex: 1; border-right: 1px solid #111; position: relative; overflow: hidden; }
+        .reel-strip { position: absolute; width: 100%; transition: transform 3s cubic-bezier(0.1, 0, 0.1, 1); top: 0; }
+        .symbol { height: 160px; display: flex; align-items: center; justify-content: center; font-size: 4rem; }
 
-        /* CONSOLA DE APUESTAS */
-        .console { background: #000; border-top: 1px solid #1a1a1a; padding: 25px 40px; }
-        .bet-input { background: #111; border: 1px solid #222; border-radius: 1.2rem; padding: 10px 20px; display: flex; align-items: center; }
-        
-        .btn-main {
-            background: var(--mx-green); color: black; font-family: 'Archivo Black';
-            font-size: 1.3rem; border-radius: 1.2rem; width: 100%; height: 60px;
-            transition: 0.2s; box-shadow: 0 8px 25px rgba(0,255,136,0.2);
-        }
-        .btn-main:active { transform: scale(0.96); }
-        .btn-main:disabled { background: #222; color: #444; box-shadow: none; cursor: not-allowed; }
+        /* CONTROL BAR */
+        .control-bar { background: var(--mx-surface); border-top: 1px solid var(--mx-border); padding: 25px 40px; display: flex; gap: 20px; align-items: center; }
+        .bet-selector { background: #000; border: 1px solid var(--mx-border); border-radius: 15px; display: flex; align-items: center; padding: 5px 20px; flex-grow: 1; }
+        .btn-play { background: var(--mx-green); color: #000; font-family: 'Archivo Black'; padding: 18px 50px; border-radius: 15px; font-size: 20px; transition: 0.2s; box-shadow: 0 10px 30px rgba(0,255,136,0.2); border: none; cursor: pointer; }
+        .btn-play:disabled { background: #222; color: #444; box-shadow: none; cursor: not-allowed; }
 
-        /* MODAL DEPOSITO ORIGINAL */
-        #modal-dep { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .dep-card { background: #0f0f0f; border-radius: 3rem; padding: 45px; width: 100%; max-width: 400px; border: 1px solid #222; text-align: center; }
+        /* MODAL DEPOSITO */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 2000; display: none; align-items: center; justify-content: center; }
+        .modal-content { background: #0f0f0f; padding: 50px; border-radius: 3.5rem; border: 1px solid #222; width: 100%; max-width: 420px; text-align: center; }
 
-        /* HISTORIAL */
-        .hist-item { background: rgba(255,255,255,0.03); border-radius: 0.8rem; padding: 10px 15px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.05); font-size: 11px; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
     </style>
 </head>
-<body class="flex flex-col">
+<body>
 
-    <header class="top-nav px-8 py-5 flex justify-between items-center">
-        <div class="flex items-center gap-6">
-            <span class="font-casino text-2xl italic tracking-tighter">WIN<span class="text-emerald-500">MX</span></span>
-            <div class="hidden md:flex gap-4 text-[10px] font-black text-zinc-600 uppercase">
-                <span class="text-white border-b-2 border-emerald-500 pb-1">Originales</span>
-                <span>Slots</span>
-                <span>En Vivo</span>
+    <div id="auth-screen">
+        <div class="auth-card">
+            <div class="font-casino text-3xl mb-10 italic">WIN<span class="text-emerald-500">MX</span></div>
+            <input id="email" type="email" placeholder="Correo Electrónico" class="auth-input">
+            <input id="pass" type="password" placeholder="Contraseña" class="auth-input">
+            <button onclick="Auth.handle()" id="btn-auth-main" class="w-full bg-emerald-500 text-black font-casino py-4 rounded-xl mt-4 text-lg">Entrar al Casino</button>
+            <button onclick="Auth.toggle()" id="btn-auth-toggle" class="mt-6 text-[10px] font-black text-zinc-600 uppercase tracking-widest">¿No tienes cuenta? Regístrate</button>
+        </div>
+    </div>
+
+    <aside>
+        <div class="p-10 font-casino text-2xl italic tracking-tighter">WIN<span class="text-emerald-500">MX</span></div>
+        <nav class="flex-grow">
+            <div onclick="Router.go('slots')" id="n-slots" class="nav-item active"><i class="fas fa-dice"></i> Lucky Slots</div>
+            <div onclick="Router.go('mines')" id="n-mines" class="nav-item"><i class="fas fa-bomb"></i> Mines Pro</div>
+            <div onclick="Router.go('crash')" id="n-crash" class="nav-item"><i class="fas fa-rocket"></i> Crash Rocket</div>
+            <div class="mt-10 px-8 text-[10px] text-zinc-700 font-black uppercase tracking-widest">Cuenta</div>
+            <div onclick="UI.modal('dep', true)" class="nav-item"><i class="fas fa-wallet"></i> Depositar</div>
+            <div onclick="Auth.signOut()" class="nav-item text-red-500"><i class="fas fa-power-off"></i> Salir</div>
+        </nav>
+    </aside>
+
+    <main>
+        <header>
+            <div id="route-label" class="text-zinc-500 font-bold text-[10px] uppercase tracking-widest">Casino > Slots</div>
+            <div class="flex items-center gap-4">
+                <div class="bg-black border border-white/5 px-6 py-2 rounded-2xl flex flex-col items-end">
+                    <span id="bal-txt" class="text-xl font-casino text-emerald-400">$0.00</span>
+                    <span class="text-[7px] text-zinc-600 font-black uppercase">Saldo MXN</span>
+                </div>
+                <button onclick="UI.modal('dep', true)" class="w-12 h-12 bg-emerald-500 text-black rounded-2xl flex items-center justify-center shadow-lg"><i class="fas fa-plus"></i></button>
+            </div>
+        </header>
+
+        <div id="game-container">
+            <div class="game-frame">
+                <div id="game-render" class="flex-grow flex items-center justify-center p-10"></div>
             </div>
         </div>
-        <div class="flex items-center gap-3">
-            <div class="bg-black px-6 py-2 rounded-2xl border border-white/5 flex flex-col items-end">
-                <span id="bal-txt" class="text-xl font-casino text-emerald-400">$0.00</span>
-                <span class="text-[8px] text-zinc-600 font-bold uppercase">Saldo Disponible</span>
-            </div>
-            <button onclick="UI.modal('dep', true)" class="w-12 h-12 bg-emerald-500 text-black rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                <i class="fas fa-plus"></i>
-            </button>
-        </div>
-    </header>
 
-    <main class="flex-grow flex flex-col p-4">
-        <div class="arena">
-            <div class="bg-black/40 px-8 py-4 flex justify-between items-center border-b border-white/5">
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-dice text-emerald-500"></i>
-                    <span class="text-xs font-black uppercase tracking-widest">Lucky 7 Premium</span>
+        <div class="control-bar">
+            <div class="bet-selector">
+                <button onclick="Game.adjustBet(-10)" class="text-zinc-600 p-2"><i class="fas fa-minus"></i></button>
+                <div class="flex-grow text-center">
+                    <p class="text-[8px] text-zinc-700 font-black uppercase">Apuesta</p>
+                    <span id="bet-txt" class="font-casino text-2xl text-white">$10</span>
                 </div>
-                <div class="flex gap-2">
-                    <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                    <span class="text-[9px] text-zinc-500 font-bold">LIVE RTP: 98.4%</span>
-                </div>
-            </div>
-
-            <div id="game-canvas" class="flex-grow flex items-center justify-center p-10 bg-[#050505]">
-                <div class="grid grid-cols-3 gap-5 w-full max-w-lg">
-                    <div class="slot-reel"><div id="r1" class="reel-strip"></div></div>
-                    <div class="slot-reel"><div id="r2" class="reel-strip"></div></div>
-                    <div class="slot-reel"><div id="r3" class="reel-strip"></div></div>
+                <button onclick="Game.adjustBet(10)" class="text-zinc-600 p-2"><i class="fas fa-plus"></i></button>
+                <div class="flex gap-2 ml-6 border-l border-zinc-800 pl-6">
+                    <button onclick="Game.adjustBet(State.bet)" class="bg-zinc-900 text-[9px] px-3 py-1 rounded font-bold uppercase">x2</button>
+                    <button onclick="Game.adjustBet(-State.bet/2)" class="bg-zinc-900 text-[9px] px-3 py-1 rounded font-bold uppercase">1/2</button>
                 </div>
             </div>
-
-            <div class="console">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                    <div class="bet-input">
-                        <button onclick="Game.setBet(State.bet - 10)" class="w-12 h-12 bg-zinc-800 rounded-xl text-xl font-bold">-</button>
-                        <div class="flex-grow text-center">
-                            <p class="text-[9px] text-zinc-600 font-black uppercase mb-1">Tu Apuesta</p>
-                            <span id="bet-txt" class="text-3xl font-casino tracking-tighter">$10</span>
-                        </div>
-                        <button onclick="Game.setBet(State.bet + 10)" class="w-12 h-12 bg-zinc-800 rounded-xl text-xl font-bold">+</button>
-                    </div>
-                    <button id="main-btn" onclick="Game.play()" class="btn-main italic">GIRAR AHORA</button>
-                </div>
-                <div class="mt-6 flex justify-center gap-8">
-                    <div class="text-center">
-                        <p class="text-[8px] text-zinc-700 font-black uppercase">Última Ganancia</p>
-                        <p id="last-win" class="text-emerald-500 font-casino">$0</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-[8px] text-zinc-700 font-black uppercase">Multiplicador Max</p>
-                        <p class="text-white font-casino text-xs">x500</p>
-                    </div>
-                </div>
-            </div>
+            <button id="btn-play-main" onclick="Game.play()" class="btn-play italic">APOSTAR</button>
         </div>
     </main>
 
-    <div id="modal-dep">
-        <div class="dep-card relative">
-            <button onclick="UI.modal('dep', false)" class="absolute top-8 right-8 text-zinc-600 hover:text-white"><i class="fas fa-times"></i></button>
-            <h2 class="font-casino text-3xl mb-8 italic text-emerald-500">Depositar</h2>
-            <div class="space-y-6">
-                <div class="bg-black p-6 rounded-3xl border border-white/5">
-                    <input id="dep-in" type="number" placeholder="$0.00" class="bg-transparent w-full text-center text-4xl font-casino text-emerald-500 outline-none">
-                </div>
-                <div class="bg-zinc-800/50 p-6 rounded-[2rem] border border-white/5 text-center">
-                    <p class="text-[10px] text-zinc-500 font-black mb-2 uppercase tracking-widest">CLAVE STP INTERBANCARIA</p>
-                    <p class="text-lg font-mono font-bold select-all tracking-tighter">722 969 020 533 491 161</p>
-                </div>
-                <button onclick="UI.confirmDep()" class="w-full py-5 bg-emerald-500 text-black font-casino text-lg rounded-2xl shadow-xl">Confirmar Envío</button>
-                <p class="text-[9px] text-zinc-600 font-bold leading-relaxed">Tu saldo se actualizará automáticamente tras la verificación del sistema.</p>
+    <div id="modal-dep" class="modal">
+        <div class="modal-content relative">
+            <button onclick="UI.modal('dep', false)" class="absolute top-10 right-10 text-zinc-600"><i class="fas fa-times"></i></button>
+            <div class="font-casino text-2xl mb-10 italic text-emerald-500">DEPOSITAR SALDO</div>
+            <input id="dep-val" type="number" placeholder="$0.00" class="w-full bg-black text-emerald-500 text-center text-5xl font-casino py-8 rounded-[2rem] border border-white/5 outline-none mb-8">
+            <div class="bg-zinc-900 p-8 rounded-[2.5rem] border border-white/5 mb-8 text-center">
+                <p class="text-[9px] text-zinc-600 font-black mb-2 uppercase tracking-widest">CUENTA STP INTERBANCARIA</p>
+                <p class="text-lg font-mono font-bold text-white select-all">722 969 020 533 491 161</p>
             </div>
+            <button onclick="UI.doDep()" class="w-full py-6 bg-emerald-500 text-black font-casino text-xl rounded-[1.5rem] shadow-2xl">Confirmar Envío</button>
         </div>
     </div>
 
     <script>
         const sb = window.supabase.createClient("https://dakhnqriwbzihlzhtfcb.supabase.co", "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs");
-        let State = { user: null, balance: 0, bet: 10, playing: false, spinCount: 0 };
-        const SYM = ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'];
-
-        const Game = {
-            setBet(v) { if(!State.playing) { State.bet = Math.max(10, v); document.getElementById('bet-txt').innerText = `$${State.bet}`; } },
-            play() {
-                if(State.balance < State.bet) return alert("Saldo insuficiente. Realiza un depósito.");
-                State.playing = true;
-                State.balance -= State.bet;
-                UI.up();
-                UI.lock(true);
-                this.spin();
-            },
-            spin() {
-                State.spinCount++;
-                const result = [SYM[Math.floor(Math.random()*6)], SYM[Math.floor(Math.random()*6)], SYM[Math.floor(Math.random()*6)]];
-                [1,2,3].forEach((id, i) => {
-                    const r = document.getElementById(`r${id}`);
-                    const pos = (State.spinCount * 160 * 12) + (SYM.indexOf(result[i]) * 160);
-                    r.style.transform = `translateY(-${pos}px)`;
-                });
-                setTimeout(() => this.finish(result), 3100);
-            },
-            async finish(res) {
-                const winMap = {'7️⃣7️⃣7️⃣':10, '💎💎💎':5, '⭐️⭐️⭐️':3, '🔔🔔🔔':2};
-                const mult = winMap[res.join('')] || 0;
-                const profit = State.bet * mult;
-                
-                State.balance += profit;
-                State.playing = false;
-                UI.up(); UI.lock(false);
-                document.getElementById('last-win').innerText = `$${profit}`;
-
-                await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                if(profit > 0) alert(`¡FELICIDADES! GANASTE $${profit}`);
-            }
-        };
-
-        const UI = {
-            up() { document.getElementById('bal-txt').innerText = `$${State.balance.toLocaleString()}`; },
-            lock(s) { document.getElementById('main-btn').disabled = s; },
-            modal(id, s) { document.getElementById(`modal-${id}`).style.display = s ? 'flex' : 'none'; },
-            async confirmDep() {
-                const val = document.getElementById('dep-in').value;
-                if(!val) return;
-                await sb.from('depositos').insert([{ user_id: State.user.id, amount: val, status: 'pending' }]);
-                alert("Notificación enviada con éxito.");
-                this.modal('dep', false);
-            }
-        };
-
-        const Logic = {
-            init() {
-                [1,2,3].forEach(id => {
-                    const r = document.getElementById(`r${id}`);
-                    for(let i=0; i<60; i++) r.innerHTML += `<div class="h-[160px] flex items-center justify-center text-6xl">${SYM[i%6]}</div>`;
-                });
-            }
-        };
+        let State = { user: null, balance: 0, bet: 10, playing: false, game: 'slots', isLogin: true, spinIdx: 0 };
+        const SYMBOLS = ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'];
 
         const Auth = {
+            toggle() { State.isLogin = !State.isLogin; document.getElementById('btn-auth-main').innerText = State.isLogin ? 'Entrar al Casino' : 'Crear Cuenta'; },
+            async handle() {
+                const email = document.getElementById('email').value;
+                const pass = document.getElementById('pass').value;
+                const { data, error } = State.isLogin ? await sb.auth.signInWithPassword({ email, password: pass }) : await sb.auth.signUp({ email, password: pass });
+                if(error) alert(error.message);
+                else { if(!State.isLogin) await sb.from('usuarios').insert([{ id: data.user.id, saldo: 0 }]); location.reload(); }
+            },
             async check() {
                 const { data: { session } } = await sb.auth.getSession();
                 if(session) {
                     State.user = session.user;
+                    document.getElementById('auth-screen').style.display = 'none';
                     const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    State.balance = data.saldo || 0;
-                    UI.up();
-                } else {
-                    alert("Por favor inicia sesión para jugar.");
+                    State.balance = data ? data.saldo : 0;
+                    UI.refresh(); Router.go('slots');
+                }
+            },
+            signOut() { sb.auth.signOut().then(() => location.reload()); }
+        };
+
+        const Router = {
+            go(g) { State.game = g; document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.id === `n-${g}`)); this.render(); },
+            render() {
+                const r = document.getElementById('game-render');
+                if(State.game === 'slots') {
+                    r.innerHTML = `<div class="flex gap-4 w-full h-full"><div class="reel-container"><div id="r1" class="reel-strip"></div></div><div class="reel-container"><div id="r2" class="reel-strip"></div></div><div class="reel-container"><div id="r3" class="reel-strip"></div></div></div>`;
+                    [1,2,3].forEach(id => { let s = document.getElementById(`r${id}`); s.innerHTML = ''; for(let i=0; i<80; i++) s.innerHTML += `<div class="symbol">${SYMBOLS[i%6]}</div>`; });
+                } else if(State.game === 'mines') {
+                    r.innerHTML = `<div id="m-grid" class="grid grid-cols-5 gap-3 w-full max-w-[320px]"></div>`;
+                    const g = document.getElementById('m-grid'); for(let i=0; i<25; i++) g.innerHTML += `<button onclick="Logic.mines.play(${i}, this)" class="aspect-square bg-zinc-900 rounded-xl border border-white/5 text-xl">?</button>`;
                 }
             }
         };
 
-        Logic.init();
+        const Logic = {
+            slots: {
+                run() {
+                    State.spinIdx++; const res = [SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)]];
+                    [1,2,3].forEach((id, i) => { const strip = document.getElementById(`r${id}`); strip.style.transform = `translateY(-${(State.spinIdx * 2400) + (SYMBOLS.indexOf(res[i]) * 160)}px)`; });
+                    setTimeout(() => Game.end(res[0]===res[1]&&res[1]===res[2] ? 10 : 0), 3100);
+                }
+            },
+            mines: {
+                active: false, bombs: [], mult: 1,
+                play(i, btn) {
+                    if(!this.active) { this.active = true; State.playing = true; this.mult = 1.2; this.bombs = Array.from({length:25},(_,k)=>k).sort(()=>Math.random()-0.5).slice(0,4); document.getElementById('btn-play-main').innerText = "COBRAR"; }
+                    if(this.bombs.includes(i)) { btn.innerText = '💣'; btn.style.background = '#f44'; this.end(false); }
+                    else { btn.innerText = '💎'; btn.style.background = 'rgba(0,255,136,0.1)'; this.mult *= 1.4; document.getElementById('btn-play-main').innerText = `COBRAR $${Math.floor(State.bet*this.mult)}`; }
+                    btn.disabled = true;
+                },
+                end(win) { this.active = false; Game.end(win ? this.mult : 0); setTimeout(() => Router.go('mines'), 1000); }
+            }
+        };
+
+        const Game = {
+            adjustBet(v) { State.bet = Math.max(10, Math.floor(State.bet + v)); document.getElementById('bet-txt').innerText = `$${State.bet}`; },
+            play() {
+                if(State.game === 'mines' && Logic.mines.active) return Logic.mines.end(true);
+                if(State.balance < State.bet) return alert("Saldo insuficiente");
+                State.playing = true; State.balance -= State.bet; UI.refresh();
+                if(State.game === 'slots') Logic.slots.run();
+            },
+            async end(m) {
+                const win = Math.floor(State.bet * m); State.balance += win; State.playing = false;
+                document.getElementById('btn-play-main').innerText = "APOSTAR"; UI.refresh();
+                await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+            }
+        };
+
+        const UI = {
+            refresh() { document.getElementById('bal-txt').innerText = `$${State.balance.toLocaleString()}`; },
+            modal(id, s) { document.getElementById(`modal-${id}`).style.display = s ? 'flex' : 'none'; },
+            async doDep() { const a = document.getElementById('dep-val').value; await sb.from('depositos').insert([{ user_id: State.user.id, amount: a, status: 'pending' }]); alert("Notificado"); this.modal('dep', false); }
+        };
+
         Auth.check();
     </script>
 </body>
