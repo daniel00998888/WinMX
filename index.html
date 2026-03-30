@@ -42,16 +42,10 @@
 
         .input-bet { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 12px; width: 100%; text-align: center; color: white; font-family: 'Archivo Black', sans-serif; outline: none; margin-bottom: 12px; }
         
-        .instruction-card { 
-            background: rgba(16, 185, 129, 0.08); 
-            border: 1px solid rgba(16, 185, 129, 0.3); 
-            border-radius: 1.2rem; 
-            padding: 20px; 
-            margin-top: 24px; 
-            text-align: left;
-        }
-        .instruction-card h4 { font-family: 'Archivo Black', sans-serif; font-size: 12px; color: var(--mx-green); text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-        .instruction-card p { font-size: 11px; color: #ccc; line-height: 1.6; }
+        /* Estilos nuevos para las instrucciones de depósito */
+        .instruction-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 1rem; padding: 15px; text-align: left; }
+        .step-num { width: 18px; height: 18px; background: var(--mx-green); color: black; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; margin-right: 6px; }
+        .copy-btn { background: rgba(16, 185, 129, 0.2); color: var(--mx-green); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body class="antialiased select-none">
@@ -141,24 +135,47 @@
     </div>
 
     <div id="modal-deposit" class="fixed inset-0 bg-black/95 z-[100] hidden-view flex items-center justify-center p-6">
-        <div class="glass p-8 w-full max-w-sm bg-[#0a0a0a]">
+        <div class="glass p-6 w-full max-w-sm bg-[#0a0a0a] overflow-y-auto max-h-[90vh]">
             <div id="dep-step-1">
                 <h2 class="font-casino text-emerald-500 text-center mb-6">Monto a cargar</h2>
                 <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-10 text-white">
                 <button onclick="UI.depNextStep()" class="btn-action w-full py-4 font-casino">Continuar</button>
             </div>
-            <div id="dep-step-2" class="hidden-view space-y-4 text-center">
-                <div class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
-                    <p class="text-[8px] font-bold text-emerald-500 mb-1 uppercase">CLABE (STP)</p>
-                    <span class="text-xs font-mono font-bold">722969020533491161</span>
+
+            <div id="dep-step-2" class="hidden-view space-y-4">
+                <h3 class="font-casino text-center text-xs text-zinc-500 mb-2">Instrucciones de Pago</h3>
+                
+                <div class="instruction-box space-y-4">
+                    <div class="flex flex-col gap-1">
+                        <p class="text-[9px] text-zinc-500 font-bold uppercase"><span class="step-num">1</span> Transferir cantidad exacta:</p>
+                        <p id="info-dep-amount" class="text-lg font-casino text-white ml-6">$0.00</p>
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <p class="text-[9px] text-zinc-500 font-bold uppercase"><span class="step-num">2</span> CLABE Destino (STP):</p>
+                        <div class="flex items-center justify-between ml-6 bg-white/5 p-2 rounded-lg">
+                            <span id="clabe-text" class="text-[11px] font-mono font-bold text-emerald-500">722969020533491161</span>
+                            <div onclick="UI.copyClabe()" class="copy-btn active:scale-90 transition-transform">COPIAR</div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <p class="text-[9px] text-zinc-500 font-bold uppercase"><span class="step-num">3</span> Concepto de pago:</p>
+                        <p id="info-dep-concept" class="text-[11px] font-bold text-white ml-6">WINMX-USER</p>
+                    </div>
                 </div>
-                <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
-                <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-2xl p-4 block cursor-pointer">
-                    <i class="fas fa-camera text-xl mb-1 text-zinc-600"></i>
-                    <p id="file-label" class="text-[8px] font-bold text-zinc-500 uppercase">Subir Comprobante</p>
-                </label>
-                <button onclick="Core.confirmDeposit()" class="btn-action w-full py-4 font-casino">Confirmar</button>
+
+                <div class="p-4 border-2 border-dashed border-zinc-800 rounded-2xl text-center">
+                    <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
+                    <label for="receipt-input" class="cursor-pointer block">
+                        <i class="fas fa-camera text-xl mb-1 text-zinc-600"></i>
+                        <p id="file-label" class="text-[9px] font-bold text-zinc-500 uppercase">Subir Foto del Comprobante</p>
+                    </label>
+                </div>
+
+                <button onclick="Core.confirmDeposit()" class="btn-action w-full py-4 font-casino">He realizado el pago</button>
             </div>
+            
             <button onclick="UI.closeModal('modal-deposit')" class="w-full mt-4 text-[9px] text-zinc-700 font-bold uppercase">Cerrar</button>
         </div>
     </div>
@@ -166,7 +183,6 @@
     <div id="notif-container" class="fixed top-6 left-6 right-6 z-[200] flex flex-col gap-2"></div>
 
     <script>
-        // CONFIGURACIÓN SUPABASE
         const DB_CONFIG = { 
             url: "https://dakhnqriwbzihlzhtfcb.supabase.co", 
             key: "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs" 
@@ -176,7 +192,6 @@
 
         let State = { user: null, balance: 0, isSpinning: false, totalSpins: 0 };
 
-        // ROUTER Y VISTAS
         const Router = {
             showView(viewId) {
                 if(State.isSpinning) return;
@@ -203,7 +218,6 @@
             }
         };
 
-        // LÓGICA DE JUEGOS
         const GameLogic = {
             slots: {
                 init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); r.innerHTML = ''; Array(40).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); }); },
@@ -332,7 +346,6 @@
             }
         };
 
-        // NÚCLEO (AUTH Y DATOS)
         const Core = {
             async init() {
                 let p = 0; const i = setInterval(() => {
@@ -393,16 +406,31 @@
             }
         };
 
-        // GESTIÓN DE INTERFAZ
         const UI = {
             updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toFixed(2)}`; },
             updateProfile() { document.getElementById('user-email-display').innerText = State.user.email; },
-            openModal(id) { document.getElementById(id).classList.remove('hidden-view'); },
+            openModal(id) { 
+                document.getElementById('dep-step-1').classList.remove('hidden-view');
+                document.getElementById('dep-step-2').classList.add('hidden-view');
+                document.getElementById(id).classList.remove('hidden-view'); 
+            },
             closeModal(id) { document.getElementById(id).classList.add('hidden-view'); },
             depNextStep() {
-                if(!document.getElementById('dep-amount').value) return;
+                const amt = document.getElementById('dep-amount').value;
+                if(!amt || amt <= 0) return UI.notify("Monto inválido", "error");
+                
+                // Actualizar info dinámica en paso 2
+                document.getElementById('info-dep-amount').innerText = `$${parseFloat(amt).toFixed(2)}`;
+                document.getElementById('info-dep-concept').innerText = `WINMX-${State.user.id.slice(0,5).toUpperCase()}`;
+                
                 document.getElementById('dep-step-1').classList.add('hidden-view');
                 document.getElementById('dep-step-2').classList.remove('hidden-view');
+            },
+            copyClabe() {
+                const clabe = document.getElementById('clabe-text').innerText;
+                navigator.clipboard.writeText(clabe).then(() => {
+                    UI.notify("Copiado al portapapeles", "success");
+                });
             },
             handleFile(input) { if(input.files[0]) document.getElementById('file-label').innerText = "LISTO ✅"; },
             toggleAccordion(accId, arrowId) {
