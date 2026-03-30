@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WinMX - Casino Premium</title>
+    <title>WinMX - Casino</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
     <style>
         @import url('https://fonts.cdnfonts.com/css/casino');
-        body { background: #09090b; color: #fafafa; font-family: sans-serif; overflow-x: hidden; }
+        body { background: #09090b; color: #fafafa; font-family: sans-serif; }
         .font-casino { font-family: 'Casino', sans-serif; }
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; }
         .hidden-view { display: none !important; }
-        .btn-action { background: linear-gradient(135deg, #10b981, #059669); color: #000; font-weight: 900; border-radius: 16px; transition: all 0.2s; }
-        .btn-action:active { transform: scale(0.95); opacity: 0.9; }
-        .slot-box { height: 90px; overflow: hidden; background: #000; border-radius: 12px; border: 2px solid #27272a; position: relative; }
+        .btn-action { background: linear-gradient(135deg, #10b981, #059669); color: #000; font-weight: 900; border-radius: 16px; }
+        .slot-box { height: 90px; overflow: hidden; background: #000; border-radius: 12px; border: 2px solid #27272a; }
         .slot-reel { transition: transform 3.5s cubic-bezier(0.45, 0.05, 0.55, 0.95); }
         .slot-item { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 40px; }
         .nav-item.active { color: #10b981; }
@@ -26,110 +25,103 @@
 
     <div id="boot-loader" class="fixed inset-0 z-[100] bg-zinc-950 flex flex-col items-center justify-center p-10">
         <h1 class="font-casino text-4xl text-emerald-500 mb-8 animate__animated animate__pulse animate__infinite">WINMX</h1>
-        <div class="w-full bg-zinc-900 h-1 rounded-full overflow-hidden"><div id="boot-bar" class="h-full bg-emerald-500 w-0 transition-all duration-300"></div></div>
-    </div>
-
-    <div id="auth-view" class="hidden-view min-h-screen flex flex-col justify-center p-8 animate__animated animate__fadeIn">
-        <div class="glass p-8 text-center">
-            <h2 class="font-casino text-2xl mb-8">BIENVENIDO</h2>
-            <input type="email" id="auth-email" placeholder="Email" class="w-full bg-black/50 border border-white/10 p-4 rounded-xl mb-3 outline-none focus:border-emerald-500">
-            <input type="password" id="auth-password" placeholder="Contraseña" class="w-full bg-black/50 border border-white/10 p-4 rounded-xl mb-6 outline-none focus:border-emerald-500">
-            <button onclick="AuthManager.login()" class="btn-action w-full py-4 mb-3">ENTRAR</button>
-            <button onclick="AuthManager.register()" class="text-[10px] text-zinc-500 uppercase tracking-widest">Crear cuenta nueva</button>
+        <div class="w-full bg-zinc-900 h-1 rounded-full overflow-hidden">
+            <div id="boot-bar" class="h-full bg-emerald-500 w-0 transition-all duration-300"></div>
         </div>
     </div>
 
-    <div id="main-app" class="hidden-view animate__animated animate__fadeIn">
+    <div id="auth-view" class="hidden-view min-h-screen flex flex-col justify-center p-8">
+        <div class="glass p-8 text-center">
+            <h2 class="font-casino text-2xl mb-8">ENTRAR</h2>
+            <input type="email" id="auth-email" placeholder="Email" class="w-full bg-black/50 border border-white/10 p-4 rounded-xl mb-3 outline-none">
+            <input type="password" id="auth-password" placeholder="Password" class="w-full bg-black/50 border border-white/10 p-4 rounded-xl mb-6 outline-none">
+            <button onclick="AuthManager.login()" class="btn-action w-full py-4 mb-3">INGRESAR</button>
+            <button onclick="AuthManager.register()" class="text-[10px] text-zinc-500 uppercase">Registrarse</button>
+        </div>
+    </div>
+
+    <div id="main-app" class="hidden-view">
         <header class="p-6 flex justify-between items-center sticky top-0 z-40 bg-zinc-950/80 backdrop-blur-md">
             <div>
-                <p class="text-[10px] text-zinc-500 font-bold tracking-[0.3em] uppercase">Disponible</p>
+                <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Saldo</p>
                 <h2 id="balance-display" class="text-2xl font-casino text-emerald-500">$0.00</h2>
             </div>
-            <button onclick="UI.openModal('modal-deposit')" class="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-black shadow-lg shadow-emerald-500/20"><i class="fas fa-plus"></i></button>
+            <button onclick="UI.openModal('modal-deposit')" class="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-black"><i class="fas fa-plus"></i></button>
         </header>
 
         <main class="px-6 py-4">
             <div id="view-lobby" class="view-content space-y-6">
-                <div class="glass p-6 bg-gradient-to-br from-emerald-500/20 to-transparent">
-                    <h3 class="font-casino text-sm mb-1 italic">PROMO SEMANAL</h3>
-                    <p class="text-[10px] text-zinc-400 leading-relaxed uppercase">Deposita $100 y recibe un bono del 50% extra para Slots.</p>
-                </div>
-                
                 <div class="grid grid-cols-2 gap-4">
-                    <div onclick="Router.openGame('slots')" class="glass p-6 text-center active:scale-95 transition-transform"><span class="text-4xl block mb-2">🎰</span><span class="font-casino text-[9px] text-emerald-500">Slots</span></div>
-                    <div onclick="Router.openGame('mines')" class="glass p-6 text-center active:scale-95 transition-transform"><span class="text-4xl block mb-2">💣</span><span class="font-casino text-[9px] text-zinc-500">Mines</span></div>
-                    <div onclick="Router.openGame('crash')" class="glass p-6 text-center active:scale-95 transition-transform"><span class="text-4xl block mb-2">🚀</span><span class="font-casino text-[9px] text-zinc-500">Aviator</span></div>
-                    <div onclick="UI.notify('Próximamente', 'success')" class="glass p-6 text-center opacity-50"><span class="text-4xl block mb-2">🃏</span><span class="font-casino text-[9px] text-zinc-500">Poker</span></div>
+                    <div onclick="Router.openGame('slots')" class="glass p-6 text-center active:scale-95 transition-all border-emerald-500/20">
+                        <span class="text-4xl block mb-2">🎰</span>
+                        <span class="font-casino text-[9px] text-emerald-500">Slots</span>
+                    </div>
+                    <div onclick="Router.openGame('mines')" class="glass p-6 text-center active:scale-95 transition-all">
+                        <span class="text-4xl block mb-2">💣</span>
+                        <span class="font-casino text-[9px] text-zinc-500">Mines</span>
+                    </div>
+                    <div onclick="Router.openGame('crash')" class="glass p-6 text-center active:scale-95 transition-all">
+                        <span class="text-4xl block mb-2">🚀</span>
+                        <span class="font-casino text-[9px] text-zinc-500">Crash</span>
+                    </div>
+                    <div class="glass p-6 text-center opacity-30">
+                        <span class="text-4xl block mb-2">🃏</span>
+                        <span class="font-casino text-[9px] text-zinc-500">Próximamente</span>
+                    </div>
                 </div>
             </div>
 
             <div id="view-game" class="view-content hidden-view">
-                <button onclick="Router.showView('lobby')" class="text-[10px] text-zinc-500 mb-6 flex items-center gap-2"><i class="fas fa-arrow-left"></i> VOLVER AL LOBBY</button>
+                <button onclick="Router.showView('lobby')" class="text-[10px] text-zinc-500 mb-6 flex items-center gap-2 uppercase font-bold"><i class="fas fa-arrow-left"></i> Volver</button>
                 <div id="game-mount"></div>
             </div>
 
-            <div id="view-history" class="view-content hidden-view space-y-4">
+            <div id="view-history" class="view-content hidden-view">
                 <h2 class="font-casino text-xl mb-6">MOVIMIENTOS</h2>
                 <div id="history-lists" class="space-y-4"></div>
             </div>
 
-            <div id="view-profile" class="view-content hidden-view space-y-6">
-                <div class="glass p-8 text-center">
-                    <div class="w-20 h-20 bg-zinc-800 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl border-2 border-emerald-500"><i class="fas fa-user"></i></div>
-                    <h3 id="user-email-display" class="text-xs font-bold text-zinc-400 mb-1">Cargando...</h3>
-                    <p class="text-[9px] text-zinc-600 uppercase tracking-widest">Nivel de Usuario: VIP 1</p>
+            <div id="view-profile" class="view-content hidden-view">
+                <div class="glass p-8 text-center mb-6">
+                    <p id="user-email-display" class="text-xs font-bold text-zinc-400"></p>
                 </div>
-                <button onclick="AuthManager.logout()" class="w-full p-5 glass text-red-500 font-bold text-xs uppercase">Cerrar Sesión</button>
+                <button onclick="AuthManager.logout()" class="w-full p-5 glass text-red-500 font-bold uppercase text-xs">Cerrar Sesión</button>
             </div>
         </main>
 
         <nav class="fixed bottom-0 inset-x-0 h-20 bg-zinc-950/90 backdrop-blur-xl border-t border-white/5 flex items-center justify-around z-50">
-            <button onclick="Router.showView('lobby')" id="nav-home" class="nav-item active flex flex-col items-center gap-1"><i class="fas fa-grid-2 text-xl"></i><span class="text-[8px] font-bold uppercase">Inicio</span></button>
-            <button onclick="Router.showView('history')" id="nav-history" class="nav-item flex flex-col items-center gap-1"><i class="fas fa-list text-xl"></i><span class="text-[8px] font-bold uppercase">Historial</span></button>
-            <button onclick="Router.showView('profile')" id="nav-profile" class="nav-item flex flex-col items-center gap-1"><i class="fas fa-user text-xl"></i><span class="text-[8px] font-bold uppercase">Perfil</span></button>
+            <button onclick="Router.showView('lobby')" id="nav-home" class="nav-item active flex flex-col items-center gap-1"><i class="fas fa-home"></i><span class="text-[8px] font-bold">INICIO</span></button>
+            <button onclick="Router.showView('history')" id="nav-history" class="nav-item flex flex-col items-center gap-1"><i class="fas fa-list"></i><span class="text-[8px] font-bold">HISTORIAL</span></button>
+            <button onclick="Router.showView('profile')" id="nav-profile" class="nav-item flex flex-col items-center gap-1"><i class="fas fa-user"></i><span class="text-[8px] font-bold">PERFIL</span></button>
         </nav>
+    </div>
+
+    <div id="modal-deposit" class="fixed inset-0 z-[100] bg-black/95 p-6 hidden-view">
+        <div class="flex justify-between items-center mb-10">
+            <h2 class="font-casino text-xl">CARGAR</h2>
+            <button onclick="UI.closeModal('modal-deposit')"><i class="fas fa-times text-2xl"></i></button>
+        </div>
+        <div id="dep-step-1" class="space-y-6">
+            <div class="glass p-6">
+                <input type="number" id="dep-amount" placeholder="Monto" class="w-full bg-transparent text-4xl font-casino outline-none text-emerald-500">
+            </div>
+            <button onclick="UI.depNextStep()" class="btn-action w-full py-5">CONTINUAR</button>
+        </div>
+        <div id="dep-step-2" class="hidden-view space-y-6">
+            <div class="glass p-6 text-center">
+                <p class="text-xs mb-2">CLABE SPEI:</p>
+                <p id="clabe-number" class="font-mono text-emerald-500">0123 4567 8901 2345 67</p>
+            </div>
+            <input type="file" id="receipt-input" class="hidden" onchange="UI.handleFile(this)">
+            <label for="receipt-input" id="file-label" class="block glass p-10 text-center border-dashed border-zinc-700">SUBIR COMPROBANTE</label>
+            <button onclick="Core.confirmDeposit()" class="btn-action w-full py-5">LISTO</button>
+        </div>
     </div>
 
     <div id="notif-container" class="fixed top-6 inset-x-6 z-[200] space-y-2 pointer-events-none"></div>
 
-    <div id="modal-deposit" class="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md p-6 hidden-view">
-        <div class="h-full flex flex-col">
-            <div class="flex justify-between items-center mb-10">
-                <h2 class="font-casino text-xl">CARGAR SALDO</h2>
-                <button onclick="UI.closeModal('modal-deposit')" class="text-zinc-500"><i class="fas fa-times text-2xl"></i></button>
-            </div>
-            
-            <div id="dep-step-1" class="space-y-6">
-                <div class="glass p-6">
-                    <p class="text-[10px] text-zinc-500 mb-2 uppercase">Monto a cargar</p>
-                    <input type="number" id="dep-amount" placeholder="$0.00" class="w-full bg-transparent text-4xl font-casino outline-none text-emerald-500">
-                </div>
-                <button onclick="UI.depNextStep()" class="btn-action w-full py-5">CONTINUAR</button>
-            </div>
-
-            <div id="dep-step-2" class="hidden-view space-y-6 animate__animated animate__fadeInRight">
-                <div class="glass p-6 space-y-4">
-                    <p class="text-[10px] text-zinc-500 uppercase">Transferencia SPEI</p>
-                    <div class="p-4 bg-black/50 rounded-xl flex justify-between items-center">
-                        <span id="clabe-number" class="font-mono text-sm tracking-widest text-emerald-500">0123 4567 8901 2345 67</span>
-                        <button onclick="UI.copyClabe()" class="text-zinc-500"><i class="fas fa-copy"></i></button>
-                    </div>
-                </div>
-                <label id="file-label" class="block glass p-10 text-center border-dashed border-zinc-700">
-                    <input type="file" id="receipt-input" class="hidden" onchange="UI.handleFile(this)">
-                    <i class="fas fa-cloud-upload text-3xl mb-4 text-emerald-500"></i>
-                    <p class="text-[10px] text-zinc-500 uppercase">Sube tu captura de pago</p>
-                </label>
-                <button onclick="Core.confirmDeposit()" id="final-dep-btn" class="btn-action w-full py-5">YA REALICÉ EL PAGO</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        const DB_CONFIG = { 
-            url: "https://dakhnqriwbzihlzhtfcb.supabase.co", 
-            key: "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs" 
-        };
+        const DB_CONFIG = { url: "https://dakhnqriwbzihlzhtfcb.supabase.co", key: "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs" };
         const sb = window.supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
 
         let State = { user: null, balance: 0, currentBet: 10, isSpinning: false, totalSpins: 0 };
@@ -154,42 +146,42 @@
             },
             templates: {
                 slots: `
-                    <div class="glass p-6 text-center animate__animated animate__fadeInUp">
+                    <div class="glass p-6 text-center">
                         <div class="grid grid-cols-3 gap-2 mb-8">
                             <div class="slot-box"><div id="reel-1" class="slot-reel"></div></div>
                             <div class="slot-box"><div id="reel-2" class="slot-reel"></div></div>
                             <div class="slot-box"><div id="reel-3" class="slot-reel"></div></div>
                         </div>
                         <div class="bg-black/50 p-4 rounded-2xl mb-4 flex justify-between items-center">
-                            <button onclick="GameLogic.changeBet(-10)" class="w-10 h-10 bg-zinc-800 rounded-xl text-white">-</button>
-                            <span class="bet-val font-casino text-2xl text-white">$10</span>
-                            <button onclick="GameLogic.changeBet(10)" class="w-10 h-10 bg-zinc-800 rounded-xl text-white">+</button>
+                            <button onclick="GameLogic.changeBet(-10)" class="w-10 h-10 bg-zinc-800 rounded-xl">-</button>
+                            <span class="bet-val font-casino text-2xl">$10</span>
+                            <button onclick="GameLogic.changeBet(10)" class="w-10 h-10 bg-zinc-800 rounded-xl">+</button>
                         </div>
                         <button onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button>
                     </div>`,
                 mines: `
-                    <div class="glass p-5 text-center animate__animated animate__zoomIn">
+                    <div class="glass p-5 text-center">
                         <div id="mines-grid" class="grid grid-cols-5 gap-2 mb-4"></div>
-                        <div class="flex justify-between items-center bg-black/60 p-4 rounded-xl mb-4 border border-white/5">
-                            <span id="mines-multiplier" class="text-emerald-500 font-casino text-xl italic">1.00x</span>
-                            <button id="mines-cashout" onclick="GameLogic.mines.cashout()" class="hidden-view bg-emerald-500 text-black px-6 py-2 rounded-lg font-black text-[10px]">COBRAR</button>
+                        <div class="flex justify-between items-center bg-black/40 p-4 rounded-xl mb-4">
+                            <span id="mines-multiplier" class="text-emerald-500 font-casino text-xl">1.00x</span>
+                            <button id="mines-cashout" onclick="GameLogic.mines.cashout()" class="hidden-view bg-emerald-500 text-black px-4 py-1 rounded-lg font-bold text-[10px]">COBRAR</button>
                         </div>
                         <div class="bg-black/50 p-4 rounded-2xl mb-4 flex justify-between items-center">
-                            <button onclick="GameLogic.changeBet(-10)" class="w-10 h-10 bg-zinc-800 rounded-xl text-white">-</button>
-                            <span class="bet-val font-casino text-2xl text-white">$10</span>
-                            <button onclick="GameLogic.changeBet(10)" class="w-10 h-10 bg-zinc-800 rounded-xl text-white">+</button>
+                            <button onclick="GameLogic.changeBet(-10)" class="w-10 h-10 bg-zinc-800 rounded-xl">-</button>
+                            <span class="bet-val font-casino text-2xl">$10</span>
+                            <button onclick="GameLogic.changeBet(10)" class="w-10 h-10 bg-zinc-800 rounded-xl">+</button>
                         </div>
                         <button id="mines-start-btn" onclick="GameLogic.mines.play()" class="btn-action w-full py-4 font-casino">MINAR</button>
                     </div>`,
                 crash: `
-                    <div class="glass p-10 text-center relative border-emerald-500/10">
-                        <div class="h-44 flex flex-col items-center justify-center">
-                            <div id="crash-mult" class="text-7xl font-casino italic text-white">1.00x</div>
+                    <div class="glass p-10 text-center">
+                        <div class="h-32 flex items-center justify-center">
+                            <div id="crash-mult" class="text-6xl font-casino italic text-white">1.00x</div>
                         </div>
                         <div class="bg-black/50 p-4 rounded-2xl mb-4 flex justify-between items-center">
-                            <button onclick="GameLogic.changeBet(-10)" class="w-10 h-10 bg-zinc-800 rounded-xl text-white">-</button>
-                            <span class="bet-val font-casino text-2xl text-white">$10</span>
-                            <button onclick="GameLogic.changeBet(10)" class="w-10 h-10 bg-zinc-800 rounded-xl text-white">+</button>
+                            <button onclick="GameLogic.changeBet(-10)" class="w-10 h-10 bg-zinc-800 rounded-xl">-</button>
+                            <span class="bet-val font-casino text-2xl">$10</span>
+                            <button onclick="GameLogic.changeBet(10)" class="w-10 h-10 bg-zinc-800 rounded-xl">+</button>
                         </div>
                         <button id="crash-btn" onclick="GameLogic.crash.play()" class="btn-action w-full py-5 font-casino text-xl">APOSTAR</button>
                     </div>`
@@ -231,26 +223,26 @@
                     this.active = true; this.revealed = 0; this.mult = 1;
                     this.mines = Array.from({length: 25}, (_, i) => i).sort(() => Math.random() - 0.5).slice(0, 4);
                     const grid = document.getElementById('mines-grid'); grid.innerHTML = '';
-                    for(let i=0; i<25; i++) { grid.innerHTML += `<div onclick="GameLogic.mines.reveal(this, ${i})" class="h-12 bg-zinc-800 rounded-lg flex items-center justify-center text-xl cursor-pointer">?</div>`; }
+                    for(let i=0; i<25; i++) { grid.innerHTML += `<div onclick="GameLogic.mines.reveal(this, ${i})" class="h-10 bg-zinc-800 rounded flex items-center justify-center text-sm cursor-pointer active:scale-95 transition-all">?</div>`; }
                     document.getElementById('mines-start-btn').classList.add('hidden-view');
                     document.getElementById('mines-cashout').classList.remove('hidden-view');
                 },
                 reveal(el, i) {
                     if(!this.active || el.innerText !== '?') return;
                     if(this.mines.includes(i)) {
-                        el.innerHTML = '💣'; el.className = 'h-12 bg-red-600 rounded-lg flex items-center justify-center text-xl animate__animated animate__shakeX';
-                        this.active = false; State.isSpinning = false; UI.notify("¡BOOM!", "error");
+                        el.innerHTML = '💣'; el.className = 'h-10 bg-red-600 rounded flex items-center justify-center text-sm';
+                        this.active = false; State.isSpinning = false; UI.notify("BOOM", "error");
                         setTimeout(() => Router.openGame('mines'), 1500);
                     } else {
-                        el.innerHTML = '💎'; el.className = 'h-12 bg-emerald-500/20 border border-emerald-500 rounded-lg flex items-center justify-center text-xl';
-                        this.revealed++; this.mult += 0.35;
+                        el.innerHTML = '💎'; el.className = 'h-10 bg-emerald-500/20 border border-emerald-500 rounded flex items-center justify-center text-sm';
+                        this.revealed++; this.mult += 0.3;
                         document.getElementById('mines-multiplier').innerText = this.mult.toFixed(2) + 'x';
                     }
                 },
                 async cashout() {
                     if(!this.active || this.revealed === 0) return;
                     this.active = false;
-                    await GameLogic.endSpin(Math.floor(State.currentBet * this.mult), 'W MINAS');
+                    await GameLogic.endSpin(Math.floor(State.currentBet * this.mult), 'W MINES');
                     Router.openGame('mines');
                 }
             },
@@ -262,13 +254,13 @@
                     const btn = document.getElementById('crash-btn');
                     btn.innerText = "COBRAR"; btn.style.background = "#ef4444";
                     this.currMult = 1;
-                    const crashAt = (Math.random() * 4 + 1.1).toFixed(2);
+                    const crashAt = (Math.random() * 5 + 1.1).toFixed(2);
                     this.timer = setInterval(() => {
                         this.currMult += 0.05;
                         document.getElementById('crash-mult').innerText = this.currMult.toFixed(2) + 'x';
                         if(this.currMult >= crashAt) {
                             clearInterval(this.timer);
-                            UI.notify("¡EXPLOTÓ!", "error");
+                            UI.notify("EXPLOTÓ", "error");
                             State.isSpinning = false;
                             setTimeout(() => Router.openGame('crash'), 1500);
                         }
@@ -286,13 +278,13 @@
             async login() {
                 const e = document.getElementById('auth-email').value, p = document.getElementById('auth-password').value;
                 const { error } = await sb.auth.signInWithPassword({ email: e, password: p });
-                if(error) return UI.notify("Error de acceso", "error");
+                if(error) return UI.notify("Error", "error");
                 location.reload();
             },
             async register() {
                 const e = document.getElementById('auth-email').value, p = document.getElementById('auth-password').value;
                 const { error } = await sb.auth.signUp({ email: e, password: p });
-                UI.notify(error ? error.message : "¡Cuenta lista!", error ? "error" : "success");
+                UI.notify(error ? error.message : "Cuenta creada", error ? "error" : "success");
             },
             async logout() { await sb.auth.signOut(); location.reload(); }
         };
@@ -326,11 +318,11 @@
             },
             async confirmDeposit() {
                 const amt = document.getElementById('dep-amount').value, file = document.getElementById('receipt-input').files[0];
-                if(!amt || !file) return UI.notify("Datos incompletos", "error");
+                if(!amt || !file) return UI.notify("Faltan datos", "error");
                 const path = `evidence/${State.user.id}/${Date.now()}.png`;
                 await sb.storage.from('comprobantes').upload(path, file);
                 await sb.from('history').insert([{ user_id: State.user.id, type: 'deposits', amount: parseFloat(amt), label: 'CARGA', status: 'pending' }]);
-                UI.notify("Enviado a revisión", "success"); UI.closeModal('modal-deposit');
+                UI.notify("En revisión", "success"); UI.closeModal('modal-deposit');
             }
         };
 
@@ -340,16 +332,15 @@
             updateProfile() { document.getElementById('user-email-display').innerText = State.user.email; },
             notify(m, t) {
                 const c = document.getElementById('notif-container'), n = document.createElement('div');
-                n.className = `p-4 rounded-2xl text-[10px] font-black uppercase shadow-2xl animate__animated animate__fadeInDown ${t === 'success' ? 'bg-emerald-500 text-black' : 'bg-red-600 text-white'}`;
+                n.className = `p-4 rounded-xl text-[10px] font-bold uppercase shadow-xl ${t === 'success' ? 'bg-emerald-500 text-black' : 'bg-red-600 text-white'}`;
                 n.innerText = m; c.appendChild(n); setTimeout(() => n.remove(), 3000);
             },
-            copyClabe() { navigator.clipboard.writeText("0123 4567 8901 2345 67").then(() => UI.notify("Copiado", "success")); },
             openModal(id) { document.getElementById(id).classList.remove('hidden-view'); },
             closeModal(id) { document.getElementById(id).classList.add('hidden-view'); },
             depNextStep() { document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
-            handleFile(i) { if(i.files[0]) document.getElementById('file-label').innerHTML = "<span class='text-emerald-500 font-bold'>LISTO ✅</span>"; },
+            handleFile(i) { if(i.files[0]) document.getElementById('file-label').innerHTML = "LISTO ✅"; },
             renderList(data) {
-                if(!data.length) return '<p class="text-[9px] text-zinc-700 text-center py-4">Sin registros</p>';
+                if(!data.length) return '<p class="text-center text-zinc-600 py-10 text-xs">Sin registros</p>';
                 return data.map(i => `<div class="flex justify-between items-center bg-white/5 p-4 rounded-xl mb-1"><div><p class="text-[10px] font-bold uppercase">${i.label}</p></div><p class="font-casino text-[11px] ${i.amount >= 0 ? 'text-emerald-400' : 'text-zinc-600'}">$${Math.abs(i.amount)}</p></div>`).join('');
             }
         };
