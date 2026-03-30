@@ -374,11 +374,53 @@
                     return `<div class="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5 ${pulse}"><div class="flex flex-col"><span class="text-[9px] font-bold uppercase text-white">${text}</span><span class="text-[7px] text-zinc-600">${new Date(i.created_at).toLocaleDateString()}</span></div><div class="text-[10px] font-casino ${color}">$${Math.abs(i.amount).toFixed(2)}</div></div>`;
                 }).join('');
             },
-            async confirmDeposit() {
+async confirmDeposit() {
                 const amt = parseFloat(document.getElementById('dep-amount').value);
-                if(!amt || !document.getElementById('receipt-input').files[0]) return UI.notify("Sube comprobante", "error");
-                await sb.from('history').insert([{ user_id: State.user.id, type: 'deposits', amount: amt, label: 'CARGA', status: 'pending' }]);
-                UI.notify("En revisión", "success"); UI.closeModal('modal-deposit'); this.fetchHistory();
+                const fileInput = document.getElementById('receipt-input');
+                const file = fileInput.files[0];
+
+                if(!amt || !file) return UI.notify("Sube comprobante", "error");
+
+                try {
+                    UI.notify("Subiendo...", "success");
+
+                    // 1. Subir la imagen al Storage de Supabase
+                    // Nota: Asegúrate de tener un bucket llamado 'comprobantes' público
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${State.user.id}-${Math.random()}.${fileExt}`;
+                    const filePath = `depositos/${fileName}`;
+
+                    const { error: uploadError } = await sb.storage
+                        .from('comprobantes')
+                        .upload(filePath, file);
+
+                    if (uploadError) throw uploadError;
+
+                    // 2. Obtener la URL pública de la imagen
+                    const { data: urlData } = sb.storage.from('comprobantes').getPublicUrl(filePath);
+                    const publicUrl = urlData.publicUrl;
+
+                    // 3. Insertar en la tabla 'history' con la URL de la imagen
+                    // IMPORTANTE: Tu tabla 'history' debe tener una columna 'evidence_url' (o similar)
+                    const { error: insertError } = await sb.from('history').insert([{ 
+                        user_id: State.user.id, 
+                        type: 'deposits', 
+                        amount: amt, 
+                        label: 'CARGA', 
+                        status: 'pending',
+                        evidence_url: publicUrl // Aquí el admin podrá ver la foto
+                    }]);
+
+                    if (insertError) throw insertError;
+
+                    UI.notify("En revisión", "success");
+                    UI.closeModal('modal-deposit');
+                    this.fetchHistory();
+                    
+                } catch (error) {
+                    console.error("Error detallado:", error);
+                    UI.notify("Error al subir", "error");
+                }
             }
         };
 
