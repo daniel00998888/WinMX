@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Control | WinMX Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -14,33 +15,40 @@
         </div>
 
     <script>
-        // CREDENCIALES REALES RESTAURADAS
         const sb = window.supabase.createClient("https://dakhnqriwbzihlzhtfcb.supabase.co", "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs");
 
         async function loadPending() {
+            // EL CAMBIO ESTÁ AQUÍ: .eq('type', 'deposits') asegura que no entren apuestas
             const { data, error } = await sb.from('history')
                 .select('*, usuarios(saldo)')
+                .eq('type', 'deposits') // <--- ESTO FILTRA SOLO LAS RECARGAS
                 .eq('status', 'pending')
                 .order('created_at', { ascending: false });
 
             const container = document.getElementById('pending-list');
             if(error) return console.error(error);
             
-            container.innerHTML = data.length === 0 ? '<p class="text-zinc-600">No hay depósitos pendientes.</p>' : '';
+            container.innerHTML = (!data || data.length === 0) ? '<p class="text-zinc-600">No hay depósitos pendientes.</p>' : '';
 
             data.forEach(dep => {
+                // Obtenemos el saldo actual del objeto relacional 'usuarios'
+                const currentSaldo = dep.usuarios ? dep.usuarios.saldo : 0;
+
                 container.innerHTML += `
-                    <div class="bg-zinc-900 p-6 rounded-[2rem] border border-white/5 flex items-center justify-between">
+                    <div class="bg-zinc-900 p-6 rounded-[2rem] border border-white/5 flex items-center justify-between animate__animated animate__fadeIn">
                         <div class="flex gap-6 items-center">
-                            <img src="${dep.evidence_url}" class="w-32 h-32 object-cover rounded-2xl border border-white/10 cursor-pointer" onclick="window.open('${dep.evidence_url}')">
+                            <div class="w-32 h-32 bg-zinc-800 rounded-2xl flex items-center justify-center overflow-hidden border border-white/10">
+                                ${dep.evidence_url ? `<img src="${dep.evidence_url}" class="w-full h-full object-cover cursor-pointer" onclick="window.open('${dep.evidence_url}')">` : '<i class="fas fa-image text-zinc-700"></i>'}
+                            </div>
                             <div>
                                 <p class="text-emerald-500 font-bold text-2xl">$${dep.amount}</p>
                                 <p class="text-[10px] text-zinc-500 font-mono">USUARIO ID: ${dep.user_id}</p>
+                                <p class="text-[10px] text-zinc-400">SALDO ACTUAL: $${currentSaldo}</p>
                             </div>
                         </div>
                         <div class="flex gap-4">
-                            <button onclick="approve('${dep.id}', '${dep.user_id}', ${dep.amount}, ${dep.usuarios.saldo})" class="bg-emerald-500 text-black px-8 py-4 rounded-2xl font-black hover:bg-emerald-400">APROBAR</button>
-                            <button onclick="reject('${dep.id}')" class="bg-red-500/10 text-red-500 px-8 py-4 rounded-2xl font-black border border-red-500/20 hover:bg-red-500 hover:text-white">RECHAZAR</button>
+                            <button onclick="approve('${dep.id}', '${dep.user_id}', ${dep.amount}, ${currentSaldo})" class="bg-emerald-500 text-black px-8 py-4 rounded-2xl font-black hover:bg-emerald-400 transition-all">APROBAR</button>
+                            <button onclick="reject('${dep.id}')" class="bg-red-500/10 text-red-500 px-8 py-4 rounded-2xl font-black border border-red-500/20 hover:bg-red-500 hover:text-white transition-all">RECHAZAR</button>
                         </div>
                     </div>
                 `;
@@ -48,22 +56,41 @@
         }
 
         async function approve(historyId, userId, amount, currentSaldo) {
-            if(!confirm("¿Confirmas que el dinero llegó a tu banco?")) return;
+            if(!confirm(`¿Aprobar carga de $${amount}? El nuevo saldo será $${currentSaldo + amount}`)) return;
+            
             const newSaldo = currentSaldo + amount;
-            await sb.from('usuarios').update({ saldo: newSaldo }).eq('id', userId);
-            await sb.from('history').update({ status: 'completed', label: 'DEPÓSITO APROBADO' }).eq('id', historyId);
-            alert("Saldo cargado con éxito.");
-            loadPending();
+
+            // 1. Actualizamos el saldo del usuario
+            const { error: errSaldo } = await sb.from('usuarios').update({ saldo: newSaldo }).eq('id', userId);
+            
+            // 2. Marcamos el depósito como completado
+            const { error: errHist } = await sb.from('history').update({ 
+                status: 'completed', 
+                label: 'DEPÓSITO APROBADO' 
+            }).eq('id', historyId);
+
+            if(!errSaldo && !errHist) {
+                alert("¡Depósito aprobado y saldo actualizado!");
+                loadPending();
+            } else {
+                alert("Error al procesar. Revisa la consola.");
+                console.log(errSaldo, errHist);
+            }
         }
 
         async function reject(id) {
             if(!confirm("¿Rechazar este depósito?")) return;
-            await sb.from('history').update({ status: 'rejected', label: 'DEPÓSITO RECHAZADO' }).eq('id', id);
+            await sb.from('history').update({ 
+                status: 'rejected', 
+                label: 'DEPÓSITO RECHAZADO' 
+            }).eq('id', id);
             loadPending();
         }
 
+        // Carga inicial
         loadPending();
-        setInterval(loadPending, 10000); // Recarga cada 10 segundos
+        // Auto-refresh cada 15 segundos para no saturar
+        setInterval(loadPending, 15000);
     </script>
 </body>
 </html>
