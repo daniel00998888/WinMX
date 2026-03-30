@@ -16,9 +16,14 @@
         body { background: var(--mx-dark); color: white; font-family: 'Inter', sans-serif; height: 100dvh; overflow: hidden; margin: 0; -webkit-tap-highlight-color: transparent; }
         .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
         .app-container { height: 100dvh; display: flex; flex-direction: column; }
-        .view-content { flex: 1; overflow-y: auto; padding-bottom: 100px; }
+        
+        /* Ajuste crucial: Permitir scroll en la vista de juego para leer instrucciones */
+        .view-content { flex: 1; overflow-y: auto; padding-bottom: 120px; scroll-behavior: smooth; }
+        .view-content::-webkit-scrollbar { width: 4px; }
+        .view-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
         .hidden-view { display: none !important; }
-        .bottom-nav { background: rgba(10, 10, 10, 0.98); backdrop-filter: blur(15px); border-top: 1px solid rgba(255,255,255,0.05); }
+        .bottom-nav { background: rgba(10, 10, 10, 0.98); backdrop-filter: blur(15px); border-top: 1px solid rgba(255,255,255,0.05); z-index: 50; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: #444; transition: 0.3s; cursor: pointer; }
         .nav-item.active { color: var(--mx-green); }
         .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 1.5rem; }
@@ -26,7 +31,7 @@
         .balance-pill { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 99px; padding: 4px 4px 4px 12px; display: flex; align-items: center; gap: 8px; }
         .btn-plus { width: 32px; height: 32px; background: var(--mx-green); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
         
-        .history-scroll { max-height: 250px; overflow-y: auto; scrollbar-width: none; }
+        .history-scroll { max-height: 280px; overflow-y: auto; scrollbar-width: none; }
         .history-scroll::-webkit-scrollbar { display: none; }
 
         .slot-box { height: 90px; overflow: hidden; background: #000; border-radius: 1rem; border: 1px solid #1a1a1a; }
@@ -38,10 +43,19 @@
 
         .input-bet { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 12px; width: 100%; text-align: center; color: white; font-family: 'Archivo Black', sans-serif; outline: none; margin-bottom: 12px; }
         
-        /* Estilo para instrucciones */
-        .instruction-card { background: rgba(16, 185, 129, 0.03); border: 1px solid rgba(16, 185, 129, 0.1); border-radius: 1rem; padding: 15px; margin-top: 20px; text-align: left; }
-        .instruction-card h4 { font-family: 'Archivo Black', sans-serif; font-size: 10px; color: var(--mx-green); text-transform: uppercase; margin-bottom: 8px; }
-        .instruction-card p { font-size: 10px; color: #888; line-height: 1.4; }
+        /* Estilo mejorado para instrucciones (Más visibles) */
+        .instruction-card { 
+            background: rgba(16, 185, 129, 0.08); 
+            border: 1px solid rgba(16, 185, 129, 0.3); 
+            border-radius: 1.2rem; 
+            padding: 20px; 
+            margin-top: 24px; 
+            text-align: left;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .instruction-card h4 { font-family: 'Archivo Black', sans-serif; font-size: 12px; color: var(--mx-green); text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .instruction-card p { font-size: 11px; color: #ccc; line-height: 1.6; font-weight: 500; }
+        .instruction-card strong { color: white; font-weight: 800; }
     </style>
 </head>
 <body class="antialiased select-none">
@@ -88,7 +102,7 @@
         </div>
 
         <div id="view-game" class="view-content hidden-view p-5">
-            <button onclick="Router.showView('lobby')" class="mb-4 text-zinc-600 text-[10px] font-bold uppercase flex items-center"><i class="fas fa-arrow-left mr-2"></i> Volver</button>
+            <button onclick="Router.showView('lobby')" class="mb-4 text-zinc-600 text-[10px] font-bold uppercase flex items-center"><i class="fas fa-arrow-left mr-2"></i> Volver al Lobby</button>
             <div id="game-mount" class="w-full"></div>
         </div>
 
@@ -159,18 +173,22 @@
             openGame(game) {
                 this.showView('game');
                 document.getElementById('game-mount').innerHTML = this.templates[game];
+                // Scroll automático al inicio al entrar a un juego
+                document.getElementById('view-game').scrollTop = 0;
+                
                 if(game === 'slots') GameLogic.slots.init();
                 if(game === 'mines') GameLogic.mines.drawGrid();
                 if(game === 'tower') GameLogic.tower.drawTower();
             },
             templates: {
-                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4>Reglas del Slot</h4><p>Alinea 3 símbolos iguales en el centro para ganar **10x** tu apuesta inicial. Cualquier otra combinación no otorga premio.</p></div></div>`,
-                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden flex justify-between items-center p-3 mb-3 bg-emerald-500/10 rounded-xl"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><button onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-3 py-1 rounded-lg font-bold text-[9px]">COBRAR</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino text-xs">APOSTAR</button></div><div class="instruction-card"><h4>Reglas de Minas</h4><p>Hay 4 minas ocultas. Cada diamante encontrado aumenta tu multiplicador en **0.35x**. ¡Cobra antes de explotar!</p></div></div>`,
-                crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div class="h-24 flex items-center justify-center mb-6"><div id="crash-rocket" class="text-4xl transition-all duration-100">🚀</div></div><input id="crash-bet-input" type="number" value="10" class="input-bet"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button><div class="instruction-card"><h4>Reglas Aviator</h4><p>El cohete sube aleatoriamente. Tu premio es tu apuesta por el multiplicador actual. Si explota antes de cobrar, pierdes todo.</p></div></div>`,
-                tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div id="tower-container" class="space-y-1.5 mb-4 flex flex-col-reverse overflow-y-auto max-h-[250px]"></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino text-xs">JUGAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino text-xs">COBRAR $0.00</button><div class="instruction-card"><h4>Reglas Torre</h4><p>Elige 1 de 3 bloques. Evita la X para subir. Cada nivel suma **0.50x**. Tienes 8 niveles para llegar a la cima.</p></div></div>`
+                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4><i class="fas fa-info-circle"></i> Reglas del Slot</h4><p>Alinea 3 símbolos iguales en el centro para ganar <strong>10x tu apuesta inicial</strong>. Cualquier otra combinación no otorga premio.</p></div></div>`,
+                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden flex justify-between items-center p-3 mb-3 bg-emerald-500/10 rounded-xl"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><button onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-3 py-1 rounded-lg font-bold text-[9px]">COBRAR</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino text-xs">APOSTAR</button></div><div class="instruction-card"><h4><i class="fas fa-bomb"></i> Reglas de Minas</h4><p>Hay 4 minas ocultas. Cada diamante encontrado aumenta tu multiplicador en <strong>0.35x acumulativo</strong>. ¡Cobra antes de explotar!</p></div></div>`,
+                crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div class="h-24 flex items-center justify-center mb-6"><div id="crash-rocket" class="text-4xl transition-all duration-100">🚀</div></div><input id="crash-bet-input" type="number" value="10" class="input-bet"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button><div class="instruction-card"><h4><i class="fas fa-rocket"></i> Reglas Aviator</h4><p>El cohete sube aleatoriamente. Tu premio es tu apuesta por el <strong>multiplicador actual</strong>. Si explota antes de cobrar, pierdes todo.</p></div></div>`,
+                tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div id="tower-container" class="space-y-1.5 mb-4 flex flex-col-reverse overflow-y-auto max-h-[250px]"></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino text-xs">JUGAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino text-xs">COBRAR $0.00</button><div class="instruction-card"><h4><i class="fas fa-chess-rook"></i> Reglas Torre</h4><p>Elige 1 de 3 bloques por piso. Evita la ❌ para subir. Cada nivel suma <strong>0.50x a tu multiplicador</strong>. Tienes 8 niveles totales.</p></div></div>`
             }
         };
 
+        // [EL RESTO DE LA LÓGICA DE JUEGOS SE MANTIENE IGUAL]
         const GameLogic = {
             slots: {
                 init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); r.innerHTML = ''; Array(40).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); }); },
