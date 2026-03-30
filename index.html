@@ -65,14 +65,36 @@
         </div>
     </div>
 
-    <div id="auth-view" class="hidden-view min-h-screen flex items-center justify-center p-8 bg-black">
-        <div class="glass p-8 w-full max-w-sm text-center">
+    <div id="auth-view" class="hidden-view min-h-screen flex items-center justify-center p-6 bg-black">
+        
+        <div id="login-container" class="glass p-8 w-full max-w-sm text-center animate__animated animate__fadeIn">
             <h2 class="text-3xl font-casino mb-10 italic tracking-tighter">Win<span class="text-emerald-500">MX</span></h2>
             <div class="space-y-4">
-                <input id="auth-email" type="email" placeholder="Correo" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
-                <input id="auth-password" type="password" placeholder="Contraseña" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
+                <input id="login-email" type="email" placeholder="Correo electrónico" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
+                <input id="login-password" type="password" placeholder="Contraseña" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
                 <button onclick="AuthManager.login()" class="btn-action w-full py-4 font-casino mt-2">Entrar</button>
-                <button onclick="AuthManager.register()" class="w-full py-2 text-zinc-600 text-[10px] font-bold uppercase tracking-widest">Crear cuenta</button>
+                <button onclick="AuthManager.switchTab('register')" class="w-full py-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-4 underline decoration-emerald-500/50">¿No tienes cuenta? Regístrate</button>
+            </div>
+        </div>
+
+        <div id="register-container" class="hidden-view glass p-8 w-full max-w-sm text-center animate__animated animate__fadeIn">
+            <h2 class="text-2xl font-casino mb-6 italic tracking-tighter text-emerald-500">Nueva Cuenta</h2>
+            <div class="space-y-4 text-left">
+                <input id="reg-email" type="email" placeholder="Correo electrónico" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
+                <input id="reg-password" type="password" placeholder="Crea una contraseña" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
+                
+                <div class="bg-white/5 border border-white/5 p-4 rounded-xl space-y-3">
+                    <p class="text-[9px] text-zinc-400 leading-relaxed uppercase font-bold">
+                        ⚠️ AVISO: Esta plataforma implica riesgo real de capital. Juega con responsabilidad. Al registrarte confirmas que eres MAYOR DE EDAD (18+) y liberas a WinMX de responsabilidad legal por pérdidas.
+                    </p>
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" id="terms-check" class="w-4 h-4 accent-emerald-500">
+                        <span class="text-[10px] text-white font-bold uppercase">Acepto términos y soy mayor de edad</span>
+                    </label>
+                </div>
+
+                <button onclick="AuthManager.register()" class="btn-action w-full py-4 font-casino mt-2">Crear Cuenta</button>
+                <button onclick="AuthManager.switchTab('login')" class="w-full py-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-2 text-center underline decoration-zinc-700">Ya tengo cuenta</button>
             </div>
         </div>
     </div>
@@ -138,7 +160,7 @@
                     <span class="text-xs font-mono font-bold">722969020533491161</span>
                 </div>
                 <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
-                <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-2xl p-4 block">
+                <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-2xl p-4 block cursor-pointer">
                     <i class="fas fa-camera text-xl mb-1 text-zinc-600"></i>
                     <p id="file-label" class="text-[8px] font-bold text-zinc-500 uppercase">Subir Comprobante</p>
                 </label>
@@ -381,37 +403,38 @@
         };
 
         const AuthManager = {
+            switchTab(tab) {
+                if(tab === 'register') {
+                    document.getElementById('login-container').classList.add('hidden-view');
+                    document.getElementById('register-container').classList.remove('hidden-view');
+                } else {
+                    document.getElementById('register-container').classList.add('hidden-view');
+                    document.getElementById('login-container').classList.remove('hidden-view');
+                }
+            },
             async login() {
-                const { error } = await sb.auth.signInWithPassword({ email: document.getElementById('auth-email').value, password: document.getElementById('auth-password').value });
+                const email = document.getElementById('login-email').value;
+                const pass = document.getElementById('login-password').value;
+                if(!email || !pass) return UI.notify("Llena los campos", "error");
+                const { error } = await sb.auth.signInWithPassword({ email, password: pass });
                 if(error) UI.notify("Error de acceso", "error"); else location.reload();
             },
             async register() {
-                const email = document.getElementById('auth-email').value;
-                const password = document.getElementById('auth-password').value;
-
-                if (!email || !password) return UI.notify("Llena todos los campos", "error");
-
-                // 1. Registro en Supabase Auth
-                const { data, error } = await sb.auth.signUp({ email, password });
+                const email = document.getElementById('reg-email').value;
+                const pass = document.getElementById('reg-password').value;
+                const accepted = document.getElementById('terms-check').checked;
                 
-                if (error) {
-                    UI.notify("Error al registrar", "error");
-                } else {
-                    // 2. Inicializar usuario en la tabla 'usuarios' con saldo 0
-                    const { error: dbError } = await sb.from('usuarios').insert([{ id: data.user.id, saldo: 0 }]);
-                    
-                    if(dbError) {
-                        UI.notify("Error de base de datos", "error");
-                    } else {
-                        UI.notify("¡Cuenta creada!", "success");
-                        setTimeout(() => location.reload(), 1500);
-                    }
+                if(!email || !pass) return UI.notify("Faltan datos", "error");
+                if(!accepted) return UI.notify("Acepta los términos", "error");
+
+                const { error } = await sb.auth.signUp({ email, password: pass });
+                if(error) UI.notify("Error al crear", "error"); 
+                else {
+                    UI.notify("¡Creado! Entra ahora", "success");
+                    setTimeout(() => this.switchTab('login'), 2000);
                 }
             },
-            async logout() {
-                await sb.auth.signOut();
-                location.reload();
-            }
+            logout() { sb.auth.signOut().then(() => location.reload()); }
         };
 
         Core.init();
