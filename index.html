@@ -3,214 +3,420 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WinMX | Plataforma Profesional v2.0</title>
+    <title>WinMX | Casino Hub</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;700;900&display=swap');
-        
-        :root { --mx-green: #00ff88; --mx-bg: #050505; --mx-surface: #0f0f0f; --mx-border: #1a1a1a; }
-        
-        body { background: var(--mx-bg); color: white; font-family: 'Inter', sans-serif; height: 100vh; display: flex; overflow: hidden; margin: 0; }
+        @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@300;400;600;800;900&display=swap');
+        :root { --mx-green: #10b981; --mx-dark: #070707; }
+        body { background-color: var(--mx-dark); color: white; font-family: 'Inter', sans-serif; min-height: 100vh; -webkit-tap-highlight-color: transparent; }
         .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
+        .glass-panel { background: rgba(18, 18, 18, 0.9); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.07); }
+        
+        /* Rodillos */
+        .slot-box { height: clamp(80px, 15vh, 140px); overflow: hidden; background: #000; border: 2px solid #1a1a1a; border-radius: 1rem; }
+        .slot-item { height: clamp(80px, 15vh, 140px); display: flex; align-items: center; justify-content: center; font-size: clamp(2rem, 8vw, 4rem); }
+        .slot-reel { transition: transform 3.5s cubic-bezier(0.15, 0, 0.05, 1); }
 
-        /* AUTH SCREEN */
-        #auth-screen { position: fixed; inset: 0; background: var(--mx-bg); z-index: 5000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .auth-card { background: var(--mx-surface); width: 100%; max-width: 400px; padding: 40px; border-radius: 2.5rem; border: 1px solid var(--mx-border); text-align: center; }
-        .auth-input { width: 100%; background: #000; border: 1px solid var(--mx-border); padding: 15px 20px; border-radius: 12px; margin-bottom: 12px; outline: none; color: white; }
-        .auth-input:focus { border-color: var(--mx-green); }
+        /* Dados y Ruleta */
+        .game-canvas { background: radial-gradient(circle, #1a1a1a, #000); border-radius: 2rem; border: 1px solid #333; position: relative; overflow: hidden; }
+        .die { width: 60px; height: 60px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: black; font-weight: 900; }
+        
+        .btn-action { background: var(--mx-green); color: black; font-weight: 900; transition: all 0.2s; }
+        .btn-game-select { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s; }
+        .btn-game-select.active { border-color: var(--mx-green); background: rgba(16, 185, 129, 0.1); color: var(--mx-green); }
 
-        /* SIDEBAR */
-        aside { width: 260px; background: var(--mx-surface); border-right: 1px solid var(--mx-border); display: flex; flex-direction: column; flex-shrink: 0; z-index: 100; }
-        .nav-item { padding: 15px 25px; display: flex; align-items: center; gap: 12px; color: #555; cursor: pointer; transition: 0.2s; font-size: 13px; font-weight: 800; text-transform: uppercase; }
-        .nav-item:hover, .nav-item.active { color: var(--mx-green); background: rgba(0,255,136,0.05); }
-        .nav-item.active { border-right: 3px solid var(--mx-green); color: var(--mx-green); }
-
-        /* MAIN CONTENT */
-        main { flex-grow: 1; display: flex; flex-direction: column; position: relative; height: 100vh; }
-        header { height: 75px; background: var(--mx-surface); border-bottom: 1px solid var(--mx-border); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; }
-
-        /* GAME AREA */
-        #game-container { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; overflow-y: auto; background: radial-gradient(circle at center, #111 0%, #050505 100%); }
-        .game-frame { width: 100%; max-width: 850px; aspect-ratio: 16/9; background: #000; border-radius: 30px; border: 1px solid var(--mx-border); position: relative; overflow: hidden; display: flex; box-shadow: 0 40px 100px rgba(0,0,0,0.8); }
-
-        /* SLOTS REELS */
-        .reel-container { flex: 1; border-right: 1px solid #111; position: relative; overflow: hidden; }
-        .reel-strip { position: absolute; width: 100%; transition: transform 3s cubic-bezier(0.1, 0, 0.1, 1); top: 0; }
-        .symbol { height: 160px; display: flex; align-items: center; justify-content: center; font-size: 4rem; }
-
-        /* CONTROL BAR */
-        .control-bar { background: var(--mx-surface); border-top: 1px solid var(--mx-border); padding: 25px 40px; display: flex; gap: 20px; align-items: center; }
-        .bet-selector { background: #000; border: 1px solid var(--mx-border); border-radius: 15px; display: flex; align-items: center; padding: 5px 20px; flex-grow: 1; }
-        .btn-play { background: var(--mx-green); color: #000; font-family: 'Archivo Black'; padding: 18px 50px; border-radius: 15px; font-size: 20px; transition: 0.2s; box-shadow: 0 10px 30px rgba(0,255,136,0.2); border: none; cursor: pointer; }
-        .btn-play:disabled { background: #222; color: #444; box-shadow: none; cursor: not-allowed; }
-
-        /* MODAL DEPOSITO */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 2000; display: none; align-items: center; justify-content: center; }
-        .modal-content { background: #0f0f0f; padding: 50px; border-radius: 3.5rem; border: 1px solid #222; width: 100%; max-width: 420px; text-align: center; }
-
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
+        .hidden-view { display: none !important; }
+        .modal-container { max-height: 90vh; overflow-y: auto; width: 95%; margin: auto; }
+        
+        @keyframes roll { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .animate-roll { animation: roll 0.2s linear infinite; }
     </style>
 </head>
-<body>
+<body class="antialiased overflow-x-hidden">
 
-    <div id="auth-screen">
-        <div class="auth-card">
-            <div class="font-casino text-3xl mb-10 italic">WIN<span class="text-emerald-500">MX</span></div>
-            <input id="email" type="email" placeholder="Correo Electrónico" class="auth-input">
-            <input id="pass" type="password" placeholder="Contraseña" class="auth-input">
-            <button onclick="Auth.handle()" id="btn-auth-main" class="w-full bg-emerald-500 text-black font-casino py-4 rounded-xl mt-4 text-lg">Entrar al Casino</button>
-            <button onclick="Auth.toggle()" id="btn-auth-toggle" class="mt-6 text-[10px] font-black text-zinc-600 uppercase tracking-widest">¿No tienes cuenta? Regístrate</button>
+    <div id="boot-loader" class="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center">
+        <div class="text-4xl font-casino italic mb-4 text-emerald-500 animate-pulse">WinMX</div>
+        <div class="w-48 h-1 bg-zinc-900 rounded-full overflow-hidden">
+            <div id="boot-bar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
         </div>
     </div>
 
-    <aside>
-        <div class="p-10 font-casino text-2xl italic tracking-tighter">WIN<span class="text-emerald-500">MX</span></div>
-        <nav class="flex-grow">
-            <div onclick="Router.go('slots')" id="n-slots" class="nav-item active"><i class="fas fa-dice"></i> Lucky Slots</div>
-            <div onclick="Router.go('mines')" id="n-mines" class="nav-item"><i class="fas fa-bomb"></i> Mines Pro</div>
-            <div onclick="Router.go('crash')" id="n-crash" class="nav-item"><i class="fas fa-rocket"></i> Crash Rocket</div>
-            <div class="mt-10 px-8 text-[10px] text-zinc-700 font-black uppercase tracking-widest">Cuenta</div>
-            <div onclick="UI.modal('dep', true)" class="nav-item"><i class="fas fa-wallet"></i> Depositar</div>
-            <div onclick="Auth.signOut()" class="nav-item text-red-500"><i class="fas fa-power-off"></i> Salir</div>
+    <div id="auth-view" class="hidden-view min-h-screen flex items-center justify-center p-4 bg-black">
+        <div class="glass-panel p-8 rounded-[2rem] w-full max-w-sm">
+            <h2 class="text-3xl font-casino text-center mb-8 italic">Win<span class="text-emerald-500">MX</span></h2>
+            <div class="space-y-4">
+                <input id="auth-email" type="email" placeholder="Email" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none">
+                <input id="auth-password" type="password" placeholder="Password" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none">
+                <button onclick="AuthManager.login()" class="btn-action w-full py-4 rounded-xl font-casino">Entrar</button>
+                <button onclick="AuthManager.register()" class="w-full py-2 text-zinc-600 text-[10px] font-bold uppercase">Crear Cuenta</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-app" class="opacity-0 hidden-view">
+        <nav class="glass-panel sticky top-0 z-50 px-4 py-3 border-b border-white/5">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <h1 class="text-xl font-casino italic">Win<span class="text-emerald-500">MX</span></h1>
+                <div id="balance-display" class="text-xl font-casino text-emerald-500">$0.00</div>
+                <button onclick="AuthManager.logout()" class="text-red-500"><i class="fas fa-power-off"></i></button>
+            </div>
         </nav>
-    </aside>
 
-    <main>
-        <header>
-            <div id="route-label" class="text-zinc-500 font-bold text-[10px] uppercase tracking-widest">Casino > Slots</div>
-            <div class="flex items-center gap-4">
-                <div class="bg-black border border-white/5 px-6 py-2 rounded-2xl flex flex-col items-end">
-                    <span id="bal-txt" class="text-xl font-casino text-emerald-400">$0.00</span>
-                    <span class="text-[7px] text-zinc-600 font-black uppercase">Saldo MXN</span>
-                </div>
-                <button onclick="UI.modal('dep', true)" class="w-12 h-12 bg-emerald-500 text-black rounded-2xl flex items-center justify-center shadow-lg"><i class="fas fa-plus"></i></button>
-            </div>
-        </header>
-
-        <div id="game-container">
-            <div class="game-frame">
-                <div id="game-render" class="flex-grow flex items-center justify-center p-10"></div>
-            </div>
+        <div class="p-4 flex gap-3 overflow-x-auto no-scrollbar max-w-7xl mx-auto">
+            <button onclick="Router.switch('slots')" id="nav-slots" class="btn-game-select active px-6 py-3 rounded-xl font-casino text-[10px] shrink-0">🎰 Slots</button>
+            <button onclick="Router.switch('dice')" id="nav-dice" class="btn-game-select px-6 py-3 rounded-xl font-casino text-[10px] shrink-0">🎲 Dados</button>
+            <button onclick="Router.switch('roulette')" id="nav-roulette" class="btn-game-select px-6 py-3 rounded-xl font-casino text-[10px] shrink-0">🎡 Ruleta</button>
+            <button onclick="Router.switch('chests')" id="nav-chests" class="btn-game-select px-6 py-3 rounded-xl font-casino text-[10px] shrink-0">🏴‍☠️ Cofres</button>
         </div>
 
-        <div class="control-bar">
-            <div class="bet-selector">
-                <button onclick="Game.adjustBet(-10)" class="text-zinc-600 p-2"><i class="fas fa-minus"></i></button>
-                <div class="flex-grow text-center">
-                    <p class="text-[8px] text-zinc-700 font-black uppercase">Apuesta</p>
-                    <span id="bet-txt" class="font-casino text-2xl text-white">$10</span>
+        <main class="max-w-7xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-6 pb-20">
+            <div id="game-container" class="lg:col-span-8">
                 </div>
-                <button onclick="Game.adjustBet(10)" class="text-zinc-600 p-2"><i class="fas fa-plus"></i></button>
-                <div class="flex gap-2 ml-6 border-l border-zinc-800 pl-6">
-                    <button onclick="Game.adjustBet(State.bet)" class="bg-zinc-900 text-[9px] px-3 py-1 rounded font-bold uppercase">x2</button>
-                    <button onclick="Game.adjustBet(-State.bet/2)" class="bg-zinc-900 text-[9px] px-3 py-1 rounded font-bold uppercase">1/2</button>
-                </div>
-            </div>
-            <button id="btn-play-main" onclick="Game.play()" class="btn-play italic">APOSTAR</button>
-        </div>
-    </main>
 
-    <div id="modal-dep" class="modal">
-        <div class="modal-content relative">
-            <button onclick="UI.modal('dep', false)" class="absolute top-10 right-10 text-zinc-600"><i class="fas fa-times"></i></button>
-            <div class="font-casino text-2xl mb-10 italic text-emerald-500">DEPOSITAR SALDO</div>
-            <input id="dep-val" type="number" placeholder="$0.00" class="w-full bg-black text-emerald-500 text-center text-5xl font-casino py-8 rounded-[2rem] border border-white/5 outline-none mb-8">
-            <div class="bg-zinc-900 p-8 rounded-[2.5rem] border border-white/5 mb-8 text-center">
-                <p class="text-[9px] text-zinc-600 font-black mb-2 uppercase tracking-widest">CUENTA STP INTERBANCARIA</p>
-                <p class="text-lg font-mono font-bold text-white select-all">722 969 020 533 491 161</p>
+            <div class="lg:col-span-4 space-y-4">
+                <button onclick="UI.openModal('modal-deposit')" class="btn-action w-full py-5 rounded-2xl font-casino">Cargar Saldo</button>
+                <div class="glass-panel p-6 rounded-[2rem]">
+                    <p class="text-[10px] font-bold text-zinc-500 uppercase mb-4 tracking-widest">Actividad Reciente</p>
+                    <div id="history-content" class="space-y-2 max-h-[400px] overflow-y-auto custom-scroll"></div>
+                </div>
             </div>
-            <button onclick="UI.doDep()" class="w-full py-6 bg-emerald-500 text-black font-casino text-xl rounded-[1.5rem] shadow-2xl">Confirmar Envío</button>
+        </main>
+    </div>
+
+    <div id="modal-deposit" class="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center hidden p-4">
+        <div class="modal-container glass-panel p-8 rounded-[2rem] max-w-md">
+            <div id="dep-step-1">
+                <h2 class="font-casino text-xl text-center mb-6 text-emerald-500">Recargar Cuenta</h2>
+                <input id="dep-amount" type="number" placeholder="Monto" class="w-full bg-transparent text-center text-5xl font-casino border-b border-zinc-800 outline-none mb-8 py-2">
+                <div class="grid grid-cols-3 gap-2 mb-8">
+                    <button onclick="UI.setDep(100)" class="py-3 bg-white/5 rounded-xl text-xs font-bold hover:bg-emerald-500 hover:text-black">+$100</button>
+                    <button onclick="UI.setDep(500)" class="py-3 bg-white/5 rounded-xl text-xs font-bold hover:bg-emerald-500 hover:text-black">+$500</button>
+                    <button onclick="UI.setDep(1000)" class="py-3 bg-white/5 rounded-xl text-xs font-bold hover:bg-emerald-500 hover:text-black">+$1000</button>
+                </div>
+                <button onclick="UI.depNextStep()" class="btn-action w-full py-4 rounded-xl font-casino">Siguiente</button>
+            </div>
+            <div id="dep-step-2" class="hidden space-y-6">
+                <div class="bg-zinc-900 p-4 rounded-xl text-[11px] text-zinc-400 space-y-2">
+                    <p>1. Transfiera a la CLAVE abajo.</p>
+                    <p>2. Monto: <strong id="dep-final-amount" class="text-white"></strong></p>
+                    <p>3. Concepto: <strong class="text-white">WinMX</strong></p>
+                </div>
+                <div class="bg-emerald-500/10 p-5 rounded-xl border border-emerald-500/20 text-center">
+                    <p class="text-[9px] font-black text-emerald-500 mb-1">CLAVE STP</p>
+                    <p class="text-lg font-mono font-bold select-all">722 969 020 533 491 161</p>
+                </div>
+                <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
+                <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-xl p-8 flex flex-col items-center cursor-pointer">
+                    <i class="fas fa-camera text-2xl mb-2"></i>
+                    <p id="file-label" class="text-[10px] font-bold text-zinc-500">SUBIR COMPROBANTE</p>
+                </label>
+                <button id="final-dep-btn" onclick="Core.confirmDeposit()" class="btn-action w-full py-4 rounded-xl font-casino">Confirmar Pago</button>
+            </div>
+            <button onclick="UI.closeModal('modal-deposit')" class="mt-6 block mx-auto text-[10px] text-zinc-600 font-bold uppercase">Cancelar</button>
         </div>
     </div>
+
+    <div id="notif-container" class="fixed bottom-4 right-4 left-4 sm:left-auto z-[200] flex flex-col gap-2"></div>
 
     <script>
-        const sb = window.supabase.createClient("https://dakhnqriwbzihlzhtfcb.supabase.co", "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs");
-        let State = { user: null, balance: 0, bet: 10, playing: false, game: 'slots', isLogin: true, spinIdx: 0 };
+        const DB_CONFIG = { url: "https://dakhnqriwbzihlzhtfcb.supabase.co", key: "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs" };
+        const sb = window.supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
+
+        let State = { user: null, balance: 0, currentBet: 10, isSpinning: false, currentGame: 'slots', totalSpins: 0 };
         const SYMBOLS = ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'];
 
-        const Auth = {
-            toggle() { State.isLogin = !State.isLogin; document.getElementById('btn-auth-main').innerText = State.isLogin ? 'Entrar al Casino' : 'Crear Cuenta'; },
-            async handle() {
-                const email = document.getElementById('email').value;
-                const pass = document.getElementById('pass').value;
-                const { data, error } = State.isLogin ? await sb.auth.signInWithPassword({ email, password: pass }) : await sb.auth.signUp({ email, password: pass });
-                if(error) alert(error.message);
-                else { if(!State.isLogin) await sb.from('usuarios').insert([{ id: data.user.id, saldo: 0 }]); location.reload(); }
+        // --- MANEJADOR DE RUTAS (CAMBIO DE JUEGOS) ---
+        const Router = {
+            switch(game) {
+                if(State.isSpinning) return;
+                State.currentGame = game;
+                document.querySelectorAll('.btn-game-select').forEach(b => b.classList.remove('active'));
+                document.getElementById(`nav-${game}`).classList.add('active');
+                this.render();
+            },
+            render() {
+                const container = document.getElementById('game-container');
+                container.innerHTML = this.templates[State.currentGame];
+                if(State.currentGame === 'slots') GameLogic.slots.init();
+                UI.updateBetDisplay();
+            },
+            templates: {
+                slots: `
+                    <div class="glass-panel p-6 md:p-10 rounded-[2rem] animate__animated animate__fadeIn">
+                        <div class="grid grid-cols-3 gap-3 mb-10">
+                            <div class="slot-box"><div id="reel-1" class="slot-reel"></div></div>
+                            <div class="slot-box"><div id="reel-2" class="slot-reel"></div></div>
+                            <div class="slot-box"><div id="reel-3" class="slot-reel"></div></div>
+                        </div>
+                        <div class="flex flex-col md:flex-row gap-4">
+                            <div class="flex items-center justify-between bg-black/50 p-4 rounded-xl flex-grow">
+                                <button onclick="GameLogic.changeBet(-10)" class="w-10 h-10 bg-zinc-800 rounded-lg">-</button>
+                                <span class="bet-val text-2xl font-casino">$10</span>
+                                <button onclick="GameLogic.changeBet(10)" class="w-10 h-10 bg-zinc-800 rounded-lg">+</button>
+                            </div>
+                            <button onclick="GameLogic.slots.play()" id="spin-btn" class="btn-action px-12 py-5 rounded-xl font-casino italic text-2xl">GIRAR</button>
+                        </div>
+                        <div class="mt-6 p-4 bg-zinc-900 rounded-xl text-[10px] text-zinc-500">
+                             <p class="mb-2 text-white font-bold uppercase">Premios Slots:</p>
+                             777 (x500), 💎💎💎 (x100), ⭐⭐⭐ (x50), 🔔🔔🔔 (x20), 🍋🍋🍋 (x10), 🍒🍒🍒 (x5)
+                        </div>
+                    </div>`,
+                dice: `
+                    <div class="glass-panel p-10 rounded-[2rem] text-center animate__animated animate__fadeIn">
+                        <h2 class="font-casino text-2xl mb-8">Lucky Dice 🎲</h2>
+                        <div class="flex justify-center gap-6 mb-10">
+                            <div id="die-1" class="die">1</div>
+                            <div id="die-2" class="die">1</div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mb-8">
+                            <button onclick="GameLogic.dice.play('under')" class="bg-blue-600/20 border border-blue-500/50 py-4 rounded-xl font-bold uppercase text-xs">Menor a 7 (x2)</button>
+                            <button onclick="GameLogic.dice.play('over')" class="bg-red-600/20 border border-red-500/50 py-4 rounded-xl font-bold uppercase text-xs">Mayor a 7 (x2)</button>
+                        </div>
+                        <div class="bg-black/50 p-4 rounded-xl flex justify-between items-center">
+                            <button onclick="GameLogic.changeBet(-10)" class="w-10 h-10 bg-zinc-800 rounded-lg">-</button>
+                            <span class="bet-val text-xl font-casino">$10</span>
+                            <button onclick="GameLogic.changeBet(10)" class="w-10 h-10 bg-zinc-800 rounded-lg">+</button>
+                        </div>
+                        <p class="mt-6 text-[10px] text-zinc-500">Si sale 7 exacto, la casa gana.</p>
+                    </div>`,
+                roulette: `
+                    <div class="glass-panel p-6 rounded-[2rem] text-center animate__animated animate__fadeIn">
+                        <h2 class="font-casino text-2xl mb-6 italic text-emerald-500">Mini Ruleta 🎡</h2>
+                        <div id="wheel" class="w-32 h-32 bg-zinc-900 rounded-full mx-auto mb-8 border-4 border-emerald-500 flex items-center justify-center text-4xl font-casino">?</div>
+                        <div class="grid grid-cols-2 gap-3 mb-6">
+                            <button onclick="GameLogic.roulette.play('red')" class="bg-red-600 py-4 rounded-xl font-bold uppercase text-[10px]">Rojo (x2)</button>
+                            <button onclick="GameLogic.roulette.play('black')" class="bg-zinc-800 py-4 rounded-xl font-bold uppercase text-[10px]">Negro (x2)</button>
+                        </div>
+                        <div class="bg-black/50 p-4 rounded-xl flex justify-between items-center mb-6">
+                            <button onclick="GameLogic.changeBet(-10)" class="w-8 h-8 bg-zinc-800 rounded-lg">-</button>
+                            <span class="bet-val text-lg font-casino">$10</span>
+                            <button onclick="GameLogic.changeBet(10)" class="w-8 h-8 bg-zinc-800 rounded-lg">+</button>
+                        </div>
+                    </div>`,
+                chests: `
+                    <div class="glass-panel p-6 rounded-[2rem] text-center animate__animated animate__fadeIn">
+                        <h2 class="font-casino text-2xl mb-8">Cofres del Tesoro 🏴‍☠️</h2>
+                        <div class="grid grid-cols-3 gap-4 mb-10">
+                            <div onclick="GameLogic.chests.play(0)" class="bg-zinc-900 p-6 rounded-2xl cursor-pointer hover:bg-zinc-800 text-4xl">🎁</div>
+                            <div onclick="GameLogic.chests.play(1)" class="bg-zinc-900 p-6 rounded-2xl cursor-pointer hover:bg-zinc-800 text-4xl">🎁</div>
+                            <div onclick="GameLogic.chests.play(2)" class="bg-zinc-900 p-6 rounded-2xl cursor-pointer hover:bg-zinc-800 text-4xl">🎁</div>
+                        </div>
+                        <div class="bg-black/50 p-4 rounded-xl flex justify-between items-center">
+                            <button onclick="GameLogic.changeBet(-10)" class="w-10 h-10 bg-zinc-800 rounded-lg">-</button>
+                            <span class="bet-val text-xl font-casino">$10</span>
+                            <button onclick="GameLogic.changeBet(10)" class="w-10 h-10 bg-zinc-800 rounded-lg">+</button>
+                        </div>
+                        <p class="mt-4 text-[10px] text-zinc-500">Un cofre tiene x5, otro x2 y uno está vacío.</p>
+                    </div>`
+            }
+        };
+
+        // --- LÓGICA DE JUEGOS ---
+        const GameLogic = {
+            changeBet(v) {
+                State.currentBet = Math.max(10, State.currentBet + v);
+                UI.updateBetDisplay();
+            },
+            async startSpin() {
+                if(State.isSpinning || State.balance < State.currentBet) { UI.notify("Sin saldo", "error"); return false; }
+                State.isSpinning = true;
+                State.balance -= State.currentBet;
+                UI.updateBalance();
+                await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+                return true;
+            },
+            async endSpin(winAmt, gameName, label) {
+                if(winAmt > 0) {
+                    State.balance += winAmt;
+                    await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+                    UI.notify(`GANASTE $${winAmt}`, "success");
+                    UI.updateBalance();
+                }
+                await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: winAmt - State.currentBet, label: label, status: 'completed' }]);
+                Core.fetchHistory();
+                State.isSpinning = false;
+            },
+            slots: {
+                init() {
+                    [1,2,3].forEach(id => {
+                        const r = document.getElementById(`reel-${id}`);
+                        r.innerHTML = '';
+                        const strip = Array(40).fill(SYMBOLS).flat();
+                        strip.forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`);
+                    });
+                },
+                async play() {
+                    if(!await GameLogic.startSpin()) return;
+                    State.totalSpins++;
+                    const res = [SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)]];
+                    const paytable = { '7️⃣7️⃣7️⃣': 500, '💎💎💎': 100, '⭐️⭐️⭐️': 50, '🔔🔔🔔': 20, '🍋🍋🍋': 10, '🍒🍒🍒': 5 };
+                    const winMult = paytable[res.join('')] || 0;
+                    
+                    const h = document.querySelector('.slot-item').offsetHeight;
+                    [1,2,3].forEach((id, i) => {
+                        const reel = document.getElementById(`reel-${id}`);
+                        const pos = (State.totalSpins * h * 12) + (SYMBOLS.indexOf(res[i]) * h);
+                        reel.style.transform = `translateY(-${pos}px)`;
+                    });
+
+                    setTimeout(() => GameLogic.endSpin(State.currentBet * winMult, 'slots', winMult > 0 ? `WIN X${winMult}` : 'SLOTS'), 3500);
+                }
+            },
+            dice: {
+                async play(choice) {
+                    if(!await GameLogic.startSpin()) return;
+                    const d1 = document.getElementById('die-1');
+                    const d2 = document.getElementById('die-2');
+                    d1.classList.add('animate-roll');
+                    d2.classList.add('animate-roll');
+
+                    setTimeout(() => {
+                        d1.classList.remove('animate-roll');
+                        d2.classList.remove('animate-roll');
+                        const v1 = Math.floor(Math.random()*6)+1;
+                        const v2 = Math.floor(Math.random()*6)+1;
+                        d1.innerText = v1; d2.innerText = v2;
+                        const sum = v1 + v2;
+                        let win = false;
+                        if(choice === 'under' && sum < 7) win = true;
+                        if(choice === 'over' && sum > 7) win = true;
+                        GameLogic.endSpin(win ? State.currentBet * 2 : 0, 'dice', win ? 'DADOS X2' : 'DADOS');
+                    }, 1500);
+                }
+            },
+            roulette: {
+                async play(color) {
+                    if(!await GameLogic.startSpin()) return;
+                    const w = document.getElementById('wheel');
+                    w.classList.add('animate-roll');
+                    setTimeout(() => {
+                        w.classList.remove('animate-roll');
+                        const num = Math.floor(Math.random()*15);
+                        const isRed = num % 2 === 0 && num !== 0;
+                        const resultColor = num === 0 ? 'green' : (isRed ? 'red' : 'black');
+                        w.innerText = num;
+                        w.style.color = resultColor === 'red' ? '#ef4444' : (resultColor === 'black' ? '#fff' : '#10b981');
+                        const win = color === resultColor;
+                        GameLogic.endSpin(win ? State.currentBet * 2 : 0, 'roulette', win ? 'RULETA X2' : 'RULETA');
+                    }, 2000);
+                }
+            },
+            chests: {
+                async play(idx) {
+                    if(!await GameLogic.startSpin()) return;
+                    const results = [0, 2, 5].sort(() => Math.random() - 0.5);
+                    const mult = results[idx];
+                    UI.notify(`Cofre: x${mult}`, mult > 0 ? 'success' : 'error');
+                    GameLogic.endSpin(State.currentBet * mult, 'chests', mult > 0 ? `COFRE X${mult}` : 'COFRE');
+                }
+            }
+        };
+
+        const AuthManager = {
+            async login() {
+                const e = document.getElementById('auth-email').value;
+                const p = document.getElementById('auth-password').value;
+                const { error } = await sb.auth.signInWithPassword({ email: e, password: p });
+                if(error) return UI.notify(error.message, 'error');
+                location.reload();
+            },
+            async register() {
+                const e = document.getElementById('auth-email').value;
+                const p = document.getElementById('auth-password').value;
+                const { error } = await sb.auth.signUp({ email: e, password: p });
+                if(error) return UI.notify(error.message, 'error');
+                UI.notify("Cuenta creada", "success");
+            },
+            async logout() { await sb.auth.signOut(); location.reload(); }
+        };
+
+        const Core = {
+            async init() {
+                let p = 0;
+                const i = setInterval(() => {
+                    p += 25; document.getElementById('boot-bar').style.width = `${p}%`;
+                    if(p >= 100) { clearInterval(i); this.check(); }
+                }, 50);
             },
             async check() {
                 const { data: { session } } = await sb.auth.getSession();
+                document.getElementById('boot-loader').style.display = 'none';
                 if(session) {
                     State.user = session.user;
-                    document.getElementById('auth-screen').style.display = 'none';
-                    const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    State.balance = data ? data.saldo : 0;
-                    UI.refresh(); Router.go('slots');
+                    document.getElementById('main-app').classList.remove('hidden-view');
+                    setTimeout(() => document.getElementById('main-app').classList.add('opacity-100'), 50);
+                    this.load();
+                    Router.render();
+                } else {
+                    document.getElementById('auth-view').classList.remove('hidden-view');
                 }
             },
-            signOut() { sb.auth.signOut().then(() => location.reload()); }
-        };
-
-        const Router = {
-            go(g) { State.game = g; document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.id === `n-${g}`)); this.render(); },
-            render() {
-                const r = document.getElementById('game-render');
-                if(State.game === 'slots') {
-                    r.innerHTML = `<div class="flex gap-4 w-full h-full"><div class="reel-container"><div id="r1" class="reel-strip"></div></div><div class="reel-container"><div id="r2" class="reel-strip"></div></div><div class="reel-container"><div id="r3" class="reel-strip"></div></div></div>`;
-                    [1,2,3].forEach(id => { let s = document.getElementById(`r${id}`); s.innerHTML = ''; for(let i=0; i<80; i++) s.innerHTML += `<div class="symbol">${SYMBOLS[i%6]}</div>`; });
-                } else if(State.game === 'mines') {
-                    r.innerHTML = `<div id="m-grid" class="grid grid-cols-5 gap-3 w-full max-w-[320px]"></div>`;
-                    const g = document.getElementById('m-grid'); for(let i=0; i<25; i++) g.innerHTML += `<button onclick="Logic.mines.play(${i}, this)" class="aspect-square bg-zinc-900 rounded-xl border border-white/5 text-xl">?</button>`;
-                }
-            }
-        };
-
-        const Logic = {
-            slots: {
-                run() {
-                    State.spinIdx++; const res = [SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)]];
-                    [1,2,3].forEach((id, i) => { const strip = document.getElementById(`r${id}`); strip.style.transform = `translateY(-${(State.spinIdx * 2400) + (SYMBOLS.indexOf(res[i]) * 160)}px)`; });
-                    setTimeout(() => Game.end(res[0]===res[1]&&res[1]===res[2] ? 10 : 0), 3100);
-                }
+            async load() {
+                let { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle();
+                if(!data) {
+                    await sb.from('usuarios').insert([{ id: State.user.id, email: State.user.email, saldo: 0 }]);
+                    State.balance = 0;
+                } else { State.balance = data.saldo; }
+                UI.updateBalance();
+                this.fetchHistory();
             },
-            mines: {
-                active: false, bombs: [], mult: 1,
-                play(i, btn) {
-                    if(!this.active) { this.active = true; State.playing = true; this.mult = 1.2; this.bombs = Array.from({length:25},(_,k)=>k).sort(()=>Math.random()-0.5).slice(0,4); document.getElementById('btn-play-main').innerText = "COBRAR"; }
-                    if(this.bombs.includes(i)) { btn.innerText = '💣'; btn.style.background = '#f44'; this.end(false); }
-                    else { btn.innerText = '💎'; btn.style.background = 'rgba(0,255,136,0.1)'; this.mult *= 1.4; document.getElementById('btn-play-main').innerText = `COBRAR $${Math.floor(State.bet*this.mult)}`; }
-                    btn.disabled = true;
-                },
-                end(win) { this.active = false; Game.end(win ? this.mult : 0); setTimeout(() => Router.go('mines'), 1000); }
-            }
-        };
-
-        const Game = {
-            adjustBet(v) { State.bet = Math.max(10, Math.floor(State.bet + v)); document.getElementById('bet-txt').innerText = `$${State.bet}`; },
-            play() {
-                if(State.game === 'mines' && Logic.mines.active) return Logic.mines.end(true);
-                if(State.balance < State.bet) return alert("Saldo insuficiente");
-                State.playing = true; State.balance -= State.bet; UI.refresh();
-                if(State.game === 'slots') Logic.slots.run();
+            async fetchHistory() {
+                const { data } = await sb.from('history').select('*').eq('user_id', State.user.id).order('created_at', { ascending: false }).limit(20);
+                UI.renderHistory(data || []);
             },
-            async end(m) {
-                const win = Math.floor(State.bet * m); State.balance += win; State.playing = false;
-                document.getElementById('btn-play-main').innerText = "APOSTAR"; UI.refresh();
-                await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+            async confirmDeposit() {
+                const amt = parseFloat(document.getElementById('dep-amount').value);
+                const file = document.getElementById('receipt-input').files[0];
+                if(!amt || !file) return UI.notify("Faltan datos", "error");
+                document.getElementById('final-dep-btn').disabled = true;
+                const path = `evidence/${State.user.id}/${Date.now()}.png`;
+                await sb.storage.from('comprobantes').upload(path, file);
+                const { data: { publicUrl } } = sb.storage.from('comprobantes').getPublicUrl(path);
+                await sb.from('history').insert([{ user_id: State.user.id, type: 'deposits', amount: amt, label: 'DEPÓSITO', status: 'pending', evidence_url: publicUrl }]);
+                UI.notify("Enviado para revisión", "success");
+                UI.closeModal('modal-deposit');
             }
         };
 
         const UI = {
-            refresh() { document.getElementById('bal-txt').innerText = `$${State.balance.toLocaleString()}`; },
-            modal(id, s) { document.getElementById(`modal-${id}`).style.display = s ? 'flex' : 'none'; },
-            async doDep() { const a = document.getElementById('dep-val').value; await sb.from('depositos').insert([{ user_id: State.user.id, amount: a, status: 'pending' }]); alert("Notificado"); this.modal('dep', false); }
+            updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toLocaleString()}`; },
+            updateBetDisplay() { document.querySelectorAll('.bet-val').forEach(el => el.innerText = `$${State.currentBet}`); },
+            notify(m, t) {
+                const c = document.getElementById('notif-container');
+                const n = document.createElement('div');
+                n.className = `p-4 rounded-xl text-[10px] font-bold uppercase ${t === 'success' ? 'bg-emerald-500 text-black' : 'bg-red-600'}`;
+                n.innerText = m; c.appendChild(n);
+                setTimeout(() => n.remove(), 3000);
+            },
+            openModal(id) { document.getElementById(id).classList.remove('hidden'); },
+            closeModal(id) { document.getElementById(id).classList.add('hidden'); },
+            setDep(v) { document.getElementById('dep-amount').value = v; },
+            depNextStep() {
+                const amt = document.getElementById('dep-amount').value;
+                if(!amt) return;
+                document.getElementById('dep-final-amount').innerText = `$${amt}`;
+                document.getElementById('dep-step-1').classList.add('hidden');
+                document.getElementById('dep-step-2').classList.remove('hidden');
+            },
+            handleFile(i) { if(i.files[0]) document.getElementById('file-label').innerText = "RECIBO LISTO ✅"; },
+            renderHistory(data) {
+                const c = document.getElementById('history-content');
+                c.innerHTML = data.map(i => {
+                    const isPos = i.amount >= 0;
+                    return `<div class="p-3 bg-white/5 rounded-xl flex justify-between items-center text-[10px]">
+                        <div><p class="font-bold ${isPos ? 'text-emerald-500' : 'text-zinc-500'}">${i.label}</p></div>
+                        <p class="font-casino ${isPos ? 'text-emerald-500' : 'text-zinc-400'}">${isPos ? '+' : ''}$${Math.abs(i.amount)}</p>
+                    </div>`;
+                }).join('');
+            }
         };
 
-        Auth.check();
+        Core.init();
     </script>
 </body>
 </html>
