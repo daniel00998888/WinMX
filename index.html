@@ -16,12 +16,9 @@
         body { background: var(--mx-dark); color: white; font-family: 'Inter', sans-serif; height: 100dvh; overflow: hidden; margin: 0; -webkit-tap-highlight-color: transparent; }
         .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
         .app-container { height: 100dvh; display: flex; flex-direction: column; }
-        
-        /* Ajuste crucial: Permitir scroll en la vista de juego para leer instrucciones */
         .view-content { flex: 1; overflow-y: auto; padding-bottom: 120px; scroll-behavior: smooth; }
         .view-content::-webkit-scrollbar { width: 4px; }
         .view-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-
         .hidden-view { display: none !important; }
         .bottom-nav { background: rgba(10, 10, 10, 0.98); backdrop-filter: blur(15px); border-top: 1px solid rgba(255,255,255,0.05); z-index: 50; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: #444; transition: 0.3s; cursor: pointer; }
@@ -30,29 +27,15 @@
         .btn-action { background: var(--mx-green); color: black; font-weight: 900; border-radius: 1.2rem; transition: 0.2s; border: none; }
         .balance-pill { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 99px; padding: 4px 4px 4px 12px; display: flex; align-items: center; gap: 8px; }
         .btn-plus { width: 32px; height: 32px; background: var(--mx-green); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
-        
         .history-scroll { max-height: 280px; overflow-y: auto; scrollbar-width: none; }
         .history-scroll::-webkit-scrollbar { display: none; }
-
         .slot-box { height: 90px; overflow: hidden; background: #000; border-radius: 1rem; border: 1px solid #1a1a1a; }
         .slot-item { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
         .slot-reel { transition: transform 3.5s cubic-bezier(0.15, 0, 0.05, 1); }
-        
         .pulse-pending { animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
         .input-bet { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 12px; width: 100%; text-align: center; color: white; font-family: 'Archivo Black', sans-serif; outline: none; margin-bottom: 12px; }
-        
-        /* Estilo mejorado para instrucciones (Más visibles) */
-        .instruction-card { 
-            background: rgba(16, 185, 129, 0.08); 
-            border: 1px solid rgba(16, 185, 129, 0.3); 
-            border-radius: 1.2rem; 
-            padding: 20px; 
-            margin-top: 24px; 
-            text-align: left;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
+        .instruction-card { background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 1.2rem; padding: 20px; margin-top: 24px; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .instruction-card h4 { font-family: 'Archivo Black', sans-serif; font-size: 12px; color: var(--mx-green); text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
         .instruction-card p { font-size: 11px; color: #ccc; line-height: 1.6; font-weight: 500; }
         .instruction-card strong { color: white; font-weight: 800; }
@@ -173,9 +156,7 @@
             openGame(game) {
                 this.showView('game');
                 document.getElementById('game-mount').innerHTML = this.templates[game];
-                // Scroll automático al inicio al entrar a un juego
                 document.getElementById('view-game').scrollTop = 0;
-                
                 if(game === 'slots') GameLogic.slots.init();
                 if(game === 'mines') GameLogic.mines.drawGrid();
                 if(game === 'tower') GameLogic.tower.drawTower();
@@ -188,7 +169,6 @@
             }
         };
 
-        // [EL RESTO DE LA LÓGICA DE JUEGOS SE MANTIENE IGUAL]
         const GameLogic = {
             slots: {
                 init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); r.innerHTML = ''; Array(40).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); }); },
@@ -196,13 +176,16 @@
                     const bet = parseFloat(document.getElementById('slots-bet-input').value) || 10;
                     if(State.balance < bet || State.isSpinning) return UI.notify("Sin saldo", "error");
                     State.isSpinning = true; State.balance -= bet; UI.updateBalance();
+                    await Core.syncBet('SLOTS', -bet);
                     const res = [SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)]];
                     State.totalSpins++;
                     [1,2,3].forEach((id, i) => { document.getElementById(`reel-${id}`).style.transform = `translateY(-${(State.totalSpins * 90 * 6) + (SYMBOLS.indexOf(res[i])*90)}px)`; });
-                    setTimeout(() => {
+                    setTimeout(async () => {
                         State.isSpinning = false;
-                        if(res[0] === res[1] && res[1] === res[2]) { const win = bet * 10; State.balance += win; UI.updateBalance(); UI.notify(`¡GANASTE $${win}!`, "success"); }
-                        else UI.notify("Suerte", "error");
+                        if(res[0] === res[1] && res[1] === res[2]) { 
+                            const win = bet * 10; State.balance += win; UI.updateBalance(); UI.notify(`¡GANASTE $${win}!`, "success"); 
+                            await Core.syncBet('PREMIO SLOTS', win);
+                        } else UI.notify("Suerte", "error");
                     }, 3500);
                 }
             },
@@ -212,10 +195,11 @@
                     const g = document.getElementById('mines-grid'); g.innerHTML = '';
                     for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/5 rounded-lg border border-white/5 flex items-center justify-center text-sm cursor-pointer opacity-50"></div>`;
                 },
-                start() {
+                async start() {
                     this.bet = parseFloat(document.getElementById('mines-bet-input').value) || 10;
                     if(State.balance < this.bet) return UI.notify("Sin saldo", "error");
                     State.balance -= this.bet; UI.updateBalance();
+                    await Core.syncBet('MINAS', -this.bet);
                     this.active = true; this.revealed = []; this.mult = 1;
                     this.mines = Array.from({length:25}, (_,i)=>i).sort(()=>Math.random()-0.5).slice(0,4);
                     this.drawGrid();
@@ -235,18 +219,21 @@
                         document.getElementById('mines-mult').innerText = this.mult.toFixed(2)+'x';
                     }
                 },
-                cashout() {
+                async cashout() {
                     if(!this.active || !this.revealed.length) return;
                     const win = this.bet * this.mult; State.balance += win; UI.updateBalance();
-                    UI.notify(`+$${win.toFixed(2)}`, "success"); this.active = false; Router.openGame('mines');
+                    UI.notify(`+$${win.toFixed(2)}`, "success"); this.active = false; 
+                    await Core.syncBet('GANANCIA MINAS', win);
+                    Router.openGame('mines');
                 }
             },
             crash: {
                 timer: null, mult: 1, active: false, bet: 10,
-                start() {
+                async start() {
                     this.bet = parseFloat(document.getElementById('crash-bet-input').value) || 10;
                     if(State.balance < this.bet) return UI.notify("Sin saldo", "error");
                     State.balance -= this.bet; UI.updateBalance();
+                    await Core.syncBet('AVIATOR', -this.bet);
                     this.active = true; this.mult = 1;
                     const b = document.getElementById('btn-crash'); b.innerText = "COBRAR"; b.onclick = () => this.cashout();
                     const limit = 1.1 + (Math.random() * 4);
@@ -255,11 +242,13 @@
                         if(this.mult >= limit) { clearInterval(this.timer); this.active = false; UI.notify("CRASH", "error"); setTimeout(() => Router.openGame('crash'), 2000); }
                     }, 100);
                 },
-                cashout() {
+                async cashout() {
                     if(!this.active) return;
                     clearInterval(this.timer); this.active = false;
                     const win = this.bet * this.mult; State.balance += win; UI.updateBalance();
-                    UI.notify(`+$${win.toFixed(2)}`, "success"); setTimeout(() => Router.openGame('crash'), 2000);
+                    UI.notify(`+$${win.toFixed(2)}`, "success"); 
+                    await Core.syncBet('GANANCIA AVIATOR', win);
+                    setTimeout(() => Router.openGame('crash'), 2000);
                 }
             },
             tower: {
@@ -274,10 +263,11 @@
                         </div>`;
                     }
                 },
-                start() {
+                async start() {
                     this.bet = parseFloat(document.getElementById('tower-bet-input').value) || 10;
                     if(State.balance < this.bet) return UI.notify("Sin saldo", "error");
                     State.balance -= this.bet; UI.updateBalance();
+                    await Core.syncBet('TORRE', -this.bet);
                     this.active = true; this.level = 0;
                     this.drawTower();
                     this.unlockRow(0);
@@ -298,10 +288,12 @@
                         if(this.level<8) this.unlockRow(this.level); else this.cashout(); 
                     }
                 },
-                cashout() {
+                async cashout() {
                     if(!this.active) return;
                     const win = this.bet * (1 + (this.level * 0.5)); State.balance += win; UI.updateBalance();
-                    UI.notify(`+$${win.toFixed(2)}`, "success"); this.active = false; Router.openGame('tower');
+                    UI.notify(`+$${win.toFixed(2)}`, "success"); this.active = false; 
+                    await Core.syncBet('GANANCIA TORRE', win);
+                    Router.openGame('tower');
                 }
             }
         };
@@ -323,10 +315,14 @@
                 const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle();
                 State.balance = data ? data.saldo : 0; UI.updateBalance();
             },
+            async syncBet(label, amount) {
+                if(!State.user) return;
+                await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: amount, label: label, status: 'completed' }]);
+                await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+            },
             async fetchHistory() {
                 const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20);
                 const d = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(20);
-                
                 const container = document.getElementById('history-lists');
                 container.innerHTML = `
                     <div class="glass overflow-hidden border-white/5 mb-4">
@@ -368,8 +364,7 @@
             updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toFixed(2)}`; },
             updateProfile() { document.getElementById('user-email-display').innerText = State.user.email; },
             toggleAccordion(accId, arrowId) {
-                const acc = document.getElementById(accId);
-                const arrow = document.getElementById(arrowId);
+                const acc = document.getElementById(accId), arrow = document.getElementById(arrowId);
                 acc.classList.toggle('hidden-view');
                 if(arrow) arrow.style.transform = acc.classList.contains('hidden-view') ? 'rotate(0deg)' : 'rotate(180deg)';
             },
@@ -390,8 +385,12 @@
                 if(error) UI.notify("Error", "error"); else location.reload();
             },
             async register() {
-                const { error } = await sb.auth.signUp({ email: document.getElementById('auth-email').value, password: document.getElementById('auth-password').value });
-                UI.notify(error ? "Error" : "¡Creado!", error ? "error" : "success");
+                const email = document.getElementById('auth-email').value;
+                const { data, error } = await sb.auth.signUp({ email, password: document.getElementById('auth-password').value });
+                if(!error && data.user) {
+                    await sb.from('usuarios').insert([{ id: data.user.id, saldo: 0, email: email }]);
+                    UI.notify("¡Creado!", "success");
+                } else UI.notify("Error", "error");
             },
             logout() { sb.auth.signOut().then(() => location.reload()); }
         };
