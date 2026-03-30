@@ -195,20 +195,18 @@
         const sb = window.supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
         const SYMBOLS = ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'];
 
-        // --- SISTEMA DE SONIDOS ACTUALIZADO ---
+        // --- SISTEMA DE SONIDOS ---
         const sfx = {
             click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
             spin: new Audio('https://assets.mixkit.co/active_storage/sfx/2014/2014-preview.mp3'),
-            win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'), // Sonido de Victoria Épico
+            win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'), // Este es el sonido de ganar
             lose: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
-            rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3'),
-            collect: new Audio('https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3')
+            rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3')
         };
         const playSfx = (key) => { sfx[key].currentTime = 0; sfx[key].play().catch(() => {}); };
 
         let State = { user: null, balance: 0, currentBet: 10, isSpinning: false, totalSpins: 0 };
 
-        // --- ROUTER Y TEMPLATES ---
         const Router = {
             showView(viewId) {
                 if(State.isSpinning) return;
@@ -227,14 +225,10 @@
                 document.getElementById('game-mount').innerHTML = this.templates[game];
                 document.getElementById('view-game').scrollTop = 0;
                 if(game === 'slots') GameLogic.slots.init();
-                if(game === 'mines') GameLogic.mines.drawGrid();
-                if(game === 'tower') GameLogic.tower.drawTower();
+                // if(game === 'mines') GameLogic.mines.drawGrid(); // Removido por recorte del usuario
             },
             templates: {
-                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4><i class="fas fa-info-circle"></i> Reglas del Slot</h4><p>Alinea 3 símbolos iguales en el centro para ganar <strong>10x tu apuesta inicial</strong>.</p></div></div>`,
-                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden flex justify-between items-center p-3 mb-3 bg-emerald-500/10 rounded-xl"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><button onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-3 py-1 rounded-lg font-bold text-[9px]">COBRAR</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino text-xs">APOSTAR</button></div><div class="instruction-card"><h4><i class="fas fa-bomb"></i> Reglas de Minas</h4><p>Cada diamante aumenta tu multiplicador en <strong>0.35x acumulativo</strong>.</p></div></div>`,
-                crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div class="h-24 flex items-center justify-center mb-6"><div id="crash-rocket" class="text-4xl transition-all duration-100">🚀</div></div><input id="crash-bet-input" type="number" value="10" class="input-bet"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button><div class="instruction-card"><h4><i class="fas fa-rocket"></i> Reglas Aviator</h4><p>Cobra antes de que el cohete explote.</p></div></div>`,
-                tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div id="tower-container" class="space-y-1.5 mb-4 flex flex-col-reverse overflow-y-auto max-h-[250px]"></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino text-xs">JUGAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino text-xs">COBRAR $0.00</button><div class="instruction-card"><h4><i class="fas fa-chess-rook"></i> Reglas Torre</h4><p>Elige 1 de 3 bloques. Cada nivel suma <strong>0.50x</strong>.</p></div></div>`
+                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4><i class="fas fa-info-circle"></i> Reglas del Slot</h4><p>Alinea 3 símbolos iguales en el centro para ganar <strong>10x tu apuesta inicial</strong>.</p></div></div>`
             }
         };
 
@@ -257,31 +251,90 @@
             },
             async confirmDeposit() {
                 const amt = parseFloat(document.getElementById('dep-amount').value);
-                const file = document.getElementById('receipt-input').files[0];
+                const fileInput = document.getElementById('receipt-input');
+                const file = fileInput.files[0];
                 if(!amt || !file) return UI.notify("Sube comprobante", "error");
-                UI.notify("Procesando...", "success");
-                UI.closeModal('modal-deposit');
+
+                try {
+                    UI.notify("Procesando...", "success");
+                    const btn = document.getElementById('btn-confirm-dep');
+                    btn.disabled = true; btn.style.opacity = "0.5";
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${State.user.id}-${Date.now()}.${fileExt}`;
+                    const filePath = `depositos/${fileName}`;
+                    const { error: uploadError } = await sb.storage.from('comprobantes').upload(filePath, file);
+                    if (uploadError) throw uploadError;
+                    const { data: urlData } = sb.storage.from('comprobantes').getPublicUrl(filePath);
+                    await sb.from('history').insert([{ 
+                        user_id: State.user.id, type: 'deposits', amount: amt, label: 'CARGA', status: 'pending', evidence_url: urlData.publicUrl 
+                    }]);
+                    UI.notify("En revisión", "success");
+                    UI.closeModal('modal-deposit');
+                    this.fetchHistory();
+                } catch (e) {
+                    UI.notify("Error al enviar", "error");
+                } finally {
+                    const btn = document.getElementById('btn-confirm-dep');
+                    btn.disabled = false; btn.style.opacity = "1";
+                }
             },
             async fetchHistory() {
+                const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20);
+                const d = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(20);
                 const container = document.getElementById('history-lists');
-                container.innerHTML = `<p class="text-[8px] text-center py-2 text-zinc-600 italic uppercase">Cargando Actividad...</p>`;
+                container.innerHTML = `
+                    <div class="glass overflow-hidden mb-4"><div onclick="UI.toggleAccordion('acc-bets','arrow-bets')" class="p-5 flex justify-between cursor-pointer"><div class="flex items-center gap-3"><i class="fas fa-history text-emerald-500"></i><span class="font-casino text-[10px]">Jugadas</span></div><i id="arrow-bets" class="fas fa-chevron-down text-zinc-700"></i></div><div id="acc-bets" class="hidden-view p-3 space-y-2 bg-black/40 history-scroll">${this.renderList(b.data || [], 'bets')}</div></div>
+                    <div class="glass overflow-hidden"><div onclick="UI.toggleAccordion('acc-deps','arrow-deps')" class="p-5 flex justify-between cursor-pointer"><div class="flex items-center gap-3"><i class="fas fa-wallet text-blue-400"></i><span class="font-casino text-[10px]">Depósitos</span></div><i id="arrow-deps" class="fas fa-chevron-down text-zinc-700"></i></div><div id="acc-deps" class="hidden-view p-3 space-y-2 bg-black/40 history-scroll">${this.renderList(d.data || [], 'deposits')}</div></div>`;
+            },
+            renderList(items, type) {
+                if(!items.length) return `<p class="text-[8px] text-center py-2 text-zinc-600">Sin registros</p>`;
+                return items.map(i => {
+                    let text = i.label, color = i.amount >= 0 ? 'text-emerald-500' : 'text-red-500', pulse = "";
+                    if(type==='deposits') {
+                        if(i.status==='pending') { text="Pendiente ⏳"; color="text-yellow-500"; pulse="pulse-pending"; }
+                        else if(i.status==='completed') { text="Confirmado ✅"; color="text-emerald-500"; }
+                        else if(i.status==='rejected') { text="Rechazado ❌"; color="text-red-500"; }
+                    }
+                    return `<div class="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5 ${pulse}"><div class="flex flex-col"><span class="text-[9px] font-bold uppercase">${text}</span><span class="text-[7px] text-zinc-600">${new Date(i.created_at).toLocaleDateString()}</span></div><div class="text-[10px] font-casino ${color}">$${Math.abs(i.amount).toFixed(2)}</div></div>`;
+                }).join('');
             }
         };
 
         const UI = {
             updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toFixed(2)}`; },
             updateProfile() { document.getElementById('user-email-display').innerText = State.user.email; },
-            openModal(id) { playSfx('click'); document.getElementById(id).classList.remove('hidden-view'); },
+            openModal(id) { 
+                playSfx('click');
+                document.getElementById(id).classList.remove('hidden-view'); 
+                document.getElementById('dep-step-1').classList.remove('hidden-view');
+                document.getElementById('dep-step-2').classList.add('hidden-view');
+            },
             closeModal(id) { playSfx('click'); document.getElementById(id).classList.add('hidden-view'); },
+            toggleAccordion(accId, arrowId) {
+                playSfx('click');
+                const acc = document.getElementById(accId);
+                acc.classList.toggle('hidden-view');
+                document.getElementById(arrowId).style.transform = acc.classList.contains('hidden-view') ? 'rotate(0deg)' : 'rotate(180deg)';
+            },
             depNextStep() {
                 const amt = document.getElementById('dep-amount').value;
                 if(!amt || amt <= 0) return this.notify("Ingresa un monto", "error");
+                playSfx('click');
                 document.getElementById('display-dep-amount').innerText = `$${parseFloat(amt).toFixed(2)}`;
                 document.getElementById('dep-step-1').classList.add('hidden-view');
                 document.getElementById('dep-step-2').classList.remove('hidden-view');
             },
             copyClabe() {
-                navigator.clipboard.writeText("722969020533491161").then(() => this.notify("CLABE Copiada", "success"));
+                const clabe = document.getElementById('clabe-number').innerText;
+                navigator.clipboard.writeText(clabe).then(() => { playSfx('click'); this.notify("CLABE Copiada", "success"); });
+            },
+            handleFile(input) {
+                if(input.files && input.files[0]) {
+                    playSfx('click');
+                    const label = document.getElementById('file-label');
+                    label.innerText = "Recibo: " + input.files[0].name.substring(0, 15) + "...";
+                    label.classList.replace('text-zinc-500', 'text-emerald-500');
+                }
             },
             notify(m, t) {
                 const n = document.createElement('div');
@@ -292,83 +345,58 @@
         };
 
         const AuthManager = {
-            async login() { location.reload(); },
+            async login() {
+                const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value;
+                const { data, error } = await sb.auth.signInWithPassword({ email: e, password: p });
+                if(error) UI.notify(error.message, "error"); else location.reload();
+            },
+            async register() {
+                if(!document.getElementById('terms-check').checked) return UI.notify("Acepta términos", "error");
+                const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value;
+                const { data, error } = await sb.auth.signUp({ email: e, password: p });
+                if(error) UI.notify(error.message, "error");
+                else {
+                    await sb.from('usuarios').insert([{ id: data.user.id, email: e, saldo: 0 }]);
+                    UI.notify("Cuenta creada", "success"); location.reload();
+                }
+            },
             async logout() { await sb.auth.signOut(); location.reload(); },
             switchTab(tab) {
+                playSfx('click');
                 document.getElementById('login-container').classList.toggle('hidden-view', tab==='register');
                 document.getElementById('register-container').classList.toggle('hidden-view', tab==='login');
             }
         };
 
-        // --- LÓGICA DE JUEGOS CON SONIDO DE GANAR ---
         const GameLogic = {
             slots: {
                 init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); r.innerHTML = ''; Array(40).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); }); },
                 async play() {
                     const bet = parseFloat(document.getElementById('slots-bet-input').value) || 10;
                     if(State.balance < bet || State.isSpinning) return UI.notify("Sin saldo", "error");
+                    
                     playSfx('spin');
                     State.isSpinning = true; State.balance -= bet; UI.updateBalance();
                     const res = [SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)]];
                     State.totalSpins++;
                     [1,2,3].forEach((id, i) => { document.getElementById(`reel-${id}`).style.transform = `translateY(-${(State.totalSpins * 90 * 6) + (SYMBOLS.indexOf(res[i])*90)}px)`; });
-                    setTimeout(() => {
+                    
+                    setTimeout(async () => {
                         State.isSpinning = false;
-                        if(res[0] === res[1] && res[1] === res[2]) {
-                            const win = bet * 10; State.balance += win;
-                            playSfx('win'); // ¡SUENA AQUÍ!
-                            UI.notify(`¡GANASTE $${win}!`, "success");
+                        let win = 0;
+                        if(res[0] === res[1] && res[1] === res[2]) { 
+                            win = bet * 10; 
+                            State.balance += win; 
+                            playSfx('win'); // <--- AQUI SE AGREGO EL SONIDO DE GANAR
+                            UI.notify(`¡GANASTE $${win}!`, "success"); 
                         } else {
                             playSfx('lose');
+                            UI.notify("Sigue intentando", "error");
                         }
                         UI.updateBalance();
+                        await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+                        await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -bet, label: 'SLOTS' }]);
                     }, 3500);
-                }
-            },
-            mines: {
-                active: false, mines: [], revealed: [], mult: 1, bet: 10,
-                drawGrid() {
-                    const g = document.getElementById('mines-grid'); g.innerHTML = '';
-                    for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-zinc-900 rounded-xl flex items-center justify-center text-xl cursor-pointer active:scale-90 transition-transform"></div>`;
-                },
-                start() {
-                    this.bet = parseFloat(document.getElementById('mines-bet-input').value) || 10;
-                    if(State.balance < this.bet) return UI.notify("Sin saldo", "error");
-                    State.balance -= this.bet; UI.updateBalance();
-                    this.mines = []; while(this.mines.length < 4) { let r = Math.floor(Math.random()*25); if(!this.mines.includes(r)) this.mines.push(r); }
-                    this.revealed = []; this.mult = 1.0; this.active = true;
-                    this.drawGrid();
-                    document.getElementById('mines-status').classList.remove('hidden');
-                    document.getElementById('mines-controls').classList.add('hidden');
-                    playSfx('click');
-                },
-                cell(i) {
-                    if(!this.active || this.revealed.includes(i)) return;
-                    this.revealed.push(i);
-                    const el = document.getElementById(`m-${i}`);
-                    if(this.mines.includes(i)) {
-                        el.innerHTML = '💣'; el.classList.add('bg-red-500/20');
-                        this.active = false; playSfx('lose');
-                        setTimeout(() => this.reset(), 1500);
-                    } else {
-                        el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20');
-                        this.mult += 0.35;
-                        document.getElementById('mines-mult').innerText = this.mult.toFixed(2) + 'x';
-                        playSfx('collect');
-                    }
-                },
-                cashout() {
-                    if(!this.active) return;
-                    const win = this.bet * this.mult;
-                    State.balance += win; UI.updateBalance();
-                    playSfx('win'); // ¡SUENA AQUÍ!
-                    UI.notify(`COBRASTE $${win.toFixed(2)}`, "success");
-                    this.reset();
-                },
-                reset() {
-                    this.active = false;
-                    document.getElementById('mines-status').classList.add('hidden');
-                    document.getElementById('mines-controls').classList.remove('hidden');
                 }
             }
         };
