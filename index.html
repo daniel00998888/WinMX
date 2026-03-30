@@ -86,10 +86,36 @@
             <div id="history-lists" class="space-y-4"></div>
         </div>
 
+        <div id="view-profile" class="view-content p-5 space-y-4 hidden-view">
+            <h2 class="font-casino text-center text-zinc-600 text-xs mb-8 tracking-widest italic">Mi Perfil</h2>
+            <div class="glass p-8 text-center bg-gradient-to-b from-white/[0.05] to-transparent">
+                <div class="w-20 h-20 bg-emerald-500 rounded-full mx-auto mb-4 flex items-center justify-center text-black text-3xl font-black">
+                    <i class="fas fa-user"></i>
+                </div>
+                <p id="user-email-display" class="text-xs font-bold text-zinc-300 truncate mb-1">Cargando...</p>
+                <p class="text-[8px] text-emerald-500 font-bold uppercase tracking-[0.2em]">Usuario Verificado</p>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <div class="glass p-5 text-center">
+                    <p class="text-[8px] text-zinc-500 font-bold uppercase mb-1">Nivel</p>
+                    <p class="font-casino text-lg text-white">VIP 1</p>
+                </div>
+                <div class="glass p-5 text-center">
+                    <p class="text-[8px] text-zinc-500 font-bold uppercase mb-1">Status</p>
+                    <p class="font-casino text-lg text-emerald-500">Online</p>
+                </div>
+            </div>
+
+            <button onclick="AuthManager.logout()" class="w-full p-5 rounded-2xl border border-red-500/20 text-red-500 font-casino text-[10px] bg-red-500/5 mt-4">
+                Cerrar Sesión Permanente
+            </button>
+        </div>
+
         <nav class="bottom-nav fixed bottom-0 left-0 right-0 h-20 flex items-center px-4">
             <div onclick="Router.showView('lobby')" id="nav-home" class="nav-item active"><i class="fas fa-gamepad text-xl mb-1"></i><span>Jugar</span></div>
             <div onclick="Router.showView('history')" id="nav-history" class="nav-item"><i class="fas fa-receipt text-xl mb-1"></i><span>Historial</span></div>
-            <div onclick="AuthManager.logout()" class="nav-item text-red-500/40"><i class="fas fa-sign-out-alt text-xl mb-1"></i><span>Salir</span></div>
+            <div onclick="Router.showView('profile')" id="nav-profile" class="nav-item"><i class="fas fa-user-circle text-xl mb-1"></i><span>Perfil</span></div>
         </nav>
     </div>
 
@@ -131,9 +157,10 @@
                 document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden-view'));
                 document.getElementById(`view-${viewId}`).classList.remove('hidden-view');
                 document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-                const navMap = { 'lobby': 'nav-home', 'history': 'nav-history' };
+                const navMap = { 'lobby': 'nav-home', 'history': 'nav-history', 'profile': 'nav-profile' };
                 if(navMap[viewId]) document.getElementById(navMap[viewId]).classList.add('active');
                 if(viewId === 'history') Core.fetchHistory();
+                if(viewId === 'profile') UI.updateProfile();
             },
             openGame(game) {
                 this.showView('game');
@@ -218,13 +245,13 @@
                 const e = document.getElementById('auth-email').value, p = document.getElementById('auth-password').value;
                 if(!e || !p) return UI.notify("Faltan datos", "error");
                 const { error } = await sb.auth.signInWithPassword({ email: e, password: p });
-                if(error) return UI.notify("Error de entrada", "error");
+                if(error) return UI.notify("Credenciales incorrectas", "error");
                 location.reload();
             },
             async register() {
                 const e = document.getElementById('auth-email').value, p = document.getElementById('auth-password').value;
                 const { error } = await sb.auth.signUp({ email: e, password: p });
-                UI.notify(error ? error.message : "¡Listo! Logueate", error ? "error" : "success");
+                UI.notify(error ? error.message : "¡Cuenta creada! Entra ahora", error ? "error" : "success");
             },
             async logout() { await sb.auth.signOut(); location.reload(); }
         };
@@ -255,9 +282,9 @@
             initRealtime() {
                 console.log("Conectando Realtime Global...");
                 sb.channel('global-updates')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'usuarios' }, payload => {
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'usuarios' }, payload => {
                     if (payload.new && payload.new.id === State.user.id) {
-                        console.log("¡Cambio detectado!");
+                        console.log("¡Saldo actualizado vía Realtime!");
                         State.balance = payload.new.saldo;
                         UI.updateBalance();
                         UI.notify("¡Saldo actualizado! 💸", "success");
@@ -270,25 +297,27 @@
                         if(payload.new && payload.new.status === 'completed') UI.notify("Depósito aprobado ✅", "success");
                     }
                 })
-                .subscribe((status) => console.log("Status:", status));
+                .subscribe();
             },
             async fetchHistory() {
                 const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(10);
                 const d = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(10);
-                document.getElementById('history-lists').innerHTML = `
-                    <div class="glass overflow-hidden mb-4">
+                const container = document.getElementById('history-lists');
+                if(!container) return;
+                container.innerHTML = `
+                    <div class="glass overflow-hidden border-white/5 mb-4">
                         <div onclick="UI.toggleAccordion('acc-bets', 'arrow-bets')" class="p-5 flex justify-between items-center bg-white/[0.02]">
-                            <span class="font-casino text-[10px]">Apuestas</span>
+                            <div class="flex items-center gap-3"><i class="fas fa-history text-emerald-500"></i><span class="font-casino text-[10px]">Apuestas</span></div>
                             <i id="arrow-bets" class="fas fa-chevron-down text-zinc-700 transition-transform"></i>
                         </div>
-                        <div id="acc-bets" class="hidden-view p-3 space-y-2 bg-black/40">${UI.renderList(b.data || [])}</div>
+                        <div id="acc-bets" class="hidden-view p-3 space-y-2 bg-black/40 border-t border-white/5">${UI.renderList(b.data || [])}</div>
                     </div>
-                    <div class="glass overflow-hidden">
+                    <div class="glass overflow-hidden border-white/5">
                         <div onclick="UI.toggleAccordion('acc-deps', 'arrow-deps')" class="p-5 flex justify-between items-center bg-white/[0.02]">
-                            <span class="font-casino text-[10px]">Depósitos</span>
+                            <div class="flex items-center gap-3"><i class="fas fa-wallet text-blue-400"></i><span class="font-casino text-[10px]">Depósitos</span></div>
                             <i id="arrow-deps" class="fas fa-chevron-down text-zinc-700 transition-transform"></i>
                         </div>
-                        <div id="acc-deps" class="hidden-view p-3 space-y-2 bg-black/40">${UI.renderList(d.data || [])}</div>
+                        <div id="acc-deps" class="hidden-view p-3 space-y-2 bg-black/40 border-t border-white/5">${UI.renderList(d.data || [])}</div>
                     </div>`;
             },
             async confirmDeposit() {
@@ -306,6 +335,7 @@
         const UI = {
             updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toLocaleString('en-US', {minimumFractionDigits: 2})}`; },
             updateBetDisplay() { document.querySelectorAll('.bet-val').forEach(el => el.innerText = `$${State.currentBet}`); },
+            updateProfile() { document.getElementById('user-email-display').innerText = State.user.email; },
             notify(m, t) {
                 const c = document.getElementById('notif-container'), n = document.createElement('div');
                 n.className = `p-4 rounded-2xl text-[10px] font-black uppercase shadow-2xl animate__animated animate__fadeInDown ${t === 'success' ? 'bg-emerald-500 text-black' : 'bg-red-600 text-white'}`;
