@@ -17,23 +17,21 @@
         .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
         .app-container { height: 100dvh; display: flex; flex-direction: column; }
         
-        /* Ajuste crucial: Permitir scroll en la vista de juego para leer instrucciones */
         .view-content { flex: 1; overflow-y: auto; padding-bottom: 120px; scroll-behavior: smooth; }
         .view-content::-webkit-scrollbar { width: 4px; }
         .view-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
 
         .hidden-view { display: none !important; }
-        .bottom-nav { background: rgba(10, 10, 10, 0.98); backdrop-filter: blur(15px); border-top: 1px solid rgba(255,255,255,0.05); z-index: 50; }
+        .bottom-nav { background: rgba(10, 10, 10, 0.98); backdrop-filter: blur(15px); border-top: 1px solid rgba(255,255,255,0.05); z-index: 50; position: fixed; bottom: 0; left: 0; right: 0; height: 80px; display: flex; align-items: center; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: #444; transition: 0.3s; cursor: pointer; }
         .nav-item.active { color: var(--mx-green); }
+        
         .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 1.5rem; }
         .btn-action { background: var(--mx-green); color: black; font-weight: 900; border-radius: 1.2rem; transition: 0.2s; border: none; }
         .balance-pill { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 99px; padding: 4px 4px 4px 12px; display: flex; align-items: center; gap: 8px; }
         .btn-plus { width: 32px; height: 32px; background: var(--mx-green); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
         
-        .history-scroll { max-height: 280px; overflow-y: auto; scrollbar-width: none; }
-        .history-scroll::-webkit-scrollbar { display: none; }
-
+        .history-scroll { max-height: 400px; overflow-y: auto; }
         .slot-box { height: 90px; overflow: hidden; background: #000; border-radius: 1rem; border: 1px solid #1a1a1a; }
         .slot-item { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
         .slot-reel { transition: transform 3.5s cubic-bezier(0.15, 0, 0.05, 1); }
@@ -43,22 +41,12 @@
 
         .input-bet { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 12px; width: 100%; text-align: center; color: white; font-family: 'Archivo Black', sans-serif; outline: none; margin-bottom: 12px; }
         
-        /* Estilo mejorado para instrucciones (Más visibles) */
-        .instruction-card { 
-            background: rgba(16, 185, 129, 0.08); 
-            border: 1px solid rgba(16, 185, 129, 0.3); 
-            border-radius: 1.2rem; 
-            padding: 20px; 
-            margin-top: 24px; 
-            text-align: left;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        .instruction-card h4 { font-family: 'Archivo Black', sans-serif; font-size: 12px; color: var(--mx-green); text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-        .instruction-card p { font-size: 11px; color: #ccc; line-height: 1.6; font-weight: 500; }
-        .instruction-card strong { color: white; font-weight: 800; }
+        .instruction-card { background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 1.2rem; padding: 20px; margin-top: 24px; text-align: left; }
+        .instruction-card h4 { font-family: 'Archivo Black', sans-serif; font-size: 11px; color: var(--mx-green); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .instruction-card p { font-size: 10px; color: #ccc; line-height: 1.5; }
     </style>
 </head>
-<body class="antialiased select-none">
+<body>
 
     <div id="boot-loader" class="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center">
         <div class="text-3xl font-casino italic mb-4 text-emerald-500 animate-pulse">WinMX</div>
@@ -94,33 +82,33 @@
                 <p class="text-[9px] font-bold text-emerald-100 uppercase tracking-widest mt-1 opacity-70">Sistema Realtime 2.0 Activo</p>
             </div>
             <div class="grid grid-cols-2 gap-4">
-                <div onclick="Router.openGame('slots')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🎰</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Slots</span></div>
-                <div onclick="Router.openGame('mines')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">💣</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Minas</span></div>
-                <div onclick="Router.openGame('crash')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🚀</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Aviator</span></div>
-                <div onclick="Router.openGame('tower')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🗼</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Torre</span></div>
+                <div onclick="Router.openGame('slots')" class="glass p-6 text-center"><span class="text-4xl block mb-2">🎰</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Slots</span></div>
+                <div onclick="Router.openGame('mines')" class="glass p-6 text-center"><span class="text-4xl block mb-2">💣</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Minas</span></div>
+                <div onclick="Router.openGame('crash')" class="glass p-6 text-center"><span class="text-4xl block mb-2">🚀</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Aviator</span></div>
+                <div onclick="Router.openGame('tower')" class="glass p-6 text-center"><span class="text-4xl block mb-2">🗼</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Torre</span></div>
             </div>
         </div>
 
         <div id="view-game" class="view-content hidden-view p-5">
-            <button onclick="Router.showView('lobby')" class="mb-4 text-zinc-600 text-[10px] font-bold uppercase flex items-center"><i class="fas fa-arrow-left mr-2"></i> Volver al Lobby</button>
+            <button onclick="Router.showView('lobby')" class="mb-4 text-zinc-600 text-[10px] font-bold uppercase"><i class="fas fa-arrow-left mr-2"></i> Volver al Lobby</button>
             <div id="game-mount" class="w-full"></div>
         </div>
 
         <div id="view-history" class="view-content p-5 space-y-4 hidden-view">
-            <h2 class="font-casino text-center text-zinc-600 text-xs mb-4 tracking-widest italic">Mi Actividad</h2>
+            <h2 class="font-casino text-center text-zinc-600 text-xs mb-4 italic">Mi Actividad</h2>
             <div id="history-lists" class="space-y-4"></div>
         </div>
 
         <div id="view-profile" class="view-content p-5 space-y-4 hidden-view">
             <div class="glass p-10 text-center">
-                <div class="w-24 h-24 bg-emerald-500 rounded-full mx-auto mb-6 flex items-center justify-center text-black text-4xl font-black"><i class="fas fa-user"></i></div>
-                <p id="user-email-display" class="text-sm font-bold text-zinc-300 truncate mb-1">Cargando...</p>
-                <p class="text-[9px] text-emerald-500 font-bold uppercase tracking-[0.2em]">Usuario Activo</p>
+                <div class="w-24 h-24 bg-emerald-500 rounded-full mx-auto mb-6 flex items-center justify-center text-black text-4xl"><i class="fas fa-user"></i></div>
+                <p id="user-email-display" class="text-sm font-bold text-zinc-300 truncate mb-1">...</p>
+                <p class="text-[9px] text-emerald-500 font-bold uppercase">Usuario Activo</p>
             </div>
-            <button onclick="AuthManager.logout()" class="w-full p-5 rounded-2xl border border-red-500/20 text-red-500 font-casino text-[10px] bg-red-500/5 mt-6 active:scale-95 transition-transform">Cerrar Sesión</button>
+            <button onclick="AuthManager.logout()" class="w-full p-5 rounded-2xl border border-red-500/20 text-red-500 font-casino text-[10px] bg-red-500/5 mt-6">Cerrar Sesión</button>
         </div>
 
-        <nav class="bottom-nav fixed bottom-0 left-0 right-0 h-20 flex items-center px-4">
+        <nav class="bottom-nav">
             <div onclick="Router.showView('lobby')" id="nav-home" class="nav-item active"><i class="fas fa-gamepad text-xl mb-1"></i><span>Jugar</span></div>
             <div onclick="Router.showView('history')" id="nav-history" class="nav-item"><i class="fas fa-receipt text-xl mb-1"></i><span>Historial</span></div>
             <div onclick="Router.showView('profile')" id="nav-profile" class="nav-item"><i class="fas fa-user-circle text-xl mb-1"></i><span>Perfil</span></div>
@@ -146,7 +134,7 @@
                 </label>
                 <button onclick="Core.confirmDeposit()" class="btn-action w-full py-4 font-casino">Confirmar</button>
             </div>
-            <button onclick="UI.closeModal('modal-deposit')" class="w-full mt-4 text-[9px] text-zinc-700 font-bold uppercase tracking-widest">Cerrar</button>
+            <button onclick="UI.closeModal('modal-deposit')" class="w-full mt-4 text-[9px] text-zinc-700 font-bold uppercase">Cerrar</button>
         </div>
     </div>
 
@@ -157,7 +145,7 @@
         const sb = window.supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
         const SYMBOLS = ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'];
 
-        let State = { user: null, balance: 0, currentBet: 10, isSpinning: false, totalSpins: 0 };
+        let State = { user: null, balance: 0, isSpinning: false, totalSpins: 0 };
 
         const Router = {
             showView(viewId) {
@@ -173,23 +161,25 @@
             openGame(game) {
                 this.showView('game');
                 document.getElementById('game-mount').innerHTML = this.templates[game];
-                // Scroll automático al inicio al entrar a un juego
                 document.getElementById('view-game').scrollTop = 0;
-                
                 if(game === 'slots') GameLogic.slots.init();
                 if(game === 'mines') GameLogic.mines.drawGrid();
                 if(game === 'tower') GameLogic.tower.drawTower();
             },
             templates: {
-                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4><i class="fas fa-info-circle"></i> Reglas del Slot</h4><p>Alinea 3 símbolos iguales en el centro para ganar <strong>10x tu apuesta inicial</strong>. Cualquier otra combinación no otorga premio.</p></div></div>`,
-                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden flex justify-between items-center p-3 mb-3 bg-emerald-500/10 rounded-xl"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><button onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-3 py-1 rounded-lg font-bold text-[9px]">COBRAR</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino text-xs">APOSTAR</button></div><div class="instruction-card"><h4><i class="fas fa-bomb"></i> Reglas de Minas</h4><p>Hay 4 minas ocultas. Cada diamante encontrado aumenta tu multiplicador en <strong>0.35x acumulativo</strong>. ¡Cobra antes de explotar!</p></div></div>`,
-                crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div class="h-24 flex items-center justify-center mb-6"><div id="crash-rocket" class="text-4xl transition-all duration-100">🚀</div></div><input id="crash-bet-input" type="number" value="10" class="input-bet"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button><div class="instruction-card"><h4><i class="fas fa-rocket"></i> Reglas Aviator</h4><p>El cohete sube aleatoriamente. Tu premio es tu apuesta por el <strong>multiplicador actual</strong>. Si explota antes de cobrar, pierdes todo.</p></div></div>`,
-                tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div id="tower-container" class="space-y-1.5 mb-4 flex flex-col-reverse overflow-y-auto max-h-[250px]"></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino text-xs">JUGAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino text-xs">COBRAR $0.00</button><div class="instruction-card"><h4><i class="fas fa-chess-rook"></i> Reglas Torre</h4><p>Elige 1 de 3 bloques por piso. Evita la ❌ para subir. Cada nivel suma <strong>0.50x a tu multiplicador</strong>. Tienes 8 niveles totales.</p></div></div>`
+                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4>🎰 Slot</h4><p>Gana <strong>10x</strong> con 3 iguales.</p></div></div>`,
+                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden flex justify-between items-center p-3 mb-3 bg-emerald-500/10 rounded-xl"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><button onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-3 py-1 rounded-lg font-bold text-[9px]">COBRAR</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino text-xs">APOSTAR</button></div><div class="instruction-card"><h4>💣 Minas</h4><p>Cada diamante suma <strong>+0.35x</strong>.</p></div></div>`,
+                crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div class="h-24 flex items-center justify-center mb-6"><div id="crash-rocket" class="text-4xl transition-all duration-100">🚀</div></div><input id="crash-bet-input" type="number" value="10" class="input-bet"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button><div class="instruction-card"><h4>🚀 Aviator</h4><p>Cobra antes del crash.</p></div></div>`,
+                tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div id="tower-container" class="space-y-1.5 mb-4 flex flex-col-reverse overflow-y-auto max-h-[250px]"></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino text-xs">JUGAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino text-xs">COBRAR $0.00</button><div class="instruction-card"><h4>🗼 Torre</h4><p>Cada piso suma <strong>+0.50x</strong>.</p></div></div>`
             }
         };
 
-        // [EL RESTO DE LA LÓGICA DE JUEGOS SE MANTIENE IGUAL]
         const GameLogic = {
+            async saveBet(label, finalAmount) {
+                // finalAmount es el total (Positivo si ganó, negativo si perdió solo la apuesta)
+                await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: finalAmount, label: label, status: 'completed' }]);
+                await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+            },
             slots: {
                 init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); r.innerHTML = ''; Array(40).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); }); },
                 async play() {
@@ -199,10 +189,14 @@
                     const res = [SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)]];
                     State.totalSpins++;
                     [1,2,3].forEach((id, i) => { document.getElementById(`reel-${id}`).style.transform = `translateY(-${(State.totalSpins * 90 * 6) + (SYMBOLS.indexOf(res[i])*90)}px)`; });
-                    setTimeout(() => {
+                    setTimeout(async () => {
                         State.isSpinning = false;
-                        if(res[0] === res[1] && res[1] === res[2]) { const win = bet * 10; State.balance += win; UI.updateBalance(); UI.notify(`¡GANASTE $${win}!`, "success"); }
-                        else UI.notify("Suerte", "error");
+                        if(res[0] === res[1] && res[1] === res[2]) { 
+                            const win = bet * 10; State.balance += win; UI.updateBalance(); UI.notify("¡GANASTE!", "success");
+                            await GameLogic.saveBet("SLOTS WIN", win);
+                        } else { 
+                            UI.notify("SUERTE", "error"); await GameLogic.saveBet("SLOTS LOSS", -bet);
+                        }
                     }, 3500);
                 }
             },
@@ -215,30 +209,28 @@
                 start() {
                     this.bet = parseFloat(document.getElementById('mines-bet-input').value) || 10;
                     if(State.balance < this.bet) return UI.notify("Sin saldo", "error");
-                    State.balance -= this.bet; UI.updateBalance();
-                    this.active = true; this.revealed = []; this.mult = 1;
+                    State.balance -= this.bet; UI.updateBalance(); this.active = true; this.revealed = []; this.mult = 1;
                     this.mines = Array.from({length:25}, (_,i)=>i).sort(()=>Math.random()-0.5).slice(0,4);
-                    this.drawGrid();
-                    document.querySelectorAll('[id^="m-"]').forEach(el => el.classList.remove('opacity-50'));
+                    this.drawGrid(); document.querySelectorAll('[id^="m-"]').forEach(el => el.classList.remove('opacity-50'));
                     document.getElementById('mines-status').classList.remove('hidden-view', 'hidden');
                     document.getElementById('mines-controls').classList.add('hidden-view');
-                    document.getElementById('mines-mult').innerText = '1.00x';
                 },
-                cell(i) {
+                async cell(i) {
                     if(!this.active || this.revealed.includes(i)) return;
                     this.revealed.push(i); const el = document.getElementById(`m-${i}`);
                     if(this.mines.includes(i)) {
-                        el.innerHTML = '💣'; el.classList.add('bg-red-500/20'); this.active = false; UI.notify("BOOM", "error");
-                        setTimeout(() => Router.openGame('mines'), 1500);
+                        el.innerHTML = '💣'; el.classList.add('bg-red-500/20'); this.active = false; UI.notify("BOMBA", "error");
+                        await GameLogic.saveBet("MINAS LOSS", -this.bet); setTimeout(() => Router.openGame('mines'), 1500);
                     } else {
                         el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20'); this.mult += 0.35;
                         document.getElementById('mines-mult').innerText = this.mult.toFixed(2)+'x';
                     }
                 },
-                cashout() {
+                async cashout() {
                     if(!this.active || !this.revealed.length) return;
                     const win = this.bet * this.mult; State.balance += win; UI.updateBalance();
-                    UI.notify(`+$${win.toFixed(2)}`, "success"); this.active = false; Router.openGame('mines');
+                    this.active = false; UI.notify(`+$${win.toFixed(2)}`, "success");
+                    await GameLogic.saveBet("MINAS WIN", win); Router.openGame('mines');
                 }
             },
             crash: {
@@ -246,20 +238,23 @@
                 start() {
                     this.bet = parseFloat(document.getElementById('crash-bet-input').value) || 10;
                     if(State.balance < this.bet) return UI.notify("Sin saldo", "error");
-                    State.balance -= this.bet; UI.updateBalance();
-                    this.active = true; this.mult = 1;
+                    State.balance -= this.bet; UI.updateBalance(); this.active = true; this.mult = 1;
                     const b = document.getElementById('btn-crash'); b.innerText = "COBRAR"; b.onclick = () => this.cashout();
                     const limit = 1.1 + (Math.random() * 4);
-                    this.timer = setInterval(() => {
+                    this.timer = setInterval(async () => {
                         this.mult += 0.04; document.getElementById('crash-mult').innerText = this.mult.toFixed(2)+'x';
-                        if(this.mult >= limit) { clearInterval(this.timer); this.active = false; UI.notify("CRASH", "error"); setTimeout(() => Router.openGame('crash'), 2000); }
+                        if(this.mult >= limit) { 
+                            clearInterval(this.timer); this.active = false; UI.notify("CRASH", "error"); 
+                            await GameLogic.saveBet("AVIATOR LOSS", -this.bet); setTimeout(() => Router.openGame('crash'), 2000); 
+                        }
                     }, 100);
                 },
-                cashout() {
+                async cashout() {
                     if(!this.active) return;
                     clearInterval(this.timer); this.active = false;
                     const win = this.bet * this.mult; State.balance += win; UI.updateBalance();
-                    UI.notify(`+$${win.toFixed(2)}`, "success"); setTimeout(() => Router.openGame('crash'), 2000);
+                    UI.notify(`+$${win.toFixed(2)}`, "success");
+                    await GameLogic.saveBet("AVIATOR WIN", win); setTimeout(() => Router.openGame('crash'), 2000);
                 }
             },
             tower: {
@@ -268,40 +263,40 @@
                     const c = document.getElementById('tower-container'); c.innerHTML = '';
                     for(let i=0; i<8; i++) {
                         c.innerHTML += `<div id="row-${i}" class="grid grid-cols-3 gap-1.5 opacity-20 pointer-events-none">
-                            <div onclick="GameLogic.tower.step(${i},0)" class="bg-white/5 p-2 rounded-lg border border-white/5 text-center text-xs">?</div>
-                            <div onclick="GameLogic.tower.step(${i},1)" class="bg-white/5 p-2 rounded-lg border border-white/5 text-center text-xs">?</div>
-                            <div onclick="GameLogic.tower.step(${i},2)" class="bg-white/5 p-2 rounded-lg border border-white/5 text-center text-xs">?</div>
+                            <div onclick="GameLogic.tower.step(${i},0)" class="bg-white/5 p-2 rounded-lg border border-white/5">?</div>
+                            <div onclick="GameLogic.tower.step(${i},1)" class="bg-white/5 p-2 rounded-lg border border-white/5">?</div>
+                            <div onclick="GameLogic.tower.step(${i},2)" class="bg-white/5 p-2 rounded-lg border border-white/5">?</div>
                         </div>`;
                     }
                 },
                 start() {
                     this.bet = parseFloat(document.getElementById('tower-bet-input').value) || 10;
                     if(State.balance < this.bet) return UI.notify("Sin saldo", "error");
-                    State.balance -= this.bet; UI.updateBalance();
-                    this.active = true; this.level = 0;
-                    this.drawTower();
-                    this.unlockRow(0);
+                    State.balance -= this.bet; UI.updateBalance(); this.active = true; this.level = 0;
+                    this.drawTower(); this.unlockRow(0);
                     document.getElementById('tower-controls').classList.add('hidden-view');
                     document.getElementById('tower-cashout-btn').classList.remove('hidden-view');
-                    document.getElementById('tower-cashout-btn').innerText = `COBRAR $${this.bet.toFixed(2)}`;
                 },
                 unlockRow(r) { const el = document.getElementById(`row-${r}`); if(el) el.classList.remove('opacity-20', 'pointer-events-none'); },
-                step(r, c) {
+                async step(r, c) {
                     if(!this.active || r !== this.level) return;
                     const mine = Math.floor(Math.random()*3);
                     const cells = document.getElementById(`row-${r}`).children;
-                    if(c === mine) { this.active = false; cells[c].innerHTML = '❌'; UI.notify("Caíste", "error"); setTimeout(()=>Router.openGame('tower'), 1500); }
-                    else { 
+                    if(c === mine) { 
+                        this.active = false; cells[c].innerHTML = '❌'; UI.notify("CAÍSTE", "error"); 
+                        await GameLogic.saveBet("TORRE LOSS", -this.bet); setTimeout(()=>Router.openGame('tower'), 1500); 
+                    } else { 
                         cells[c].innerHTML = '💎'; cells[c].classList.add('bg-emerald-500/10'); this.level++; 
                         const win = this.bet * (1 + (this.level * 0.5));
                         document.getElementById('tower-cashout-btn').innerText = `COBRAR $${win.toFixed(2)}`;
                         if(this.level<8) this.unlockRow(this.level); else this.cashout(); 
                     }
                 },
-                cashout() {
+                async cashout() {
                     if(!this.active) return;
                     const win = this.bet * (1 + (this.level * 0.5)); State.balance += win; UI.updateBalance();
-                    UI.notify(`+$${win.toFixed(2)}`, "success"); this.active = false; Router.openGame('tower');
+                    this.active = false; UI.notify(`+$${win.toFixed(2)}`, "success");
+                    await GameLogic.saveBet("TORRE WIN", win); Router.openGame('tower');
                 }
             }
         };
@@ -324,58 +319,56 @@
                 State.balance = data ? data.saldo : 0; UI.updateBalance();
             },
             async fetchHistory() {
-                const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20);
-                const d = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(20);
+                const { data: b } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(15);
+                const { data: d } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(15);
                 
-                const container = document.getElementById('history-lists');
-                container.innerHTML = `
-                    <div class="glass overflow-hidden border-white/5 mb-4">
-                        <div onclick="UI.toggleAccordion('acc-bets', 'arrow-bets')" class="p-5 flex justify-between items-center bg-white/[0.02] cursor-pointer">
-                            <div class="flex items-center gap-3"><i class="fas fa-history text-emerald-500"></i><span class="font-casino text-[10px]">Mis Jugadas</span></div>
-                            <i id="arrow-bets" class="fas fa-chevron-down text-zinc-700 transition-transform"></i>
+                document.getElementById('history-lists').innerHTML = `
+                    <div class="glass overflow-hidden">
+                        <div onclick="UI.toggleAccordion('acc-bets')" class="p-5 flex justify-between items-center bg-white/[0.02] cursor-pointer">
+                            <span class="font-casino text-[10px] tracking-widest">🎲 Mis Jugadas</span>
+                            <i class="fas fa-chevron-down text-zinc-600"></i>
                         </div>
-                        <div id="acc-bets" class="hidden-view p-3 space-y-2 bg-black/40 border-t border-white/5 history-scroll">${this.renderList(b.data || [], 'bets')}</div>
+                        <div id="acc-bets" class="p-3 space-y-2 history-scroll">${this.renderList(b || [], 'bets')}</div>
                     </div>
-                    <div class="glass overflow-hidden border-white/5">
-                        <div onclick="UI.toggleAccordion('acc-deps', 'arrow-deps')" class="p-5 flex justify-between items-center bg-white/[0.02] cursor-pointer">
-                            <div class="flex items-center gap-3"><i class="fas fa-wallet text-blue-400"></i><span class="font-casino text-[10px]">Mis Depósitos</span></div>
-                            <i id="arrow-deps" class="fas fa-chevron-down text-zinc-700 transition-transform"></i>
+                    <div class="glass overflow-hidden mt-4">
+                        <div onclick="UI.toggleAccordion('acc-deps')" class="p-5 flex justify-between items-center bg-white/[0.02] cursor-pointer">
+                            <span class="font-casino text-[10px] tracking-widest">💰 Depósitos</span>
+                            <i class="fas fa-chevron-down text-zinc-600"></i>
                         </div>
-                        <div id="acc-deps" class="hidden-view p-3 space-y-2 bg-black/40 border-t border-white/5 history-scroll">${this.renderList(d.data || [], 'deposits')}</div>
+                        <div id="acc-deps" class="p-3 space-y-2 history-scroll">${this.renderList(d || [], 'deposits')}</div>
                     </div>`;
             },
             renderList(items, type) {
-                if(!items.length) return `<p class="text-[8px] text-center text-zinc-600 py-2">Sin registros</p>`;
+                if(!items.length) return `<p class="text-[8px] text-center text-zinc-600 py-4 font-bold">Sin registros</p>`;
                 return items.map(i => {
-                    let text = i.label, color = i.amount >= 0 ? 'text-emerald-500' : 'text-red-500', pulse = "";
-                    if (type === 'deposits') {
-                        if (i.status === 'pending') { text = "Pendiente ⏳"; color = "text-yellow-500"; pulse = "pulse-pending"; }
-                        else if (i.status === 'completed') { text = "Confirmado ✅"; color = "text-emerald-500"; }
-                        else if (i.status === 'rejected') { text = "Rechazado ❌"; color = "text-red-500"; }
-                    }
-                    return `<div class="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5 ${pulse}"><div class="flex flex-col"><span class="text-[9px] font-bold uppercase text-white">${text}</span><span class="text-[7px] text-zinc-600">${new Date(i.created_at).toLocaleDateString()}</span></div><div class="text-[10px] font-casino ${color}">$${Math.abs(i.amount).toFixed(2)}</div></div>`;
+                    let label = i.label;
+                    let color = i.amount >= 0 ? 'text-emerald-500' : 'text-red-500';
+                    let pulse = "";
+                    if(type === 'deposits' && i.status === 'pending') { label = "Pendiente ⏳"; color = "text-yellow-500"; pulse = "pulse-pending"; }
+                    return `<div class="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5 ${pulse}">
+                        <div class="flex flex-col">
+                            <span class="text-[9px] font-bold uppercase text-white">${label}</span>
+                            <span class="text-[7px] text-zinc-600">${new Date(i.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <div class="text-[10px] font-casino ${color}">${i.amount >= 0 ? '+' : '-'}$${Math.abs(i.amount).toFixed(2)}</div>
+                    </div>`;
                 }).join('');
             },
             async confirmDeposit() {
                 const amt = parseFloat(document.getElementById('dep-amount').value);
-                if(!amt || !document.getElementById('receipt-input').files[0]) return UI.notify("Sube comprobante", "error");
+                if(!amt || !document.getElementById('receipt-input').files[0]) return UI.notify("Datos incompletos", "error");
                 await sb.from('history').insert([{ user_id: State.user.id, type: 'deposits', amount: amt, label: 'CARGA', status: 'pending' }]);
-                UI.notify("En revisión", "success"); UI.closeModal('modal-deposit'); this.fetchHistory();
+                UI.notify("Enviado", "success"); UI.closeModal('modal-deposit');
             }
         };
 
         const UI = {
             updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toFixed(2)}`; },
             updateProfile() { document.getElementById('user-email-display').innerText = State.user.email; },
-            toggleAccordion(accId, arrowId) {
-                const acc = document.getElementById(accId);
-                const arrow = document.getElementById(arrowId);
-                acc.classList.toggle('hidden-view');
-                if(arrow) arrow.style.transform = acc.classList.contains('hidden-view') ? 'rotate(0deg)' : 'rotate(180deg)';
-            },
+            toggleAccordion(id) { document.getElementById(id).classList.toggle('hidden-view'); },
             notify(m, t) {
                 const c = document.getElementById('notif-container'), n = document.createElement('div');
-                n.className = `p-4 rounded-2xl text-[10px] font-black uppercase shadow-2xl animate__animated animate__fadeInDown ${t === 'success' ? 'bg-emerald-500 text-black' : 'bg-red-600 text-white'}`;
+                n.className = `p-4 rounded-2xl text-[10px] font-black uppercase ${t === 'success' ? 'bg-emerald-500 text-black' : 'bg-red-600 text-white'}`;
                 n.innerText = m; c.appendChild(n); setTimeout(() => n.remove(), 3000);
             },
             openModal(id) { document.getElementById(id).classList.remove('hidden-view'); },
@@ -391,7 +384,7 @@
             },
             async register() {
                 const { error } = await sb.auth.signUp({ email: document.getElementById('auth-email').value, password: document.getElementById('auth-password').value });
-                UI.notify(error ? "Error" : "¡Creado!", error ? "error" : "success");
+                UI.notify(error ? "Error" : "¡Listo!", error ? "error" : "success");
             },
             logout() { sb.auth.signOut().then(() => location.reload()); }
         };
