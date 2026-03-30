@@ -42,6 +42,9 @@
         .dep-step-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 1rem; padding: 12px; margin-bottom: 10px; text-align: left; }
         .step-number { background: var(--mx-green); color: black; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; items-center; justify-content: center; font-size: 10px; font-weight: 900; margin-right: 8px; }
         .step-title { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #aaa; }
+
+        /* Estilos de Instrucciones en Juegos */
+        .game-guide { background: rgba(16, 185, 129, 0.05); border: 1px dashed rgba(16, 185, 129, 0.2); border-radius: 1rem; padding: 10px; margin-top: 15px; text-align: left; }
     </style>
 </head>
 <body class="antialiased select-none">
@@ -103,9 +106,10 @@
             </div>
         </div>
 
-        <div id="view-game" class="view-content hidden-view p-5">
+        <div id="view-game" class="view-content hidden-view p-5 text-center">
             <button onclick="Router.showView('lobby')" class="mb-4 text-zinc-600 text-[10px] font-bold uppercase flex items-center"><i class="fas fa-arrow-left mr-2"></i> Lobby</button>
             <div id="game-mount" class="w-full"></div>
+            <div id="game-instructions" class="game-guide mt-6 animate__animated animate__fadeInUp"></div>
         </div>
 
         <div id="view-history" class="view-content p-5 space-y-4 hidden-view">
@@ -199,6 +203,7 @@
             openGame(game) {
                 this.showView('game');
                 document.getElementById('game-mount').innerHTML = this.templates[game];
+                document.getElementById('game-instructions').innerHTML = this.instructions[game];
                 if(game === 'slots') GameLogic.slots.init();
                 if(game === 'mines') GameLogic.mines.drawGrid();
                 if(game === 'tower') GameLogic.tower.drawTower();
@@ -208,6 +213,12 @@
                 mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden flex justify-between items-center p-3 mb-3 bg-emerald-500/10 rounded-xl"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><button onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-3 py-1 rounded-lg font-bold text-[9px]">COBRAR</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino text-xs">APOSTAR</button></div></div>`,
                 crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div class="h-24 mb-6"><div id="crash-rocket" class="text-4xl">🚀</div></div><input id="crash-bet-input" type="number" value="10" class="input-bet"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button></div>`,
                 tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div id="tower-container" class="space-y-1.5 mb-4 flex flex-col-reverse overflow-y-auto max-h-[250px]"></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino text-xs">JUGAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino text-xs">COBRAR</button></div>`
+            },
+            instructions: {
+                slots: `<p class="text-[8px] font-bold text-emerald-500 uppercase mb-1">Guía Rápida:</p><p class="text-[10px] text-zinc-400">Alinea 3 símbolos iguales para ganar 10x tu apuesta. ¡Suerte!</p>`,
+                mines: `<p class="text-[8px] font-bold text-emerald-500 uppercase mb-1">Guía Rápida:</p><p class="text-[10px] text-zinc-400">Encuentra diamantes para subir el multiplicador. Si tocas una mina, pierdes todo.</p>`,
+                crash: `<p class="text-[8px] font-bold text-emerald-500 uppercase mb-1">Guía Rápida:</p><p class="text-[10px] text-zinc-400">El cohete sube. Retira tu apuesta antes de que explote para ganar.</p>`,
+                tower: `<p class="text-[8px] font-bold text-emerald-500 uppercase mb-1">Guía Rápida:</p><p class="text-[10px] text-zinc-400">Sube piso por piso. Cada nivel aumenta tu premio, pero un error te devuelve al suelo.</p>`
             }
         };
 
@@ -281,62 +292,54 @@
             async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); } else { document.getElementById('auth-view').classList.remove('hidden-view'); } },
             async loadBalance() { const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle(); State.balance = data ? data.saldo : 0; UI.updateBalance(); },
             async fetchHistory() {
-                const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20);
-                const d = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(20);
+                const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(10);
+                const d = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(10);
                 const container = document.getElementById('history-lists');
-                container.innerHTML = `<div class="glass overflow-hidden"><div onclick="UI.toggleAccordion('acc-bets')" class="p-5 flex justify-between items-center cursor-pointer"><span class="font-casino text-[10px]">Jugadas</span><i class="fas fa-chevron-down"></i></div><div id="acc-bets" class="hidden-view p-3 space-y-2 history-scroll">${this.renderList(b.data || [], 'bets')}</div></div><div class="glass overflow-hidden mt-4"><div onclick="UI.toggleAccordion('acc-deps')" class="p-5 flex justify-between items-center cursor-pointer"><span class="font-casino text-[10px]">Depósitos</span><i class="fas fa-chevron-down"></i></div><div id="acc-deps" class="hidden-view p-3 space-y-2 history-scroll">${this.renderList(d.data || [], 'deposits')}</div></div>`;
+                container.innerHTML = `
+                    <div class="glass overflow-hidden"><div onclick="UI.toggleAccordion('acc-bets')" class="p-5 flex justify-between items-center cursor-pointer"><span class="font-casino text-[10px] text-emerald-500 italic">Historial de Juego</span><i class="fas fa-chevron-down text-zinc-500"></i></div><div id="acc-bets" class="p-3 space-y-2 history-scroll">${this.renderList(b.data || [], 'bets')}</div></div>
+                    <div class="glass overflow-hidden mt-4"><div onclick="UI.toggleAccordion('acc-deps')" class="p-5 flex justify-between items-center cursor-pointer"><span class="font-casino text-[10px] text-emerald-500 italic">Historial de Pagos</span><i class="fas fa-chevron-down text-zinc-500"></i></div><div id="acc-deps" class="p-3 space-y-2 history-scroll">${this.renderList(d.data || [], 'deposits')}</div></div>`;
             },
-            renderList(items, type) { return items.length ? items.map(i => `<div class="flex justify-between p-3 bg-white/[0.02] border border-white/5"><div><p class="text-[9px] uppercase">${i.status || i.label}</p><span class="text-[7px] text-zinc-600">${new Date(i.created_at).toLocaleDateString()}</span></div><div class="text-[10px] font-casino">$${Math.abs(i.amount).toFixed(2)}</div></div>`).join('') : '<p class="text-[8px] text-center py-2">Vacío</p>'; },
-            
-async confirmDeposit() {
+            renderList(items, type) { 
+                if(!items.length) return '<p class="text-[8px] text-center py-4 text-zinc-600">SIN MOVIMIENTOS RECIENTES</p>';
+                return items.map(i => {
+                    const isPos = i.amount > 0;
+                    const statusColor = i.status === 'pending' ? 'text-yellow-500 animate-pulse' : (i.status === 'success' ? 'text-emerald-500' : 'text-zinc-500');
+                    return `
+                        <div class="flex justify-between items-center p-3 bg-white/[0.02] border border-white/5 rounded-xl">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-[10px] ${isPos ? 'text-emerald-500' : 'text-red-500'}">
+                                    <i class="fas ${type === 'bets' ? (isPos ? 'fa-plus' : 'fa-minus') : 'fa-receipt'}"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-black uppercase">${i.label || (type === 'bets' ? 'APUESTA' : 'DEPÓSITO')}</p>
+                                    <span class="text-[7px] text-zinc-600 font-bold tracking-tighter">${new Date(i.created_at).toLocaleString()}</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-[10px] font-casino ${isPos ? 'text-emerald-500' : 'text-white'}">${isPos ? '+' : ''}$${Math.abs(i.amount).toFixed(2)}</div>
+                                <div class="text-[7px] uppercase font-black tracking-widest ${statusColor}">${i.status || 'Completado'}</div>
+                            </div>
+                        </div>`;
+                }).join('');
+            },
+            async confirmDeposit() {
                 const amt = parseFloat(document.getElementById('dep-amount').value);
                 const file = document.getElementById('receipt-input').files[0];
                 const btn = document.getElementById('btn-confirm-dep');
-
-                if(!amt || !file) return UI.notify("Sube el comprobante", "error");
-
-                btn.disabled = true;
-                btn.innerText = "ENVIANDO...";
-
+                if(!amt || !file) return UI.notify("Sube comprobante", "error");
+                btn.disabled = true; btn.innerText = "SUBIENDO...";
                 try {
-                    // 1. Subir el archivo al bucket 'comprobantes'
                     const fileExt = file.name.split('.').pop();
                     const fileName = `${State.user.id}_${Date.now()}.${fileExt}`;
-                    
-                    const { data: uploadData, error: uploadError } = await sb.storage
-                        .from('comprobantes')
-                        .upload(fileName, file);
-
+                    const { error: uploadError } = await sb.storage.from('comprobantes').upload(fileName, file);
                     if (uploadError) throw uploadError;
-
-                    // 2. Obtener la URL pública de la foto recién subida
-                    const { data: { publicUrl } } = sb.storage
-                        .from('comprobantes')
-                        .getPublicUrl(fileName);
-
-                    // 3. Insertar en la tabla 'history' usando 'evidence_url'
+                    const { data: { publicUrl } } = sb.storage.from('comprobantes').getPublicUrl(fileName);
                     const { error: dbError } = await sb.from('history').insert([{ 
-                        user_id: State.user.id, 
-                        type: 'deposits', 
-                        amount: amt, 
-                        label: 'CARGA', 
-                        status: 'pending',
-                        evidence_url: publicUrl  // Probando con el nombre que recordaste
+                        user_id: State.user.id, type: 'deposits', amount: amt, label: 'CARGA', status: 'pending', evidence_url: publicUrl 
                     }]);
-
                     if (dbError) throw dbError;
-
-                    UI.notify("Enviado con éxito", "success");
-                    UI.closeModal('modal-deposit');
-                    this.fetchHistory();
-
-                } catch (err) {
-                    console.error("Error en el envío:", err);
-                    UI.notify("Error al enviar", "error");
-                } finally {
-                    btn.disabled = false;
-                    btn.innerText = "CONFIRMAR ENVÍO";
-                }
+                    UI.notify("Recibido", "success"); UI.closeModal('modal-deposit'); this.fetchHistory();
+                } catch (err) { UI.notify("Error", "error"); } finally { btn.disabled = false; btn.innerText = "CONFIRMAR ENVÍO"; }
             }
         };
 
@@ -360,8 +363,8 @@ async confirmDeposit() {
 
         const AuthManager = {
             switchTab(tab) { if(tab === 'register') { document.getElementById('login-container').classList.add('hidden-view'); document.getElementById('register-container').classList.remove('hidden-view'); } else { document.getElementById('register-container').classList.add('hidden-view'); document.getElementById('login-container').classList.remove('hidden-view'); } },
-            async login() { const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value; const { error } = await sb.auth.signInWithPassword({ email: e, password: p }); if(error) UI.notify("Error de acceso", "error"); else location.reload(); },
-            async register() { const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value, a = document.getElementById('terms-check').checked; if(!a) return UI.notify("Acepta términos", "error"); const { error } = await sb.auth.signUp({ email: e, password: p }); if(error) UI.notify("Error", "error"); else { UI.notify("Cuenta creada", "success"); this.switchTab('login'); } },
+            async login() { const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value; const { error } = await sb.auth.signInWithPassword({ email: e, password: p }); if(error) UI.notify("Error", "error"); else location.reload(); },
+            async register() { const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value, a = document.getElementById('terms-check').checked; if(!a) return UI.notify("Acepta términos", "error"); const { error } = await sb.auth.signUp({ email: e, password: p }); if(error) UI.notify("Error", "error"); else { UI.notify("Listo", "success"); this.switchTab('login'); } },
             logout() { sb.auth.signOut().then(() => location.reload()); }
         };
 
