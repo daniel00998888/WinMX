@@ -29,10 +29,6 @@
         .slot-item { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
         .slot-reel { transition: transform 3.5s cubic-bezier(0.15, 0, 0.05, 1); }
         .input-bet { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 12px; width: 100%; text-align: center; color: white; font-family: 'Archivo Black', sans-serif; outline: none; margin-bottom: 12px; }
-        .instruction-card { background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 1.2rem; padding: 15px; margin-top: 15px; text-align: left; }
-        .instruction-card h4 { font-family: 'Archivo Black', sans-serif; font-size: 10px; color: var(--mx-green); margin-bottom: 5px; }
-        .instruction-card p { font-size: 10px; color: #ccc; line-height: 1.4; }
-        .history-scroll { max-height: 250px; overflow-y: auto; }
     </style>
 </head>
 <body>
@@ -62,18 +58,18 @@
             <h2 class="text-3xl font-casino mb-8 italic tracking-tighter text-emerald-500">Registro</h2>
             <div class="space-y-4">
                 <input id="reg-email" type="email" placeholder="Correo electrónico" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
-                <input id="reg-password" type="password" placeholder="Contraseña (mín. 6 caracteres)" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
+                <input id="reg-password" type="password" placeholder="Contraseña" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
                 
-                <div class="bg-emerald-500/5 border border-emerald-500/20 p-4 rounded-2xl text-left">
+                <div class="bg-emerald-500/5 border border-emerald-500/20 p-4 rounded-2xl text-left overflow-y-auto max-h-32">
                     <div class="flex items-start gap-3">
                         <input type="checkbox" id="terms-check" class="mt-1 accent-emerald-500 scale-125">
-                        <label for="terms-check" class="text-[10px] text-zinc-400 leading-tight">
-                            Confirmo que soy <b>mayor de edad (+18)</b>. Acepto los riesgos de pérdida y que WinMX no se hace responsable. Juego con responsabilidad.
+                        <label for="terms-check" class="text-[9px] text-zinc-400 leading-tight">
+                            Acepto que soy <b>mayor de 18 años</b> y que el acceso a esta plataforma es bajo mi propia responsabilidad. Reconozco que los juegos ofrecidos son de <b>puro azar</b> y existe un riesgo real de pérdida total del capital depositado. WinMX actúa únicamente como proveedor de entretenimiento tecnológico y <b>se deslinda de toda responsabilidad legal o financiera</b> por pérdidas, adicciones o mal uso del sistema. Juego por diversión, no por necesidad.
                         </label>
                     </div>
                 </div>
 
-                <button onclick="AuthManager.register()" class="btn-action w-full py-4 font-casino mt-2">FINALIZAR REGISTRO</button>
+                <button onclick="AuthManager.register()" class="btn-action w-full py-4 font-casino mt-2">CREAR MI CUENTA</button>
                 <button onclick="AuthManager.switchView('login')" class="text-zinc-600 text-[10px] font-bold uppercase tracking-widest mt-2 block w-full">Volver al inicio</button>
             </div>
         </div>
@@ -115,7 +111,6 @@
             <div class="glass p-10 text-center">
                 <div class="w-24 h-24 bg-emerald-500 rounded-full mx-auto mb-6 flex items-center justify-center text-black text-4xl font-black"><i class="fas fa-user"></i></div>
                 <p id="user-email-display" class="text-sm font-bold text-zinc-300 truncate mb-1">Cargando...</p>
-                <p class="text-[9px] text-emerald-500 font-bold uppercase tracking-[0.2em]">Usuario Activo</p>
                 <button onclick="AuthManager.logout()" class="w-full p-4 rounded-2xl border border-red-500/20 text-red-500 font-casino text-[10px] bg-red-500/5 mt-6">Cerrar Sesión</button>
             </div>
         </div>
@@ -176,7 +171,6 @@
                 const terms = document.getElementById('terms-check').checked;
 
                 if(!email || !pass) return UI.notify("Faltan datos", "error");
-                if(pass.length < 6) return UI.notify("Contraseña: mín. 6 chars", "error");
                 if(!terms) return UI.notify("Debes aceptar los términos", "error");
 
                 const { data, error } = await sb.auth.signUp({ email, password: pass });
@@ -185,7 +179,7 @@
                     UI.notify("Cuenta creada. ¡Inicia sesión!", "success");
                     this.switchView('login');
                 } else {
-                    UI.notify("Error al registrar: " + error.message, "error");
+                    UI.notify("Error: " + error.message, "error");
                 }
             },
             logout() { sb.auth.signOut().then(() => location.reload()); }
@@ -196,7 +190,7 @@
                 init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); r.innerHTML = ''; Array(40).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); }); },
                 async play() {
                     const bet = parseFloat(document.getElementById('slots-bet-input').value) || 10;
-                    if(State.balance < bet || State.isSpinning) return UI.notify("Sin saldo", "error");
+                    if(State.balance < bet || State.isSpinning) return UI.notify("Saldo insuficiente", "error");
                     State.isSpinning = true; State.balance -= bet; UI.updateBalance();
                     await Core.syncBet('SLOTS', -bet);
                     const res = [SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)]];
@@ -205,9 +199,9 @@
                     setTimeout(async () => {
                         State.isSpinning = false;
                         if(res[0] === res[1] && res[1] === res[2]) { 
-                            const win = bet * 10; State.balance += win; UI.updateBalance(); UI.notify(`¡GANASTE $${win}!`, "success"); 
+                            const win = bet * 10; State.balance += win; UI.updateBalance(); UI.notify(`¡WIN $${win}!`, "success"); 
                             await Core.syncBet('PREMIO SLOTS', win);
-                        } else UI.notify("Sigue intentando", "error");
+                        } else UI.notify("Intenta de nuevo", "error");
                     }, 3500);
                 }
             },
@@ -219,7 +213,7 @@
                 },
                 async start() {
                     this.bet = parseFloat(document.getElementById('mines-bet-input').value) || 10;
-                    if(State.balance < this.bet) return UI.notify("Sin saldo", "error");
+                    if(State.balance < this.bet) return UI.notify("Saldo insuficiente", "error");
                     State.balance -= this.bet; UI.updateBalance();
                     await Core.syncBet('MINAS', -this.bet);
                     this.active = true; this.revealed = []; this.mult = 1;
@@ -244,7 +238,7 @@
                     if(!this.active || !this.revealed.length) return;
                     const win = this.bet * this.mult; State.balance += win; UI.updateBalance();
                     UI.notify(`+$${win.toFixed(2)}`, "success"); this.active = false; 
-                    await Core.syncBet('GANANCIA MINAS', win);
+                    await Core.syncBet('WIN MINAS', win);
                     Router.openGame('mines');
                 }
             },
@@ -252,7 +246,7 @@
                 timer: null, mult: 1, active: false, bet: 10,
                 async start() {
                     this.bet = parseFloat(document.getElementById('crash-bet-input').value) || 10;
-                    if(State.balance < this.bet) return UI.notify("Sin saldo", "error");
+                    if(State.balance < this.bet) return UI.notify("Saldo insuficiente", "error");
                     State.balance -= this.bet; UI.updateBalance();
                     await Core.syncBet('AVIATOR', -this.bet);
                     this.active = true; this.mult = 1;
@@ -268,7 +262,7 @@
                     clearInterval(this.timer); this.active = false;
                     const win = this.bet * this.mult; State.balance += win; UI.updateBalance();
                     UI.notify(`+$${win.toFixed(2)}`, "success"); 
-                    await Core.syncBet('GANANCIA AVIATOR', win);
+                    await Core.syncBet('WIN AVIATOR', win);
                     setTimeout(() => Router.openGame('crash'), 2000);
                 }
             },
@@ -286,7 +280,7 @@
                 },
                 async start() {
                     this.bet = parseFloat(document.getElementById('tower-bet-input').value) || 10;
-                    if(State.balance < this.bet) return UI.notify("Sin saldo", "error");
+                    if(State.balance < this.bet) return UI.notify("Saldo insuficiente", "error");
                     State.balance -= this.bet; UI.updateBalance();
                     await Core.syncBet('TORRE', -this.bet);
                     this.active = true; this.level = 0; this.drawTower(); this.unlockRow(0);
@@ -299,7 +293,7 @@
                     if(!this.active || r !== this.level) return;
                     const mine = Math.floor(Math.random()*3);
                     const cells = document.getElementById(`row-${r}`).children;
-                    if(c === mine) { this.active = false; cells[c].innerHTML = '❌'; UI.notify("Caíste", "error"); setTimeout(()=>Router.openGame('tower'), 1500); }
+                    if(c === mine) { this.active = false; cells[c].innerHTML = '❌'; UI.notify("PERDISTE", "error"); setTimeout(()=>Router.openGame('tower'), 1500); }
                     else { 
                         cells[c].innerHTML = '💎'; cells[c].classList.add('bg-emerald-500/10'); this.level++; 
                         const win = this.bet * (1 + (this.level * 0.5));
@@ -311,7 +305,7 @@
                     if(!this.active) return;
                     const win = this.bet * (1 + (this.level * 0.5)); State.balance += win; UI.updateBalance();
                     UI.notify(`+$${win.toFixed(2)}`, "success"); this.active = false; 
-                    await Core.syncBet('GANANCIA TORRE', win);
+                    await Core.syncBet('WIN TORRE', win);
                     Router.openGame('tower');
                 }
             }
@@ -346,15 +340,11 @@
             openModal(id) { document.getElementById(id).classList.remove('hidden-view'); },
             closeModal(id) { document.getElementById(id).classList.add('hidden-view'); },
             depNextStep() { document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
-            handleFile(input) { if(input.files[0]) document.getElementById('file-label').innerText = "RECIBO OK ✅"; },
+            handleFile(input) { if(input.files[0]) document.getElementById('file-label').innerText = "VOUCHER CARGADO ✅"; },
             notify(m, t) {
                 const c = document.getElementById('notif-container'), n = document.createElement('div');
                 n.className = `p-4 rounded-2xl text-[10px] font-black uppercase shadow-2xl animate__animated animate__fadeInDown ${t === 'success' ? 'bg-emerald-500 text-black' : 'bg-red-600 text-white'}`;
                 n.innerText = m; c.appendChild(n); setTimeout(() => n.remove(), 3000);
-            },
-            toggleAccordion(accId, arrowId) {
-                const acc = document.getElementById(accId);
-                acc.classList.toggle('hidden-view');
             }
         };
 
@@ -386,19 +376,19 @@
                 const amt = parseFloat(document.getElementById('dep-amount').value);
                 if(!amt || !document.getElementById('receipt-input').files[0]) return UI.notify("Sube comprobante", "error");
                 await sb.from('history').insert([{ user_id: State.user.id, type: 'deposits', amount: amt, label: 'CARGA', status: 'pending' }]);
-                UI.notify("Enviado para revisión", "success"); UI.closeModal('modal-deposit');
+                UI.notify("Solicitud en revisión", "success"); UI.closeModal('modal-deposit');
             },
             async fetchHistory() {
                 const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(10);
                 const d = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(10);
                 const container = document.getElementById('history-lists');
                 container.innerHTML = `
-                    <div class="glass p-4"><h3 class="text-[9px] font-casino mb-3">Jugadas Recientes</h3><div class="history-scroll">${this.renderList(b.data || [])}</div></div>
-                    <div class="glass p-4"><h3 class="text-[9px] font-casino mb-3">Depósitos</h3><div class="history-scroll">${this.renderList(d.data || [])}</div></div>`;
+                    <div class="glass p-4"><h3 class="text-[9px] font-casino mb-3">Últimas Jugadas</h3><div class="history-scroll">${this.renderList(b.data || [])}</div></div>
+                    <div class="glass p-4"><h3 class="text-[9px] font-casino mb-3">Movimientos de Caja</h3><div class="history-scroll">${this.renderList(d.data || [])}</div></div>`;
             },
             renderList(items) {
-                if(!items.length) return `<p class="text-[8px] text-zinc-600">Sin registros</p>`;
-                return items.map(i => `<div class="flex justify-between border-b border-white/5 py-2"><span class="text-[9px]">${i.label}</span><span class="${i.amount >= 0 ? 'text-emerald-500' : 'text-red-500'} text-[9px] font-bold">$${i.amount.toFixed(2)}</span></div>`).join('');
+                if(!items.length) return `<p class="text-[8px] text-zinc-600">Sin movimientos</p>`;
+                return items.map(i => `<div class="flex justify-between border-b border-white/5 py-2"><span class="text-[9px]">${i.label} ${i.status === 'pending' ? '(⏳)' : ''}</span><span class="${i.amount >= 0 ? 'text-emerald-500' : 'text-red-500'} text-[9px] font-bold">$${i.amount.toFixed(2)}</span></div>`).join('');
             }
         };
 
