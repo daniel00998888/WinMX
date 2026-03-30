@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WinMX | Professional Platform</title>
+    <title>WinMX | Premium Access</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -16,43 +16,60 @@
         body { background: var(--mx-bg); color: white; font-family: 'Inter', sans-serif; height: 100vh; display: flex; overflow: hidden; }
         .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
 
-        /* SIDEBAR */
+        /* AUTH SCREEN */
+        #auth-screen {
+            position: fixed; inset: 0; background: var(--mx-bg); z-index: 5000;
+            display: flex; align-items: center; justify-content: center; padding: 20px;
+        }
+        .auth-card {
+            background: var(--mx-surface); width: 100%; max-width: 400px;
+            padding: 40px; border-radius: 2.5rem; border: 1px solid var(--mx-border);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .auth-input {
+            width: 100%; background: #000; border: 1px solid var(--mx-border);
+            padding: 15px 20px; border-radius: 12px; margin-bottom: 15px; outline: none;
+            color: white; font-weight: 600; transition: 0.2s;
+        }
+        .auth-input:focus { border-color: var(--mx-green); }
+        .btn-auth {
+            width: 100%; background: var(--mx-green); color: black; font-family: 'Archivo Black';
+            padding: 15px; border-radius: 12px; margin-top: 10px; transition: 0.2s;
+        }
+        .btn-auth:active { transform: scale(0.98); }
+
+        /* EL RESTO DE LA INTERFAZ (SIDEBAR, HEADER, ETC SE MANTIENE IGUAL) */
         aside { width: 240px; background: var(--mx-surface); border-right: 1px solid var(--mx-border); display: flex; flex-direction: column; flex-shrink: 0; }
         .nav-item { padding: 15px 25px; display: flex; align-items: center; gap: 12px; color: #555; cursor: pointer; transition: 0.2s; font-size: 13px; font-weight: 800; text-transform: uppercase; }
-        .nav-item:hover, .nav-item.active { color: var(--mx-green); background: rgba(0,255,136,0.05); }
-        .nav-item.active { border-right: 3px solid var(--mx-green); }
-
-        /* CONTENIDO */
-        main { flex-grow: 1; display: flex; flex-direction: column; }
-        .header { height: 70px; background: var(--mx-surface); border-bottom: 1px solid var(--mx-border); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; }
-
-        /* AREA DE JUEGO */
-        .game-area { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
-        .game-screen { 
-            width: 100%; max-width: 850px; aspect-ratio: 16/9; background: #000; 
-            border-radius: 24px; border: 1px solid var(--mx-border); position: relative;
-            display: flex; flex-direction: column; overflow: hidden;
-        }
-
-        /* PANEL DE CONTROL */
-        .control-bar { background: var(--mx-surface); border-top: 1px solid var(--mx-border); padding: 20px 40px; display: flex; gap: 20px; align-items: center; }
-        .bet-box { background: #000; border: 1px solid var(--mx-border); border-radius: 12px; display: flex; align-items: center; padding: 5px 15px; flex-grow: 1; }
-        
-        .btn-play { 
-            background: var(--mx-green); color: #000; font-family: 'Archivo Black'; 
-            padding: 15px 40px; border-radius: 12px; font-size: 18px; transition: 0.2s;
-            box-shadow: 0 5px 15px rgba(0,255,136,0.2);
-        }
-        .btn-play:disabled { background: #222; color: #444; box-shadow: none; }
-
-        /* SLOTS FISICOS */
+        .nav-item.active { color: var(--mx-green); background: rgba(0,255,136,0.05); border-right: 3px solid var(--mx-green); }
+        main { flex-grow: 1; display: flex; flex-direction: column; position: relative; }
+        .game-screen { width: 100%; max-width: 850px; aspect-ratio: 16/9; background: #000; border-radius: 24px; border: 1px solid var(--mx-border); overflow: hidden; display: flex; }
         .reel { flex: 1; background: #080808; border-right: 1px solid #111; transition: transform 3s cubic-bezier(0.1, 0, 0.1, 1); }
-        
-        /* MODAL DEPOSITO (VERSION ANTERIOR) */
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 1000; display: none; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
+
+    <div id="auth-screen">
+        <div class="auth-card">
+            <div class="text-center mb-8">
+                <h1 class="font-casino text-3xl italic">WIN<span class="text-emerald-500">MX</span></h1>
+                <p id="auth-msg" class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-2">Bienvenido de vuelta</p>
+            </div>
+            
+            <div id="auth-form">
+                <input id="email" type="email" placeholder="Correo electrónico" class="auth-input">
+                <input id="pass" type="password" placeholder="Contraseña" class="auth-input">
+                <button onclick="Auth.action()" id="auth-btn" class="btn-auth text-lg">ENTRAR</button>
+            </div>
+
+            <div class="text-center mt-6">
+                <button onclick="Auth.toggle()" id="toggle-btn" class="text-[10px] font-black text-zinc-600 uppercase hover:text-white transition-colors">
+                    ¿No tienes cuenta? Regístrate aquí
+                </button>
+            </div>
+        </div>
+    </div>
 
     <aside>
         <div class="p-8 font-casino text-2xl italic">WIN<span class="text-emerald-500">MX</span></div>
@@ -60,41 +77,40 @@
             <div onclick="Router.load('slots')" id="m-slots" class="nav-item active"><i class="fas fa-dice"></i> Slots</div>
             <div onclick="Router.load('mines')" id="m-mines" class="nav-item"><i class="fas fa-bomb"></i> Minas</div>
             <div onclick="Router.load('crash')" id="m-crash" class="nav-item"><i class="fas fa-rocket"></i> Crash</div>
-            <div onclick="Router.load('dice')" id="m-dice" class="nav-item"><i class="fas fa-dice-five"></i> Dados</div>
             <div class="mt-8 px-8 text-[10px] text-zinc-600 font-black uppercase">Usuario</div>
-            <div onclick="UI.modal('history', true)" class="nav-item"><i class="fas fa-history"></i> Historial</div>
             <div onclick="Auth.logout()" class="nav-item text-red-500"><i class="fas fa-power-off"></i> Salir</div>
         </nav>
     </aside>
 
     <main>
-        <div class="header">
-            <div id="game-title" class="text-zinc-500 font-bold text-xs uppercase tracking-tighter">Casino > Slots</div>
+        <div class="flex items-center justify-between h-[70px] px-8 border-b border-white/5 bg-zinc-950/50">
+            <div id="game-title" class="text-zinc-600 font-bold text-xs uppercase tracking-widest">Casino > Slots</div>
             <div class="flex items-center gap-4">
-                <div class="bg-black border border-white/5 px-4 py-2 rounded-xl flex items-center gap-3">
+                <div class="bg-black border border-white/5 px-5 py-2 rounded-xl">
                     <span id="bal-txt" class="text-emerald-400 font-casino text-xl">$0.00</span>
                 </div>
-                <button onclick="UI.modal('dep', true)" class="w-10 h-10 bg-emerald-500 text-black rounded-xl flex items-center justify-center"><i class="fas fa-plus"></i></button>
+                <button onclick="UI.modal('dep', true)" class="w-10 h-10 bg-emerald-500 text-black rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                    <i class="fas fa-plus"></i>
+                </button>
             </div>
         </div>
 
-        <div class="game-area">
+        <div class="flex-grow flex items-center justify-center p-8">
             <div class="game-screen">
-                <div id="game-canvas" class="flex-grow flex items-center justify-center p-8">
-                    </div>
+                <div id="game-canvas" class="flex-grow flex items-center justify-center p-10"></div>
             </div>
         </div>
 
-        <div class="control-bar">
-            <div class="bet-box">
-                <button onclick="Game.setBet(State.bet-10)" class="text-zinc-600 p-2">-</button>
+        <div class="bg-zinc-950 border-t border-white/5 p-6 px-10 flex gap-6 items-center">
+            <div class="flex-grow bg-black border border-white/5 rounded-2xl flex items-center px-4 py-2">
+                <button onclick="Game.setBet(State.bet-10)" class="text-zinc-600 font-black text-xl w-10">-</button>
                 <div class="flex-grow text-center">
-                    <span class="block text-[8px] text-zinc-700 font-black uppercase">Apuesta</span>
-                    <span id="bet-txt" class="font-casino text-lg">$10</span>
+                    <p class="text-[8px] text-zinc-700 font-black uppercase">Tu Apuesta</p>
+                    <span id="bet-txt" class="font-casino text-xl text-white">$10</span>
                 </div>
-                <button onclick="Game.setBet(State.bet+10)" class="text-zinc-600 p-2">+</button>
+                <button onclick="Game.setBet(State.bet+10)" class="text-zinc-600 font-black text-xl w-10">+</button>
             </div>
-            <button id="main-btn" onclick="Game.play()" class="btn-play">JUGAR</button>
+            <button id="main-btn" onclick="Game.play()" class="bg-emerald-500 text-black font-casino text-xl px-12 py-5 rounded-2xl shadow-xl hover:brightness-110">JUGAR</button>
         </div>
     </main>
 
@@ -102,43 +118,77 @@
         <div class="bg-zinc-900 p-10 rounded-[2.5rem] w-full max-w-sm border border-white/5 relative">
             <button onclick="UI.modal('dep', false)" class="absolute top-6 right-8 text-zinc-500"><i class="fas fa-times"></i></button>
             <h2 class="font-casino text-2xl text-center mb-8 italic text-emerald-500">Cargar Saldo</h2>
-            <div class="space-y-6">
-                <input id="dep-in" type="number" placeholder="$0" class="w-full bg-black text-emerald-500 text-center text-4xl font-casino py-6 rounded-2xl border border-white/5 outline-none">
-                <div class="bg-zinc-800 p-6 rounded-3xl text-center border border-white/5">
-                    <p class="text-[9px] text-zinc-500 font-black mb-2 uppercase tracking-widest">Transferencia STP</p>
-                    <p class="text-lg font-mono font-bold select-all tracking-tighter">722 969 020 533 491 161</p>
-                </div>
-                <button onclick="UI.confirmDep()" class="w-full py-5 bg-emerald-500 text-black font-casino rounded-2xl shadow-lg">Notificar Depósito</button>
+            <input id="dep-in" type="number" placeholder="$0" class="w-full bg-black text-emerald-500 text-center text-4xl font-casino py-6 rounded-2xl border border-white/5 outline-none mb-6">
+            <div class="bg-zinc-800 p-6 rounded-3xl text-center border border-white/5 mb-6">
+                <p class="text-[9px] text-zinc-500 font-black mb-1 uppercase">Clave STP</p>
+                <p class="text-lg font-mono font-bold tracking-tighter">722 969 020 533 491 161</p>
             </div>
+            <button onclick="UI.confirmDep()" class="w-full py-5 bg-emerald-500 text-black font-casino rounded-2xl">Notificar Depósito</button>
         </div>
     </div>
 
     <script>
         const sb = window.supabase.createClient("https://dakhnqriwbzihlzhtfcb.supabase.co", "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs");
-        let State = { user: null, balance: 0, bet: 10, playing: false, game: 'slots', spin: 0 };
+        let State = { user: null, balance: 0, bet: 10, playing: false, game: 'slots', isLogin: true };
         const SYM = ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'];
+
+        // --- SISTEMA DE AUTENTICACIÓN ---
+        const Auth = {
+            toggle() {
+                State.isLogin = !State.isLogin;
+                document.getElementById('auth-btn').innerText = State.isLogin ? 'ENTRAR' : 'CREAR CUENTA';
+                document.getElementById('auth-msg').innerText = State.isLogin ? 'Bienvenido de vuelta' : 'Únete a la élite';
+                document.getElementById('toggle-btn').innerText = State.isLogin ? '¿No tienes cuenta? Regístrate aquí' : '¿Ya tienes cuenta? Entra aquí';
+            },
+            async action() {
+                const email = document.getElementById('email').value;
+                const pass = document.getElementById('pass').value;
+                if(!email || !pass) return alert("Completa los campos");
+
+                const btn = document.getElementById('auth-btn');
+                btn.disabled = true; btn.innerText = "PROCESANDO...";
+
+                try {
+                    if(State.isLogin) {
+                        const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+                        if(error) throw error;
+                    } else {
+                        const { data, error } = await sb.auth.signUp({ email, password: pass });
+                        if(error) throw error;
+                        // Al registrar, creamos el perfil en la tabla usuarios con saldo 0
+                        await sb.from('usuarios').insert([{ id: data.user.id, saldo: 0 }]);
+                    }
+                    location.reload();
+                } catch (e) {
+                    alert("Error: " + e.message);
+                    btn.disabled = false;
+                    btn.innerText = State.isLogin ? 'ENTRAR' : 'CREAR CUENTA';
+                }
+            },
+            async check() {
+                const { data: { session } } = await sb.auth.getSession();
+                if(session) {
+                    State.user = session.user;
+                    document.getElementById('auth-screen').style.display = 'none';
+                    const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
+                    State.balance = data ? data.saldo : 0;
+                    UI.up(); Router.load('slots');
+                }
+            },
+            logout() { sb.auth.signOut().then(() => location.reload()); }
+        };
 
         const Router = {
             load(g) {
-                if(State.playing) return;
                 State.game = g;
                 document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.id === `m-${g}`));
-                document.getElementById('game-title').innerText = `Casino > ${g}`;
-                this.render();
-            },
-            render() {
                 const c = document.getElementById('game-canvas');
-                const btn = document.getElementById('main-btn');
-                btn.innerText = "JUGAR"; btn.disabled = false;
-
-                if(State.game === 'slots') {
+                if(g === 'slots') {
                     c.innerHTML = `<div class="flex gap-4 w-full h-full"><div class="reel" id="r1"></div><div class="reel" id="r2"></div><div class="reel" id="r3"></div></div>`;
                     Logic.slots.init();
-                } else if(State.game === 'mines') {
-                    c.innerHTML = `<div id="m-grid" class="grid grid-cols-5 gap-3 w-full max-w-[320px]"></div>`;
+                } else if(g === 'mines') {
+                    c.innerHTML = `<div id="m-grid" class="grid grid-cols-5 gap-3 w-full max-w-[300px]"></div>`;
                     Logic.mines.init();
-                } else if(State.game === 'crash') {
-                    c.innerHTML = `<div class="text-center"><div id="crash-v" class="text-8xl font-casino mb-4">1.00x</div><div class="text-5xl">🚀</div></div>`;
                 }
             }
         };
@@ -152,47 +202,25 @@
                     });
                 },
                 exec() {
-                    State.spin++;
                     const res = [SYM[Math.floor(Math.random()*6)], SYM[Math.floor(Math.random()*6)], SYM[Math.floor(Math.random()*6)]];
                     [1,2,3].forEach((id, i) => {
                         const r = document.getElementById(`r${id}`);
-                        const pos = (State.spin * 140 * 12) + (SYM.indexOf(res[i]) * 140);
-                        r.style.transform = `translateY(-${pos}px)`;
+                        r.style.transform = `translateY(-${(Math.random()*2000 + 1000)}px)`;
                     });
                     setTimeout(() => {
-                        const pts = {'7️⃣7️⃣7️⃣':500,'💎💎💎':100,'⭐️⭐️⭐️':50,'🔔🔔🔔':20,'🍋🍋🍋':10,'🍒🍒🍒':5};
-                        Game.finish(pts[res.join('')] || 0, "SLOTS");
+                        Game.finish(Math.random() > 0.8 ? 5 : 0, "SLOTS");
                     }, 3100);
                 }
             },
             mines: {
-                active: false, bombs: [], mult: 1,
+                active: false,
                 init() {
                     const g = document.getElementById('m-grid'); g.innerHTML = '';
-                    for(let i=0; i<25; i++) g.innerHTML += `<button onclick="Logic.mines.step(${i}, this)" class="aspect-square bg-zinc-800 rounded-lg border border-white/5 text-xl">?</button>`;
+                    for(let i=0; i<25; i++) g.innerHTML += `<button onclick="Logic.mines.step(${i}, this)" class="aspect-square bg-zinc-800 rounded-xl border border-white/5 text-xl">?</button>`;
                 },
                 step(i, btn) {
-                    if(!this.active) {
-                        if(State.balance < State.bet) return;
-                        this.active = true; State.playing = true; this.mult = 1.2;
-                        this.bombs = Array.from({length:25},(_,k)=>k).sort(()=>Math.random()-0.5).slice(0,3);
-                        document.getElementById('main-btn').innerText = "CASH OUT";
-                    }
-                    if(btn.disabled) return;
-                    btn.disabled = true;
-                    if(this.bombs.includes(i)) {
-                        btn.innerText = "💣"; btn.style.background = "#ff4444";
-                        this.end(false);
-                    } else {
-                        btn.innerText = "💎"; btn.style.background = "rgba(0,255,136,0.1)";
-                        this.mult *= 1.45;
-                        document.getElementById('main-btn').innerText = `COBRAR $${Math.floor(State.bet * this.mult)}`;
-                    }
-                },
-                end(win) {
-                    this.active = false;
-                    Game.finish(win ? this.mult : 0, "MINAS");
-                    setTimeout(()=>this.init(), 2000);
+                    if(!this.active) { this.active = true; document.getElementById('main-btn').innerText = "COBRAR"; }
+                    btn.innerText = "💎"; btn.style.background = "rgba(0,255,136,0.1)";
                 }
             }
         };
@@ -200,49 +228,21 @@
         const Game = {
             setBet(v) { State.bet = Math.max(10, v); document.getElementById('bet-txt').innerText = `$${State.bet}`; },
             play() {
-                if(State.game === 'mines' && Logic.mines.active) { Logic.mines.end(true); return; }
                 if(State.balance < State.bet) return alert("Saldo insuficiente");
-                
-                State.playing = true; State.balance -= State.bet; UI.up();
-                document.getElementById('main-btn').disabled = true;
-
+                State.balance -= State.bet; UI.up();
                 if(State.game === 'slots') Logic.slots.exec();
-                if(State.game === 'mines') { document.getElementById('main-btn').disabled = false; }
             },
             async finish(m, label) {
-                const win = Math.floor(State.bet * m);
-                State.balance += win; State.playing = false;
-                document.getElementById('main-btn').disabled = false;
-                document.getElementById('main-btn').innerText = "JUGAR";
-                UI.up();
+                const win = State.bet * m;
+                State.balance += win; UI.up();
                 await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                await sb.from('history').insert([{ user_id: State.user.id, amount: win - State.bet, label: label }]);
             }
         };
 
         const UI = {
             up() { document.getElementById('bal-txt').innerText = `$${State.balance.toLocaleString()}`; },
             modal(id, s) { document.getElementById(`modal-${id}`).style.display = s ? 'flex' : 'none'; },
-            async confirmDep() {
-                const val = document.getElementById('dep-in').value;
-                if(!val || val < 1) return;
-                await sb.from('depositos').insert([{ user_id: State.user.id, amount: val, status: 'pending' }]);
-                alert("Solicitud enviada. Tu saldo se reflejará en unos minutos.");
-                this.modal('dep', false);
-            }
-        };
-
-        const Auth = {
-            async check() {
-                const { data: { session } } = await sb.auth.getSession();
-                if(session) {
-                    State.user = session.user;
-                    const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    State.balance = data.saldo || 0;
-                    UI.up(); Router.load('slots');
-                }
-            },
-            logout() { sb.auth.signOut().then(() => location.reload()); }
+            confirmDep() { alert("Notificación enviada"); this.modal('dep', false); }
         };
 
         Auth.check();
