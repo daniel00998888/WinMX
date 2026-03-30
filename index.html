@@ -26,7 +26,6 @@
         .balance-pill { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 99px; padding: 4px 4px 4px 12px; display: flex; align-items: center; gap: 8px; }
         .btn-plus { width: 32px; height: 32px; background: var(--mx-green); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
         
-        /* Ajuste de scroll para el historial */
         .history-scroll { max-height: 250px; overflow-y: auto; scrollbar-width: none; }
         .history-scroll::-webkit-scrollbar { display: none; }
 
@@ -36,6 +35,8 @@
         
         .pulse-pending { animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        .input-bet { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 12px; width: 100%; text-align: center; color: white; font-family: 'Archivo Black', sans-serif; outline: none; margin-bottom: 12px; }
     </style>
 </head>
 <body class="antialiased select-none">
@@ -154,12 +155,14 @@
                 this.showView('game');
                 document.getElementById('game-mount').innerHTML = this.templates[game];
                 if(game === 'slots') GameLogic.slots.init();
+                if(game === 'mines') GameLogic.mines.drawGrid();
+                if(game === 'tower') GameLogic.tower.drawTower();
             },
             templates: {
-                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><button onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR $10</button></div>`,
-                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden flex justify-between items-center p-3 mb-3 bg-emerald-500/10 rounded-xl"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><button onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-3 py-1 rounded-lg font-bold text-[9px]">COBRAR</button></div><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino text-xs">APOSTAR $10</button></div>`,
-                crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div class="h-24 flex items-center justify-center mb-6"><div id="crash-rocket" class="text-4xl transition-all duration-100">🚀</div></div><input id="crash-bet-input" type="number" value="10" class="w-full bg-black/40 border border-white/5 p-3 rounded-xl mb-4 text-center font-casino outline-none"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button></div>`,
-                tower: `<div class="glass p-4 mx-auto max-w-[280px]"><div id="tower-container" class="space-y-1.5 mb-4 flex flex-col-reverse overflow-y-auto max-h-[300px]"></div><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino text-xs">EMPEZAR $10</button></div>`
+                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button></div>`,
+                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden flex justify-between items-center p-3 mb-3 bg-emerald-500/10 rounded-xl"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><button onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-3 py-1 rounded-lg font-bold text-[9px]">COBRAR</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino text-xs">APOSTAR</button></div></div>`,
+                crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div class="h-24 flex items-center justify-center mb-6"><div id="crash-rocket" class="text-4xl transition-all duration-100">🚀</div></div><input id="crash-bet-input" type="number" value="10" class="input-bet"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button></div>`,
+                tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div id="tower-container" class="space-y-1.5 mb-4 flex flex-col-reverse overflow-y-auto max-h-[250px]"></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino text-xs">JUGAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino text-xs">COBRAR $0.00</button></div>`
             }
         };
 
@@ -167,35 +170,42 @@
             slots: {
                 init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); r.innerHTML = ''; Array(40).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); }); },
                 async play() {
-                    if(State.balance < 10 || State.isSpinning) return UI.notify("Sin saldo", "error");
-                    State.isSpinning = true; State.balance -= 10; UI.updateBalance();
+                    const bet = parseFloat(document.getElementById('slots-bet-input').value) || 10;
+                    if(State.balance < bet || State.isSpinning) return UI.notify("Sin saldo", "error");
+                    State.isSpinning = true; State.balance -= bet; UI.updateBalance();
                     const res = [SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)]];
                     State.totalSpins++;
                     [1,2,3].forEach((id, i) => { document.getElementById(`reel-${id}`).style.transform = `translateY(-${(State.totalSpins * 90 * 6) + (SYMBOLS.indexOf(res[i])*90)}px)`; });
                     setTimeout(() => {
                         State.isSpinning = false;
-                        if(res[0] === res[1] && res[1] === res[2]) { State.balance += 100; UI.updateBalance(); UI.notify("¡GANASTE $100!", "success"); }
+                        if(res[0] === res[1] && res[1] === res[2]) { const win = bet * 10; State.balance += win; UI.updateBalance(); UI.notify(`¡GANASTE $${win}!`, "success"); }
                         else UI.notify("Suerte", "error");
                     }, 3500);
                 }
             },
             mines: {
-                active: false, mines: [], revealed: [], mult: 1,
+                active: false, mines: [], revealed: [], mult: 1, bet: 10,
+                drawGrid() {
+                    const g = document.getElementById('mines-grid'); g.innerHTML = '';
+                    for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/5 rounded-lg border border-white/5 flex items-center justify-center text-sm cursor-pointer opacity-50"></div>`;
+                },
                 start() {
-                    if(State.balance < 10) return UI.notify("Saldo insuficiente", "error");
-                    State.balance -= 10; UI.updateBalance();
+                    this.bet = parseFloat(document.getElementById('mines-bet-input').value) || 10;
+                    if(State.balance < this.bet) return UI.notify("Sin saldo", "error");
+                    State.balance -= this.bet; UI.updateBalance();
                     this.active = true; this.revealed = []; this.mult = 1;
                     this.mines = Array.from({length:25}, (_,i)=>i).sort(()=>Math.random()-0.5).slice(0,4);
-                    const g = document.getElementById('mines-grid'); g.innerHTML = '';
-                    for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/5 rounded-lg border border-white/5 flex items-center justify-center text-sm cursor-pointer active:scale-90 transition-all"></div>`;
-                    document.getElementById('mines-status').classList.remove('hidden');
-                    document.getElementById('btn-mines-start').classList.add('hidden-view');
+                    this.drawGrid();
+                    document.querySelectorAll('[id^="m-"]').forEach(el => el.classList.remove('opacity-50'));
+                    document.getElementById('mines-status').classList.remove('hidden-view', 'hidden');
+                    document.getElementById('mines-controls').classList.add('hidden-view');
+                    document.getElementById('mines-mult').innerText = '1.00x';
                 },
                 cell(i) {
                     if(!this.active || this.revealed.includes(i)) return;
                     this.revealed.push(i); const el = document.getElementById(`m-${i}`);
                     if(this.mines.includes(i)) {
-                        el.innerHTML = '💣'; el.classList.add('bg-red-500/20'); this.active = false; UI.notify("¡BOOM!", "error");
+                        el.innerHTML = '💣'; el.classList.add('bg-red-500/20'); this.active = false; UI.notify("BOOM", "error");
                         setTimeout(() => Router.openGame('mines'), 1500);
                     } else {
                         el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20'); this.mult += 0.35;
@@ -204,7 +214,7 @@
                 },
                 cashout() {
                     if(!this.active || !this.revealed.length) return;
-                    const win = 10 * this.mult; State.balance += win; UI.updateBalance();
+                    const win = this.bet * this.mult; State.balance += win; UI.updateBalance();
                     UI.notify(`+$${win.toFixed(2)}`, "success"); this.active = false; Router.openGame('mines');
                 }
             },
@@ -212,14 +222,14 @@
                 timer: null, mult: 1, active: false, bet: 10,
                 start() {
                     this.bet = parseFloat(document.getElementById('crash-bet-input').value) || 10;
-                    if(State.balance < this.bet) return UI.notify("Saldo insuficiente", "error");
+                    if(State.balance < this.bet) return UI.notify("Sin saldo", "error");
                     State.balance -= this.bet; UI.updateBalance();
                     this.active = true; this.mult = 1;
                     const b = document.getElementById('btn-crash'); b.innerText = "COBRAR"; b.onclick = () => this.cashout();
                     const limit = 1.1 + (Math.random() * 4);
                     this.timer = setInterval(() => {
                         this.mult += 0.04; document.getElementById('crash-mult').innerText = this.mult.toFixed(2)+'x';
-                        if(this.mult >= limit) { clearInterval(this.timer); this.active = false; UI.notify("CRASH!", "error"); setTimeout(() => Router.openGame('crash'), 2000); }
+                        if(this.mult >= limit) { clearInterval(this.timer); this.active = false; UI.notify("CRASH", "error"); setTimeout(() => Router.openGame('crash'), 2000); }
                     }, 100);
                 },
                 cashout() {
@@ -230,11 +240,8 @@
                 }
             },
             tower: {
-                level: 0, active: false,
-                start() {
-                    if(State.balance < 10) return UI.notify("Saldo insuficiente", "error");
-                    State.balance -= 10; UI.updateBalance();
-                    this.active = true; this.level = 0;
+                level: 0, active: false, bet: 10,
+                drawTower() {
                     const c = document.getElementById('tower-container'); c.innerHTML = '';
                     for(let i=0; i<8; i++) {
                         c.innerHTML += `<div id="row-${i}" class="grid grid-cols-3 gap-1.5 opacity-20 pointer-events-none">
@@ -243,8 +250,17 @@
                             <div onclick="GameLogic.tower.step(${i},2)" class="bg-white/5 p-2 rounded-lg border border-white/5 text-center text-xs">?</div>
                         </div>`;
                     }
+                },
+                start() {
+                    this.bet = parseFloat(document.getElementById('tower-bet-input').value) || 10;
+                    if(State.balance < this.bet) return UI.notify("Sin saldo", "error");
+                    State.balance -= this.bet; UI.updateBalance();
+                    this.active = true; this.level = 0;
+                    this.drawTower();
                     this.unlockRow(0);
-                    const b = document.getElementById('btn-tower-start'); b.innerText = "COBRAR $0.00"; b.onclick = () => this.cashout();
+                    document.getElementById('tower-controls').classList.add('hidden-view');
+                    document.getElementById('tower-cashout-btn').classList.remove('hidden-view');
+                    document.getElementById('tower-cashout-btn').innerText = `COBRAR $${this.bet.toFixed(2)}`;
                 },
                 unlockRow(r) { const el = document.getElementById(`row-${r}`); if(el) el.classList.remove('opacity-20', 'pointer-events-none'); },
                 step(r, c) {
@@ -254,14 +270,14 @@
                     if(c === mine) { this.active = false; cells[c].innerHTML = '❌'; UI.notify("Caíste", "error"); setTimeout(()=>Router.openGame('tower'), 1500); }
                     else { 
                         cells[c].innerHTML = '💎'; cells[c].classList.add('bg-emerald-500/10'); this.level++; 
-                        const win = 10 * (1 + (this.level * 0.5));
-                        document.getElementById('btn-tower-start').innerText = `COBRAR $${win.toFixed(2)}`;
+                        const win = this.bet * (1 + (this.level * 0.5));
+                        document.getElementById('tower-cashout-btn').innerText = `COBRAR $${win.toFixed(2)}`;
                         if(this.level<8) this.unlockRow(this.level); else this.cashout(); 
                     }
                 },
                 cashout() {
-                    if(!this.active || this.level === 0) return;
-                    const win = 10 * (1 + (this.level * 0.5)); State.balance += win; UI.updateBalance();
+                    if(!this.active) return;
+                    const win = this.bet * (1 + (this.level * 0.5)); State.balance += win; UI.updateBalance();
                     UI.notify(`+$${win.toFixed(2)}`, "success"); this.active = false; Router.openGame('tower');
                 }
             }
