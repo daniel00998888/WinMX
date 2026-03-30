@@ -391,12 +391,11 @@
                         let win = 0;
                         if(res[0] === res[1] && res[1] === res[2]) { 
                             win = bet * 10; State.balance += win; 
-                            playSfx('win');
-                            playSfx('winExtra');
-                            UI.notify(`¡GANASTE $${win}!`, "success"); 
+                            playSfx('win'); playSfx('winExtra');
+                            UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
                         } else {
                             playSfx('lose');
-                            UI.notify("Sigue intentando", "error");
+                            UI.notify("SIGUE INTENTANDO", "error");
                         }
                         UI.updateBalance();
                         await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
@@ -425,6 +424,7 @@
                     this.revealed.push(i); const el = document.getElementById(`m-${i}`);
                     if(this.mines.includes(i)) {
                         playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500');
+                        UI.notify("SIGUE INTENTANDO", "error");
                         this.end(false);
                     } else {
                         playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500');
@@ -434,9 +434,8 @@
                 async cashout() {
                     if(!this.active) return;
                     const win = this.bet * this.mult; State.balance += win; 
-                    playSfx('win');
-                    playSfx('winExtra');
-                    UI.notify(`+$${win.toFixed(2)}`, "success");
+                    playSfx('win'); playSfx('winExtra');
+                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
                     this.end(true);
                 },
                 async end(win) {
@@ -472,6 +471,7 @@
                     const items = document.getElementById(`tower-row-${r}`).children;
                     if(c === mine) {
                         playSfx('lose'); items[c].innerHTML = '💣'; items[c].classList.add('bg-red-500/20', 'border-red-500');
+                        UI.notify("SIGUE INTENTANDO", "error");
                         this.end(false);
                     } else {
                         playSfx('click'); items[c].innerHTML = '💎'; items[c].classList.add('bg-emerald-500/20', 'border-emerald-500');
@@ -484,9 +484,8 @@
                 async cashout() {
                     if(!this.active || this.mult <= 1) return;
                     const win = this.bet * (this.mult - 1); State.balance += win; 
-                    playSfx('win');
-                    playSfx('winExtra');
-                    UI.notify(`+$${win.toFixed(2)}`, "success");
+                    playSfx('win'); playSfx('winExtra');
+                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
                     this.end(true);
                 },
                 async end(win) {
@@ -517,15 +516,15 @@
                     if(!this.active) return;
                     clearInterval(this.interval);
                     const win = this.bet * this.mult; State.balance += win; 
-                    playSfx('win');
-                    playSfx('winExtra');
-                    UI.notify(`+$${win.toFixed(2)}`, "success");
+                    playSfx('win'); playSfx('winExtra');
+                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
                     this.end(true);
                 },
                 explode() {
                     playSfx('lose');
                     document.getElementById('crash-mult').classList.add('text-red-500');
                     document.getElementById('crash-rocket').innerHTML = '💥';
+                    UI.notify("SIGUE INTENTANDO", "error");
                     this.end(false);
                 },
                 async end(win) {
