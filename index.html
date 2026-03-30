@@ -288,18 +288,18 @@
             },
             renderList(items, type) { return items.length ? items.map(i => `<div class="flex justify-between p-3 bg-white/[0.02] border border-white/5"><div><p class="text-[9px] uppercase">${i.status || i.label}</p><span class="text-[7px] text-zinc-600">${new Date(i.created_at).toLocaleDateString()}</span></div><div class="text-[10px] font-casino">$${Math.abs(i.amount).toFixed(2)}</div></div>`).join('') : '<p class="text-[8px] text-center py-2">Vacío</p>'; },
             
-            async confirmDeposit() {
+async confirmDeposit() {
                 const amt = parseFloat(document.getElementById('dep-amount').value);
                 const file = document.getElementById('receipt-input').files[0];
                 const btn = document.getElementById('btn-confirm-dep');
 
-                if(!amt || !file) return UI.notify("Monto y comprobante requeridos", "error");
+                if(!amt || !file) return UI.notify("Sube el comprobante", "error");
 
                 btn.disabled = true;
-                btn.innerText = "SUBIENDO...";
-                UI.notify("Procesando...", "success");
+                btn.innerText = "ENVIANDO...";
 
                 try {
+                    // 1. Subir el archivo al bucket 'comprobantes'
                     const fileExt = file.name.split('.').pop();
                     const fileName = `${State.user.id}_${Date.now()}.${fileExt}`;
                     
@@ -309,26 +309,29 @@
 
                     if (uploadError) throw uploadError;
 
+                    // 2. Obtener la URL pública de la foto recién subida
                     const { data: { publicUrl } } = sb.storage
                         .from('comprobantes')
                         .getPublicUrl(fileName);
 
+                    // 3. Insertar en la tabla 'history' usando 'evidence_url'
                     const { error: dbError } = await sb.from('history').insert([{ 
                         user_id: State.user.id, 
                         type: 'deposits', 
                         amount: amt, 
                         label: 'CARGA', 
                         status: 'pending',
-                        receipt_url: publicUrl 
+                        evidence_url: publicUrl  // Probando con el nombre que recordaste
                     }]);
 
                     if (dbError) throw dbError;
 
-                    UI.notify("Enviado para revisión", "success");
+                    UI.notify("Enviado con éxito", "success");
                     UI.closeModal('modal-deposit');
                     this.fetchHistory();
+
                 } catch (err) {
-                    console.error(err);
+                    console.error("Error en el envío:", err);
                     UI.notify("Error al enviar", "error");
                 } finally {
                     btn.disabled = false;
