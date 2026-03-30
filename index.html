@@ -70,7 +70,7 @@
         <div id="view-lobby" class="view-content p-5 space-y-6">
             <div class="bg-gradient-to-br from-emerald-500 to-emerald-800 p-6 rounded-[2.2rem] shadow-xl">
                 <h2 class="text-2xl font-casino italic leading-tight text-white">Suerte hoy</h2>
-                <p class="text-[9px] font-bold text-emerald-100 uppercase tracking-widest mt-1 opacity-70">Sistema Realtime 2.0 Activo</p>
+                <p class="text-[9px] font-bold text-emerald-100 uppercase tracking-widest mt-1 opacity-70">SISTEMA VERIFICADO</p>
             </div>
             <div class="grid grid-cols-2 gap-4">
                 <div onclick="Router.openGame('slots')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🎰</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Slots</span></div>
@@ -81,26 +81,21 @@
         </div>
 
         <div id="view-game" class="view-content hidden-view p-5">
-            <button onclick="Router.showView('lobby')" class="mb-4 text-zinc-600 text-[10px] font-bold uppercase flex items-center"><i class="fas fa-arrow-left mr-2"></i> Volver</button>
+            <button onclick="Router.showView('lobby')" class="mb-4 text-zinc-600 text-[10px] font-bold uppercase flex items-center"><i class="fas fa-arrow-left mr-2"></i> Salir</button>
             <div id="game-mount" class="w-full"></div>
         </div>
 
         <div id="view-history" class="view-content p-5 space-y-4 hidden-view">
             <h2 class="font-casino text-center text-zinc-600 text-xs mb-4 tracking-widest italic">Mi Actividad</h2>
-            <div id="history-lists" class="space-y-4">
-                </div>
+            <div id="history-lists" class="space-y-4"></div>
         </div>
 
         <div id="view-profile" class="view-content p-5 space-y-4 hidden-view">
-            <h2 class="font-casino text-center text-zinc-600 text-xs mb-8 tracking-widest italic">Mi Perfil</h2>
-            <div class="glass p-10 text-center bg-gradient-to-b from-white/[0.05] to-transparent">
-                <div class="w-24 h-24 bg-emerald-500 rounded-full mx-auto mb-6 flex items-center justify-center text-black text-4xl font-black">
-                    <i class="fas fa-user"></i>
-                </div>
-                <p id="user-email-display" class="text-sm font-bold text-zinc-300 truncate mb-1">Cargando...</p>
-                <p class="text-[9px] text-emerald-500 font-bold uppercase tracking-[0.2em]">Usuario Activo</p>
+            <div class="glass p-10 text-center">
+                <div class="w-20 h-20 bg-emerald-500 rounded-full mx-auto mb-4 flex items-center justify-center text-black text-2xl"><i class="fas fa-user"></i></div>
+                <p id="user-email-display" class="text-xs font-bold text-zinc-300 truncate">...</p>
             </div>
-            <button onclick="AuthManager.logout()" class="w-full p-5 rounded-2xl border border-red-500/20 text-red-500 font-casino text-[10px] bg-red-500/5 mt-6 active:scale-95 transition-transform">Cerrar Sesión</button>
+            <button onclick="AuthManager.logout()" class="w-full p-5 rounded-2xl border border-red-500/20 text-red-500 font-casino text-[10px]">Cerrar Sesión</button>
         </div>
 
         <nav class="bottom-nav fixed bottom-0 left-0 right-0 h-20 flex items-center px-4">
@@ -111,38 +106,34 @@
     </div>
 
     <div id="modal-deposit" class="fixed inset-0 bg-black/95 z-[100] hidden-view flex items-center justify-center p-6">
-        <div class="glass p-8 w-full max-w-sm bg-[#0a0a0a]">
+        <div class="glass p-8 w-full max-w-sm">
             <div id="dep-step-1">
-                <h2 class="font-casino text-emerald-500 text-center mb-6">Monto a cargar</h2>
-                <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-10 text-white">
+                <h2 class="font-casino text-emerald-500 text-center mb-6">Monto</h2>
+                <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-10">
                 <button onclick="UI.depNextStep()" class="btn-action w-full py-4 font-casino">Continuar</button>
             </div>
-            <div id="dep-step-2" class="hidden-view space-y-4">
-                <div class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 text-center">
-                    <p class="text-[8px] font-bold text-emerald-500 mb-1 uppercase">Transferencia CLABE (STP)</p>
-                    <span id="clabe-number" class="text-xs font-mono font-bold">722969020533491161</span>
-                    <button onclick="UI.copyClabe()" class="ml-2 text-emerald-500"><i class="fas fa-copy"></i></button>
-                </div>
+            <div id="dep-step-2" class="hidden-view space-y-4 text-center">
+                <p class="text-[10px] text-zinc-500 uppercase font-bold">Transferir a CLABE:</p>
+                <div class="bg-white/5 p-4 rounded-xl font-mono text-emerald-500">722969020533491161</div>
                 <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
-                <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-2xl p-4 flex flex-col items-center cursor-pointer active:bg-white/5">
-                    <i class="fas fa-camera text-xl mb-1 text-zinc-600"></i>
+                <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-2xl p-6 block cursor-pointer">
+                    <i class="fas fa-camera text-2xl mb-2 text-zinc-600"></i>
                     <p id="file-label" class="text-[8px] font-bold text-zinc-500 uppercase">Subir Comprobante</p>
                 </label>
-                <button id="final-dep-btn" onclick="Core.confirmDeposit()" class="btn-action w-full py-4 font-casino text-[10px]">Ya realicé el pago</button>
+                <button id="final-dep-btn" onclick="Core.confirmDeposit()" class="btn-action w-full py-4 font-casino">Confirmar Pago</button>
             </div>
-            <button onclick="UI.closeModal('modal-deposit')" class="w-full mt-4 text-[9px] text-zinc-700 font-bold uppercase tracking-widest">Cerrar</button>
+            <button onclick="UI.closeModal('modal-deposit')" class="w-full mt-4 text-[9px] text-zinc-700 font-bold uppercase">Cerrar</button>
         </div>
     </div>
 
     <div id="notif-container" class="fixed top-6 left-6 right-6 z-[200] flex flex-col gap-2"></div>
 
     <script>
-        // Configuración Supabase
         const DB_CONFIG = { url: "https://dakhnqriwbzihlzhtfcb.supabase.co", key: "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs" };
         const sb = window.supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
+        const SYMBOLS = ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'];
 
         let State = { user: null, balance: 0, currentBet: 10, isSpinning: false, totalSpins: 0 };
-        const SYMBOLS = ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'];
 
         const Router = {
             showView(viewId) {
@@ -150,8 +141,8 @@
                 document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden-view'));
                 document.getElementById(`view-${viewId}`).classList.remove('hidden-view');
                 document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-                const navMap = { 'lobby': 'nav-home', 'history': 'nav-history', 'profile': 'nav-profile' };
-                if(navMap[viewId]) document.getElementById(navMap[viewId]).classList.add('active');
+                const navId = {'lobby':'nav-home','history':'nav-history','profile':'nav-profile'}[viewId];
+                if(navId) document.getElementById(navId).classList.add('active');
                 if(viewId === 'history') Core.fetchHistory();
                 if(viewId === 'profile') UI.updateProfile();
             },
@@ -159,30 +150,110 @@
                 this.showView('game');
                 document.getElementById('game-mount').innerHTML = this.templates[game];
                 if(game === 'slots') GameLogic.slots.init();
-                UI.updateBetDisplay();
             },
             templates: {
-                slots: `
-                    <div class="game-info text-[10px] text-zinc-400">
-                        <span class="text-white font-bold block mb-1 uppercase">Reglas Slots:</span>
-                        Alinea 3 símbolos iguales en el centro. <span class="text-emerald-500 font-bold">Premios hasta 50x.</span>
-                    </div>
-                    <div class="glass p-6 text-center animate__animated animate__fadeInUp">
-                        <div class="grid grid-cols-3 gap-2 mb-8">
-                            <div class="slot-box"><div id="reel-1" class="slot-reel"></div></div>
-                            <div class="slot-box"><div id="reel-2" class="slot-reel"></div></div>
-                            <div class="slot-box"><div id="reel-3" class="slot-reel"></div></div>
-                        </div>
-                        <div class="bg-black/50 p-4 rounded-2xl mb-4 flex justify-between items-center">
-                            <button onclick="GameLogic.changeBet(-10)" class="w-10 h-10 bg-zinc-800 rounded-xl">-</button>
-                            <span class="bet-val font-casino text-2xl">$10</span>
-                            <button onclick="GameLogic.changeBet(10)" class="w-10 h-10 bg-zinc-800 rounded-xl">+</button>
-                        </div>
-                        <button onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button>
-                    </div>`,
-                mines: `<div class="p-10 text-center glass"><h2 class="font-casino">Proximamente Minas</h2></div>`,
-                crash: `<div class="p-10 text-center glass"><h2 class="font-casino">Proximamente Aviator</h2></div>`,
-                tower: `<div class="p-10 text-center glass"><h2 class="font-casino">Proximamente Torre</h2></div>`
+                slots: `<div class="game-info text-[10px]">Alinea 3 iguales para ganar 10x.</div><div class="glass p-6 text-center"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><button onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button></div>`,
+                mines: `<div class="game-info text-[10px]">Busca los diamantes. 4 minas ocultas.</div><div class="glass p-4 text-center"><div id="mines-grid" class="grid grid-cols-5 gap-2 mb-6"></div><div id="mines-status" class="hidden mb-4"><span id="mines-mult" class="font-casino text-emerald-500">1.00x</span></div><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino">APOSTAR $10</button></div>`,
+                crash: `<div class="game-info text-[10px]">Retírate antes del Crash.</div><div class="glass p-8 text-center h-64 flex flex-col justify-between"><div id="crash-mult" class="text-6xl font-casino italic">1.00x</div><div id="crash-rocket" class="text-4xl transition-all duration-100">🚀</div><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button></div>`,
+                tower: `<div class="game-info text-[10px]">Sube la torre eligiendo 1 de 3.</div><div class="glass p-4"><div id="tower-container" class="space-y-2 mb-4 flex flex-col-reverse"></div><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino uppercase">Empezar $10</button></div>`
+            }
+        };
+
+        const GameLogic = {
+            slots: {
+                init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); r.innerHTML = ''; Array(40).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); }); },
+                async play() {
+                    if(State.balance < 10 || State.isSpinning) return UI.notify("Sin saldo", "error");
+                    State.isSpinning = true; State.balance -= 10; UI.updateBalance();
+                    const res = [SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)]];
+                    State.totalSpins++;
+                    [1,2,3].forEach((id, i) => { document.getElementById(`reel-${id}`).style.transform = `translateY(-${(State.totalSpins * 90 * 6) + (SYMBOLS.indexOf(res[i])*90)}px)`; });
+                    setTimeout(() => {
+                        State.isSpinning = false;
+                        if(res[0] === res[1] && res[1] === res[2]) { State.balance += 100; UI.updateBalance(); UI.notify("¡GANASTE $100!", "success"); }
+                        else UI.notify("Sigue intentando", "error");
+                    }, 3500);
+                }
+            },
+            mines: {
+                active: false, mines: [], revealed: [], mult: 1,
+                start() {
+                    if(State.balance < 10) return UI.notify("Sin saldo", "error");
+                    State.balance -= 10; UI.updateBalance();
+                    this.active = true; this.revealed = []; this.mult = 1;
+                    this.mines = Array.from({length:25}, (_,i)=>i).sort(()=>Math.random()-0.5).slice(0,4);
+                    const g = document.getElementById('mines-grid'); g.innerHTML = '';
+                    for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/5 rounded-lg border border-white/5 flex items-center justify-center cursor-pointer"></div>`;
+                    document.getElementById('mines-status').classList.remove('hidden');
+                    const b = document.getElementById('btn-mines-start'); b.innerText = "COBRAR"; b.onclick = () => this.cashout();
+                },
+                cell(i) {
+                    if(!this.active || this.revealed.includes(i)) return;
+                    this.revealed.push(i); const el = document.getElementById(`m-${i}`);
+                    if(this.mines.includes(i)) {
+                        el.innerHTML = '💣'; el.classList.add('bg-red-500/20'); this.active = false; UI.notify("¡BOOM!", "error");
+                        setTimeout(() => Router.openGame('mines'), 1500);
+                    } else {
+                        el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20'); this.mult += 0.3;
+                        document.getElementById('mines-mult').innerText = this.mult.toFixed(2)+'x';
+                    }
+                },
+                cashout() {
+                    if(!this.active || !this.revealed.length) return;
+                    const win = 10 * this.mult; State.balance += win; UI.updateBalance();
+                    UI.notify(`Ganaste $${win.toFixed(2)}`, "success"); this.active = false; Router.openGame('mines');
+                }
+            },
+            crash: {
+                timer: null, mult: 1, active: false,
+                start() {
+                    if(State.balance < 10) return UI.notify("Sin saldo", "error");
+                    State.balance -= 10; UI.updateBalance();
+                    this.active = true; this.mult = 1;
+                    const b = document.getElementById('btn-crash'); b.innerText = "COBRAR"; b.onclick = () => this.cashout();
+                    const limit = 1.1 + (Math.random() * 4);
+                    this.timer = setInterval(() => {
+                        this.mult += 0.03; document.getElementById('crash-mult').innerText = this.mult.toFixed(2)+'x';
+                        if(this.mult >= limit) { clearInterval(this.timer); this.active = false; UI.notify("CRASH!", "error"); setTimeout(() => Router.openGame('crash'), 2000); }
+                    }, 100);
+                },
+                cashout() {
+                    if(!this.active) return;
+                    clearInterval(this.timer); this.active = false;
+                    const win = 10 * this.mult; State.balance += win; UI.updateBalance();
+                    UI.notify(`Cobraste $${win.toFixed(2)}`, "success"); setTimeout(() => Router.openGame('crash'), 2000);
+                }
+            },
+            tower: {
+                level: 0, active: false,
+                start() {
+                    if(State.balance < 10) return UI.notify("Sin saldo", "error");
+                    State.balance -= 10; UI.updateBalance();
+                    this.active = true; this.level = 0;
+                    const c = document.getElementById('tower-container'); c.innerHTML = '';
+                    for(let i=0; i<8; i++) {
+                        c.innerHTML += `<div id="row-${i}" class="grid grid-cols-3 gap-2 opacity-20 pointer-events-none">
+                            <div onclick="GameLogic.tower.step(${i},0)" class="bg-white/5 p-3 rounded-lg border border-white/5 text-center">?</div>
+                            <div onclick="GameLogic.tower.step(${i},1)" class="bg-white/5 p-3 rounded-lg border border-white/5 text-center">?</div>
+                            <div onclick="GameLogic.tower.step(${i},2)" class="bg-white/5 p-3 rounded-lg border border-white/5 text-center">?</div>
+                        </div>`;
+                    }
+                    this.unlockRow(0);
+                    const b = document.getElementById('btn-tower-start'); b.innerText = "COBRAR"; b.onclick = () => this.cashout();
+                },
+                unlockRow(r) { const el = document.getElementById(`row-${r}`); if(el) el.classList.remove('opacity-20', 'pointer-events-none'); },
+                step(r, c) {
+                    if(!this.active || r !== this.level) return;
+                    const mine = Math.floor(Math.random()*3);
+                    const cells = document.getElementById(`row-${r}`).children;
+                    if(c === mine) { this.active = false; cells[c].innerHTML = '❌'; UI.notify("Caíste", "error"); setTimeout(()=>Router.openGame('tower'), 1500); }
+                    else { cells[c].innerHTML = '💎'; cells[c].classList.add('bg-emerald-500/10'); this.level++; if(this.level<8) this.unlockRow(this.level); else this.cashout(); }
+                },
+                cashout() {
+                    if(!this.active || this.level === 0) return;
+                    const win = 10 * (1 + (this.level * 0.4)); State.balance += win; UI.updateBalance();
+                    UI.notify(`Cobraste $${win.toFixed(2)}`, "success"); this.active = false; Router.openGame('tower');
+                }
             }
         };
 
@@ -196,145 +267,65 @@
             async check() {
                 const { data: { session } } = await sb.auth.getSession();
                 document.getElementById('boot-loader').style.display = 'none';
-                if(session) {
-                    State.user = session.user;
-                    document.getElementById('main-app').classList.remove('hidden-view');
-                    await this.loadBalance();
-                } else { document.getElementById('auth-view').classList.remove('hidden-view'); }
+                if(session) { State.user = session.user; document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); }
+                else { document.getElementById('auth-view').classList.remove('hidden-view'); }
             },
             async loadBalance() {
-                let { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle();
-                State.balance = data ? data.saldo : 0;
-                UI.updateBalance();
+                const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle();
+                State.balance = data ? data.saldo : 0; UI.updateBalance();
             },
             async fetchHistory() {
-                const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(10);
-                const d = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(10);
-                
-                const container = document.getElementById('history-lists');
-                container.innerHTML = `
-                    <div class="glass overflow-hidden border-white/5">
-                        <div onclick="UI.toggleAccordion('acc-bets', 'arrow-bets')" class="p-5 flex justify-between items-center bg-white/[0.02] cursor-pointer">
-                            <div class="flex items-center gap-3"><i class="fas fa-history text-emerald-500"></i><span class="font-casino text-[10px]">Mis Jugadas</span></div>
-                            <i id="arrow-bets" class="fas fa-chevron-down text-zinc-700 transition-transform"></i>
-                        </div>
-                        <div id="acc-bets" class="hidden-view p-3 space-y-2 bg-black/40 border-t border-white/5">${this.renderList(b.data || [], 'bets')}</div>
-                    </div>
-                    <div class="glass overflow-hidden border-white/5">
-                        <div onclick="UI.toggleAccordion('acc-deps', 'arrow-deps')" class="p-5 flex justify-between items-center bg-white/[0.02] cursor-pointer">
-                            <div class="flex items-center gap-3"><i class="fas fa-wallet text-blue-400"></i><span class="font-casino text-[10px]">Mis Depósitos</span></div>
-                            <i id="arrow-deps" class="fas fa-chevron-down text-zinc-700 transition-transform"></i>
-                        </div>
-                        <div id="acc-deps" class="hidden-view p-3 space-y-2 bg-black/40 border-t border-white/5">${this.renderList(d.data || [], 'deposits')}</div>
-                    </div>`;
+                const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(5);
+                const d = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(5);
+                document.getElementById('history-lists').innerHTML = `
+                    <div class="glass overflow-hidden"><div onclick="UI.toggleAccordion('acc-bets')" class="p-5 flex justify-between bg-white/[0.02] cursor-pointer"><span class="font-casino text-[10px]">Jugadas</span><i class="fas fa-chevron-down"></i></div>
+                    <div id="acc-bets" class="hidden-view p-3 space-y-2">${this.renderList(b.data || [], 'bets')}</div></div>
+                    <div class="glass overflow-hidden"><div onclick="UI.toggleAccordion('acc-deps')" class="p-5 flex justify-between bg-white/[0.02] cursor-pointer"><span class="font-casino text-[10px]">Depósitos</span><i class="fas fa-chevron-down"></i></div>
+                    <div id="acc-deps" class="hidden-view p-3 space-y-2">${this.renderList(d.data || [], 'deposits')}</div></div>`;
             },
             renderList(items, type) {
                 if(!items.length) return `<p class="text-[8px] text-center text-zinc-600 py-2 italic">Sin registros</p>`;
                 return items.map(i => {
-                    let text = i.label;
-                    let color = i.amount >= 0 ? 'text-emerald-500' : 'text-red-500';
-                    let pulseClass = "";
-
+                    let text = i.label, color = i.amount >= 0 ? 'text-emerald-500' : 'text-red-500', pulse = "";
                     if (type === 'deposits') {
-                        if (i.status === 'pending') {
-                            text = "Depósito Pendiente ⏳";
-                            color = "text-yellow-500";
-                            pulseClass = "pulse-pending";
-                        } else if (i.status === 'completed') {
-                            text = "Depósito Confirmado ✅";
-                            color = "text-emerald-500";
-                        } else if (i.status === 'rejected') {
-                            text = "Depósito Rechazado ❌";
-                            color = "text-red-500";
-                        }
+                        if (i.status === 'pending') { text = "Pendiente ⏳"; color = "text-yellow-500"; pulse = "pulse-pending"; }
+                        else if (i.status === 'completed') { text = "Confirmado ✅"; color = "text-emerald-500"; }
+                        else if (i.status === 'rejected') { text = "Rechazado ❌"; color = "text-red-500"; }
                     }
-
-                    return `
-                        <div class="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5 ${pulseClass}">
-                            <div class="flex flex-col">
-                                <span class="text-[9px] font-bold uppercase text-white">${text}</span>
-                                <span class="text-[7px] text-zinc-600">${new Date(i.created_at).toLocaleDateString()}</span>
-                            </div>
-                            <div class="text-[10px] font-casino ${color}">$${Math.abs(i.amount).toFixed(2)}</div>
-                        </div>`;
+                    return `<div class="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5 ${pulse}"><div class="flex flex-col"><span class="text-[9px] font-bold uppercase">${text}</span><span class="text-[7px] text-zinc-600">${new Date(i.created_at).toLocaleDateString()}</span></div><div class="text-[10px] font-casino ${color}">$${Math.abs(i.amount).toFixed(2)}</div></div>`;
                 }).join('');
             },
             async confirmDeposit() {
-                const amtInput = document.getElementById('dep-amount');
-                const amt = parseFloat(amtInput.value);
-                const file = document.getElementById('receipt-input').files[0];
-                if(!amt || !file) return UI.notify("Sube comprobante y monto", "error");
-                
-                const btn = document.getElementById('final-dep-btn');
-                btn.disabled = true; btn.innerText = "Enviando...";
-
-                await sb.from('history').insert([{ 
-                    user_id: State.user.id, type: 'deposits', amount: amt, label: 'CARGA', status: 'pending' 
-                }]);
-
-                UI.notify("Depósito enviado a revisión", "success");
-                UI.closeModal('modal-deposit');
-                this.fetchHistory();
-                btn.disabled = false; btn.innerText = "Ya realicé el pago"; amtInput.value = '';
+                const amt = parseFloat(document.getElementById('dep-amount').value);
+                if(!amt || !document.getElementById('receipt-input').files[0]) return UI.notify("Completa los datos", "error");
+                await sb.from('history').insert([{ user_id: State.user.id, type: 'deposits', amount: amt, label: 'CARGA', status: 'pending' }]);
+                UI.notify("Enviado a revisión", "success"); UI.closeModal('modal-deposit');
             }
         };
 
         const UI = {
-            updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toLocaleString('en-US', {minimumFractionDigits: 2})}`; },
-            updateBetDisplay() { document.querySelectorAll('.bet-val').forEach(el => el.innerText = `$${State.currentBet}`); },
+            updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toFixed(2)}`; },
             updateProfile() { document.getElementById('user-email-display').innerText = State.user.email; },
-            toggleAccordion(accId, arrowId) {
-                const acc = document.getElementById(accId);
-                const arrow = document.getElementById(arrowId);
-                acc.classList.toggle('hidden-view');
-                arrow.style.transform = acc.classList.contains('hidden-view') ? 'rotate(0deg)' : 'rotate(180deg)';
-            },
+            toggleAccordion(id) { document.getElementById(id).classList.toggle('hidden-view'); },
             notify(m, t) {
                 const c = document.getElementById('notif-container'), n = document.createElement('div');
-                n.className = `p-4 rounded-2xl text-[10px] font-black uppercase shadow-2xl animate__animated animate__fadeInDown ${t === 'success' ? 'bg-emerald-500 text-black' : 'bg-red-600 text-white'}`;
+                n.className = `p-4 rounded-2xl text-[10px] font-black shadow-2xl animate__animated animate__fadeInDown ${t === 'success' ? 'bg-emerald-500 text-black' : 'bg-red-600 text-white'}`;
                 n.innerText = m; c.appendChild(n); setTimeout(() => n.remove(), 3000);
             },
             openModal(id) { document.getElementById(id).classList.remove('hidden-view'); },
-            closeModal(id) { document.getElementById(id).classList.add('hidden-view'); document.getElementById('dep-step-1').classList.remove('hidden-view'); document.getElementById('dep-step-2').classList.add('hidden-view'); },
-            depNextStep() {
-                const amt = document.getElementById('dep-amount').value;
-                if(!amt || amt < 1) return UI.notify("Monto inválido", "error");
-                document.getElementById('dep-step-1').classList.add('hidden-view');
-                document.getElementById('dep-step-2').classList.remove('hidden-view');
-            },
-            copyClabe() { navigator.clipboard.writeText("722969020533491161").then(() => UI.notify("CLABE Copiada", "success")); },
-            handleFile(input) { if(input.files[0]) document.getElementById('file-label').innerText = "Imagen cargada ✅"; }
-        };
-
-        const GameLogic = {
-            changeBet(v) { State.currentBet = Math.max(10, State.currentBet + v); UI.updateBetDisplay(); },
-            slots: {
-                init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); r.innerHTML = ''; Array(30).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); }); },
-                async play() {
-                    if(State.balance < State.currentBet) return UI.notify("Saldo insuficiente", "error");
-                    State.balance -= State.currentBet; UI.updateBalance();
-                    State.isSpinning = true;
-                    State.totalSpins++; 
-                    const res = [SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)]];
-                    [1,2,3].forEach((id, i) => { 
-                        const reel = document.getElementById(`reel-${id}`);
-                        reel.style.transform = `translateY(-${(State.totalSpins * 90 * 6) + (SYMBOLS.indexOf(res[i])*90)}px)`; 
-                    });
-                    setTimeout(() => { State.isSpinning = false; UI.notify("Suerte a la próxima", "error"); }, 3500);
-                }
-            }
+            closeModal(id) { document.getElementById(id).classList.add('hidden-view'); },
+            depNextStep() { document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
+            handleFile(input) { if(input.files[0]) document.getElementById('file-label').innerText = "LISTO ✅"; }
         };
 
         const AuthManager = {
             async login() {
-                const e = document.getElementById('auth-email').value, p = document.getElementById('auth-password').value;
-                const { error } = await sb.auth.signInWithPassword({ email: e, password: p });
-                if(error) UI.notify("Datos incorrectos", "error"); else location.reload();
+                const { error } = await sb.auth.signInWithPassword({ email: document.getElementById('auth-email').value, password: document.getElementById('auth-password').value });
+                if(error) UI.notify("Error", "error"); else location.reload();
             },
             async register() {
-                const e = document.getElementById('auth-email').value, p = document.getElementById('auth-password').value;
-                const { error } = await sb.auth.signUp({ email: e, password: p });
-                UI.notify(error ? "Error" : "¡Cuenta Creada!", error ? "error" : "success");
+                const { error } = await sb.auth.signUp({ email: document.getElementById('auth-email').value, password: document.getElementById('auth-password').value });
+                UI.notify(error ? "Error" : "¡Creado!", error ? "error" : "success");
             },
             logout() { sb.auth.signOut().then(() => location.reload()); }
         };
