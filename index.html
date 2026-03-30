@@ -66,6 +66,7 @@
     </div>
 
     <div id="auth-view" class="hidden-view min-h-screen flex items-center justify-center p-6 bg-black">
+        
         <div id="login-container" class="glass p-8 w-full max-w-sm text-center animate__animated animate__fadeIn">
             <h2 class="text-3xl font-casino mb-10 italic tracking-tighter">Win<span class="text-emerald-500">MX</span></h2>
             <div class="space-y-4">
@@ -147,63 +148,24 @@
     </div>
 
     <div id="modal-deposit" class="fixed inset-0 bg-black/95 z-[100] hidden-view flex items-center justify-center p-6">
-        <div class="glass p-8 w-full max-w-sm bg-[#0a0a0a] border-emerald-500/20">
-            
+        <div class="glass p-8 w-full max-w-sm bg-[#0a0a0a]">
             <div id="dep-step-1">
-                <h2 class="font-casino text-emerald-500 text-center mb-2">Cargar Saldo</h2>
-                <p class="text-[9px] text-zinc-500 text-center uppercase tracking-widest mb-6">Ingresa la cantidad a depositar</p>
-                
-                <div class="relative mb-10">
-                    <span class="absolute left-0 top-1/2 -translate-y-1/2 text-2xl font-casino text-emerald-500/50">$</span>
-                    <input id="dep-amount" type="number" placeholder="0.00" class="w-full bg-transparent text-center text-5xl font-casino outline-none text-white">
-                </div>
-
+                <h2 class="font-casino text-emerald-500 text-center mb-6">Monto a cargar</h2>
+                <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-10 text-white">
                 <button onclick="UI.depNextStep()" class="btn-action w-full py-4 font-casino">Continuar</button>
             </div>
-
-            <div id="dep-step-2" class="hidden-view space-y-5">
-                <div class="text-center">
-                    <h2 class="font-casino text-emerald-500 mb-1 text-sm">Instrucciones de Pago</h2>
-                    <p class="text-[8px] text-zinc-400 uppercase font-bold">Realiza la transferencia exacta</p>
+            <div id="dep-step-2" class="hidden-view space-y-4 text-center">
+                <div class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
+                    <p class="text-[8px] font-bold text-emerald-500 mb-1 uppercase">CLABE (STP)</p>
+                    <span class="text-xs font-mono font-bold">722969020533491161</span>
                 </div>
-
-                <div class="bg-white/5 rounded-2xl p-4 border border-white/10 space-y-4">
-                    <div class="flex justify-between items-center pb-2 border-b border-white/5">
-                        <span class="text-[9px] text-zinc-500 font-bold uppercase">Monto a enviar:</span>
-                        <span id="display-final-amount" class="font-casino text-emerald-500 text-lg">$0.00</span>
-                    </div>
-
-                    <div class="space-y-1">
-                        <span class="text-[9px] text-zinc-500 font-bold uppercase">Cuenta CLABE (STP):</span>
-                        <div class="flex items-center gap-2 bg-black/50 p-3 rounded-xl border border-emerald-500/30">
-                            <code id="clabe-number" class="flex-1 text-[10px] font-mono font-bold text-white tracking-wider">722969020533491161</code>
-                            <button onclick="UI.copyClabe()" class="text-emerald-500 active:scale-90 transition-transform p-1">
-                                <i class="fas fa-copy"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="space-y-2 px-1">
-                    <div class="flex gap-3 items-start">
-                        <div class="w-4 h-4 bg-emerald-500 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] text-black font-black">1</div>
-                        <p class="text-[9px] text-zinc-400">Transfiere desde tu banco a la CLABE.</p>
-                    </div>
-                    <div class="flex gap-3 items-start">
-                        <div class="w-4 h-4 bg-emerald-500 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] text-black font-black">2</div>
-                        <p class="text-[9px] text-zinc-400">Toma una captura del comprobante.</p>
-                    </div>
-                </div>
-
                 <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
-                <label id="drop-zone" for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-2xl p-4 block cursor-pointer text-center">
-                    <i id="file-icon" class="fas fa-cloud-upload-alt text-xl mb-1 text-zinc-600"></i>
+                <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-2xl p-4 block cursor-pointer">
+                    <i class="fas fa-camera text-xl mb-1 text-zinc-600"></i>
                     <p id="file-label" class="text-[8px] font-bold text-zinc-500 uppercase">Subir Comprobante</p>
                 </label>
-
                 <button onclick="Core.confirmDeposit()" class="btn-action w-full py-4 font-casino">Confirmar</button>
             </div>
-
             <button onclick="UI.closeModal('modal-deposit')" class="w-full mt-4 text-[9px] text-zinc-700 font-bold uppercase tracking-widest">Cerrar</button>
         </div>
     </div>
@@ -255,12 +217,10 @@
                     const res = [SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)]];
                     State.totalSpins++;
                     [1,2,3].forEach((id, i) => { document.getElementById(`reel-${id}`).style.transform = `translateY(-${(State.totalSpins * 90 * 6) + (SYMBOLS.indexOf(res[i])*90)}px)`; });
-                    setTimeout(async () => {
+                    setTimeout(() => {
                         State.isSpinning = false;
-                        let won = 0;
-                        if(res[0] === res[1] && res[1] === res[2]) { won = bet * 10; State.balance += won; UI.updateBalance(); UI.notify(`¡GANASTE $${won}!`, "success"); }
+                        if(res[0] === res[1] && res[1] === res[2]) { const win = bet * 10; State.balance += win; UI.updateBalance(); UI.notify(`¡GANASTE $${win}!`, "success"); }
                         else UI.notify("Suerte", "error");
-                        await Core.saveGameResult('Slots', bet, won);
                     }, 3500);
                 }
             },
@@ -282,24 +242,21 @@
                     document.getElementById('mines-controls').classList.add('hidden-view');
                     document.getElementById('mines-mult').innerText = '1.00x';
                 },
-                async cell(i) {
+                cell(i) {
                     if(!this.active || this.revealed.includes(i)) return;
                     this.revealed.push(i); const el = document.getElementById(`m-${i}`);
                     if(this.mines.includes(i)) {
                         el.innerHTML = '💣'; el.classList.add('bg-red-500/20'); this.active = false; UI.notify("BOOM", "error");
-                        await Core.saveGameResult('Minas', this.bet, 0);
                         setTimeout(() => Router.openGame('mines'), 1500);
                     } else {
                         el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20'); this.mult += 0.35;
                         document.getElementById('mines-mult').innerText = this.mult.toFixed(2)+'x';
                     }
                 },
-                async cashout() {
+                cashout() {
                     if(!this.active || !this.revealed.length) return;
                     const win = this.bet * this.mult; State.balance += win; UI.updateBalance();
-                    UI.notify(`+$${win.toFixed(2)}`, "success"); this.active = false; 
-                    await Core.saveGameResult('Minas', this.bet, win);
-                    Router.openGame('mines');
+                    UI.notify(`+$${win.toFixed(2)}`, "success"); this.active = false; Router.openGame('mines');
                 }
             },
             crash: {
@@ -311,22 +268,16 @@
                     this.active = true; this.mult = 1;
                     const b = document.getElementById('btn-crash'); b.innerText = "COBRAR"; b.onclick = () => this.cashout();
                     const limit = 1.1 + (Math.random() * 4);
-                    this.timer = setInterval(async () => {
+                    this.timer = setInterval(() => {
                         this.mult += 0.04; document.getElementById('crash-mult').innerText = this.mult.toFixed(2)+'x';
-                        if(this.mult >= limit) { 
-                            clearInterval(this.timer); this.active = false; UI.notify("CRASH", "error"); 
-                            await Core.saveGameResult('Aviator', this.bet, 0);
-                            setTimeout(() => Router.openGame('crash'), 2000); 
-                        }
+                        if(this.mult >= limit) { clearInterval(this.timer); this.active = false; UI.notify("CRASH", "error"); setTimeout(() => Router.openGame('crash'), 2000); }
                     }, 100);
                 },
-                async cashout() {
+                cashout() {
                     if(!this.active) return;
                     clearInterval(this.timer); this.active = false;
                     const win = this.bet * this.mult; State.balance += win; UI.updateBalance();
-                    UI.notify(`+$${win.toFixed(2)}`, "success"); 
-                    await Core.saveGameResult('Aviator', this.bet, win);
-                    setTimeout(() => Router.openGame('crash'), 2000);
+                    UI.notify(`+$${win.toFixed(2)}`, "success"); setTimeout(() => Router.openGame('crash'), 2000);
                 }
             },
             tower: {
@@ -353,15 +304,11 @@
                     document.getElementById('tower-cashout-btn').innerText = `COBRAR $${this.bet.toFixed(2)}`;
                 },
                 unlockRow(r) { const el = document.getElementById(`row-${r}`); if(el) el.classList.remove('opacity-20', 'pointer-events-none'); },
-                async step(r, c) {
+                step(r, c) {
                     if(!this.active || r !== this.level) return;
                     const mine = Math.floor(Math.random()*3);
                     const cells = document.getElementById(`row-${r}`).children;
-                    if(c === mine) { 
-                        this.active = false; cells[c].innerHTML = '❌'; UI.notify("Caíste", "error"); 
-                        await Core.saveGameResult('Torre', this.bet, 0);
-                        setTimeout(()=>Router.openGame('tower'), 1500); 
-                    }
+                    if(c === mine) { this.active = false; cells[c].innerHTML = '❌'; UI.notify("Caíste", "error"); setTimeout(()=>Router.openGame('tower'), 1500); }
                     else { 
                         cells[c].innerHTML = '💎'; cells[c].classList.add('bg-emerald-500/10'); this.level++; 
                         const win = this.bet * (1 + (this.level * 0.5));
@@ -369,12 +316,10 @@
                         if(this.level<8) this.unlockRow(this.level); else this.cashout(); 
                     }
                 },
-                async cashout() {
+                cashout() {
                     if(!this.active) return;
                     const win = this.bet * (1 + (this.level * 0.5)); State.balance += win; UI.updateBalance();
-                    UI.notify(`+$${win.toFixed(2)}`, "success"); this.active = false; 
-                    await Core.saveGameResult('Torre', this.bet, win);
-                    Router.openGame('tower');
+                    UI.notify(`+$${win.toFixed(2)}`, "success"); this.active = false; Router.openGame('tower');
                 }
             }
         };
@@ -396,23 +341,6 @@
                 const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle();
                 State.balance = data ? data.saldo : 0; UI.updateBalance();
             },
-
-            // SOLUCIÓN 2: REGISTRO DE APUESTAS REAL
-            async saveGameResult(game, bet, win) {
-                // Actualizar saldo en DB
-                await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                
-                // Registrar movimiento en el historial para el Admin
-                await sb.from('history').insert([{
-                    user_id: State.user.id,
-                    amount: win > 0 ? win : -bet,
-                    label: `Jugada: ${game}`,
-                    type: 'bets',
-                    status: win > 0 ? 'ganado' : 'perdido',
-                    created_at: new Date()
-                }]);
-            },
-
             async fetchHistory() {
                 const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20);
                 const d = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(20);
@@ -435,126 +363,78 @@
                     </div>`;
             },
             renderList(items, type) {
-                if(!items.length) return `<p class="text-center text-zinc-600 text-[10px] py-4">No hay registros</p>`;
-                return items.map(i => `
-                    <div class="flex justify-between items-center p-3 bg-white/[0.02] rounded-xl border border-white/5">
-                        <div class="text-[10px] font-bold text-zinc-400">${i.label}</div>
-                        <div class="text-[11px] font-casino ${i.amount > 0 ? 'text-emerald-500' : 'text-zinc-500'}">
-                            ${i.amount > 0 ? '+' : ''}${i.amount.toFixed(2)}
-                        </div>
-                    </div>
-                `).join('');
+                if(!items.length) return `<p class="text-[8px] text-center text-zinc-600 py-2">Sin registros</p>`;
+                return items.map(i => {
+                    let text = i.label, color = i.amount >= 0 ? 'text-emerald-500' : 'text-red-500', pulse = "";
+                    if (type === 'deposits') {
+                        if (i.status === 'pending') { text = "Pendiente ⏳"; color = "text-yellow-500"; pulse = "pulse-pending"; }
+                        else if (i.status === 'completed') { text = "Confirmado ✅"; color = "text-emerald-500"; }
+                        else if (i.status === 'rejected') { text = "Rechazado ❌"; color = "text-red-500"; }
+                    }
+                    return `<div class="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5 ${pulse}"><div class="flex flex-col"><span class="text-[9px] font-bold uppercase text-white">${text}</span><span class="text-[7px] text-zinc-600">${new Date(i.created_at).toLocaleDateString()}</span></div><div class="text-[10px] font-casino ${color}">$${Math.abs(i.amount).toFixed(2)}</div></div>`;
+                }).join('');
             },
-
-            // SOLUCIÓN 1: CARGA DE IMÁGENES PARA EL ADMIN
             async confirmDeposit() {
-                const amount = parseFloat(document.getElementById('dep-amount').value);
-                const fileInput = document.getElementById('receipt-input');
-                const file = fileInput.files[0];
-                
-                if(!amount || !file) return UI.notify("Ingresa monto y captura", "error");
-
-                UI.notify("Procesando...", "success");
-
-                try {
-                    // 1. Subir imagen al Bucket
-                    const fileName = `${State.user.id}/${Date.now()}_${file.name}`;
-                    const { data: uploadData, error: uploadError } = await sb.storage
-                        .from('comprobantes')
-                        .upload(fileName, file);
-
-                    if (uploadError) throw uploadError;
-
-                    // 2. OBTENER URL PÚBLICA PARA EL ADMIN
-                    const { data: { publicUrl } } = sb.storage
-                        .from('comprobantes')
-                        .getPublicUrl(fileName);
-
-                    // 3. Insertar registro con la URL de la imagen
-                    const { error: insertError } = await sb.from('history').insert([{
-                        user_id: State.user.id,
-                        amount: amount,
-                        label: 'DEPOSITO PENDIENTE',
-                        type: 'deposits',
-                        status: 'pending',
-                        image_url: publicUrl // <-- EL ADMIN YA PODRÁ VERLA
-                    }]);
-
-                    if (insertError) throw insertError;
-
-                    UI.notify("Enviado con éxito", "success");
-                    UI.closeModal('modal-deposit');
-                } catch (e) {
-                    UI.notify("Error al subir", "error");
-                }
-            }
-        };
-
-        const AuthManager = {
-            async login() {
-                const email = document.getElementById('login-email').value;
-                const password = document.getElementById('login-password').value;
-                const { data, error } = await sb.auth.signInWithPassword({ email, password });
-                if(error) UI.notify(error.message, "error"); else location.reload();
-            },
-            async register() {
-                const email = document.getElementById('reg-email').value;
-                const password = document.getElementById('reg-password').value;
-                const terms = document.getElementById('terms-check').checked;
-                if(!terms) return UI.notify("Acepta los términos", "error");
-                const { data, error } = await sb.auth.signUp({ email, password });
-                if(error) UI.notify(error.message, "error");
-                else {
-                    await sb.from('usuarios').insert([{ id: data.user.id, saldo: 0 }]);
-                    UI.notify("Cuenta creada", "success");
-                    setTimeout(() => location.reload(), 1500);
-                }
-            },
-            logout() { sb.auth.signOut().then(() => location.reload()); },
-            switchTab(tab) {
-                document.getElementById('login-container').classList.add('hidden-view');
-                document.getElementById('register-container').classList.add('hidden-view');
-                document.getElementById(`${tab}-container`).classList.remove('hidden-view');
+                const amt = parseFloat(document.getElementById('dep-amount').value);
+                if(!amt || !document.getElementById('receipt-input').files[0]) return UI.notify("Sube comprobante", "error");
+                await sb.from('history').insert([{ user_id: State.user.id, type: 'deposits', amount: amt, label: 'CARGA', status: 'pending' }]);
+                UI.notify("En revisión", "success"); UI.closeModal('modal-deposit'); this.fetchHistory();
             }
         };
 
         const UI = {
             updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toFixed(2)}`; },
             updateProfile() { document.getElementById('user-email-display').innerText = State.user.email; },
+            toggleAccordion(accId, arrowId) {
+                const acc = document.getElementById(accId);
+                const arrow = document.getElementById(arrowId);
+                acc.classList.toggle('hidden-view');
+                if(arrow) arrow.style.transform = acc.classList.contains('hidden-view') ? 'rotate(0deg)' : 'rotate(180deg)';
+            },
+            notify(m, t) {
+                const c = document.getElementById('notif-container'), n = document.createElement('div');
+                n.className = `p-4 rounded-2xl text-[10px] font-black uppercase shadow-2xl animate__animated animate__fadeInDown ${t === 'success' ? 'bg-emerald-500 text-black' : 'bg-red-600 text-white'}`;
+                n.innerText = m; c.appendChild(n); setTimeout(() => n.remove(), 3000);
+            },
             openModal(id) { document.getElementById(id).classList.remove('hidden-view'); },
             closeModal(id) { document.getElementById(id).classList.add('hidden-view'); },
-            depNextStep() {
-                const amt = document.getElementById('dep-amount').value;
-                if(!amt || amt <= 0) return this.notify("Monto inválido", "error");
-                document.getElementById('dep-step-1').classList.add('hidden-view');
-                document.getElementById('dep-step-2').classList.remove('hidden-view');
-                document.getElementById('display-final-amount').innerText = `$${parseFloat(amt).toFixed(2)}`;
-            },
-            handleFile(input) {
-                if(input.files && input.files[0]) {
-                    document.getElementById('file-icon').className = "fas fa-check-circle text-emerald-500 text-xl mb-1";
-                    document.getElementById('file-label').innerText = "CAPTURADO";
-                    document.getElementById('drop-zone').classList.add('border-emerald-500/50');
+            depNextStep() { document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
+            handleFile(input) { if(input.files[0]) document.getElementById('file-label').innerText = "OK ✅"; }
+        };
+
+        const AuthManager = {
+            switchTab(tab) {
+                if(tab === 'register') {
+                    document.getElementById('login-container').classList.add('hidden-view');
+                    document.getElementById('register-container').classList.remove('hidden-view');
+                } else {
+                    document.getElementById('register-container').classList.add('hidden-view');
+                    document.getElementById('login-container').classList.remove('hidden-view');
                 }
             },
-            copyClabe() {
-                const clabe = document.getElementById('clabe-number').innerText;
-                navigator.clipboard.writeText(clabe);
-                this.notify("CLABE Copiada", "success");
+            async login() {
+                const email = document.getElementById('login-email').value;
+                const pass = document.getElementById('login-password').value;
+                if(!email || !pass) return UI.notify("Llena los campos", "error");
+                const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+                if(error) UI.notify("Error de acceso", "error"); else location.reload();
             },
-            notify(msg, type) {
-                const n = document.createElement('div');
-                n.className = `p-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest animate__animated animate__fadeInDown ${type === 'success' ? 'bg-emerald-500 text-black' : 'bg-red-500 text-white'}`;
-                n.innerText = msg;
-                document.getElementById('notif-container').appendChild(n);
-                setTimeout(() => { n.classList.replace('animate__fadeInDown', 'animate__fadeOutUp'); setTimeout(() => n.remove(), 500); }, 2500);
+            async register() {
+                const email = document.getElementById('reg-email').value;
+                const pass = document.getElementById('reg-password').value;
+                const accepted = document.getElementById('terms-check').checked;
+                
+                if(!email || !pass) return UI.notify("Faltan datos", "error");
+                if(!accepted) return UI.notify("Acepta los términos", "error");
+
+                const { error } = await sb.auth.signUp({ email, password: pass });
+                if(error) UI.notify("Error al crear", "error"); 
+                else {
+                    UI.notify("¡Creado! Entra ahora", "success");
+                    setTimeout(() => this.switchTab('login'), 2000);
+                }
             },
-            toggleAccordion(id, arrow) {
-                const el = document.getElementById(id);
-                const arr = document.getElementById(arrow);
-                el.classList.toggle('hidden-view');
-                arr.style.transform = el.classList.contains('hidden-view') ? 'rotate(0deg)' : 'rotate(180deg)';
-            }
+            logout() { sb.auth.signOut().then(() => location.reload()); }
         };
 
         Core.init();
