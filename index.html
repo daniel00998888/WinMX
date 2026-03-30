@@ -3,125 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Casino Pro - New Games Edition</title>
+    <title>WinMX | Premium Casino</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;700&display=swap" rel="stylesheet">
-    <style>
-        :root { --gold: #fccf31; --bg: #09090b; }
-        body { background-color: var(--bg); color: white; font-family: 'Outfit', sans-serif; overflow: hidden; }
-        .font-casino { font-family: 'Bebas+Neue', cursive; letter-spacing: 1px; }
-        .glass { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); border-radius: 24px; }
-        .nav-item { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0.5; }
-        .nav-item.active { opacity: 1; transform: translateY(-5px); color: var(--gold); }
-        .hidden-view { display: none; }
-        .btn-action { background: linear-gradient(135deg, #fccf31 0%, #f55555 100%); border-radius: 16px; transition: transform 0.1s; }
-        .btn-action:active { transform: scale(0.95); }
-        
-        /* Slots Engine */
-        .slot-box { height: 90px; overflow: hidden; background: #18181b; border-radius: 12px; border: 2px solid #27272a; }
-        .slot-reel { transition: transform 3.5s cubic-bezier(0.45, 0.05, 0.55, 0.95); }
-        .slot-item { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
 
-        /* Mines */
-        .mine-tile { transition: all 0.2s; }
-        .mine-tile:hover { background: #27272a; }
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@300;400;600;900&display=swap');
+        :root { --mx-green: #10b981; --mx-dark: #070707; }
+        body { background: var(--mx-dark); color: white; font-family: 'Inter', sans-serif; height: 100dvh; overflow: hidden; margin: 0; -webkit-tap-highlight-color: transparent; }
+        .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
+        .app-container { height: 100dvh; display: flex; flex-direction: column; }
+        .view-content { flex: 1; overflow-y: auto; padding-bottom: 100px; }
+        .hidden-view { display: none !important; }
+        .bottom-nav { background: rgba(10, 10, 10, 0.98); backdrop-filter: blur(15px); border-top: 1px solid rgba(255,255,255,0.05); }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: #444; transition: 0.3s; cursor: pointer; }
+        .nav-item.active { color: var(--mx-green); }
+        .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 1.5rem; }
+        .btn-action { background: var(--mx-green); color: black; font-weight: 900; border-radius: 1.2rem; transition: 0.2s; border: none; }
+        .balance-pill { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 99px; padding: 4px 4px 4px 12px; display: flex; align-items: center; gap: 8px; }
+        .btn-plus { width: 32px; height: 32px; background: var(--mx-green); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .slot-box { height: 90px; overflow: hidden; background: #000; border-radius: 1rem; border: 1px solid #1a1a1a; }
+        .slot-item { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
+        .slot-reel { transition: transform 3.5s cubic-bezier(0.15, 0, 0.05, 1); }
+        .game-info { background: rgba(16, 185, 129, 0.05); border-left: 3px solid var(--mx-green); padding: 12px; border-radius: 0 15px 15px 0; margin-bottom: 20px; }
+        /* Nuevos estilos para juegos agregados */
+        .mine-btn { background: rgba(255,255,255,0.05); aspect-ratio: 1; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: 0.2s; }
+        .mine-btn.active { background: var(--mx-green); color: black; }
+        .crash-multiplier { font-size: 4rem; font-weight: 900; color: var(--mx-green); text-shadow: 0 0 20px rgba(16,185,129,0.4); }
     </style>
 </head>
-<body class="flex justify-center items-center h-screen bg-black">
+<body class="antialiased select-none">
 
-    <div id="app" class="w-full max-w-md h-full bg-[#09090b] relative shadow-2xl flex flex-col overflow-hidden">
-        
-        <header class="p-6 flex justify-between items-center z-10">
-            <div>
-                <p class="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Bienvenido</p>
-                <h2 id="user-name" class="font-casino text-xl text-white">Cargando...</h2>
+    <div id="boot-loader" class="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center">
+        <div class="text-3xl font-casino italic mb-4 text-emerald-500 animate-pulse">WinMX</div>
+        <div class="w-32 h-1 bg-zinc-900 rounded-full overflow-hidden">
+            <div id="boot-bar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <div id="auth-view" class="hidden-view min-h-screen flex items-center justify-center p-8 bg-black">
+        <div class="glass p-8 w-full max-w-sm text-center">
+            <h2 class="text-3xl font-casino mb-10 italic tracking-tighter">Win<span class="text-emerald-500">MX</span></h2>
+            <div class="space-y-4">
+                <input id="auth-email" type="email" placeholder="Correo" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
+                <input id="auth-password" type="password" placeholder="Contraseña" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
+                <button onclick="AuthManager.login()" class="btn-action w-full py-4 font-casino mt-2">Entrar</button>
+                <button onclick="AuthManager.register()" class="w-full py-2 text-zinc-600 text-[10px] font-bold uppercase tracking-widest">Crear cuenta</button>
             </div>
-            <div class="glass px-4 py-2 flex items-center gap-2 border-yellow-500/20">
-                <span class="text-yellow-500 text-xs">💰</span>
-                <span id="user-balance" class="font-casino text-lg">0.00</span>
+        </div>
+    </div>
+
+    <div id="main-app" class="app-container hidden-view">
+        <header class="p-5 flex justify-between items-center bg-black/40 border-b border-white/5">
+            <span class="font-casino italic text-xl tracking-tighter">WIN<span class="text-emerald-500">MX</span></span>
+            <div class="balance-pill">
+                <span id="balance-display" class="font-casino text-emerald-500 text-lg tracking-tight">$0.00</span>
+                <div onclick="UI.openModal('modal-deposit')" class="btn-plus active:scale-90 transition-transform"><i class="fas fa-plus"></i></div>
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto px-6 pb-24">
-            
-            <div id="view-lobby" class="view-content animate__animated animate__fadeIn">
-                <div class="mb-8 p-6 glass bg-gradient-to-br from-yellow-500/10 to-transparent relative overflow-hidden">
-                    <h3 class="font-casino text-3xl mb-1">JACKPOT SEMANAL</h3>
-                    <p class="text-zinc-400 text-xs">Aclama tu premio diario en la sección perfil.</p>
-                    <div class="absolute -right-4 -bottom-4 opacity-10 text-8xl">🎰</div>
+        <div id="view-lobby" class="view-content p-5 space-y-6">
+            <div class="bg-gradient-to-br from-emerald-500 to-emerald-800 p-6 rounded-[2.2rem] shadow-xl">
+                <h2 class="text-2xl font-casino italic leading-tight text-white">Suerte hoy</h2>
+                <p class="text-[9px] font-bold text-emerald-100 uppercase tracking-widest mt-1 opacity-70">Sistema Realtime 2.0 Activo</p>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div onclick="Router.openGame('slots')" class="glass p-6 text-center active:scale-95 transition-transform"><span class="text-4xl block mb-2">🎰</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Slots</span></div>
+                <div onclick="Router.openGame('crash')" class="glass p-6 text-center active:scale-95 transition-transform"><span class="text-4xl block mb-2">🚀</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Crash</span></div>
+                <div onclick="Router.openGame('mines')" class="glass p-6 text-center active:scale-95 transition-transform"><span class="text-4xl block mb-2">💣</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Mines</span></div>
+                <div onclick="Router.openGame('plinko')" class="glass p-6 text-center active:scale-95 transition-transform"><span class="text-4xl block mb-2">🔵</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Plinko</span></div>
+            </div>
+        </div>
+
+        <div id="view-game" class="view-content hidden-view p-5">
+            <button onclick="Router.showView('lobby')" class="mb-4 text-zinc-600 text-[10px] font-bold uppercase flex items-center"><i class="fas fa-arrow-left mr-2"></i> Volver</button>
+            <div id="game-mount" class="w-full"></div>
+        </div>
+
+        <div id="view-history" class="view-content p-5 space-y-4 hidden-view">
+            <h2 class="font-casino text-center text-zinc-600 text-xs mb-4 tracking-widest italic">Mi Actividad</h2>
+            <div id="history-lists" class="space-y-4"></div>
+        </div>
+
+        <div id="view-profile" class="view-content p-5 space-y-4 hidden-view">
+            <h2 class="font-casino text-center text-zinc-600 text-xs mb-8 tracking-widest italic">Mi Perfil</h2>
+            <div class="glass p-10 text-center bg-gradient-to-b from-white/[0.05] to-transparent">
+                <div class="w-24 h-24 bg-emerald-500 rounded-full mx-auto mb-6 flex items-center justify-center text-black text-4xl font-black shadow-lg shadow-emerald-500/20">
+                    <i class="fas fa-user"></i>
                 </div>
+                <p id="user-email-display" class="text-sm font-bold text-zinc-300 truncate mb-1">Cargando...</p>
+                <p class="text-[9px] text-emerald-500 font-bold uppercase tracking-[0.2em]">Usuario Activo</p>
+            </div>
+            <button onclick="AuthManager.logout()" class="w-full p-5 rounded-2xl border border-red-500/20 text-red-500 font-casino text-[10px] bg-red-500/5 mt-6 active:scale-95 transition-transform">Cerrar Sesión</button>
+        </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div onclick="Router.openGame('slots')" class="glass p-5 flex flex-col items-center gap-3 cursor-pointer hover:bg-white/5">
-                        <span class="text-4xl">🎰</span>
-                        <span class="font-casino">SLOTS</span>
-                    </div>
-                    <div onclick="Router.openGame('mines')" class="glass p-5 flex flex-col items-center gap-3 cursor-pointer hover:bg-white/5">
-                        <span class="text-4xl">💎</span>
-                        <span class="font-casino">MINAS</span>
-                    </div>
-                    <div onclick="Router.openGame('roulette')" class="glass p-5 flex flex-col items-center gap-3 cursor-pointer hover:bg-white/5">
-                        <span class="text-4xl">🚀</span>
-                        <span class="font-casino">CRASH</span>
-                    </div>
-                    <div onclick="Router.openGame('chests')" class="glass p-5 flex flex-col items-center gap-3 cursor-pointer hover:bg-white/5">
-                        <span class="text-4xl">🗼</span>
-                        <span class="font-casino">TOWERS</span>
-                    </div>
-                </div>
-            </div>
-
-            <div id="view-game" class="view-content hidden-view">
-                <button onclick="Router.showView('lobby')" class="mb-4 text-zinc-500 text-sm flex items-center gap-2">
-                    ← Volver al Lobby
-                </button>
-                <div id="game-mount"></div>
-            </div>
-
-            <div id="view-profile" class="view-content hidden-view animate__animated animate__fadeIn">
-                <h2 class="font-casino text-3xl mb-6">Mi Perfil</h2>
-                <div class="glass p-6 mb-4">
-                    <p class="text-zinc-400 text-sm">ID de Usuario</p>
-                    <p id="prof-id" class="text-xs font-mono text-zinc-500 mb-4">...</p>
-                    <button onclick="Core.claimDaily()" class="w-full py-3 glass hover:bg-white/10 text-yellow-500 font-bold rounded-xl border-yellow-500/30">RECLAMAR BONO DIARIO</button>
-                </div>
-                <div class="glass p-6">
-                    <p class="text-sm mb-4">Enviar saldo a otro usuario</p>
-                    <input id="transfer-id" type="text" placeholder="ID del destinatario" class="w-full bg-black/50 border border-white/10 p-3 rounded-lg mb-2 text-sm">
-                    <input id="transfer-amt" type="number" placeholder="Monto" class="w-full bg-black/50 border border-white/10 p-3 rounded-lg mb-4 text-sm">
-                    <button onclick="Core.transfer()" class="btn-action w-full py-3 font-bold">ENVIAR DINERO</button>
-                </div>
-            </div>
-
-            <div id="view-history" class="view-content hidden-view animate__animated animate__fadeIn">
-                <h2 class="font-casino text-3xl mb-6">Historial de Apuestas</h2>
-                <div id="history-list" class="space-y-3"></div>
-            </div>
-        </main>
-
-        <nav class="absolute bottom-0 w-full h-20 glass rounded-t-[32px] border-t border-white/10 flex items-center justify-around px-6 z-20">
-            <div id="nav-home" onclick="Router.showView('lobby')" class="nav-item active flex flex-col items-center">
-                <span class="text-xl">🏠</span>
-                <span class="text-[10px] mt-1 font-bold">LOBBY</span>
-            </div>
-            <div id="nav-history" onclick="Router.showView('history')" class="nav-item flex flex-col items-center">
-                <span class="text-xl">📊</span>
-                <span class="text-[10px] mt-1 font-bold">HISTORIAL</span>
-            </div>
-            <div id="nav-profile" onclick="Router.showView('profile')" class="nav-item flex flex-col items-center">
-                <span class="text-xl">👤</span>
-                <span class="text-[10px] mt-1 font-bold">PERFIL</span>
-            </div>
+        <nav class="bottom-nav fixed bottom-0 left-0 right-0 h-20 flex items-center px-4">
+            <div onclick="Router.showView('lobby')" id="nav-home" class="nav-item active"><i class="fas fa-gamepad text-xl mb-1"></i><span>Jugar</span></div>
+            <div onclick="Router.showView('history')" id="nav-history" class="nav-item"><i class="fas fa-receipt text-xl mb-1"></i><span>Historial</span></div>
+            <div onclick="Router.showView('profile')" id="nav-profile" class="nav-item"><i class="fas fa-user-circle text-xl mb-1"></i><span>Perfil</span></div>
         </nav>
     </div>
+
+    <div id="modal-deposit" class="fixed inset-0 bg-black/95 z-[100] hidden-view flex items-center justify-center p-6">
+        <div class="glass p-8 w-full max-w-sm bg-[#0a0a0a] overflow-y-auto max-h-[90vh]">
+            <div id="dep-step-1">
+                <h2 class="font-casino text-emerald-500 text-center mb-6">¿Cuánto vas a cargar?</h2>
+                <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-10 text-white">
+                <button onclick="UI.depNextStep()" class="btn-action w-full py-4 font-casino">Continuar</button>
+            </div>
+            <div id="dep-step-2" class="hidden-view space-y-4 text-center">
+                <div class="bg-emerald-500/10 p-5 rounded-2xl border border-emerald-500/20">
+                    <p class="text-[8px] font-bold text-emerald-500 uppercase mb-2 tracking-widest">Cuenta CLABE (STP)</p>
+                    <div class="flex items-center justify-between bg-black/40 p-3 rounded-lg border border-white/5">
+                        <span id="clabe-number" class="text-sm font-mono font-bold text-white tracking-tighter">722969020533491161</span>
+                        <button onclick="UI.copyClabe()" class="ml-2 text-emerald-500 active:scale-75 transition-transform p-2"><i class="fas fa-copy"></i></button>
+                    </div>
+                </div>
+                <button id="final-dep-btn" onclick="Core.confirmDeposit()" class="btn-action w-full py-4 font-casino">Ya realicé el pago</button>
+            </div>
+            <button onclick="UI.closeModal('modal-deposit')" class="w-full mt-6 text-[9px] text-zinc-700 font-bold uppercase">Cerrar</button>
+        </div>
+    </div>
+    <div id="notif-container" class="fixed top-6 left-6 right-6 z-[200] flex flex-col gap-2"></div>
 
     <script>
         const DB_CONFIG = { url: "https://dakhnqriwbzihlzhtfcb.supabase.co", key: "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs" };
         const sb = window.supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
 
-        let State = { user: null, balance: 0, currentBet: 10, isSpinning: false, totalSpins: 0, crashMult: 1, minesGrid: [] };
+        let State = { user: null, balance: 0, currentBet: 10, isSpinning: false, totalSpins: 0, crashActive: false };
         const SYMBOLS = ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'];
 
         const Router = {
@@ -132,19 +144,20 @@
                 document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
                 const navMap = { 'lobby': 'nav-home', 'history': 'nav-history', 'profile': 'nav-profile' };
                 if(navMap[viewId]) document.getElementById(navMap[viewId]).classList.add('active');
-                if(viewId === 'history') Core.fetchHistory();
-                if(viewId === 'profile') UI.updateProfile();
             },
             openGame(game) {
                 this.showView('game');
                 document.getElementById('game-mount').innerHTML = this.templates[game];
                 if(game === 'slots') GameLogic.slots.init();
-                if(game === 'mines') GameLogic.mines.init();
                 UI.updateBetDisplay();
             },
             templates: {
-                slots: `<div class="game-info text-[10px] text-zinc-400 uppercase mb-4"><span class="text-white font-bold block">SLOTS CLASSIC:</span> 3 iguales para ganar.</div>
-                    <div class="glass p-6 text-center animate__animated animate__fadeInUp">
+                slots: `
+                    <div class="game-info text-[10px] text-zinc-400">
+                        <span class="text-white font-bold block mb-1">COMO GANAR EN SLOTS:</span>
+                        Presiona GIRAR. Si los 3 iconos del centro son iguales, ¡ganas!
+                    </div>
+                    <div class="glass p-6 text-center">
                         <div class="grid grid-cols-3 gap-2 mb-8">
                             <div class="slot-box"><div id="reel-1" class="slot-reel"></div></div>
                             <div class="slot-box"><div id="reel-2" class="slot-reel"></div></div>
@@ -157,42 +170,39 @@
                         </div>
                         <button onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button>
                     </div>`,
-                mines: `<div class="game-info text-[10px] text-zinc-400 mb-4"><span class="text-white font-bold block">MINES VIP:</span> Encuentra diamantes, evita la bomba.</div>
+                crash: `
+                    <div class="game-info text-[10px] text-zinc-400">Retira antes de que el cohete explote.</div>
+                    <div class="glass p-10 text-center">
+                        <div id="crash-display" class="crash-multiplier mb-10">1.00x</div>
+                        <button id="crash-btn" onclick="GameLogic.crash.action()" class="btn-action w-full py-5 font-casino text-xl">APOSTAR</button>
+                    </div>`,
+                mines: `
+                    <div class="game-info text-[10px] text-zinc-400">Evita las minas y retira tu premio.</div>
                     <div class="glass p-6 text-center">
-                        <div id="mines-board" class="grid grid-cols-3 gap-2 mb-6"></div>
-                        <div class="bg-black/50 p-4 rounded-2xl mb-4 flex justify-between items-center">
-                            <button onclick="GameLogic.changeBet(-10)" class="w-10 h-10 bg-zinc-800 rounded-xl">-</button>
-                            <span class="bet-val font-casino text-2xl">$10</span>
-                            <button onclick="GameLogic.changeBet(10)" class="w-10 h-10 bg-zinc-800 rounded-xl">+</button>
+                        <div class="grid grid-cols-5 gap-2 mb-6" id="mines-grid">
+                            ${Array(25).fill(0).map((_,i) => `<div onclick="GameLogic.mines.reveal(${i})" class="mine-btn" id="mine-${i}">?</div>`).join('')}
                         </div>
-                        <button id="btn-mines" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino">INICIAR JUEGO</button>
+                        <button id="mines-cashout" onclick="GameLogic.mines.cashout()" class="btn-action w-full py-4 font-casino hidden-view">RETIRAR</button>
+                        <button id="mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino">JUGAR</button>
                     </div>`,
-                roulette: `<div class="game-info text-[10px] text-zinc-400 mb-4"><span class="text-white font-bold block">CRASH ROCKET:</span> Retira antes de que explote.</div>
+                plinko: `
+                    <div class="game-info text-[10px] text-zinc-400">La bola caerá en un multiplicador.</div>
                     <div class="glass p-8 text-center">
-                        <div id="crash-display" class="text-6xl font-casino text-emerald-500 mb-8">1.00x</div>
-                        <div class="bg-black/50 p-4 rounded-2xl mb-4 flex justify-between items-center">
-                            <button onclick="GameLogic.changeBet(-10)" class="w-10 h-10 bg-zinc-800 rounded-xl">-</button>
-                            <span class="bet-val font-casino text-2xl">$10</span>
-                            <button onclick="GameLogic.changeBet(10)" class="w-10 h-10 bg-zinc-800 rounded-xl">+</button>
+                        <div class="h-40 flex items-center justify-center text-5xl">🔵</div>
+                        <div class="flex justify-between mt-4 text-[10px] font-bold">
+                            <div class="p-2 bg-red-500 rounded">0.2x</div>
+                            <div class="p-2 bg-yellow-500 rounded">1.5x</div>
+                            <div class="p-2 bg-green-500 rounded">5.0x</div>
                         </div>
-                        <button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-5 font-casino">APOSTAR</button>
-                    </div>`,
-                chests: `<div class="game-info text-[10px] text-zinc-400 mb-4"><span class="text-white font-bold block">TOWER CLIMB:</span> Doble o nada rápido.</div>
-                    <div class="glass p-8 text-center">
-                        <div class="flex flex-col-reverse gap-2 mb-6">
-                            <div class="p-3 bg-zinc-900 rounded-xl opacity-20">Nivel 3 - 4.0x</div>
-                            <div class="p-3 bg-zinc-900 rounded-xl opacity-20">Nivel 2 - 2.0x</div>
-                            <div class="p-3 bg-white/10 rounded-xl border border-yellow-500/50">Nivel 1 - 1.5x</div>
-                        </div>
-                        <button onclick="GameLogic.tower.play()" class="btn-action w-full py-5 font-casino">SUBIR PISO</button>
+                        <button onclick="GameLogic.plinko.play()" class="btn-action w-full py-5 font-casino mt-8">SOLTAR BOLA</button>
                     </div>`
             }
         };
 
         const GameLogic = {
-            changeBet(v) { if(!State.isSpinning) { State.currentBet = Math.max(10, State.currentBet + v); UI.updateBetDisplay(); } },
+            changeBet(v) { State.currentBet = Math.max(10, State.currentBet + v); UI.updateBetDisplay(); },
             async startSpin() {
-                if(State.isSpinning || State.balance < State.currentBet) { UI.notify("Saldo insuficiente o partida activa", "error"); return false; }
+                if(State.isSpinning || State.balance < State.currentBet) { UI.notify("Saldo insuficiente", "error"); return false; }
                 State.isSpinning = true; State.balance -= State.currentBet; UI.updateBalance();
                 await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                 return true;
@@ -201,7 +211,7 @@
                 if(winAmt > 0) {
                     State.balance += winAmt;
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                    UI.notify(`+ $${winAmt.toFixed(2)}`, "success"); UI.updateBalance();
+                    UI.notify(`GANASTE $${winAmt.toFixed(2)}`, "success"); UI.updateBalance();
                 }
                 await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: winAmt - State.currentBet, label: label, status: 'completed' }]);
                 State.isSpinning = false;
@@ -214,110 +224,124 @@
                     const pay = { '7️⃣7️⃣7️⃣': 50, '💎💎💎': 15, '⭐️⭐️⭐️': 10, '🔔🔔🔔': 5, '🍋🍋🍋': 2, '🍒🍒🍒': 1.5 };
                     const mult = pay[res.join('')] || 0;
                     [1,2,3].forEach((id, i) => { const reel = document.getElementById(`reel-${id}`); const pos = (State.totalSpins * 90 * 12) + (SYMBOLS.indexOf(res[i]) * 90); reel.style.transform = `translateY(-${pos}px)`; });
-                    setTimeout(() => GameLogic.endSpin(State.currentBet * mult, mult > 0 ? 'WIN SLOTS' : 'LOSS SLOTS'), 3500);
-                }
-            },
-            mines: {
-                init() {
-                    const b = document.getElementById('mines-board'); if(!b) return;
-                    b.innerHTML = '';
-                    for(let i=0; i<9; i++) b.innerHTML += `<div onclick="GameLogic.mines.reveal(${i})" class="mine-tile glass h-16 flex items-center justify-center cursor-pointer text-xl">?</div>`;
-                },
-                async start() {
-                    if(!await GameLogic.startSpin()) return;
-                    document.getElementById('btn-mines').innerText = "BUSCANDO...";
-                    State.minesGrid = Array(9).fill('💎'); State.minesGrid[Math.floor(Math.random()*9)] = '💣';
-                    this.init();
-                },
-                reveal(idx) {
-                    if(!State.isSpinning) return;
-                    const tiles = document.querySelectorAll('.mine-tile');
-                    const content = State.minesGrid[idx];
-                    tiles[idx].innerText = content;
-                    tiles[idx].onclick = null;
-                    if(content === '💣') {
-                        tiles[idx].classList.add('bg-red-500/50');
-                        GameLogic.endSpin(0, 'LOSS MINES');
-                        setTimeout(() => Router.openGame('mines'), 1000);
-                    } else {
-                        tiles[idx].classList.add('bg-emerald-500/50');
-                        GameLogic.endSpin(State.currentBet * 1.8, 'WIN MINES');
-                        setTimeout(() => Router.openGame('mines'), 1000);
-                    }
+                    setTimeout(() => GameLogic.endSpin(State.currentBet * mult, 'SLOTS'), 3500);
                 }
             },
             crash: {
-                async start() {
-                    if(!await GameLogic.startSpin()) return;
-                    const btn = document.getElementById('btn-crash');
-                    const disp = document.getElementById('crash-display');
-                    btn.innerText = "RETIRAR"; btn.onclick = () => this.cashout();
-                    let mult = 1.0; const crashLimit = (Math.random() * 4 + 1.1).toFixed(2);
-                    this.timer = setInterval(() => {
-                        mult += 0.04; disp.innerText = mult.toFixed(2) + "x"; State.crashMult = mult;
-                        if(mult >= crashLimit) {
-                            clearInterval(this.timer); disp.classList.replace('text-emerald-500', 'text-red-500');
-                            GameLogic.endSpin(0, 'LOSS CRASH');
-                            setTimeout(() => Router.openGame('roulette'), 1500);
-                        }
-                    }, 100);
+                mult: 1.0,
+                async action() {
+                    if(!State.crashActive) {
+                        if(!await GameLogic.startSpin()) return;
+                        State.crashActive = true; this.mult = 1.0;
+                        document.getElementById('crash-btn').innerText = "RETIRAR";
+                        this.loop();
+                    } else {
+                        State.crashActive = false;
+                        GameLogic.endSpin(State.currentBet * this.mult, 'CRASH');
+                        document.getElementById('crash-btn').innerText = "APOSTAR";
+                    }
                 },
-                cashout() {
-                    clearInterval(this.timer);
-                    GameLogic.endSpin(State.currentBet * State.crashMult, 'WIN CRASH');
-                    Router.openGame('roulette');
+                loop() {
+                    if(!State.crashActive) return;
+                    this.mult += 0.01;
+                    document.getElementById('crash-display').innerText = this.mult.toFixed(2) + "x";
+                    if(Math.random() < 0.01) {
+                        State.crashActive = false;
+                        document.getElementById('crash-display').innerText = "BOOM!";
+                        document.getElementById('crash-btn').innerText = "APOSTAR";
+                        GameLogic.endSpin(0, 'CRASH LOST');
+                    } else { setTimeout(() => this.loop(), 100); }
                 }
             },
-            tower: {
+            mines: {
+                minesPos: [], revealed: 0,
+                async start() {
+                    if(!await GameLogic.startSpin()) return;
+                    this.minesPos = Array.from({length: 25}, (_, i) => i).sort(() => Math.random() - 0.5).slice(0, 3);
+                    this.revealed = 0;
+                    document.getElementById('mines-start').classList.add('hidden-view');
+                    document.getElementById('mines-cashout').classList.remove('hidden-view');
+                    document.querySelectorAll('.mine-btn').forEach(b => { b.innerText = '?'; b.classList.remove('active'); });
+                },
+                reveal(i) {
+                    if(!State.isSpinning) return;
+                    const btn = document.getElementById(`mine-${i}`);
+                    if(this.minesPos.includes(i)) {
+                        btn.innerText = '💣'; btn.style.background = 'red';
+                        State.isSpinning = false; GameLogic.endSpin(0, 'MINES LOST');
+                        this.reset();
+                    } else {
+                        btn.innerText = '💎'; btn.classList.add('active'); this.revealed++;
+                    }
+                },
+                cashout() {
+                    const win = State.currentBet * (1 + (this.revealed * 0.2));
+                    GameLogic.endSpin(win, 'MINES'); this.reset();
+                },
+                reset() {
+                    document.getElementById('mines-start').classList.remove('hidden-view');
+                    document.getElementById('mines-cashout').classList.add('hidden-view');
+                }
+            },
+            plinko: {
                 async play() {
                     if(!await GameLogic.startSpin()) return;
-                    if(Math.random() > 0.45) {
-                        GameLogic.endSpin(State.currentBet * 1.5, 'WIN TOWER');
-                    } else {
-                        GameLogic.endSpin(0, 'LOSS TOWER');
-                    }
+                    const results = [0.2, 0.5, 1.5, 2, 5, 10];
+                    const win = results[Math.floor(Math.random()*results.length)];
+                    setTimeout(() => GameLogic.endSpin(State.currentBet * win, 'PLINKKO'), 1000);
                 }
             }
+        };
+
+        const AuthManager = {
+            async login() {
+                const e = document.getElementById('auth-email').value, p = document.getElementById('auth-password').value;
+                const { error } = await sb.auth.signInWithPassword({ email: e, password: p });
+                if(error) return UI.notify("Error de acceso", "error");
+                location.reload();
+            },
+            async register() {
+                const e = document.getElementById('auth-email').value, p = document.getElementById('auth-password').value;
+                const { error } = await sb.auth.signUp({ email: e, password: p });
+                UI.notify(error ? error.message : "¡Cuenta lista!", error ? "error" : "success");
+            },
+            async logout() { await sb.auth.signOut(); location.reload(); }
         };
 
         const Core = {
             async init() {
-                const { data: { user } } = await sb.auth.getUser();
-                if(!user) return window.location.href = 'login.html'; // Redirigir si no hay sesión
-                State.user = user;
-                const { data } = await sb.from('usuarios').select('*').eq('id', user.id).single();
-                State.balance = data.saldo;
+                let p = 0; const i = setInterval(() => {
+                    p += 25; document.getElementById('boot-bar').style.width = `${p}%`;
+                    if(p >= 100) { clearInterval(i); this.check(); }
+                }, 100);
+            },
+            async check() {
+                const { data: { session } } = await sb.auth.getSession();
+                document.getElementById('boot-loader').style.display = 'none';
+                if(session) {
+                    State.user = session.user;
+                    document.getElementById('main-app').classList.remove('hidden-view');
+                    await this.load();
+                } else { document.getElementById('auth-view').classList.remove('hidden-view'); }
+            },
+            async load() {
+                let { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle();
+                if(!data) { await sb.from('usuarios').insert([{ id: State.user.id, email: State.user.email, saldo: 0 }]); State.balance = 0; } 
+                else { State.balance = data.saldo; }
                 UI.updateBalance();
-                document.getElementById('user-name').innerText = user.email.split('@')[0].toUpperCase();
-            },
-            async fetchHistory() {
-                const { data } = await sb.from('history').select('*').eq('user_id', State.user.id).order('created_at', { ascending: false }).limit(10);
-                const list = document.getElementById('history-list');
-                list.innerHTML = data.map(h => `
-                    <div class="glass p-4 flex justify-between items-center border-l-4 ${h.amount >= 0 ? 'border-emerald-500' : 'border-red-500'}">
-                        <div><p class="font-bold text-xs">${h.label}</p><p class="text-[10px] text-zinc-500">${new Date(h.created_at).toLocaleTimeString()}</p></div>
-                        <span class="font-casino ${h.amount >= 0 ? 'text-emerald-500' : 'text-zinc-500'}">${h.amount >= 0 ? '+' : ''}${h.amount.toFixed(2)}</span>
-                    </div>
-                `).join('');
-            },
-            async claimDaily() {
-                State.balance += 50;
-                await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                UI.notify("¡Bono de $50 reclamado!", "success"); UI.updateBalance();
             }
         };
 
         const UI = {
-            updateBalance() { document.getElementById('user-balance').innerText = State.balance.toFixed(2); },
+            updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toLocaleString('en-US', {minimumFractionDigits: 2})}`; },
             updateBetDisplay() { document.querySelectorAll('.bet-val').forEach(el => el.innerText = `$${State.currentBet}`); },
-            updateProfile() { document.getElementById('prof-id').innerText = State.user.id; },
-            notify(msg, type) {
-                const toast = document.createElement('div');
-                toast.className = `fixed top-10 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full font-bold z-50 animate__animated animate__fadeInDown ${type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`;
-                toast.innerText = msg;
-                document.body.appendChild(toast);
-                setTimeout(() => { toast.classList.add('animate__fadeOutUp'); setTimeout(() => toast.remove(), 500); }, 2000);
-            }
+            notify(m, t) {
+                const c = document.getElementById('notif-container'), n = document.createElement('div');
+                n.className = `p-4 rounded-2xl text-[10px] font-black uppercase shadow-2xl animate__animated animate__fadeInDown ${t === 'success' ? 'bg-emerald-500 text-black' : 'bg-red-600 text-white'}`;
+                n.innerText = m; c.appendChild(n); setTimeout(() => n.remove(), 3000);
+            },
+            openModal(id) { document.getElementById(id).classList.remove('hidden-view'); },
+            closeModal(id) { document.getElementById(id).classList.add('hidden-view'); }
         };
 
         Core.init();
