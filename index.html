@@ -43,7 +43,6 @@
         .step-number { background: var(--mx-green); color: black; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; items-center; justify-content: center; font-size: 10px; font-weight: 900; margin-right: 8px; }
         .step-title { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #aaa; }
 
-        /* Estilos de Instrucciones en Juegos */
         .game-guide { background: rgba(16, 185, 129, 0.05); border: 1px dashed rgba(16, 185, 129, 0.2); border-radius: 1rem; padding: 10px; margin-top: 15px; text-align: left; }
     </style>
 </head>
@@ -291,6 +290,7 @@
             async init() { let p = 0; const i = setInterval(() => { p += 25; document.getElementById('boot-bar').style.width = `${p}%`; if(p >= 100) { clearInterval(i); this.check(); } }, 100); },
             async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); } else { document.getElementById('auth-view').classList.remove('hidden-view'); } },
             async loadBalance() { const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle(); State.balance = data ? data.saldo : 0; UI.updateBalance(); },
+            
             async fetchHistory() {
                 const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(10);
                 const d = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(10);
@@ -304,6 +304,7 @@
                 return items.map(i => {
                     const isPos = i.amount > 0;
                     const statusColor = i.status === 'pending' ? 'text-yellow-500 animate-pulse' : (i.status === 'success' ? 'text-emerald-500' : 'text-zinc-500');
+                    const statusText = i.status === 'pending' ? 'PENDIENTE' : (i.status === 'success' ? 'APROBADO' : 'COMPLETADO');
                     return `
                         <div class="flex justify-between items-center p-3 bg-white/[0.02] border border-white/5 rounded-xl">
                             <div class="flex items-center gap-3">
@@ -317,11 +318,12 @@
                             </div>
                             <div class="text-right">
                                 <div class="text-[10px] font-casino ${isPos ? 'text-emerald-500' : 'text-white'}">${isPos ? '+' : ''}$${Math.abs(i.amount).toFixed(2)}</div>
-                                <div class="text-[7px] uppercase font-black tracking-widest ${statusColor}">${i.status || 'Completado'}</div>
+                                <div class="text-[7px] uppercase font-black tracking-widest ${statusColor}">${i.status ? statusText : 'EXITOSO'}</div>
                             </div>
                         </div>`;
                 }).join('');
             },
+
             async confirmDeposit() {
                 const amt = parseFloat(document.getElementById('dep-amount').value);
                 const file = document.getElementById('receipt-input').files[0];
