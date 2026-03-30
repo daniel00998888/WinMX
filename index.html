@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WinMX | Premium App</title>
+    <title>WinMX | Premium Casino</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -108,32 +108,7 @@
 
         <div id="view-history" class="view-content p-5 space-y-4 hidden-view">
             <h2 class="font-casino text-center text-zinc-600 text-xs mb-4 tracking-widest italic">Mi Actividad</h2>
-
-            <div class="glass overflow-hidden border-white/5">
-                <div onclick="UI.toggleAccordion('acc-bets', 'arrow-bets')" class="p-5 flex justify-between items-center bg-white/[0.02] active:bg-white/[0.05]">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-history text-emerald-500 text-sm"></i>
-                        <span class="font-casino text-[10px] tracking-widest">Apuestas</span>
-                    </div>
-                    <i id="arrow-bets" class="fas fa-chevron-down text-zinc-700 transition-transform duration-300"></i>
-                </div>
-                <div id="acc-bets" class="hidden-view p-3 space-y-2 bg-black/40 border-t border-white/5">
-                    <div id="bet-history-content" class="space-y-2"></div>
-                </div>
-            </div>
-
-            <div class="glass overflow-hidden border-white/5">
-                <div onclick="UI.toggleAccordion('acc-deps', 'arrow-deps')" class="p-5 flex justify-between items-center bg-white/[0.02] active:bg-white/[0.05]">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-wallet text-blue-400 text-sm"></i>
-                        <span class="font-casino text-[10px] tracking-widest">Depósitos</span>
-                    </div>
-                    <i id="arrow-deps" class="fas fa-chevron-down text-zinc-700 transition-transform duration-300"></i>
-                </div>
-                <div id="acc-deps" class="hidden-view p-3 space-y-2 bg-black/40 border-t border-white/5">
-                    <div id="dep-history-content" class="space-y-2"></div>
-                </div>
-            </div>
+            <div id="history-lists" class="space-y-4"></div>
         </div>
 
         <nav class="bottom-nav fixed bottom-0 left-0 right-0 h-20 flex items-center px-4">
@@ -162,7 +137,7 @@
             <div id="dep-step-2" class="hidden-view space-y-5 text-center">
                 <div class="bg-emerald-500/10 p-5 rounded-2xl border border-emerald-500/20">
                     <p class="text-[9px] font-bold text-emerald-500 uppercase mb-1">CLAVE STP</p>
-                    <p class="text-md font-mono font-bold select-all tracking-tighter">722 969 020 533 491 161</p>
+                    <p class="text-md font-mono font-bold select-all tracking-tighter text-white">722 969 020 533 491 161</p>
                 </div>
                 <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
                 <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-2xl p-6 flex flex-col items-center cursor-pointer active:bg-white/5">
@@ -201,10 +176,82 @@
                 UI.updateBetDisplay();
             },
             templates: {
-                slots: `<div class="glass p-6 text-center animate__animated animate__fadeInUp"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><div class="flex items-center justify-between bg-black/50 p-4 rounded-2xl mb-4 border border-white/5"><button onclick="GameLogic.changeBet(-10)" class="w-10 h-10 bg-zinc-800 rounded-xl">-</button><span class="bet-val font-casino text-2xl">$10</span><button onclick="GameLogic.changeBet(10)" class="w-10 h-10 bg-zinc-800 rounded-xl">+</button></div><button onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl shadow-lg shadow-emerald-500/20">GIRAR</button></div>`,
-                dice: `<div class="glass p-8 text-center animate__animated animate__fadeInUp"><div class="flex justify-center gap-4 mb-10"><div id="die-1" class="die">1</div><div id="die-2" class="die">1</div></div><div class="grid grid-cols-2 gap-3 mb-6"><button onclick="GameLogic.dice.play('under')" class="bg-blue-500/10 border border-blue-500/30 py-4 rounded-2xl font-bold text-[10px] text-blue-400">MENOR 7</button><button onclick="GameLogic.dice.play('over')" class="bg-red-500/10 border border-red-500/30 py-4 rounded-2xl font-bold text-[10px] text-red-400">MAYOR 7</button></div><div class="bg-black/50 p-4 rounded-2xl flex justify-between items-center border border-white/5"><button onclick="GameLogic.changeBet(-10)" class="w-10 h-10 bg-zinc-800 rounded-xl">-</button><span class="bet-val font-casino text-2xl">$10</span><button onclick="GameLogic.changeBet(10)" class="w-10 h-10 bg-zinc-800 rounded-xl">+</button></div></div>`,
-                roulette: `<div class="glass p-8 text-center animate__animated animate__fadeInUp"><div id="wheel" class="w-24 h-24 bg-zinc-900 rounded-full mx-auto mb-8 border-4 border-emerald-500 flex items-center justify-center text-3xl font-casino">?</div><div class="grid grid-cols-2 gap-3 mb-6"><button onclick="GameLogic.roulette.play('red')" class="bg-red-600/20 border border-red-600/50 py-4 rounded-2xl font-bold text-[10px] text-red-400">ROJO</button><button onclick="GameLogic.roulette.play('black')" class="bg-zinc-800 border border-white/10 py-4 rounded-2xl font-bold text-[10px]">NEGRO</button></div><div class="bg-black/50 p-4 rounded-2xl flex justify-between items-center border border-white/5"><button onclick="GameLogic.changeBet(-10)" class="w-10 h-10 bg-zinc-800 rounded-xl">-</button><span class="bet-val font-casino text-2xl">$10</span><button onclick="GameLogic.changeBet(10)" class="w-10 h-10 bg-zinc-800 rounded-xl">+</button></div></div>`,
-                chests: `<div class="glass p-8 text-center animate__animated animate__fadeInUp"><div class="grid grid-cols-3 gap-3 mb-10"><div onclick="GameLogic.chests.play(0)" class="bg-zinc-900 p-6 rounded-2xl text-4xl active:scale-90 transition-transform">🎁</div><div onclick="GameLogic.chests.play(1)" class="bg-zinc-900 p-6 rounded-2xl text-4xl active:scale-90 transition-transform">🎁</div><div onclick="GameLogic.chests.play(2)" class="bg-zinc-900 p-6 rounded-2xl text-4xl active:scale-90 transition-transform">🎁</div></div><div class="bg-black/50 p-4 rounded-2xl flex justify-between items-center border border-white/5"><button onclick="GameLogic.changeBet(-10)" class="w-10 h-10 bg-zinc-800 rounded-xl">-</button><span class="bet-val font-casino text-2xl">$10</span><button onclick="GameLogic.changeBet(10)" class="w-10 h-10 bg-zinc-800 rounded-xl">+</button></div></div>`
+                slots: `
+                <div class="glass p-6 text-center animate__animated animate__fadeInUp">
+                    <div class="flex justify-between mb-4 px-2">
+                        <span class="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Min: x0.5</span>
+                        <span class="text-[8px] font-bold text-emerald-500 uppercase tracking-widest">Max: x500</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 mb-8">
+                        <div class="slot-box"><div id="reel-1" class="slot-reel"></div></div>
+                        <div class="slot-box"><div id="reel-2" class="slot-reel"></div></div>
+                        <div class="slot-box"><div id="reel-3" class="slot-reel"></div></div>
+                    </div>
+                    <p class="text-[9px] text-zinc-400 mb-4 italic">Combina 3 iguales para ganar. ¡777 paga el premio gordo!</p>
+                    <div class="flex items-center justify-between bg-black/50 p-4 rounded-2xl mb-4 border border-white/5">
+                        <button onclick="GameLogic.changeBet(-10)" class="w-10 h-10 bg-zinc-800 rounded-xl">-</button>
+                        <span class="bet-val font-casino text-2xl">$10</span>
+                        <button onclick="GameLogic.changeBet(10)" class="w-10 h-10 bg-zinc-800 rounded-xl">+</button>
+                    </div>
+                    <button onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl shadow-lg shadow-emerald-500/20">GIRAR</button>
+                </div>`,
+                dice: `
+                <div class="glass p-8 text-center animate__animated animate__fadeInUp">
+                    <div class="flex justify-between mb-6 px-2">
+                        <span class="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Min: x0</span>
+                        <span class="text-[8px] font-bold text-emerald-500 uppercase tracking-widest">Premio: x2.0</span>
+                    </div>
+                    <div class="flex justify-center gap-4 mb-6">
+                        <div id="die-1" class="die">1</div>
+                        <div id="die-2" class="die">1</div>
+                    </div>
+                    <p class="text-[9px] text-zinc-400 mb-6 italic">¿Suma Menor o Mayor a 7? El 7 exacto pierde.</p>
+                    <div class="grid grid-cols-2 gap-3 mb-6">
+                        <button onclick="GameLogic.dice.play('under')" class="bg-blue-500/10 border border-blue-500/30 py-4 rounded-2xl font-bold text-[10px] text-blue-400">MENOR 7</button>
+                        <button onclick="GameLogic.dice.play('over')" class="bg-red-500/10 border border-red-500/30 py-4 rounded-2xl font-bold text-[10px] text-red-400">MAYOR 7</button>
+                    </div>
+                    <div class="bg-black/50 p-4 rounded-2xl flex justify-between items-center border border-white/5">
+                        <button onclick="GameLogic.changeBet(-10)" class="w-10 h-10 bg-zinc-800 rounded-xl">-</button>
+                        <span class="bet-val font-casino text-2xl">$10</span>
+                        <button onclick="GameLogic.changeBet(10)" class="w-10 h-10 bg-zinc-800 rounded-xl">+</button>
+                    </div>
+                </div>`,
+                roulette: `
+                <div class="glass p-8 text-center animate__animated animate__fadeInUp">
+                    <div class="flex justify-between mb-6 px-2">
+                        <span class="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Min: x0</span>
+                        <span class="text-[8px] font-bold text-emerald-500 uppercase tracking-widest">Premio: x2.0</span>
+                    </div>
+                    <div id="wheel" class="w-24 h-24 bg-zinc-900 rounded-full mx-auto mb-6 border-4 border-emerald-500 flex items-center justify-center text-3xl font-casino">?</div>
+                    <p class="text-[9px] text-zinc-400 mb-6 italic">Rojo (Pares) o Negro (Impares). El 0 es Verde.</p>
+                    <div class="grid grid-cols-2 gap-3 mb-6">
+                        <button onclick="GameLogic.roulette.play('red')" class="bg-red-600/20 border border-red-600/50 py-4 rounded-2xl font-bold text-[10px] text-red-400">ROJO</button>
+                        <button onclick="GameLogic.roulette.play('black')" class="bg-zinc-800 border border-white/10 py-4 rounded-2xl font-bold text-[10px]">NEGRO</button>
+                    </div>
+                    <div class="bg-black/50 p-4 rounded-2xl flex justify-between items-center border border-white/5">
+                        <button onclick="GameLogic.changeBet(-10)" class="w-10 h-10 bg-zinc-800 rounded-xl">-</button>
+                        <span class="bet-val font-casino text-2xl">$10</span>
+                        <button onclick="GameLogic.changeBet(10)" class="w-10 h-10 bg-zinc-800 rounded-xl">+</button>
+                    </div>
+                </div>`,
+                chests: `
+                <div class="glass p-8 text-center animate__animated animate__fadeInUp">
+                    <div class="flex justify-between mb-6 px-2">
+                        <span class="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Min: x0</span>
+                        <span class="text-[8px] font-bold text-emerald-500 uppercase tracking-widest">Max: x5.0</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 mb-6">
+                        <div onclick="GameLogic.chests.play(0)" class="bg-zinc-900 p-6 rounded-2xl text-4xl active:scale-90 transition-transform">🎁</div>
+                        <div onclick="GameLogic.chests.play(1)" class="bg-zinc-900 p-6 rounded-2xl text-4xl active:scale-90 transition-transform">🎁</div>
+                        <div onclick="GameLogic.chests.play(2)" class="bg-zinc-900 p-6 rounded-2xl text-4xl active:scale-90 transition-transform">🎁</div>
+                    </div>
+                    <p class="text-[9px] text-zinc-400 mb-6 italic">Un cofre está vacío, uno da x2 y uno da x5.</p>
+                    <div class="bg-black/50 p-4 rounded-2xl flex justify-between items-center border border-white/5">
+                        <button onclick="GameLogic.changeBet(-10)" class="w-10 h-10 bg-zinc-800 rounded-xl">-</button>
+                        <span class="bet-val font-casino text-2xl">$10</span>
+                        <button onclick="GameLogic.changeBet(10)" class="w-10 h-10 bg-zinc-800 rounded-xl">+</button>
+                    </div>
+                </div>`
             }
         };
 
@@ -285,8 +332,8 @@
             async login() {
                 const e = document.getElementById('auth-email').value, p = document.getElementById('auth-password').value;
                 if(!e || !p) return UI.notify("Completa los campos", "error");
-                const { data, error } = await sb.auth.signInWithPassword({ email: e, password: p });
-                if(error) return UI.notify("Error: Credenciales inválidas", "error");
+                const { error } = await sb.auth.signInWithPassword({ email: e, password: p });
+                if(error) return UI.notify("Credenciales inválidas", "error");
                 location.reload();
             },
             async register() {
@@ -294,7 +341,7 @@
                 if(!e || !p) return UI.notify("Completa los campos", "error");
                 const { error } = await sb.auth.signUp({ email: e, password: p });
                 if(error) return UI.notify(error.message, "error");
-                UI.notify("Cuenta creada. ¡Ya puedes entrar!", "success");
+                UI.notify("Cuenta creada. ¡Entra ahora!", "success");
             },
             async logout() {
                 await sb.auth.signOut();
@@ -331,10 +378,19 @@
                 UI.updateBalance();
             },
             async fetchHistory() {
-                const bets = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(10);
-                const deps = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(10);
-                UI.renderList('bet-history-content', bets.data || []);
-                UI.renderList('dep-history-content', deps.data || []);
+                const bets = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(5);
+                const deps = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(5);
+                const container = document.getElementById('history-lists');
+                container.innerHTML = `
+                    <div class="glass p-5">
+                        <p class="text-[10px] font-casino text-emerald-500 mb-4">Apuestas</p>
+                        <div class="space-y-2">${UI.renderList(bets.data || [])}</div>
+                    </div>
+                    <div class="glass p-5">
+                        <p class="text-[10px] font-casino text-blue-400 mb-4">Depósitos</p>
+                        <div class="space-y-2">${UI.renderList(deps.data || [])}</div>
+                    </div>
+                `;
             },
             async confirmDeposit() {
                 const amt = parseFloat(document.getElementById('dep-amount').value), file = document.getElementById('receipt-input').files[0];
@@ -364,27 +420,17 @@
             },
             depNextStep() { document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
             handleFile(i) { if(i.files[0]) document.getElementById('file-label').innerText = "ARCHIVO LISTO ✅"; },
-            toggleAccordion(cid, aid) {
-                const c = document.getElementById(cid), a = document.getElementById(aid);
-                const isHidden = c.classList.contains('hidden-view');
-                c.classList.toggle('hidden-view');
-                a.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
-                a.classList.toggle('text-emerald-500', isHidden);
-            },
-            renderList(id, data) {
-                const c = document.getElementById(id);
-                c.innerHTML = data.map(i => `
-                    <div class="p-4 bg-white/5 rounded-2xl flex justify-between items-center border border-white/5">
+            renderList(data) {
+                if(!data.length) return '<p class="text-[9px] text-zinc-700 text-center py-4">Sin actividad</p>';
+                return data.map(i => `
+                    <div class="flex justify-between items-center bg-white/5 p-3 rounded-xl">
                         <div>
-                            <p class="text-[10px] font-black ${i.status === 'pending' ? 'text-yellow-500' : (i.amount >= 0 ? 'text-emerald-400' : 'text-zinc-600')}">
-                                ${i.label} ${i.status === 'pending' ? '⏳' : ''}
-                            </p>
-                            <p class="text-[8px] text-zinc-600 uppercase font-bold">${new Date(i.created_at).toLocaleDateString()}</p>
+                            <p class="text-[9px] font-bold ${i.amount >= 0 ? 'text-emerald-400' : 'text-zinc-500'} uppercase">${i.label} ${i.status === 'pending' ? '⏳' : ''}</p>
+                            <p class="text-[7px] text-zinc-700 font-bold">${new Date(i.created_at).toLocaleDateString()}</p>
                         </div>
-                        <div class="font-casino text-xs">${i.amount >= 0 ? '+' : ''}$${Math.abs(i.amount).toLocaleString()}</div>
+                        <p class="font-casino text-[10px]">${i.amount >= 0 ? '+' : ''}$${Math.abs(i.amount).toLocaleString()}</p>
                     </div>
                 `).join('');
-                if(!data.length) c.innerHTML = '<p class="text-[9px] text-zinc-700 text-center py-6">Sin actividad reciente</p>';
             }
         };
 
