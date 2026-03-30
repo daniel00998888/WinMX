@@ -322,13 +322,23 @@
                 const { data: d } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(20);
                 
                 document.getElementById('history-lists').innerHTML = `
-                    <div class="glass overflow-hidden"><div onclick="UI.toggleAccordion('acc-bets')" class="p-5 flex justify-between bg-white/[0.02] cursor-pointer"><span class="font-casino text-[10px] tracking-widest">Mis Jugadas</span><i class="fas fa-chevron-down"></i></div>
-                    <div id="acc-bets" class="p-3 space-y-2 history-scroll">${this.renderList(b || [], 'bets')}</div></div>
-                    <div class="glass overflow-hidden mt-4"><div onclick="UI.toggleAccordion('acc-deps')" class="p-5 flex justify-between bg-white/[0.02] cursor-pointer"><span class="font-casino text-[10px] tracking-widest">Depósitos</span><i class="fas fa-chevron-down"></i></div>
-                    <div id="acc-deps" class="p-3 space-y-2 history-scroll">${this.renderList(d || [], 'deposits')}</div></div>`;
+                    <div class="glass overflow-hidden">
+                        <div onclick="UI.toggleAccordion('acc-bets')" class="p-5 flex justify-between items-center bg-white/[0.02] cursor-pointer">
+                            <span class="font-casino text-[10px] tracking-widest">🎲 Mis Jugadas</span>
+                            <i class="fas fa-chevron-down text-[10px] text-zinc-600"></i>
+                        </div>
+                        <div id="acc-bets" class="p-3 space-y-2 history-scroll">${this.renderList(b || [], 'bets')}</div>
+                    </div>
+                    <div class="glass overflow-hidden mt-4">
+                        <div onclick="UI.toggleAccordion('acc-deps')" class="p-5 flex justify-between items-center bg-white/[0.02] cursor-pointer">
+                            <span class="font-casino text-[10px] tracking-widest">💰 Depósitos</span>
+                            <i class="fas fa-chevron-down text-[10px] text-zinc-600"></i>
+                        </div>
+                        <div id="acc-deps" class="p-3 space-y-2 history-scroll">${this.renderList(d || [], 'deposits')}</div>
+                    </div>`;
             },
             renderList(items, type) {
-                if(!items.length) return `<p class="text-[8px] text-center text-zinc-600 py-4">Sin registros</p>`;
+                if(!items.length) return `<p class="text-[8px] text-center text-zinc-600 py-4 font-bold">Sin registros aún</p>`;
                 return items.map(i => {
                     let icon = "🎮";
                     let statusText = i.label;
