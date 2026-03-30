@@ -28,79 +28,76 @@
         <div class="w-full bg-zinc-900 h-1 rounded-full overflow-hidden"><div id="boot-bar" class="h-full bg-emerald-500 w-0 transition-all duration-300"></div></div>
     </div>
 
-    <div id="auth-view" class="hidden-view min-h-screen flex flex-col justify-center p-8 animate__animated animate__fadeIn">
+    <div id="auth-view" class="hidden-view min-h-screen flex flex-col justify-center p-8">
         <div class="glass p-8 text-center">
-            <h2 class="font-casino text-2xl mb-8">BIENVENIDO</h2>
-            <input type="email" id="auth-email" placeholder="Email" class="w-full bg-black/50 border border-white/10 p-4 rounded-xl mb-3 outline-none focus:border-emerald-500">
-            <input type="password" id="auth-password" placeholder="Contraseña" class="w-full bg-black/50 border border-white/10 p-4 rounded-xl mb-6 outline-none focus:border-emerald-500">
-            <button onclick="AuthManager.login()" class="btn-action w-full py-4 mb-3">ENTRAR</button>
-            <button onclick="AuthManager.register()" class="text-[10px] text-zinc-500 uppercase tracking-widest">Crear cuenta nueva</button>
+            <h2 class="font-casino text-2xl mb-8">ENTRAR</h2>
+            <input type="email" id="auth-email" placeholder="Email" class="w-full bg-black/50 border border-white/10 p-4 rounded-xl mb-3 outline-none">
+            <input type="password" id="auth-password" placeholder="Password" class="w-full bg-black/50 border border-white/10 p-4 rounded-xl mb-6 outline-none">
+            <button onclick="AuthManager.login()" class="btn-action w-full py-4 mb-3">INGRESAR</button>
+            <button onclick="AuthManager.register()" class="text-[10px] text-zinc-500 uppercase">Registrarse</button>
         </div>
     </div>
 
     <div id="main-app" class="hidden-view">
         <header class="p-6 flex justify-between items-center sticky top-0 z-40 bg-zinc-950/80 backdrop-blur-md">
             <div>
-                <p class="text-[10px] text-zinc-500 font-bold tracking-[0.3em] uppercase">Disponible</p>
+                <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Saldo</p>
                 <h2 id="balance-display" class="text-2xl font-casino text-emerald-500">$0.00</h2>
             </div>
-            <button onclick="UI.openModal('modal-deposit')" class="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-black shadow-lg shadow-emerald-500/20"><i class="fas fa-plus"></i></button>
+            <button onclick="UI.openModal('modal-deposit')" class="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-black"><i class="fas fa-plus"></i></button>
         </header>
 
         <main class="px-6 py-4">
-            <div id="view-lobby" class="view-content space-y-6">
-                <div onclick="Router.openGame('slots')" class="glass p-10 text-center active:scale-95 transition-transform border-emerald-500/20">
+            <div id="view-lobby" class="view-content">
+                <div onclick="Router.openGame('slots')" class="glass p-10 text-center active:scale-95 transition-all border-emerald-500/20">
                     <span class="text-6xl block mb-4">🎰</span>
-                    <span class="font-casino text-xl text-emerald-500">SLOTS</span>
+                    <span class="font-casino text-xl text-emerald-500 uppercase tracking-widest">Jugar Slots</span>
                 </div>
             </div>
 
             <div id="view-game" class="view-content hidden-view">
-                <button onclick="Router.showView('lobby')" class="text-[10px] text-zinc-500 mb-6 flex items-center gap-2"><i class="fas fa-arrow-left"></i> VOLVER AL LOBBY</button>
+                <button onclick="Router.showView('lobby')" class="text-[10px] text-zinc-500 mb-6 flex items-center gap-2 uppercase font-bold"><i class="fas fa-arrow-left"></i> Volver</button>
                 <div id="game-mount"></div>
             </div>
 
-            <div id="view-history" class="view-content hidden-view space-y-4">
-                <h2 class="font-casino text-xl mb-6">MOVIMIENTOS</h2>
-                <div id="history-lists" class="space-y-4"></div>
+            <div id="view-history" class="view-content hidden-view">
+                <h2 class="font-casino text-xl mb-6 uppercase tracking-widest text-emerald-500">Movimientos</h2>
+                <div id="history-lists" class="space-y-2"></div>
             </div>
 
-            <div id="view-profile" class="view-content hidden-view space-y-6">
-                <div class="glass p-8 text-center">
-                    <div class="w-20 h-20 bg-zinc-800 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl border-2 border-emerald-500"><i class="fas fa-user"></i></div>
-                    <h3 id="user-email-display" class="text-xs font-bold text-zinc-400 mb-1 text-center"></h3>
+            <div id="view-profile" class="view-content hidden-view">
+                <div class="glass p-8 text-center mb-6">
+                    <p id="user-email-display" class="text-xs font-bold text-zinc-400"></p>
                 </div>
-                <button onclick="AuthManager.logout()" class="w-full p-5 glass text-red-500 font-bold text-xs uppercase">Cerrar Sesión</button>
+                <button onclick="AuthManager.logout()" class="w-full p-5 glass text-red-500 font-bold uppercase text-xs">Cerrar Sesión</button>
             </div>
         </main>
 
         <nav class="fixed bottom-0 inset-x-0 h-20 bg-zinc-950/90 backdrop-blur-xl border-t border-white/5 flex items-center justify-around z-50">
-            <button onclick="Router.showView('lobby')" id="nav-home" class="nav-item active flex flex-col items-center gap-1"><i class="fas fa-home text-xl"></i><span class="text-[8px] font-bold uppercase">Inicio</span></button>
-            <button onclick="Router.showView('history')" id="nav-history" class="nav-item flex flex-col items-center gap-1"><i class="fas fa-list text-xl"></i><span class="text-[8px] font-bold uppercase">Historial</span></button>
-            <button onclick="Router.showView('profile')" id="nav-profile" class="nav-item flex flex-col items-center gap-1"><i class="fas fa-user text-xl"></i><span class="text-[8px] font-bold uppercase">Perfil</span></button>
+            <button onclick="Router.showView('lobby')" id="nav-home" class="nav-item active flex flex-col items-center gap-1"><i class="fas fa-home"></i><span class="text-[8px] font-bold">INICIO</span></button>
+            <button onclick="Router.showView('history')" id="nav-history" class="nav-item flex flex-col items-center gap-1"><i class="fas fa-list"></i><span class="text-[8px] font-bold">HISTORIAL</span></button>
+            <button onclick="Router.showView('profile')" id="nav-profile" class="nav-item flex flex-col items-center gap-1"><i class="fas fa-user"></i><span class="text-[8px] font-bold">PERFIL</span></button>
         </nav>
     </div>
 
-    <div id="modal-deposit" class="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md p-6 hidden-view">
-        <div class="h-full flex flex-col">
-            <div class="flex justify-between items-center mb-10">
-                <h2 class="font-casino text-xl italic">CARGAR SALDO</h2>
-                <button onclick="UI.closeModal('modal-deposit')" class="text-zinc-500"><i class="fas fa-times text-2xl"></i></button>
+    <div id="modal-deposit" class="fixed inset-0 z-[100] bg-black/95 p-6 hidden-view">
+        <div class="flex justify-between items-center mb-10">
+            <h2 class="font-casino text-xl text-emerald-500">CARGAR SALDO</h2>
+            <button onclick="UI.closeModal('modal-deposit')"><i class="fas fa-times text-2xl"></i></button>
+        </div>
+        <div id="dep-step-1" class="space-y-6">
+            <div class="glass p-6"><input type="number" id="dep-amount" placeholder="MONTO" class="w-full bg-transparent text-4xl font-casino outline-none text-emerald-500 text-center"></div>
+            <button onclick="UI.depNextStep()" class="btn-action w-full py-5">CONTINUAR</button>
+        </div>
+        <div id="dep-step-2" class="hidden-view space-y-6">
+            <div class="glass p-6 text-center">
+                <p id="clabe-number" class="font-casino text-emerald-500 text-sm">0123 4567 8901 2345 67</p>
             </div>
-            <div id="dep-step-1" class="space-y-6">
-                <div class="glass p-6"><input type="number" id="dep-amount" placeholder="$0.00" class="w-full bg-transparent text-4xl font-casino outline-none text-emerald-500 text-center"></div>
-                <button onclick="UI.depNextStep()" class="btn-action w-full py-5">CONTINUAR</button>
-            </div>
-            <div id="dep-step-2" class="hidden-view space-y-6 animate__animated animate__fadeInRight">
-                <div class="glass p-6 space-y-4 text-center">
-                    <p id="clabe-number" class="font-mono text-sm tracking-widest text-emerald-500">0123 4567 8901 2345 67</p>
-                </div>
-                <label id="file-label" class="block glass p-10 text-center border-dashed border-zinc-700">
-                    <input type="file" id="receipt-input" class="hidden" onchange="UI.handleFile(this)">
-                    <p class="text-[10px] text-zinc-500 uppercase">Sube tu captura</p>
-                </label>
-                <button onclick="Core.confirmDeposit()" class="btn-action w-full py-5 font-bold uppercase">Enviar Pago</button>
-            </div>
+            <label id="file-label" class="block glass p-10 text-center border-dashed border-zinc-700">
+                <input type="file" id="receipt-input" class="hidden" onchange="UI.handleFile(this)">
+                <span class="text-[10px] text-zinc-500 uppercase">Subir Comprobante</span>
+            </label>
+            <button onclick="Core.confirmDeposit()" class="btn-action w-full py-5">FINALIZAR</button>
         </div>
     </div>
 
@@ -169,8 +166,7 @@
                 init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); r.innerHTML = ''; Array(40).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); }); },
                 async play() {
                     if(!await GameLogic.startSpin()) return;
-                    State.totalSpins++; 
-                    const res = [SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)]];
+                    State.totalSpins++; const res = [SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)]];
                     const pay = { '7️⃣7️⃣7️⃣': 50, '💎💎💎': 15, '⭐️⭐️⭐️': 10, '🔔🔔🔔': 5, '🍋🍋🍋': 2, '🍒🍒🍒': 1.5 };
                     const mult = pay[res.join('')] || 0;
                     [1,2,3].forEach((id, i) => { const reel = document.getElementById(`reel-${id}`); const pos = (State.totalSpins * 90 * 12) + (SYMBOLS.indexOf(res[i]) * 90); reel.style.transform = `translateY(-${pos}px)`; });
@@ -189,7 +185,7 @@
             async register() {
                 const e = document.getElementById('auth-email').value, p = document.getElementById('auth-password').value;
                 const { error } = await sb.auth.signUp({ email: e, password: p });
-                UI.notify(error ? error.message : "¡Cuenta lista!", error ? "error" : "success");
+                UI.notify(error ? error.message : "Registrado", error ? "error" : "success");
             },
             async logout() { await sb.auth.signOut(); location.reload(); }
         };
@@ -227,7 +223,7 @@
                 const path = `evidence/${State.user.id}/${Date.now()}.png`;
                 await sb.storage.from('comprobantes').upload(path, file);
                 await sb.from('history').insert([{ user_id: State.user.id, type: 'deposits', amount: parseFloat(amt), label: 'CARGA', status: 'pending' }]);
-                UI.notify("Enviado a revisión", "success"); UI.closeModal('modal-deposit');
+                UI.notify("Enviado", "success"); UI.closeModal('modal-deposit');
             }
         };
 
@@ -237,7 +233,7 @@
             updateProfile() { document.getElementById('user-email-display').innerText = State.user.email; },
             notify(m, t) {
                 const c = document.getElementById('notif-container'), n = document.createElement('div');
-                n.className = `p-4 rounded-xl text-[10px] font-bold uppercase shadow-2xl ${t === 'success' ? 'bg-emerald-500 text-black' : 'bg-red-600 text-white'}`;
+                n.className = `p-4 rounded-xl text-[10px] font-bold uppercase ${t === 'success' ? 'bg-emerald-500 text-black' : 'bg-red-600 text-white'}`;
                 n.innerText = m; c.appendChild(n); setTimeout(() => n.remove(), 3000);
             },
             openModal(id) { document.getElementById(id).classList.remove('hidden-view'); },
@@ -247,6 +243,11 @@
                 document.getElementById('dep-step-2').classList.remove('hidden-view'); 
             },
             handleFile(i) { if(i.files[0]) document.getElementById('file-label').innerHTML = "<span class='text-emerald-500 font-bold italic'>FOTO LISTA ✅</span>"; },
+            toggleAccordion(cid, aid) {
+                const c = document.getElementById(cid), a = document.getElementById(aid), isH = c.classList.contains('hidden-view');
+                if(isH) { c.classList.remove('hidden-view'); a.style.transform = 'rotate(180deg)'; a.classList.add('text-emerald-500'); } 
+                else { c.classList.add('hidden-view'); a.style.transform = 'rotate(0deg)'; a.classList.remove('text-emerald-500'); }
+            },
             renderList(data) {
                 if(!data.length) return '<p class="text-[9px] text-zinc-700 text-center py-4">Sin registros aún</p>';
                 return data.map(i => `
