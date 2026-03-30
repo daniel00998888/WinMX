@@ -43,6 +43,9 @@
 
         .input-bet { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 12px; width: 100%; text-align: center; color: white; font-family: 'Archivo Black', sans-serif; outline: none; margin-bottom: 12px; }
         
+        /* Aviator Rocket Adjustment */
+        #crash-rocket { transform: translate(0, 20px); position: relative; }
+
         .instruction-card { 
             background: rgba(16, 185, 129, 0.08); 
             border: 1px solid rgba(16, 185, 129, 0.3); 
@@ -206,7 +209,7 @@
         };
         const playSfx = (key) => { sfx[key].currentTime = 0; sfx[key].play().catch(() => {}); };
 
-        let State = { user: null, balance: 0, currentBet: 10, isSpinning: false, totalSpins: 0 };
+        let State = { user: null, balance: 0, isSpinning: false, totalSpins: 0 };
 
         const Router = {
             showView(viewId) {
@@ -373,8 +376,9 @@
             slots: {
                 init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); r.innerHTML = ''; Array(40).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); }); },
                 async play() {
+                    if(State.isSpinning) return;
                     const bet = parseFloat(document.getElementById('slots-bet-input').value) || 10;
-                    if(State.balance < bet || State.isSpinning) return UI.notify("Sin saldo", "error");
+                    if(State.balance < bet) return UI.notify("Sin saldo", "error");
                     
                     const btn = document.getElementById('btn-slots-play');
                     btn.disabled = true;
@@ -509,11 +513,12 @@
                     const btn = document.getElementById('btn-crash'); 
                     btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
                     btn.onclick = () => this.cashout();
-                    const limit = 1 + Math.random() * 5;
+                    const limit = 1.1 + Math.random() * 4;
                     this.interval = setInterval(() => {
                         this.mult += 0.05;
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
-                        document.getElementById('crash-rocket').style.transform = `translate(${this.mult * 10}px, -${this.mult * 10}px)`;
+                        // Bajamos un poco más la trayectoria con +25 y mult*8
+                        document.getElementById('crash-rocket').style.transform = `translate(${this.mult * 10}px, -${this.mult * 8}px)`;
                         btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
                         if(this.mult >= limit) { clearInterval(this.interval); this.explode(); }
                     }, 100);
@@ -535,13 +540,22 @@
                 },
                 async end(win) {
                     this.active = false; UI.updateBalance();
-                    const btn = document.getElementById('btn-crash'); btn.innerText = "DESPEGAR"; btn.onclick = () => GameLogic.crash.start();
+                    const btn = document.getElementById('btn-crash');
+                    btn.innerText = "EXPLOTÓ";
+                    btn.disabled = true; // Bloqueo inmediato
+                    
+                    // Espera de 3 segundos para habilitar el botón nuevamente
                     setTimeout(() => {
+                        btn.disabled = false;
+                        btn.innerText = "DESPEGAR";
+                        btn.onclick = () => GameLogic.crash.start();
+                        
                         document.getElementById('crash-mult').classList.remove('text-red-500');
                         document.getElementById('crash-mult').innerText = '1.00x';
                         document.getElementById('crash-rocket').innerHTML = '🚀';
-                        document.getElementById('crash-rocket').style.transform = 'translate(0,0)';
-                    }, 2000);
+                        document.getElementById('crash-rocket').style.transform = 'translate(0, 20px)';
+                    }, 3000);
+
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? (this.bet * this.mult) : -this.bet, label: 'AVIATOR' }]);
                 }
