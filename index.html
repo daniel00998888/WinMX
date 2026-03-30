@@ -29,7 +29,6 @@
         .slot-item { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
         .slot-reel { transition: transform 3.5s cubic-bezier(0.15, 0, 0.05, 1); }
         .game-info { background: rgba(16, 185, 129, 0.05); border-left: 3px solid var(--mx-green); padding: 12px; border-radius: 0 15px 15px 0; margin-bottom: 20px; }
-        /* Estilos específicos nuevos juegos */
         .mine-cell { aspect-ratio: 1; background: rgba(255,255,255,0.05); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: 0.2s; border: 1px solid rgba(255,255,255,0.05); }
         .mine-cell.revealed { background: rgba(16, 185, 129, 0.2); border-color: var(--mx-green); }
         .mine-cell.exploded { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; }
@@ -83,6 +82,23 @@
             <div id="game-mount" class="w-full"></div>
         </div>
 
+        <div id="view-history" class="view-content p-5 space-y-4 hidden-view">
+            <h2 class="font-casino text-center text-zinc-600 text-xs mb-4 tracking-widest italic">Mi Actividad</h2>
+            <div id="history-lists" class="space-y-4"></div>
+        </div>
+
+        <div id="view-profile" class="view-content p-5 space-y-4 hidden-view">
+            <h2 class="font-casino text-center text-zinc-600 text-xs mb-8 tracking-widest italic">Mi Perfil</h2>
+            <div class="glass p-10 text-center bg-gradient-to-b from-white/[0.05] to-transparent">
+                <div class="w-24 h-24 bg-emerald-500 rounded-full mx-auto mb-6 flex items-center justify-center text-black text-4xl font-black shadow-lg shadow-emerald-500/20">
+                    <i class="fas fa-user"></i>
+                </div>
+                <p id="user-email-display" class="text-sm font-bold text-zinc-300 truncate mb-1">Cargando...</p>
+                <p class="text-[9px] text-emerald-500 font-bold uppercase tracking-[0.2em]">Usuario Activo</p>
+            </div>
+            <button onclick="AuthManager.logout()" class="w-full p-5 rounded-2xl border border-red-500/20 text-red-500 font-casino text-[10px] bg-red-500/5 mt-6 active:scale-95 transition-transform">Cerrar Sesión</button>
+        </div>
+
         <nav class="bottom-nav fixed bottom-0 left-0 right-0 h-20 flex items-center px-4">
             <div onclick="Router.showView('lobby')" id="nav-home" class="nav-item active"><i class="fas fa-gamepad text-xl mb-1"></i><span>Jugar</span></div>
             <div onclick="Router.showView('history')" id="nav-history" class="nav-item"><i class="fas fa-receipt text-xl mb-1"></i><span>Historial</span></div>
@@ -93,20 +109,32 @@
     <div id="modal-deposit" class="fixed inset-0 bg-black/95 z-[100] hidden-view flex items-center justify-center p-6">
         <div class="glass p-8 w-full max-w-sm bg-[#0a0a0a] overflow-y-auto max-h-[90vh]">
             <div id="dep-step-1">
-                <h2 class="font-casino text-emerald-500 text-center mb-6">Monto a Cargar</h2>
+                <h2 class="font-casino text-emerald-500 text-center mb-6">¿Cuánto vas a cargar?</h2>
                 <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-10 text-white">
-                <button onclick="UI.depNextStep()" class="btn-action w-full py-4 font-casino">Siguiente</button>
+                <button onclick="UI.depNextStep()" class="btn-action w-full py-4 font-casino">Continuar</button>
             </div>
             <div id="dep-step-2" class="hidden-view space-y-4 text-center">
-                <div class="bg-emerald-500/10 p-5 rounded-2xl border border-emerald-500/20 text-center">
+                <div class="bg-emerald-500/10 p-5 rounded-2xl border border-emerald-500/20">
                     <p class="text-[8px] font-bold text-emerald-500 uppercase mb-2 tracking-widest">Cuenta CLABE (STP)</p>
                     <div class="flex items-center justify-between bg-black/40 p-3 rounded-lg border border-white/5">
                         <span id="clabe-number" class="text-sm font-mono font-bold text-white tracking-tighter">722969020533491161</span>
                         <button onclick="UI.copyClabe()" class="ml-2 text-emerald-500 active:scale-75 transition-transform p-2"><i class="fas fa-copy"></i></button>
                     </div>
                 </div>
-                <button onclick="UI.closeModal('modal-deposit')" class="w-full mt-6 text-[9px] text-zinc-700 font-bold uppercase">Cerrar</button>
+                <div class="text-left bg-white/5 p-4 rounded-xl text-[10px] space-y-3 text-zinc-400">
+                    <p class="font-bold text-white uppercase text-[8px] border-b border-white/10 pb-1">Instrucciones:</p>
+                    <p><i class="fas fa-1 mr-2 text-emerald-500"></i>Transfiere por SPEI.</p>
+                    <p><i class="fas fa-2 mr-2 text-emerald-500"></i>Toma captura del pago.</p>
+                    <p><i class="fas fa-camera mr-2 text-emerald-500"></i>Súbela aquí abajo.</p>
+                </div>
+                <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
+                <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-2xl p-6 flex flex-col items-center cursor-pointer active:bg-white/5">
+                    <i class="fas fa-cloud-upload-alt text-2xl mb-2 text-zinc-600"></i>
+                    <p id="file-label" class="text-[9px] font-bold text-zinc-500 uppercase">Subir captura</p>
+                </label>
+                <button id="final-dep-btn" onclick="Core.confirmDeposit()" class="btn-action w-full py-4 font-casino">Confirmar Pago</button>
             </div>
+            <button onclick="UI.closeModal('modal-deposit')" class="w-full mt-6 text-[9px] text-zinc-700 font-bold uppercase">Cerrar</button>
         </div>
     </div>
 
@@ -127,6 +155,8 @@
                 document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
                 const navMap = { 'lobby': 'nav-home', 'history': 'nav-history', 'profile': 'nav-profile' };
                 if(navMap[viewId]) document.getElementById(navMap[viewId]).classList.add('active');
+                if(viewId === 'history') Core.fetchHistory();
+                if(viewId === 'profile') UI.updateProfile();
             },
             openGame(game) {
                 this.showView('game');
@@ -138,8 +168,7 @@
                 slots: `
                     <div class="game-info text-[10px] text-zinc-400">
                         <span class="text-white font-bold block mb-1">REGLAS DE SLOTS:</span>
-                        Gira y busca 3 iguales. <br>
-                        <span class="text-emerald-500 mt-1 block italic font-bold">Premios: 1.5x a 50x.</span>
+                        Consigue 3 iguales para ganar hasta 50x.
                     </div>
                     <div class="glass p-6 text-center">
                         <div class="grid grid-cols-3 gap-2 mb-8">
@@ -157,8 +186,7 @@
                 crash: `
                     <div class="game-info text-[10px] text-zinc-400">
                         <span class="text-white font-bold block mb-1">REGLAS DE CRASH:</span>
-                        El multiplicador sube. Retira antes de que explote. <br>
-                        <span class="text-emerald-500 mt-1 block italic font-bold">Entre más esperas, más ganas, pero más riesgo.</span>
+                        Retira antes del estallido. ¡El multiplicador vuela!
                     </div>
                     <div class="glass p-8 text-center">
                         <div id="crash-val" class="text-6xl font-casino text-emerald-500 mb-6">1.00x</div>
@@ -172,8 +200,7 @@
                 mines: `
                     <div class="game-info text-[10px] text-zinc-400">
                         <span class="text-white font-bold block mb-1">REGLAS DE MINAS:</span>
-                        Encuentra diamantes sin tocar bombas. <br>
-                        <span class="text-emerald-500 mt-1 block italic font-bold">A más diamantes, mayor multiplicador.</span>
+                        Busca diamantes. Evita las 4 bombas ocultas.
                     </div>
                     <div class="glass p-4 text-center">
                         <div id="mine-grid" class="grid grid-cols-5 gap-2 mb-6">
@@ -189,8 +216,7 @@
                 tower: `
                     <div class="game-info text-[10px] text-zinc-400">
                         <span class="text-white font-bold block mb-1">REGLAS DE TORRE:</span>
-                        Elige una casilla por nivel. Si pasas, el premio sube. <br>
-                        <span class="text-emerald-500 mt-1 block italic font-bold">Llega al nivel 5 para el 10x.</span>
+                        Asciende nivel por nivel. El 5to piso paga 10x.
                     </div>
                     <div class="glass p-6 text-center space-y-2">
                         ${[5,4,3,2,1].map(l => `<div id="tower-row-${l}" class="grid grid-cols-2 gap-2 opacity-20">
@@ -213,6 +239,7 @@
             async win(amt, label) {
                 State.balance += amt; UI.updateBalance();
                 await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+                await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: amt - State.currentBet, label: label, status: 'completed' }]);
                 UI.notify(`+ $${amt.toFixed(2)}`, "success");
             },
             slots: {
@@ -224,7 +251,7 @@
                     const pay = { '7️⃣7️⃣7️⃣': 50, '💎💎💎': 15, '⭐️⭐️⭐️': 10, '🔔🔔🔔': 5, '🍋🍋🍋': 2, '🍒🍒🍒': 1.5 };
                     const mult = pay[res.join('')] || 0;
                     [1,2,3].forEach((id, i) => { const reel = document.getElementById(`reel-${id}`); reel.style.transform = `translateY(-${(30 * 90) + (SYMBOLS.indexOf(res[i]) * 90)}px)`; });
-                    setTimeout(() => { if(mult > 0) GameLogic.win(State.currentBet * mult, 'W SLOTS'); State.isSpinning = false; }, 3500);
+                    setTimeout(() => { if(mult > 0) GameLogic.win(State.currentBet * mult, 'W SLOTS'); else sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: -State.currentBet, label: 'SLOTS', status: 'completed' }]); State.isSpinning = false; }, 3500);
                 }
             },
             crash: {
@@ -243,9 +270,9 @@
                 },
                 explode() {
                     clearInterval(this.timer); this.active = false; State.isSpinning = false;
-                    document.getElementById('crash-val').innerText = "EXPLOTÓ!";
-                    document.getElementById('crash-val').style.color = "#ef4444";
+                    document.getElementById('crash-val').innerText = "EXPLOTÓ!"; document.getElementById('crash-val').style.color = "#ef4444";
                     const btn = document.getElementById('crash-btn'); btn.innerText = "VOLAR"; btn.style.background = "#10b981";
+                    sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: -State.currentBet, label: 'CRASH', status: 'completed' }]);
                     setTimeout(() => { document.getElementById('crash-val').style.color = "#10b981"; document.getElementById('crash-val').innerText = "1.00x"; }, 2000);
                 },
                 cashout() {
@@ -271,18 +298,16 @@
                     if(this.bombs.includes(i)) {
                         cell.className = "mine-cell exploded"; cell.innerHTML = "💣";
                         this.active = false; State.isSpinning = false;
-                        UI.notify("BOOM!", "error");
-                        document.getElementById('mine-btn').innerText = "EMPEZAR";
+                        sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: -State.currentBet, label: 'MINAS', status: 'completed' }]);
+                        UI.notify("BOOM!", "error"); document.getElementById('mine-btn').innerText = "EMPEZAR";
                     } else {
-                        cell.className = "mine-cell revealed"; cell.innerHTML = "💎";
-                        this.count++;
+                        cell.className = "mine-cell revealed"; cell.innerHTML = "💎"; this.count++;
                         document.getElementById('mine-btn').innerText = `RETIRAR $${(State.currentBet * (1 + this.count*0.3)).toFixed(2)}`;
                     }
                 },
                 cashout() {
                     GameLogic.win(State.currentBet * (1 + this.count*0.3), 'W MINES');
-                    this.active = false; State.isSpinning = false;
-                    document.getElementById('mine-btn').innerText = "EMPEZAR";
+                    this.active = false; State.isSpinning = false; document.getElementById('mine-btn').innerText = "EMPEZAR";
                 }
             },
             tower: {
@@ -296,17 +321,16 @@
                 },
                 step(l, s) {
                     if(!this.active || l !== State.towerLvl) return;
-                    if(Math.random() > 0.5) {
+                    if(Math.random() > 0.6) {
                         UI.notify("CAÍSTE!", "error"); this.active = false; State.isSpinning = false;
+                        sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: -State.currentBet, label: 'TORRE', status: 'completed' }]);
                         document.getElementById('tower-btn').classList.remove('hidden-view');
                     } else {
                         if(l === 5) {
                             GameLogic.win(State.currentBet * 10, 'W TOWER');
-                            this.active = false; State.isSpinning = false;
-                            document.getElementById('tower-btn').classList.remove('hidden-view');
+                            this.active = false; State.isSpinning = false; document.getElementById('tower-btn').classList.remove('hidden-view');
                         } else {
-                            State.towerLvl++;
-                            document.getElementById(`tower-row-${State.towerLvl}`).classList.remove('opacity-20');
+                            State.towerLvl++; document.getElementById(`tower-row-${State.towerLvl}`).classList.remove('opacity-20');
                         }
                     }
                 }
@@ -316,15 +340,25 @@
         const UI = {
             updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toLocaleString('en-US', {minimumFractionDigits: 2})}`; },
             updateBetDisplay() { document.querySelectorAll('.bet-val').forEach(el => el.innerText = `$${State.currentBet}`); },
+            updateProfile() { document.getElementById('user-email-display').innerText = State.user.email; },
             notify(m, t) {
                 const c = document.getElementById('notif-container'), n = document.createElement('div');
                 n.className = `p-4 rounded-2xl text-[10px] font-black uppercase shadow-2xl animate__animated animate__fadeInDown ${t === 'success' ? 'bg-emerald-500 text-black' : 'bg-red-600 text-white'}`;
                 n.innerText = m; c.appendChild(n); setTimeout(() => n.remove(), 3000);
             },
-            copyClabe() { navigator.clipboard.writeText("722969020533491161"); UI.notify("CLABE COPIADA", "success"); },
+            copyClabe() { navigator.clipboard.writeText("722969020533491161").then(() => UI.notify("Copiado!", "success")); },
             openModal(id) { document.getElementById(id).classList.remove('hidden-view'); },
             closeModal(id) { document.getElementById(id).classList.add('hidden-view'); },
-            depNextStep() { document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); }
+            depNextStep() { document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
+            handleFile(i) { if(i.files[0]) document.getElementById('file-label').innerHTML = "<span class='text-emerald-500'>FOTO LISTA ✅</span>"; },
+            renderList(data) {
+                if(!data.length) return '<p class="text-[9px] text-zinc-700 text-center py-4">Sin registros</p>';
+                return data.map(i => `
+                    <div class="flex justify-between items-center bg-white/5 p-4 rounded-xl border border-white/5 mb-1">
+                        <div><p class="text-[10px] font-bold ${i.amount >= 0 ? 'text-emerald-400' : 'text-zinc-600'}">${i.label}</p></div>
+                        <p class="font-casino text-[11px]">${i.amount >= 0 ? '+' : ''}$${Math.abs(i.amount).toLocaleString()}</p>
+                    </div>`).join('');
+            }
         };
 
         const AuthManager = {
@@ -333,11 +367,7 @@
                 const { error } = await sb.auth.signInWithPassword({ email: e, password: p });
                 if(!error) location.reload();
             },
-            async register() {
-                const e = document.getElementById('auth-email').value, p = document.getElementById('auth-password').value;
-                const { error } = await sb.auth.signUp({ email: e, password: p });
-                UI.notify(error ? "Error" : "Cuenta lista", error ? "error" : "success");
-            }
+            async logout() { await sb.auth.signOut(); location.reload(); }
         };
 
         const Core = {
@@ -351,6 +381,15 @@
                     State.balance = data ? data.saldo : 0;
                     UI.updateBalance();
                 } else { document.getElementById('auth-view').classList.remove('hidden-view'); }
+            },
+            async confirmDeposit() {
+                const amt = document.getElementById('dep-amount').value, file = document.getElementById('receipt-input').files[0];
+                if(!amt || !file) return UI.notify("Faltan datos", "error");
+                const path = `evidence/${State.user.id}/${Date.now()}.png`;
+                await sb.storage.from('comprobantes').upload(path, file);
+                const { data: { publicUrl } } = sb.storage.from('comprobantes').getPublicUrl(path);
+                await sb.from('history').insert([{ user_id: State.user.id, type: 'deposits', amount: amt, label: 'CARGA', status: 'pending', evidence_url: publicUrl }]);
+                UI.notify("Carga enviada ✅", "success"); UI.closeModal('modal-deposit');
             }
         };
 
