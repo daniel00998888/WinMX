@@ -42,6 +42,11 @@
 
         .input-bet { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 12px; width: 100%; text-align: center; color: white; font-family: 'Archivo Black', sans-serif; outline: none; margin-bottom: 12px; }
         
+        /* ESTILOS DE INSTRUCCIONES DE DEPÓSITO */
+        .dep-step-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 1rem; padding: 12px; margin-bottom: 10px; text-align: left; }
+        .step-number { background: var(--mx-green); color: black; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; items-center; justify-content: center; font-size: 10px; font-weight: 900; margin-right: 8px; }
+        .step-title { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #aaa; }
+        
         .instruction-card { 
             background: rgba(16, 185, 129, 0.08); 
             border: 1px solid rgba(16, 185, 129, 0.3); 
@@ -148,25 +153,46 @@
     </div>
 
     <div id="modal-deposit" class="fixed inset-0 bg-black/95 z-[100] hidden-view flex items-center justify-center p-6">
-        <div class="glass p-8 w-full max-w-sm bg-[#0a0a0a]">
+        <div class="glass p-8 w-full max-w-sm bg-[#0a0a0a] border border-emerald-500/20 shadow-2xl shadow-emerald-500/10">
             <div id="dep-step-1">
-                <h2 class="font-casino text-emerald-500 text-center mb-6">Monto a cargar</h2>
-                <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-10 text-white">
-                <button onclick="UI.depNextStep()" class="btn-action w-full py-4 font-casino">Continuar</button>
+                <h2 class="font-casino text-emerald-500 text-center mb-6">Cargar Saldo</h2>
+                <p class="text-[9px] text-zinc-500 text-center uppercase font-bold mb-4 tracking-widest">¿Cuánto deseas depositar?</p>
+                <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-10 text-white border-b border-white/5 pb-4">
+                <button onclick="UI.depNextStep()" class="btn-action w-full py-4 font-casino">Siguiente Paso</button>
             </div>
-            <div id="dep-step-2" class="hidden-view space-y-4 text-center">
-                <div class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
-                    <p class="text-[8px] font-bold text-emerald-500 mb-1 uppercase">CLABE (STP)</p>
-                    <span class="text-xs font-mono font-bold">722969020533491161</span>
+
+            <div id="dep-step-2" class="hidden-view space-y-4">
+                <h3 class="font-casino text-xs text-center text-emerald-500 mb-4 italic">Instrucciones de Pago</h3>
+                
+                <div class="dep-step-card">
+                    <span class="step-number">1</span><span class="step-title">Realiza la transferencia</span>
+                    <div class="mt-3 bg-black/40 p-3 rounded-lg border border-emerald-500/30">
+                        <p class="text-[8px] text-emerald-500 font-bold uppercase mb-1">CLABE INTERBANCARIA (STP):</p>
+                        <div class="flex items-center justify-between">
+                            <span id="clabe-val" class="text-xs font-mono font-bold tracking-wider text-white">722969020533491161</span>
+                            <button onclick="UI.copyClabe()" class="text-emerald-500 hover:text-white transition-colors"><i class="fas fa-copy"></i></button>
+                        </div>
+                    </div>
+                    <p class="text-[8px] text-zinc-500 mt-2 font-bold italic">⚠️ Importante: El nombre del beneficiario puede aparecer como "WinMX" o "Sistema de Pagos".</p>
                 </div>
-                <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
-                <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-2xl p-4 block cursor-pointer">
-                    <i class="fas fa-camera text-xl mb-1 text-zinc-600"></i>
-                    <p id="file-label" class="text-[8px] font-bold text-zinc-500 uppercase">Subir Comprobante</p>
-                </label>
-                <button onclick="Core.confirmDeposit()" class="btn-action w-full py-4 font-casino">Confirmar</button>
+
+                <div class="dep-step-card">
+                    <span class="step-number">2</span><span class="step-title">Sube tu comprobante</span>
+                    <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
+                    <label for="receipt-input" class="mt-3 border-2 border-dashed border-zinc-800 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500/50 transition-colors">
+                        <i class="fas fa-cloud-upload-alt text-xl mb-1 text-emerald-500"></i>
+                        <p id="file-label" class="text-[8px] font-bold text-zinc-500 uppercase">Click para adjuntar foto</p>
+                    </label>
+                </div>
+
+                <div class="dep-step-card">
+                    <span class="step-number">3</span><span class="step-title">Finaliza</span>
+                    <p class="text-[8px] text-zinc-400 mt-1 mb-3 leading-relaxed">Una vez hecha la transferencia y subida la imagen, presiona el botón inferior.</p>
+                    <button onclick="Core.confirmDeposit()" class="btn-action w-full py-4 font-casino text-xs">ENVIAR PARA REVISIÓN</button>
+                </div>
             </div>
-            <button onclick="UI.closeModal('modal-deposit')" class="w-full mt-4 text-[9px] text-zinc-700 font-bold uppercase tracking-widest">Cerrar</button>
+            
+            <button onclick="UI.closeModal('modal-deposit')" class="w-full mt-4 text-[9px] text-zinc-700 font-bold uppercase tracking-widest">Cancelar Proceso</button>
         </div>
     </div>
 
@@ -389,50 +415,52 @@
                 const acc = document.getElementById(accId);
                 const arrow = document.getElementById(arrowId);
                 acc.classList.toggle('hidden-view');
-                if(arrow) arrow.style.transform = acc.classList.contains('hidden-view') ? 'rotate(0deg)' : 'rotate(180deg)';
-            },
-            notify(m, t) {
-                const c = document.getElementById('notif-container'), n = document.createElement('div');
-                n.className = `p-4 rounded-2xl text-[10px] font-black uppercase shadow-2xl animate__animated animate__fadeInDown ${t === 'success' ? 'bg-emerald-500 text-black' : 'bg-red-600 text-white'}`;
-                n.innerText = m; c.appendChild(n); setTimeout(() => n.remove(), 3000);
+                arrow.style.transform = acc.classList.contains('hidden-view') ? 'rotate(0deg)' : 'rotate(180deg)';
             },
             openModal(id) { document.getElementById(id).classList.remove('hidden-view'); },
-            closeModal(id) { document.getElementById(id).classList.add('hidden-view'); },
-            depNextStep() { document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
-            handleFile(input) { if(input.files[0]) document.getElementById('file-label').innerText = "OK ✅"; }
+            closeModal(id) { 
+                document.getElementById(id).classList.add('hidden-view');
+                document.getElementById('dep-step-1').classList.remove('hidden-view');
+                document.getElementById('dep-step-2').classList.add('hidden-view');
+            },
+            depNextStep() {
+                const amt = document.getElementById('dep-amount').value;
+                if(!amt || amt <= 0) return UI.notify("Monto inválido", "error");
+                document.getElementById('dep-step-1').classList.add('hidden-view');
+                document.getElementById('dep-step-2').classList.remove('hidden-view');
+            },
+            copyClabe() {
+                const val = document.getElementById('clabe-val').innerText;
+                navigator.clipboard.writeText(val).then(() => UI.notify("CLABE Copiada", "success"));
+            },
+            handleFile(input) {
+                if(input.files[0]) {
+                    document.getElementById('file-label').innerText = "✅ Archivo seleccionado";
+                    document.getElementById('file-label').style.color = "#10b981";
+                }
+            },
+            notify(msg, type) {
+                const c = document.getElementById('notif-container'), n = document.createElement('div');
+                n.className = `p-4 rounded-2xl text-[10px] font-black uppercase animate__animated animate__fadeInDown ${type==='success'?'bg-emerald-500 text-black':'bg-red-600 text-white'}`;
+                n.innerText = msg; c.appendChild(n); setTimeout(() => n.remove(), 3000);
+            }
         };
 
         const AuthManager = {
             switchTab(tab) {
-                if(tab === 'register') {
-                    document.getElementById('login-container').classList.add('hidden-view');
-                    document.getElementById('register-container').classList.remove('hidden-view');
-                } else {
-                    document.getElementById('register-container').classList.add('hidden-view');
-                    document.getElementById('login-container').classList.remove('hidden-view');
-                }
+                if(tab === 'register') { document.getElementById('login-container').classList.add('hidden-view'); document.getElementById('register-container').classList.remove('hidden-view'); }
+                else { document.getElementById('register-container').classList.add('hidden-view'); document.getElementById('login-container').classList.remove('hidden-view'); }
             },
             async login() {
-                const email = document.getElementById('login-email').value;
-                const pass = document.getElementById('login-password').value;
-                if(!email || !pass) return UI.notify("Llena los campos", "error");
-                const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+                const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value;
+                const { error } = await sb.auth.signInWithPassword({ email: e, password: p });
                 if(error) UI.notify("Error de acceso", "error"); else location.reload();
             },
             async register() {
-                const email = document.getElementById('reg-email').value;
-                const pass = document.getElementById('reg-password').value;
-                const accepted = document.getElementById('terms-check').checked;
-                
-                if(!email || !pass) return UI.notify("Faltan datos", "error");
-                if(!accepted) return UI.notify("Acepta los términos", "error");
-
-                const { error } = await sb.auth.signUp({ email, password: pass });
-                if(error) UI.notify("Error al crear", "error"); 
-                else {
-                    UI.notify("¡Creado! Entra ahora", "success");
-                    setTimeout(() => this.switchTab('login'), 2000);
-                }
+                const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value, a = document.getElementById('terms-check').checked;
+                if(!a) return UI.notify("Acepta términos", "error");
+                const { error } = await sb.auth.signUp({ email: e, password: p });
+                if(error) UI.notify("Error al crear", "error"); else { UI.notify("¡Éxito! Ahora entra", "success"); this.switchTab('login'); }
             },
             logout() { sb.auth.signOut().then(() => location.reload()); }
         };
