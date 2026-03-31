@@ -60,9 +60,9 @@
         
         .risk-badge { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; margin-bottom: 10px; }
         
-        /* Nueva clase para el indicador de siguiente multiplicador */
-        .next-mult-tag { font-size: 10px; color: #666; font-weight: 800; text-transform: uppercase; margin-top: 4px; display: block; }
-        .next-mult-tag span { color: #10b981; }
+        /* Indicador de adrenalina */
+        .next-step-hint { font-size: 10px; color: #555; font-weight: 900; text-transform: uppercase; margin-bottom: 8px; }
+        .next-step-hint span { color: var(--mx-green); }
     </style>
 </head>
 <body class="antialiased select-none">
@@ -211,15 +211,7 @@
         };
         const playSfx = (key) => { sfx[key].currentTime = 0; sfx[key].play().catch(() => {}); };
 
-        let State = { 
-            user: null, 
-            balance: 0, 
-            isSpinning: false, 
-            totalSpins: 0, 
-            consecutiveLosses: 0, 
-            pityMode: false,
-            cooldownIntensity: 0
-        };
+        let State = { user: null, balance: 0, isSpinning: false, totalSpins: 0, consecutiveLosses: 0, pityMode: false, cooldownIntensity: 0 };
 
         const Router = {
             showView(viewId) {
@@ -243,10 +235,10 @@
                 if(game === 'tower') GameLogic.tower.drawTower();
             },
             templates: {
-                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button></div>`,
-                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div class="risk-badge"><i class="fas fa-bomb"></i> 3 Minas Activas</div><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view flex flex-col items-center mb-3 bg-emerald-500/10 rounded-xl p-3"><div class="flex justify-between w-full items-center"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><button id="mines-cashout-btn" onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-4 py-2 rounded-lg font-bold text-[9px] font-casino tracking-tighter">COBRAR $0.00</button></div><span id="mines-next-val" class="next-mult-tag">Siguiente: <span>1.25x</span></span></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino text-xs">APOSTAR</button></div></div>`,
-                crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div class="h-24 flex items-center justify-center mb-6"><div id="crash-rocket" class="text-4xl transition-all duration-100">🚀</div></div><input id="crash-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button></div>`,
-                tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div class="risk-badge" style="color: #fbbf24; background: rgba(251,191,36,0.1); border-color: rgba(251,191,36,0.2)"><i class="fas fa-bolt"></i> 1 Peligro por Piso</div><div id="tower-container" class="space-y-1.5 mb-4 flex flex-col-reverse overflow-y-auto max-h-[250px]"></div><div id="tower-status-box" class="hidden-view mb-3"><span id="tower-next-val" class="next-mult-tag">Siguiente nivel: <span>1.45x</span></span></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino text-xs">JUGAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino text-xs">COBRAR $0.00</button></div>`
+                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4><i class="fas fa-info-circle"></i> Reglas del Slot</h4><p>Alinea 3 símbolos iguales en el centro para ganar <strong>10x tu apuesta inicial</strong>.</p></div></div>`,
+                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div class="risk-badge"><i class="fas fa-bomb"></i> 3 Minas Activas</div><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view flex flex-col mb-3 bg-emerald-500/10 rounded-xl p-3"><div class="flex justify-between items-center w-full"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><button id="mines-cashout-btn" onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-4 py-2 rounded-lg font-bold text-[9px] font-casino tracking-tighter">COBRAR $0.00</button></div><div id="mines-next-info" class="next-step-hint mt-2">Siguiente: <span id="m-next-val">1.25x</span></div></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino text-xs">APOSTAR</button></div><div class="instruction-card"><h4><i class="fas fa-bomb"></i> Reglas de Minas</h4><p>El riesgo aumenta en cada clic. ¡Los multiplicadores son <strong>exponenciales</strong>!</p></div></div>`,
+                crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div class="h-24 flex items-center justify-center mb-6"><div id="crash-rocket" class="text-4xl transition-all duration-100">🚀</div></div><input id="crash-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button><div class="instruction-card"><h4><i class="fas fa-rocket"></i> Reglas Aviator</h4><p>Cobra antes de que el cohete explote.</p></div></div>`,
+                tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div class="risk-badge" style="color: #fbbf24; background: rgba(251,191,36,0.1); border-color: rgba(251,191,36,0.2)"><i class="fas fa-bolt"></i> 1 Peligro por Piso</div><div id="tower-container" class="space-y-1.5 mb-4 flex flex-col-reverse overflow-y-auto max-h-[250px]"></div><div id="tower-next-info" class="hidden-view next-step-hint">Siguiente Nivel: <span id="t-next-val">1.45x</span></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino text-xs">JUGAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino text-xs">COBRAR $0.00</button><div class="instruction-card"><h4><i class="fas fa-chess-rook"></i> Reglas Torre</h4><p>Cada piso es más difícil, pero paga mucho más.</p></div></div>`
             }
         };
 
@@ -261,8 +253,7 @@
                 if(!amt || amt <= 0 || !file) return UI.notify("Datos inválidos", "error");
                 try {
                     UI.notify("Procesando...", "success");
-                    const btn = document.getElementById('btn-confirm-dep');
-                    btn.disabled = true; btn.style.opacity = "0.5";
+                    const btn = document.getElementById('btn-confirm-dep'); btn.disabled = true;
                     const fileExt = file.name.split('.').pop();
                     const fileName = `${State.user.id}-${Date.now()}.${fileExt}`;
                     const filePath = `depositos/${fileName}`;
@@ -273,8 +264,7 @@
                     UI.notify("En revisión", "success");
                     UI.closeModal('modal-deposit');
                     this.fetchHistory();
-                } catch (e) { UI.notify("Error al enviar", "error"); } 
-                finally { const btn = document.getElementById('btn-confirm-dep'); btn.disabled = false; btn.style.opacity = "1"; }
+                } catch (e) { UI.notify("Error al enviar", "error"); } finally { document.getElementById('btn-confirm-dep').disabled = false; }
             },
             async fetchHistory() {
                 const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20);
@@ -301,7 +291,7 @@
         const UI = {
             updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toFixed(2)}`; },
             updateProfile() { document.getElementById('user-email-display').innerText = State.user.email; },
-            openModal(id) { playSfx('click'); document.getElementById(id).classList.remove('hidden-view'); document.getElementById('dep-step-1').classList.remove('hidden-view'); document.getElementById('dep-step-2').classList.add('hidden-view'); },
+            openModal(id) { playSfx('click'); document.getElementById(id).classList.remove('hidden-view'); },
             closeModal(id) { playSfx('click'); document.getElementById(id).classList.add('hidden-view'); },
             toggleAccordion(accId, arrowId) { playSfx('click'); const acc = document.getElementById(accId); acc.classList.toggle('hidden-view'); document.getElementById(arrowId).style.transform = acc.classList.contains('hidden-view') ? 'rotate(0deg)' : 'rotate(180deg)'; },
             depNextStep() { const amt = parseFloat(document.getElementById('dep-amount').value); if(isNaN(amt) || amt <= 0) return this.notify("Monto inválido", "error"); playSfx('click'); document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`; document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
@@ -311,49 +301,31 @@
         };
 
         const AuthManager = {
-            async login() { const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value; const { data, error } = await sb.auth.signInWithPassword({ email: e, password: p }); if(error) UI.notify(error.message, "error"); else location.reload(); },
-            async register() { if(!document.getElementById('terms-check').checked) return UI.notify("Acepta términos", "error"); const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value; const { data, error } = await sb.auth.signUp({ email: e, password: p }); if(error) UI.notify(error.message, "error"); else { await sb.from('usuarios').insert([{ id: data.user.id, email: e, saldo: 0 }]); UI.notify("Cuenta creada", "success"); location.reload(); } },
+            async login() { const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value; const { error } = await sb.auth.signInWithPassword({ email: e, password: p }); if(error) UI.notify(error.message, "error"); else location.reload(); },
+            async register() { if(!document.getElementById('terms-check').checked) return UI.notify("Acepta términos", "error"); const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value; const { data, error } = await sb.auth.signUp({ email: e, password: p }); if(error) UI.notify(error.message, "error"); else { await sb.from('usuarios').insert([{ id: data.user.id, email: e, saldo: 0 }]); location.reload(); } },
             async logout() { await sb.auth.signOut(); location.reload(); },
             switchTab(tab) { playSfx('click'); document.getElementById('login-container').classList.toggle('hidden-view', tab==='register'); document.getElementById('register-container').classList.toggle('hidden-view', tab==='login'); }
         };
 
         const GameLogic = {
-            updatePsychology(winAmount, betAmount) {
-                if (winAmount > 0) {
-                    State.consecutiveLosses = 0;
-                    if (winAmount >= betAmount * 5) State.cooldownIntensity = 85;
-                } else {
-                    State.consecutiveLosses++;
-                    State.cooldownIntensity = Math.max(0, State.cooldownIntensity - 15);
-                    State.pityMode = State.consecutiveLosses >= 4;
-                }
+            updatePsychology(win, bet) {
+                if (win > 0) { State.consecutiveLosses = 0; if (win >= bet * 5) State.cooldownIntensity = 85; }
+                else { State.consecutiveLosses++; State.cooldownIntensity = Math.max(0, State.cooldownIntensity - 15); State.pityMode = State.consecutiveLosses >= 4; }
             },
-            getLuckFactor() {
-                let base = 0.40;
-                if (State.pityMode) base = 0.75 + (Math.random() * 0.15);
-                else if (State.cooldownIntensity > 0) base = 0.20 + (Math.random() * 0.15);
-                return base;
-            },
+            getLuck() { let b = 0.40; if (State.pityMode) b = 0.75 + (Math.random()*0.15); else if (State.cooldownIntensity > 0) b = 0.20 + (Math.random()*0.15); return b; },
+            
             slots: {
                 init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); r.innerHTML = ''; Array(40).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); }); },
                 async play() {
-                    if(State.isSpinning) return;
                     const bet = Math.abs(parseFloat(document.getElementById('slots-bet-input').value)) || 10;
-                    if(State.balance < bet || bet <= 0) return UI.notify("Saldo insuficiente", "error");
-                    const btn = document.getElementById('btn-slots-play'); btn.disabled = true;
-                    playSfx('spin'); State.isSpinning = true; State.balance -= bet; UI.updateBalance();
-                    const currentLuck = GameLogic.getLuckFactor();
-                    const getSymbol = () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
-                    let res = []; const almostWin = Math.random() < 0.60;
-                    if (Math.random() < currentLuck) { const winSym = getSymbol(); res = [winSym, winSym, winSym]; }
-                    else if (almostWin) { const sym = getSymbol(); let fail; do { fail = getSymbol(); } while(fail === sym); res = [sym, sym, fail]; }
-                    else { res = [getSymbol(), getSymbol(), getSymbol()]; }
-                    State.totalSpins++; [1,2,3].forEach((id, i) => { document.getElementById(`reel-${id}`).style.transform = `translateY(-${(State.totalSpins * 90 * 6) + (SYMBOLS.indexOf(res[i])*90)}px)`; });
+                    if(State.isSpinning || State.balance < bet) return;
+                    State.isSpinning = true; State.balance -= bet; UI.updateBalance(); playSfx('spin');
+                    const luck = GameLogic.getLuck(); const getSym = () => SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)];
+                    let res; if(Math.random() < luck) { const s = getSym(); res = [s,s,s]; } else if(Math.random()<0.6) { const s = getSym(); let f; do{f=getSym()}while(f===s); res=[s,s,f]; } else res=[getSym(),getSym(),getSym()];
+                    State.totalSpins++; [1,2,3].forEach((id, i) => document.getElementById(`reel-${id}`).style.transform = `translateY(-${(State.totalSpins * 540) + (SYMBOLS.indexOf(res[i])*90)}px)`);
                     setTimeout(async () => {
-                        State.isSpinning = false; btn.disabled = false;
-                        let win = (res[0] === res[1] && res[1] === res[2]) ? bet * 10 : 0;
-                        if(win > 0) { State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); }
-                        else { playSfx('lose'); UI.notify("SIGUE INTENTANDO", "error"); }
+                        State.isSpinning = false; let win = (res[0] === res[1] && res[1] === res[2]) ? bet * 10 : 0;
+                        if(win > 0) { State.balance += win; playSfx('win'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); } else playSfx('lose');
                         UI.updateBalance(); GameLogic.updatePsychology(win, bet);
                         await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                         await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -bet, label: 'SLOTS' }]);
@@ -361,144 +333,115 @@
                 }
             },
             mines: {
-                active: false, mines: [], revealed: [], mult: 1, bet: 10,
-                multSteps: [1.25, 1.85, 2.75, 4.20, 6.50, 10.20, 16.50, 28.00, 45.00, 80.00],
-                drawGrid() {
-                    const g = document.getElementById('mines-grid'); g.innerHTML = '';
-                    for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/5 border border-white/5 rounded-lg flex items-center justify-center text-xl cursor-pointer active:scale-90 transition-all"></div>`;
-                },
+                active: false, mines: [], rev: [], mult: 1, bet: 10,
+                steps: [1.25, 1.85, 2.75, 4.20, 6.50, 10.20, 16.50, 28.00, 45.00, 80.00],
+                drawGrid() { const g = document.getElementById('mines-grid'); g.innerHTML = ''; for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/5 border border-white/5 rounded-lg flex items-center justify-center text-xl cursor-pointer"></div>`; },
                 start() {
-                    if(this.active) return;
                     const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 10;
-                    if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
-                    playSfx('click'); State.balance -= b; UI.updateBalance();
-                    this.active = true; this.bet = b; this.mult = 1; this.revealed = [];
+                    if(State.balance < b) return;
+                    State.balance -= b; UI.updateBalance(); playSfx('click');
+                    this.active = true; this.bet = b; this.mult = 1; this.rev = [];
                     this.mines = []; while(this.mines.length < 3) { let r = Math.floor(Math.random()*25); if(!this.mines.includes(r)) this.mines.push(r); }
                     document.getElementById('mines-controls').classList.add('hidden-view');
                     document.getElementById('mines-status').classList.remove('hidden-view');
                     document.getElementById('mines-mult').innerText = '1.00x';
-                    document.getElementById('mines-next-val').innerHTML = `Siguiente: <span>${this.multSteps[0].toFixed(2)}x</span>`;
+                    document.getElementById('m-next-val').innerText = '1.25x';
                     document.getElementById('mines-cashout-btn').innerText = `COBRAR $0.00`;
                     this.drawGrid();
                 },
                 cell(i) {
-                    if(!this.active || this.revealed.includes(i)) return;
-                    const winCount = this.revealed.length;
-                    let luck = GameLogic.getLuckFactor();
-                    let failProb = (winCount === 0) ? 0.05 : (0.15 + (winCount * 0.10)) / (luck * 2);
-                    if (Math.random() < failProb) { if (!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); } }
-                    this.revealed.push(i); const el = document.getElementById(`m-${i}`);
-                    if(this.mines.includes(i)) {
-                        playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500');
-                        this.end(false);
-                    } else {
+                    if(!this.active || this.rev.includes(i)) return;
+                    let failProb = (this.rev.length === 0) ? 0.05 : (0.15 + (this.rev.length * 0.10)) / (GameLogic.getLuck() * 2);
+                    if(Math.random() < failProb) { if(!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); } }
+                    this.rev.push(i); const el = document.getElementById(`m-${i}`);
+                    if(this.mines.includes(i)) { el.innerHTML = '💣'; this.end(false); }
+                    else {
                         playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500');
-                        this.mult = this.multSteps[winCount] || this.mult * 1.5;
+                        this.mult = this.steps[this.rev.length-1] || this.mult * 1.5;
                         document.getElementById('mines-mult').innerText = this.mult.toFixed(2) + 'x';
-                        const nextStep = this.multSteps[winCount+1] || (this.mult * 1.5);
-                        document.getElementById('mines-next-val').innerHTML = `Siguiente: <span>${nextStep.toFixed(2)}x</span>`;
+                        const next = this.steps[this.rev.length] || (this.mult * 1.5);
+                        document.getElementById('m-next-val').innerText = next.toFixed(2) + 'x';
                         document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                     }
                 },
                 async cashout() { if(!this.active) return; State.balance += (this.bet * this.mult); playSfx('win'); this.end(true); },
                 async end(win) {
-                    const winAmt = win ? (this.bet * this.mult) : 0;
-                    GameLogic.updatePsychology(winAmt, this.bet);
-                    this.active = false; UI.updateBalance();
+                    this.active = false; UI.updateBalance(); GameLogic.updatePsychology(win ? this.bet*this.mult : 0, this.bet);
                     document.getElementById('mines-controls').classList.remove('hidden-view');
                     document.getElementById('mines-status').classList.add('hidden-view');
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'MINAS' }]);
+                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? this.bet*this.mult : -this.bet, label: 'MINAS' }]);
                 }
             },
             tower: {
                 level: 0, active: false, bet: 0, mult: 1,
-                towerSteps: [1.45, 2.30, 3.80, 6.50, 11.20, 19.80, 35.00, 75.00],
-                drawTower() {
-                    const c = document.getElementById('tower-container'); c.innerHTML = '';
-                    for(let i=0; i<8; i++) {
-                        let row = document.createElement('div'); row.className = "grid grid-cols-3 gap-1.5 opacity-30"; row.id = `tower-row-${i}`;
-                        for(let j=0; j<3; j++) row.innerHTML += `<div onclick="GameLogic.tower.select(${i}, ${j})" class="h-8 bg-white/5 border border-white/5 rounded-lg flex items-center justify-center cursor-pointer transition-all"></div>`;
-                        c.appendChild(row);
-                    }
-                },
+                steps: [1.45, 2.30, 3.80, 6.50, 11.20, 19.80, 35.00, 75.00],
+                drawTower() { const c = document.getElementById('tower-container'); c.innerHTML = ''; for(let i=0; i<8; i++) { let r = document.createElement('div'); r.className = "grid grid-cols-3 gap-1.5 opacity-30"; r.id = `tower-row-${i}`; for(let j=0; j<3; j++) r.innerHTML += `<div onclick="GameLogic.tower.select(${i}, ${j})" class="h-8 bg-white/5 border border-white/5 rounded-lg flex items-center justify-center cursor-pointer"></div>`; c.appendChild(r); } },
                 start() {
-                    if(this.active) return;
                     const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10;
-                    if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
-                    playSfx('click'); State.balance -= b; UI.updateBalance();
+                    if(State.balance < b) return;
+                    State.balance -= b; UI.updateBalance(); playSfx('click');
                     this.active = true; this.bet = b; this.level = 0; this.mult = 1;
                     this.drawTower(); document.getElementById('tower-row-0').classList.remove('opacity-30');
                     document.getElementById('tower-controls').classList.add('hidden-view');
-                    document.getElementById('tower-status-box').classList.remove('hidden-view');
-                    document.getElementById('tower-next-val').innerHTML = `Siguiente nivel: <span>${this.towerSteps[0].toFixed(2)}x</span>`;
+                    document.getElementById('tower-next-info').classList.remove('hidden-view');
+                    document.getElementById('t-next-val').innerText = '1.45x';
                     const btn = document.getElementById('tower-cashout-btn'); btn.classList.remove('hidden-view'); btn.innerText = `COBRAR $0.00`;
                 },
                 select(r, c) {
                     if(!this.active || r !== this.level) return;
-                    let luck = GameLogic.getLuckFactor();
-                    let failProb = (this.level < 2) ? 0.15 : (0.35 + (this.level * 0.05)) / (luck * 2);
-                    const isBomb = Math.random() < failProb;
-                    const items = document.getElementById(`tower-row-${r}`).children;
-                    if(isBomb) { playSfx('lose'); items[c].innerHTML = '💣'; this.end(false); }
+                    let failProb = (this.level < 2) ? 0.15 : (0.35 + (this.level * 0.05)) / (GameLogic.getLuck() * 2);
+                    const el = document.getElementById(`tower-row-${r}`).children[c];
+                    if(Math.random() < failProb) { el.innerHTML = '💣'; this.end(false); }
                     else {
-                        playSfx('click'); items[c].innerHTML = '💎'; items[c].classList.add('bg-emerald-500/20', 'border-emerald-500');
-                        this.mult = this.towerSteps[this.level]; this.level++;
+                        playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500');
+                        this.mult = this.steps[this.level]; this.level++;
                         document.getElementById('tower-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                         if(this.level < 8) {
                             document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30');
-                            document.getElementById('tower-next-val').innerHTML = `Siguiente nivel: <span>${this.towerSteps[this.level].toFixed(2)}x</span>`;
+                            document.getElementById('t-next-val').innerText = this.steps[this.level].toFixed(2) + 'x';
                         } else this.cashout();
                     }
                 },
-                async cashout() { if(!this.active || this.level === 0) return; State.balance += (this.bet * this.mult); playSfx('win'); this.end(true); },
+                async cashout() { if(!this.active) return; State.balance += (this.bet * this.mult); playSfx('win'); this.end(true); },
                 async end(win) {
-                    const winAmt = win ? (this.bet * this.mult) : 0;
-                    GameLogic.updatePsychology(winAmt, this.bet);
-                    this.active = false; UI.updateBalance();
+                    this.active = false; UI.updateBalance(); GameLogic.updatePsychology(win ? this.bet*this.mult : 0, this.bet);
                     document.getElementById('tower-controls').classList.remove('hidden-view');
                     document.getElementById('tower-cashout-btn').classList.add('hidden-view');
-                    document.getElementById('tower-status-box').classList.add('hidden-view');
+                    document.getElementById('tower-next-info').classList.add('hidden-view');
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'TORRE' }]);
+                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? this.bet*this.mult : -this.bet, label: 'TORRE' }]);
                 }
             },
             crash: {
                 active: false, mult: 1, bet: 0, interval: null,
                 start() {
-                    if(this.active) return;
                     const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10;
-                    if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
-                    playSfx('rocket'); State.balance -= b; UI.updateBalance();
+                    if(State.balance < b) return;
+                    State.balance -= b; UI.updateBalance(); playSfx('rocket');
                     this.active = true; this.bet = b; this.mult = 1;
                     const btn = document.getElementById('btn-crash'); btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
                     btn.onclick = () => this.cashout();
-                    let luck = GameLogic.getLuckFactor();
-                    const limit = (1.1 + (Math.random() * 6)) * (luck * 1.2);
+                    const lim = (1.1 + (Math.random()*6)) * (GameLogic.getLuck() * 1.2);
                     this.interval = setInterval(() => {
                         this.mult += this.mult < 2 ? 0.05 : 0.12; 
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
-                        document.getElementById('crash-rocket').style.transform = `translate(${this.mult * 10}px, -${this.mult * 8}px)`;
+                        document.getElementById('crash-rocket').style.transform = `translate(${this.mult*10}px, -${this.mult*8}px)`;
                         btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
-                        if(this.mult >= limit) { clearInterval(this.interval); this.explode(); }
+                        if(this.mult >= lim) { clearInterval(this.interval); this.explode(); }
                     }, 100);
                 },
                 cashout() { if(!this.active) return; clearInterval(this.interval); State.balance += (this.bet * this.mult); playSfx('win'); this.end(true); },
-                explode() { playSfx('lose'); document.getElementById('crash-mult').classList.add('text-red-500'); document.getElementById('crash-rocket').innerHTML = '💥'; this.end(false); },
+                explode() { playSfx('lose'); document.getElementById('crash-rocket').innerHTML = '💥'; this.end(false); },
                 async end(win) {
-                    const winAmt = win ? (this.bet * this.mult) : 0;
-                    GameLogic.updatePsychology(winAmt, this.bet);
-                    this.active = false; UI.updateBalance();
+                    this.active = false; UI.updateBalance(); GameLogic.updatePsychology(win?this.bet*this.mult:0, this.bet);
                     const btn = document.getElementById('btn-crash'); btn.innerText = "EXPLOTÓ"; btn.disabled = true;
                     setTimeout(() => {
                         btn.disabled = false; btn.innerText = "DESPEGAR"; btn.onclick = () => GameLogic.crash.start();
-                        document.getElementById('crash-mult').classList.remove('text-red-500');
-                        document.getElementById('crash-mult').innerText = '1.00x';
-                        document.getElementById('crash-rocket').innerHTML = '🚀';
-                        document.getElementById('crash-rocket').style.transform = 'translate(0, 20px)';
+                        document.getElementById('crash-rocket').innerHTML = '🚀'; document.getElementById('crash-rocket').style.transform = 'translate(0, 20px)';
                     }, 3000);
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR' }]);
+                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win?this.bet*this.mult:-this.bet, label: 'AVIATOR' }]);
                 }
             }
         };
