@@ -28,7 +28,7 @@
         .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 1.5rem; }
         .btn-action { background: var(--mx-green); color: black; font-weight: 900; border-radius: 1.2rem; transition: 0.2s; border: none; }
         .btn-action:disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
-        .balance-pill { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 99px; padding: 4px 4px 4px 129px; display: flex; align-items: center; gap: 8px; }
+        .balance-pill { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 99px; padding: 4px 4px 4px 12px; display: flex; align-items: center; gap: 8px; }
         .btn-plus { width: 32px; height: 32px; background: var(--mx-green); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
         
         .history-scroll { max-height: 280px; overflow-y: auto; scrollbar-width: none; }
@@ -160,13 +160,24 @@
                     <h4><i class="fas fa-university"></i> Instrucciones de Pago</h4>
                     <p class="text-[10px] mb-2 text-zinc-400">Transfiere con estos datos exactos:</p>
                     <div class="space-y-2 text-[11px]">
-                        <div class="flex justify-between border-b border-white/5 pb-1"><span class="text-zinc-500 uppercase">Monto:</span><span class="text-emerald-500 font-bold" id="display-dep-amount">$0.00</span></div>
-                        <div class="flex justify-between border-b border-white/5 pb-1"><span class="text-zinc-500 uppercase">Concepto:</span><span class="text-white font-bold uppercase">Transferencia</span></div>
+                        <div class="flex justify-between border-b border-white/5 pb-1">
+                            <span class="text-zinc-500 uppercase">Monto:</span>
+                            <span class="text-emerald-500 font-bold" id="display-dep-amount">$0.00</span>
+                        </div>
+                        <div class="flex justify-between border-b border-white/5 pb-1">
+                            <span class="text-zinc-500 uppercase">Concepto:</span>
+                            <span class="text-white font-bold uppercase">Transferencia</span>
+                        </div>
                     </div>
                 </div>
                 <div class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
                     <p class="text-[8px] font-bold text-emerald-500 mb-1 uppercase">CLABE (STP)</p>
-                    <div class="flex items-center justify-center gap-3"><span id="clabe-number" class="text-xs font-mono font-bold">722969020533491161</span><button onclick="UI.copyClabe()" class="text-emerald-500 active:scale-90 transition-transform"><i class="fas fa-copy"></i></button></div>
+                    <div class="flex items-center justify-center gap-3">
+                        <span id="clabe-number" class="text-xs font-mono font-bold">722969020533491161</span>
+                        <button onclick="UI.copyClabe()" class="text-emerald-500 active:scale-90 transition-transform">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
                 </div>
                 <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
                 <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-2xl p-4 block cursor-pointer">
@@ -194,23 +205,9 @@
             lose: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
             rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3')
         };
-        const playSfx = (key) => { try { sfx[key].currentTime = 0; sfx[key].play(); } catch(e){} };
+        const playSfx = (key) => { sfx[key].currentTime = 0; sfx[key].play().catch(() => {}); };
 
-        // ESTADO CON LOGICA DE CALOR
-        let State = { user: null, balance: 0, isSpinning: false, totalSpins: 0, heat: 0 };
-
-        // SISTEMA DE ENFRIAMIENTO (SILENCIOSO)
-        const LuckEngine = {
-            update(mult) {
-                if(mult >= 5) State.heat = Math.min(100, State.heat + (mult * 1.5));
-                else State.heat = Math.max(0, State.heat - 5);
-            },
-            getRiskFactor() {
-                if(State.heat < 10) return 0;
-                if(Math.random() < 0.2) return 0; // "Suerte loca": 20% de probabilidad de ignorar el calor
-                return (State.heat / 300); // Maximo 0.33 de ajuste
-            }
-        };
+        let State = { user: null, balance: 0, isSpinning: false, totalSpins: 0, lastWinBig: false };
 
         const Router = {
             showView(viewId) {
@@ -228,6 +225,7 @@
                 playSfx('click');
                 this.showView('game');
                 document.getElementById('game-mount').innerHTML = this.templates[game];
+                document.getElementById('view-game').scrollTop = 0;
                 if(game === 'slots') GameLogic.slots.init();
                 if(game === 'mines') GameLogic.mines.drawGrid();
                 if(game === 'tower') GameLogic.tower.drawTower();
@@ -244,23 +242,29 @@
             async init() { let p = 0; const i = setInterval(() => { p += 25; document.getElementById('boot-bar').style.width = `${p}%`; if(p >= 100) { clearInterval(i); this.check(); } }, 100); },
             async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); } else { document.getElementById('auth-view').classList.remove('hidden-view'); } },
             async loadBalance() { const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle(); State.balance = data ? data.saldo : 0; UI.updateBalance(); },
+            getLuckFactor() { return State.lastWinBig ? 1.15 : 1.0; },
+            checkBigWin(bet, win) { State.lastWinBig = win > (bet * 5); },
             async confirmDeposit() {
                 const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value));
-                const file = document.getElementById('receipt-input').files[0];
+                const fileInput = document.getElementById('receipt-input');
+                const file = fileInput.files[0];
                 if(!amt || amt <= 0 || !file) return UI.notify("Datos inválidos", "error");
                 try {
                     UI.notify("Procesando...", "success");
-                    const btn = document.getElementById('btn-confirm-dep'); btn.disabled = true;
+                    const btn = document.getElementById('btn-confirm-dep');
+                    btn.disabled = true; btn.style.opacity = "0.5";
                     const fileExt = file.name.split('.').pop();
                     const fileName = `${State.user.id}-${Date.now()}.${fileExt}`;
                     const filePath = `depositos/${fileName}`;
-                    await sb.storage.from('comprobantes').upload(filePath, file);
+                    const { error: uploadError } = await sb.storage.from('comprobantes').upload(filePath, file);
+                    if (uploadError) throw uploadError;
                     const { data: urlData } = sb.storage.from('comprobantes').getPublicUrl(filePath);
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'deposits', amount: amt, label: 'CARGA', status: 'pending', evidence_url: urlData.publicUrl }]);
-                    UI.notify("En revisión", "success"); UI.closeModal('modal-deposit');
+                    UI.notify("En revisión", "success");
+                    UI.closeModal('modal-deposit');
                     this.fetchHistory();
                 } catch (e) { UI.notify("Error al enviar", "error"); } 
-                finally { document.getElementById('btn-confirm-dep').disabled = false; }
+                finally { const btn = document.getElementById('btn-confirm-dep'); btn.disabled = false; btn.style.opacity = "1"; }
             },
             async fetchHistory() {
                 const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20);
@@ -298,7 +302,7 @@
 
         const AuthManager = {
             async login() { const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value; const { data, error } = await sb.auth.signInWithPassword({ email: e, password: p }); if(error) UI.notify(error.message, "error"); else location.reload(); },
-            async register() { if(!document.getElementById('terms-check').checked) return UI.notify("Acepta términos", "error"); const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value; const { data, error } = await sb.auth.signUp({ email: e, password: p }); if(error) UI.notify(error.message, "error"); else { await sb.from('usuarios').insert([{ id: data.user.id, email: e, saldo: 0 }]); location.reload(); } },
+            async register() { if(!document.getElementById('terms-check').checked) return UI.notify("Acepta términos", "error"); const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value; const { data, error } = await sb.auth.signUp({ email: e, password: p }); if(error) UI.notify(error.message, "error"); else { await sb.from('usuarios').insert([{ id: data.user.id, email: e, saldo: 0 }]); UI.notify("Cuenta creada", "success"); location.reload(); } },
             async logout() { await sb.auth.signOut(); location.reload(); },
             switchTab(tab) { playSfx('click'); document.getElementById('login-container').classList.toggle('hidden-view', tab==='register'); document.getElementById('register-container').classList.toggle('hidden-view', tab==='login'); }
         };
@@ -308,24 +312,28 @@
                 init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); r.innerHTML = ''; Array(40).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); }); },
                 async play() {
                     if(State.isSpinning) return;
-                    const bet = Math.abs(parseFloat(document.getElementById('slots-bet-input').value)) || 10;
+                    const betInput = document.getElementById('slots-bet-input');
+                    const bet = Math.abs(parseFloat(betInput.value)) || 10;
+                    betInput.value = bet;
                     if(State.balance < bet || bet <= 0) return UI.notify("Saldo insuficiente", "error");
-                    
+                    const btn = document.getElementById('btn-slots-play');
+                    btn.disabled = true;
                     playSfx('spin'); State.isSpinning = true; State.balance -= bet; UI.updateBalance();
-                    
-                    const risk = LuckEngine.getRiskFactor();
-                    const forceLose = Math.random() < risk * 2;
-                    const res = forceLose ? [SYMBOLS[0], SYMBOLS[1], SYMBOLS[2]] : [SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)]];
-                    
+                    const res = [SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)]];
                     State.totalSpins++;
                     [1,2,3].forEach((id, i) => { document.getElementById(`reel-${id}`).style.transform = `translateY(-${(State.totalSpins * 90 * 6) + (SYMBOLS.indexOf(res[i])*90)}px)`; });
                     setTimeout(async () => {
-                        State.isSpinning = false;
-                        let win = (res[0] === res[1] && res[1] === res[2]) ? bet * 10 : 0;
-                        if(win > 0) { State.balance += win; playSfx('win'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); } 
-                        else { playSfx('lose'); }
-                        
-                        LuckEngine.update(win/bet); UI.updateBalance();
+                        State.isSpinning = false; btn.disabled = false;
+                        let win = 0;
+                        const luck = Core.getLuckFactor();
+                        const riggedLoss = State.lastWinBig && Math.random() < 0.15;
+                        if(res[0] === res[1] && res[1] === res[2] && !riggedLoss) { 
+                            win = bet * 10; State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
+                        } else { 
+                            playSfx('lose'); UI.notify("SIGUE INTENTANDO", "error"); 
+                        }
+                        Core.checkBigWin(bet, win);
+                        UI.updateBalance();
                         await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                         await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -bet, label: 'SLOTS' }]);
                     }, 3500);
@@ -336,107 +344,174 @@
                 multSteps: [1.25, 1.85, 2.75, 4.20, 6.50, 10.20, 16.50, 28.00, 45.00, 80.00],
                 drawGrid() {
                     const g = document.getElementById('mines-grid'); g.innerHTML = '';
-                    for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/[0.03] border border-white/5 rounded-xl flex items-center justify-center text-xl cursor-pointer active:scale-90 transition-transform"></div>`;
+                    for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/5 border border-white/5 rounded-lg flex items-center justify-center text-xl cursor-pointer active:scale-90 transition-all"></div>`;
                 },
                 start() {
-                    const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 10;
-                    if(State.balance < b) return UI.notify("Saldo insuficiente", "error");
-                    this.active = true; this.bet = b; this.mult = 1; this.revealed = []; State.balance -= b; UI.updateBalance();
+                    if(this.active) return;
+                    const betInput = document.getElementById('mines-bet-input');
+                    const b = Math.abs(parseFloat(betInput.value)) || 10;
+                    betInput.value = b;
+                    if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
+                    playSfx('click'); State.balance -= b; UI.updateBalance();
+                    this.active = true; this.bet = b; this.mult = 1; this.revealed = [];
                     this.mines = []; while(this.mines.length < 3) { let r = Math.floor(Math.random()*25); if(!this.mines.includes(r)) this.mines.push(r); }
                     document.getElementById('mines-controls').classList.add('hidden-view');
                     document.getElementById('mines-status').classList.remove('hidden-view');
-                    document.getElementById('mines-mult').innerText = "1.00x";
+                    document.getElementById('mines-mult').innerText = '1.00x';
+                    document.getElementById('mines-cashout-btn').innerText = `COBRAR $0.00`;
                     this.drawGrid();
                 },
                 cell(i) {
                     if(!this.active || this.revealed.includes(i)) return;
-                    this.revealed.push(i);
+                    const winCount = this.revealed.length;
+                    const luck = Core.getLuckFactor();
+                    if (winCount > 2 && Math.random() < (0.1 + (winCount * 0.08)) * luck) {
+                        if (!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); }
+                    }
+                    this.revealed.push(i); 
                     const el = document.getElementById(`m-${i}`);
-                    const risk = LuckEngine.getRiskFactor();
-                    
-                    if(this.mines.includes(i) || (Math.random() < risk && this.revealed.length > 2)) {
-                        el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500/50'); this.end(0);
+                    if(this.mines.includes(i)) {
+                        playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500');
+                        UI.notify("SIGUE INTENTANDO", "error");
+                        this.end(false);
                     } else {
-                        el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500/50');
-                        this.mult = this.multSteps[Math.min(this.revealed.length-1, 9)];
-                        document.getElementById('mines-mult').innerText = this.mult.toFixed(2)+'x';
+                        playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500');
+                        this.mult = this.multSteps[winCount] || this.mult * 1.5;
+                        document.getElementById('mines-mult').innerText = this.mult.toFixed(2) + 'x';
                         document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
-                        playSfx('click');
                     }
                 },
-                cashout() { this.end(this.bet * this.mult); },
+                async cashout() {
+                    if(!this.active) return;
+                    const win = this.bet * this.mult; State.balance += win; 
+                    playSfx('win'); playSfx('winExtra');
+                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
+                    this.end(true);
+                },
                 async end(win) {
-                    this.active = false; State.balance += win; UI.updateBalance();
-                    LuckEngine.update(win/this.bet);
+                    this.active = false; UI.updateBalance();
                     document.getElementById('mines-controls').classList.remove('hidden-view');
                     document.getElementById('mines-status').classList.add('hidden-view');
-                    if(win > 0) playSfx('win'); else playSfx('lose');
+                    const totalWin = win ? (this.bet * this.mult) : 0;
+                    Core.checkBigWin(this.bet, totalWin);
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -this.bet, label: 'MINAS' }]);
-                }
-            },
-            crash: {
-                active: false, mult: 1, bet: 10, interval: null,
-                start() {
-                    const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10;
-                    if(State.balance < b) return UI.notify("Saldo insuficiente", "error");
-                    this.active = true; this.bet = b; this.mult = 1; State.balance -= b; UI.updateBalance();
-                    const risk = LuckEngine.getRiskFactor();
-                    const limit = 1.1 + (Math.random() * (5 / (1 + risk * 4)));
-                    document.getElementById('btn-crash').innerText = "COBRAR";
-                    this.interval = setInterval(() => {
-                        this.mult += 0.04; document.getElementById('crash-mult').innerText = this.mult.toFixed(2)+'x';
-                        if(this.mult >= limit) this.explode();
-                    }, 100);
-                },
-                explode() { clearInterval(this.interval); this.end(0); },
-                cashout() { if(!this.active) return; clearInterval(this.interval); this.end(this.bet * this.mult); },
-                async end(win) {
-                    this.active = false; State.balance += win; UI.updateBalance();
-                    LuckEngine.update(win/this.bet);
-                    document.getElementById('btn-crash').innerText = "DESPEGAR";
-                    if(win > 0) playSfx('win'); else { playSfx('lose'); document.getElementById('crash-mult').innerText = "EXPLOTÓ!"; }
-                    await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? totalWin : -this.bet, label: 'MINAS' }]);
                 }
             },
             tower: {
-                level: 0, active: false, bet: 10, mult: 1,
+                level: 0, active: false, bet: 0, mult: 1,
+                towerSteps: [1.45, 2.30, 3.80, 6.50, 11.20, 19.80, 35.00, 75.00],
                 drawTower() {
                     const c = document.getElementById('tower-container'); c.innerHTML = '';
                     for(let i=0; i<8; i++) {
-                        let row = document.createElement('div'); row.className = "grid grid-cols-3 gap-1.5 opacity-20 transition-opacity"; row.id = `tw-r-${i}`;
-                        for(let j=0; j<3; j++) row.innerHTML += `<div onclick="GameLogic.tower.select(${i},${j})" class="h-10 bg-white/5 border border-white/5 rounded-xl"></div>`;
+                        let row = document.createElement('div'); row.className = "grid grid-cols-3 gap-1.5 opacity-30"; row.id = `tower-row-${i}`;
+                        for(let j=0; j<3; j++) { row.innerHTML += `<div onclick="GameLogic.tower.select(${i}, ${j})" class="h-8 bg-white/5 border border-white/5 rounded-lg flex items-center justify-center cursor-pointer transition-all"></div>`; }
                         c.appendChild(row);
                     }
                 },
                 start() {
-                    const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10;
-                    if(State.balance < b) return UI.notify("Saldo insuficiente", "error");
-                    this.active = true; this.bet = b; this.level = 0; this.mult = 1; State.balance -= b; UI.updateBalance();
-                    this.drawTower(); document.getElementById('tw-r-0').classList.replace('opacity-20', 'opacity-100');
+                    if(this.active) return;
+                    const betInput = document.getElementById('tower-bet-input');
+                    const b = Math.abs(parseFloat(betInput.value)) || 10;
+                    betInput.value = b;
+                    if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
+                    playSfx('click'); State.balance -= b; UI.updateBalance();
+                    this.active = true; this.bet = b; this.level = 0; this.mult = 1;
+                    this.drawTower(); document.getElementById('tower-row-0').classList.remove('opacity-30');
                     document.getElementById('tower-controls').classList.add('hidden-view');
-                    document.getElementById('tower-cashout-btn').classList.remove('hidden-view');
+                    const btn = document.getElementById('tower-cashout-btn'); btn.classList.remove('hidden-view'); btn.innerText = `COBRAR $0.00`;
                 },
                 select(r, c) {
                     if(!this.active || r !== this.level) return;
-                    const risk = LuckEngine.getRiskFactor();
-                    if(Math.random() < (0.34 + risk)) this.end(0);
-                    else {
-                        this.mult *= 1.5; this.level++;
+                    const luck = Core.getLuckFactor();
+                    let failProb = 0.33 * luck;
+                    if (this.level > 2) failProb = 0.45 * luck;
+                    if (this.level > 5) failProb = 0.60 * luck;
+                    const isBomb = Math.random() < failProb;
+                    const items = document.getElementById(`tower-row-${r}`).children;
+                    if(isBomb) {
+                        playSfx('lose'); items[c].innerHTML = '💣'; items[c].classList.add('bg-red-500/20', 'border-red-500');
+                        UI.notify("SIGUE INTENTANDO", "error");
+                        this.end(false);
+                    } else {
+                        playSfx('click'); items[c].innerHTML = '💎'; items[c].classList.add('bg-emerald-500/20', 'border-emerald-500');
+                        this.mult = this.towerSteps[this.level];
+                        this.level++;
                         document.getElementById('tower-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
-                        if(this.level < 8) document.getElementById(`tw-r-${this.level}`).classList.replace('opacity-20', 'opacity-100');
+                        if(this.level < 8) document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30');
                         else this.cashout();
-                        playSfx('click');
                     }
                 },
-                cashout() { this.end(this.bet * this.mult); },
+                async cashout() {
+                    if(!this.active || this.level === 0) return;
+                    const win = this.bet * this.mult; State.balance += win; 
+                    playSfx('win'); playSfx('winExtra');
+                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
+                    this.end(true);
+                },
                 async end(win) {
-                    this.active = false; State.balance += win; UI.updateBalance();
-                    LuckEngine.update(win/this.bet);
+                    this.active = false; UI.updateBalance();
                     document.getElementById('tower-controls').classList.remove('hidden-view');
                     document.getElementById('tower-cashout-btn').classList.add('hidden-view');
-                    if(win > 0) playSfx('win'); else playSfx('lose');
+                    const totalWin = win ? (this.bet * this.mult) : 0;
+                    Core.checkBigWin(this.bet, totalWin);
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? totalWin : -this.bet, label: 'TORRE' }]);
+                }
+            },
+            crash: {
+                active: false, mult: 1, bet: 0, interval: null,
+                start() {
+                    if(this.active) return;
+                    const betInput = document.getElementById('crash-bet-input');
+                    const b = Math.abs(parseFloat(betInput.value)) || 10;
+                    betInput.value = b;
+                    if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
+                    playSfx('rocket'); State.balance -= b; UI.updateBalance();
+                    this.active = true; this.bet = b; this.mult = 1;
+                    const btn = document.getElementById('btn-crash'); 
+                    btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
+                    btn.onclick = () => this.cashout();
+                    const luck = Core.getLuckFactor();
+                    const limit = (1.05 + Math.random() * 4.5) / luck;
+                    this.interval = setInterval(() => {
+                        this.mult += this.mult < 2 ? 0.04 : 0.08; 
+                        document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
+                        document.getElementById('crash-rocket').style.transform = `translate(${this.mult * 10}px, -${this.mult * 8}px)`;
+                        btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
+                        if(this.mult >= limit) { clearInterval(this.interval); this.explode(); }
+                    }, 100);
+                },
+                cashout() {
+                    if(!this.active) return;
+                    clearInterval(this.interval);
+                    const win = this.bet * this.mult; State.balance += win; 
+                    playSfx('win'); playSfx('winExtra');
+                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
+                    this.end(true);
+                },
+                explode() {
+                    playSfx('lose');
+                    document.getElementById('crash-mult').classList.add('text-red-500');
+                    document.getElementById('crash-rocket').innerHTML = '💥';
+                    UI.notify("SIGUE INTENTANDO", "error");
+                    this.end(false);
+                },
+                async end(win) {
+                    this.active = false; UI.updateBalance();
+                    const btn = document.getElementById('btn-crash');
+                    btn.innerText = "EXPLOTÓ"; btn.disabled = true;
+                    const totalWin = win ? (this.bet * this.mult) : 0;
+                    Core.checkBigWin(this.bet, totalWin);
+                    setTimeout(() => {
+                        btn.disabled = false; btn.innerText = "DESPEGAR"; btn.onclick = () => GameLogic.crash.start();
+                        document.getElementById('crash-mult').classList.remove('text-red-500');
+                        document.getElementById('crash-mult').innerText = '1.00x';
+                        document.getElementById('crash-rocket').innerHTML = '🚀';
+                        document.getElementById('crash-rocket').style.transform = 'translate(0, 20px)';
+                    }, 3000);
+                    await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? totalWin : -this.bet, label: 'AVIATOR' }]);
                 }
             }
         };
