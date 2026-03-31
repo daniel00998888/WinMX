@@ -16,7 +16,11 @@
         body { background: var(--mx-dark); color: white; font-family: 'Inter', sans-serif; height: 100dvh; overflow: hidden; margin: 0; -webkit-tap-highlight-color: transparent; }
         .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
         .app-container { height: 100dvh; display: flex; flex-direction: column; }
+        
         .view-content { flex: 1; overflow-y: auto; padding-bottom: 120px; scroll-behavior: smooth; }
+        .view-content::-webkit-scrollbar { width: 4px; }
+        .view-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
         .hidden-view { display: none !important; }
         .bottom-nav { background: rgba(10, 10, 10, 0.98); backdrop-filter: blur(15px); border-top: 1px solid rgba(255,255,255,0.05); z-index: 50; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: #444; transition: 0.3s; cursor: pointer; }
@@ -26,138 +30,277 @@
         .btn-action:disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
         .balance-pill { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 99px; padding: 4px 4px 4px 12px; display: flex; align-items: center; gap: 8px; }
         .btn-plus { width: 32px; height: 32px; background: var(--mx-green); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
-        .input-bet { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 12px; width: 100%; text-align: center; color: white; font-family: 'Archivo Black', sans-serif; outline: none; margin-bottom: 12px; }
-        .risk-badge { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; margin-bottom: 10px; }
+        
+        .history-scroll { max-height: 280px; overflow-y: auto; scrollbar-width: none; }
+        .history-scroll::-webkit-scrollbar { display: none; }
+
         .slot-box { height: 90px; overflow: hidden; background: #000; border-radius: 1rem; border: 1px solid #1a1a1a; }
         .slot-item { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
         .slot-reel { transition: transform 3.5s cubic-bezier(0.15, 0, 0.05, 1); }
+        
+        .pulse-pending { animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        .input-bet { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 12px; width: 100%; text-align: center; color: white; font-family: 'Archivo Black', sans-serif; outline: none; margin-bottom: 12px; }
+        
+        #crash-rocket { transform: translate(0, 20px); position: relative; }
+
+        .instruction-card { 
+            background: rgba(16, 185, 129, 0.08); 
+            border: 1px solid rgba(16, 185, 129, 0.3); 
+            border-radius: 1.2rem; 
+            padding: 20px; 
+            margin-top: 24px; 
+            text-align: left;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .instruction-card h4 { font-family: 'Archivo Black', sans-serif; font-size: 12px; color: var(--mx-green); text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .instruction-card p { font-size: 11px; color: #ccc; line-height: 1.6; font-weight: 500; }
+        .instruction-card strong { color: white; font-weight: 800; }
+        
+        .risk-badge { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; margin-bottom: 10px; }
     </style>
 </head>
-<body>
+<body class="antialiased select-none">
 
     <div id="boot-loader" class="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center">
         <div class="text-3xl font-casino italic mb-4 text-emerald-500 animate-pulse">WinMX</div>
-        <div class="w-32 h-1 bg-zinc-900 rounded-full overflow-hidden"><div id="boot-bar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div></div>
+        <div class="w-32 h-1 bg-zinc-900 rounded-full overflow-hidden">
+            <div id="boot-bar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+        </div>
     </div>
 
     <div id="auth-view" class="hidden-view min-h-screen flex items-center justify-center p-6 bg-black">
-        <div id="login-container" class="glass p-8 w-full max-w-sm text-center">
-            <h2 class="text-3xl font-casino mb-10 italic">Win<span class="text-emerald-500">MX</span></h2>
+        <div id="login-container" class="glass p-8 w-full max-w-sm text-center animate__animated animate__fadeIn">
+            <h2 class="text-3xl font-casino mb-10 italic tracking-tighter">Win<span class="text-emerald-500">MX</span></h2>
             <div class="space-y-4">
-                <input id="login-email" type="email" placeholder="Email" class="w-full bg-white/5 p-4 rounded-2xl outline-none text-white">
-                <input id="login-password" type="password" placeholder="Pass" class="w-full bg-white/5 p-4 rounded-2xl outline-none text-white">
-                <button onclick="AuthManager.login()" class="btn-action w-full py-4 font-casino">Entrar</button>
-                <button onclick="AuthManager.switchTab('register')" class="text-zinc-500 text-[10px] mt-4 underline">Registrarse</button>
+                <input id="login-email" type="email" placeholder="Correo electrónico" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
+                <input id="login-password" type="password" placeholder="Contraseña" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
+                <button onclick="AuthManager.login()" class="btn-action w-full py-4 font-casino mt-2">Entrar</button>
+                <button onclick="AuthManager.switchTab('register')" class="w-full py-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-4 underline decoration-emerald-500/50">¿No tienes cuenta? Regístrate</button>
             </div>
         </div>
-        <div id="register-container" class="hidden-view glass p-8 w-full max-w-sm text-center">
-             <h2 class="text-2xl font-casino mb-6 text-emerald-500">Registro</h2>
-             <input id="reg-email" type="email" placeholder="Email" class="w-full bg-white/5 p-4 rounded-2xl outline-none text-white mb-4">
-             <input id="reg-password" type="password" placeholder="Pass" class="w-full bg-white/5 p-4 rounded-2xl outline-none text-white mb-4">
-             <button onclick="AuthManager.register()" class="btn-action w-full py-4 font-casino">Crear Cuenta</button>
-             <button onclick="AuthManager.switchTab('login')" class="text-zinc-500 text-[10px] mt-4 underline">Volver</button>
+        <div id="register-container" class="hidden-view glass p-8 w-full max-w-sm text-center animate__animated animate__fadeIn">
+            <h2 class="text-2xl font-casino mb-6 italic tracking-tighter text-emerald-500">Nueva Cuenta</h2>
+            <div class="space-y-4 text-left">
+                <input id="reg-email" type="email" placeholder="Correo electrónico" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
+                <input id="reg-password" type="password" placeholder="Crea una contraseña" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
+                <div class="bg-white/5 border border-white/5 p-4 rounded-xl space-y-3">
+                    <p class="text-[9px] text-zinc-400 leading-relaxed uppercase font-bold">
+                        ⚠️ AVISO: Riesgo real de capital. Juega con responsabilidad.
+                    </p>
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" id="terms-check" class="w-4 h-4 accent-emerald-500">
+                        <span class="text-[10px] text-white font-bold uppercase">Acepto términos y soy mayor de edad</span>
+                    </label>
+                </div>
+                <button onclick="AuthManager.register()" class="btn-action w-full py-4 font-casino mt-2">Crear Cuenta</button>
+                <button onclick="AuthManager.switchTab('login')" class="w-full py-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-2 text-center underline decoration-zinc-700">Ya tengo cuenta</button>
+            </div>
         </div>
     </div>
 
     <div id="main-app" class="app-container hidden-view">
-        <header class="p-5 flex justify-between items-center border-b border-white/5">
-            <span class="font-casino italic text-xl">WIN<span class="text-emerald-500">MX</span></span>
+        <header class="p-5 flex justify-between items-center bg-black/40 border-b border-white/5">
+            <span class="font-casino italic text-xl tracking-tighter">WIN<span class="text-emerald-500">MX</span></span>
             <div class="balance-pill">
-                <span id="balance-display" class="font-casino text-emerald-500 text-lg">$0.00</span>
-                <div onclick="UI.openModal('modal-deposit')" class="btn-plus cursor-pointer"><i class="fas fa-plus"></i></div>
+                <span id="balance-display" class="font-casino text-emerald-500 text-lg tracking-tight">$0.00</span>
+                <div onclick="UI.openModal('modal-deposit')" class="btn-plus active:scale-90 transition-transform cursor-pointer"><i class="fas fa-plus"></i></div>
             </div>
         </header>
 
         <div id="view-lobby" class="view-content p-5 space-y-6">
+            <div class="bg-gradient-to-br from-emerald-500 to-emerald-800 p-6 rounded-[2.2rem] shadow-xl">
+                <h2 class="text-2xl font-casino italic text-white">Suerte hoy</h2>
+                <p class="text-[9px] font-bold text-emerald-100 uppercase tracking-widest mt-1 opacity-70">Sistema Realtime 2.0 Activo</p>
+            </div>
             <div class="grid grid-cols-2 gap-4">
-                <div onclick="Router.openGame('slots')" class="glass p-6 text-center">🎰<span class="font-casino text-[9px] block">Slots</span></div>
-                <div onclick="Router.openGame('mines')" class="glass p-6 text-center">💣<span class="font-casino text-[9px] block">Minas</span></div>
-                <div onclick="Router.openGame('crash')" class="glass p-6 text-center">🚀<span class="font-casino text-[9px] block">Aviator</span></div>
-                <div onclick="Router.openGame('tower')" class="glass p-6 text-center">🗼<span class="font-casino text-[9px] block">Torre</span></div>
+                <div onclick="Router.openGame('slots')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🎰</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Slots</span></div>
+                <div onclick="Router.openGame('mines')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">💣</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Minas</span></div>
+                <div onclick="Router.openGame('crash')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🚀</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Aviator</span></div>
+                <div onclick="Router.openGame('tower')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🗼</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Torre</span></div>
             </div>
         </div>
 
         <div id="view-game" class="view-content hidden-view p-5">
-            <button onclick="Router.showView('lobby')" class="mb-4 text-zinc-600 text-[10px] font-bold uppercase"><i class="fas fa-arrow-left"></i> Volver</button>
-            <div id="game-mount"></div>
+            <button onclick="Router.showView('lobby')" class="mb-4 text-zinc-600 text-[10px] font-bold uppercase flex items-center"><i class="fas fa-arrow-left mr-2"></i> Volver al Lobby</button>
+            <div id="game-mount" class="w-full"></div>
+        </div>
+
+        <div id="view-history" class="view-content p-5 space-y-4 hidden-view">
+            <h2 class="font-casino text-center text-zinc-600 text-xs mb-4 tracking-widest italic">Mi Actividad</h2>
+            <div id="history-lists" class="space-y-4"></div>
+        </div>
+
+        <div id="view-profile" class="view-content p-5 space-y-4 hidden-view">
+            <div class="glass p-10 text-center">
+                <div class="w-24 h-24 bg-emerald-500 rounded-full mx-auto mb-6 flex items-center justify-center text-black text-4xl font-black"><i class="fas fa-user"></i></div>
+                <p id="user-email-display" class="text-sm font-bold text-zinc-300 truncate mb-1">Cargando...</p>
+                <p class="text-[9px] text-emerald-500 font-bold uppercase tracking-[0.2em]">Usuario Activo</p>
+            </div>
+            <button onclick="AuthManager.logout()" class="w-full p-5 rounded-2xl border border-red-500/20 text-red-500 font-casino text-[10px] bg-red-500/5 mt-6 active:scale-95 transition-transform">Cerrar Sesión</button>
         </div>
 
         <nav class="bottom-nav fixed bottom-0 left-0 right-0 h-20 flex items-center px-4">
-            <div onclick="Router.showView('lobby')" class="nav-item active"><i class="fas fa-gamepad"></i><span>Jugar</span></div>
-            <div onclick="AuthManager.logout()" class="nav-item"><i class="fas fa-sign-out-alt"></i><span>Salir</span></div>
+            <div onclick="Router.showView('lobby')" id="nav-home" class="nav-item active"><i class="fas fa-gamepad text-xl mb-1"></i><span>Jugar</span></div>
+            <div onclick="Router.showView('history')" id="nav-history" class="nav-item"><i class="fas fa-receipt text-xl mb-1"></i><span>Historial</span></div>
+            <div onclick="Router.showView('profile')" id="nav-profile" class="nav-item"><i class="fas fa-user-circle text-xl mb-1"></i><span>Perfil</span></div>
         </nav>
     </div>
 
     <div id="modal-deposit" class="fixed inset-0 bg-black/95 z-[100] hidden-view flex items-center justify-center p-6">
-        <div class="glass p-8 w-full max-w-sm">
-            <input id="dep-amount" type="number" placeholder="$Monto" class="w-full bg-transparent text-center text-4xl font-casino text-white mb-6">
-            <button onclick="UI.notify('Depósito simulado', 'success'); UI.closeModal('modal-deposit')" class="btn-action w-full py-4 font-casino">Depositar</button>
-            <button onclick="UI.closeModal('modal-deposit')" class="w-full mt-4 text-[9px] text-zinc-500">CERRAR</button>
+        <div class="glass p-8 w-full max-w-sm bg-[#0a0a0a]">
+            <div id="dep-step-1">
+                <h2 class="font-casino text-emerald-500 text-center mb-6">Monto a cargar</h2>
+                <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-10 text-white">
+                <button onclick="UI.depNextStep()" class="btn-action w-full py-4 font-casino">Continuar</button>
+            </div>
+            <div id="dep-step-2" class="hidden-view space-y-4 text-center">
+                <div class="instruction-card !mt-0 !mb-4 bg-emerald-500/5 border-emerald-500/20">
+                    <h4><i class="fas fa-university"></i> Instrucciones de Pago</h4>
+                    <p class="text-[10px] mb-2 text-zinc-400">Transfiere con estos datos exactos:</p>
+                    <div class="space-y-2 text-[11px]">
+                        <div class="flex justify-between border-b border-white/5 pb-1">
+                            <span class="text-zinc-500 uppercase">Monto:</span>
+                            <span class="text-emerald-500 font-bold" id="display-dep-amount">$0.00</span>
+                        </div>
+                        <div class="flex justify-between border-b border-white/5 pb-1">
+                            <span class="text-zinc-500 uppercase">Concepto:</span>
+                            <span class="text-white font-bold uppercase">Transferencia</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
+                    <p class="text-[8px] font-bold text-emerald-500 mb-1 uppercase">CLABE (STP)</p>
+                    <div class="flex items-center justify-center gap-3">
+                        <span id="clabe-number" class="text-xs font-mono font-bold">722969020533491161</span>
+                        <button onclick="UI.copyClabe()" class="text-emerald-500 active:scale-90 transition-transform">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
+                <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-2xl p-4 block cursor-pointer">
+                    <i class="fas fa-camera text-xl mb-1 text-zinc-600"></i>
+                    <p id="file-label" class="text-[8px] font-bold text-zinc-500 uppercase text-center">Subir Comprobante</p>
+                </label>
+                <button id="btn-confirm-dep" onclick="Core.confirmDeposit()" class="btn-action w-full py-4 font-casino">Confirmar</button>
+            </div>
+            <button onclick="UI.closeModal('modal-deposit')" class="w-full mt-4 text-[9px] text-zinc-700 font-bold uppercase tracking-widest">Cerrar</button>
         </div>
     </div>
 
-    <div id="notif-container" class="fixed top-6 left-6 right-6 z-[200]"></div>
+    <div id="notif-container" class="fixed top-6 left-6 right-6 z-[200] flex flex-col gap-2"></div>
 
     <script>
         const DB_CONFIG = { url: "https://dakhnqriwbzihlzhtfcb.supabase.co", key: "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs" };
         const sb = window.supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
         const SYMBOLS = ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'];
 
-        let State = { 
-            user: null, 
-            balance: 0, 
-            isSpinning: false, 
-            totalSpins: 0,
-            // NUEVO: heat (Calor de la cuenta). 0 = normal, 100 = racha muy alta.
-            heat: 0 
-        };
-
         const sfx = {
             click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
             spin: new Audio('https://assets.mixkit.co/active_storage/sfx/2014/2014-preview.mp3'),
             win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
-            lose: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3')
+            winExtra: new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3'),
+            lose: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
+            rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3')
         };
-        const playSfx = (k) => { try{ sfx[k].currentTime=0; sfx[k].play(); }catch(e){} };
+        const playSfx = (key) => { sfx[key].currentTime = 0; sfx[key].play().catch(() => {}); };
 
-        // LÓGICA DE PROBABILIDAD DINÁMICA
-        const Probability = {
-            // Se llama después de cada apuesta
-            adjust(winMult) {
-                if(winMult >= 10) {
-                    State.heat = Math.min(100, State.heat + (winMult * 1.5)); // Sube el "calor"
-                } else if(winMult <= 0) {
-                    State.heat = Math.max(0, State.heat - 10); // Enfría la cuenta si pierde
-                }
-            },
-            // Obtiene el factor de riesgo actual. 0 = nada, 1 = riesgo extra.
-            getRiskFactor() {
-                // Si el calor es bajo, no hay riesgo.
-                if(State.heat < 20) return 0;
-                // El factor escala con el calor, pero siempre deja un 10% de probabilidad de ignorarlo (suerte pura)
-                if(Math.random() < 0.10) return 0;
-                return State.heat / 250; // Retorna un valor sutil (máximo ~0.4 de riesgo extra)
-            }
-        };
+        // STATE AGREGADO: lastWinningMult para controlar la probabilidad
+        let State = { user: null, balance: 0, isSpinning: false, totalSpins: 0, lastWinningMult: 1 };
 
         const Router = {
-            showView(id) {
+            showView(viewId) {
+                if(State.isSpinning) return;
+                playSfx('click');
                 document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden-view'));
-                document.getElementById(`view-${id}`).classList.remove('hidden-view');
+                document.getElementById(`view-${viewId}`).classList.remove('hidden-view');
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                const navId = {'lobby':'nav-home','history':'nav-history','profile':'nav-profile'}[viewId];
+                if(navId) document.getElementById(navId).classList.add('active');
+                if(viewId === 'history') Core.fetchHistory();
+                if(viewId === 'profile') UI.updateProfile();
             },
             openGame(game) {
+                playSfx('click');
                 this.showView('game');
                 document.getElementById('game-mount').innerHTML = this.templates[game];
-                if(game==='slots') GameLogic.slots.init();
-                if(game==='mines') GameLogic.mines.drawGrid();
-                if(game==='tower') GameLogic.tower.drawTower();
+                document.getElementById('view-game').scrollTop = 0;
+                if(game === 'slots') GameLogic.slots.init();
+                if(game === 'mines') GameLogic.mines.drawGrid();
+                if(game === 'tower') GameLogic.tower.drawTower();
             },
             templates: {
-                slots: `<div class="glass p-6 text-center"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet" type="number" value="10" class="input-bet"><button onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino">GIRAR</button></div>`,
-                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div class="risk-badge">3 Minas</div><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view mb-3"><button id="mines-cashout-btn" onclick="GameLogic.mines.cashout()" class="btn-action w-full py-3 font-casino">COBRAR $0</button></div><div id="mines-controls"><input id="mines-bet" type="number" value="10" class="input-bet"><button onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div></div>`,
-                tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div id="tower-container" class="space-y-1.5 mb-4 flex flex-col-reverse"></div><div id="tower-controls"><input id="tower-bet" type="number" value="10" class="input-bet"><button onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino">JUGAR</button></div><button id="tower-cashout" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino">COBRAR</button></div>`,
-                crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino mb-4">1.00x</div><div id="crash-rocket" class="text-4xl mb-6">🚀</div><input id="crash-bet" type="number" value="10" class="input-bet"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button></div>`
+                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4><i class="fas fa-info-circle"></i> Reglas del Slot</h4><p>Alinea 3 símbolos iguales en el centro para ganar <strong>10x tu apuesta inicial</strong>.</p></div></div>`,
+                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div class="risk-badge"><i class="fas fa-bomb"></i> 3 Minas Activas</div><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view flex justify-between items-center p-3 mb-3 bg-emerald-500/10 rounded-xl"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><button id="mines-cashout-btn" onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-4 py-2 rounded-lg font-bold text-[9px] font-casino tracking-tighter">COBRAR $0.00</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino text-xs">APOSTAR</button></div><div class="instruction-card"><h4><i class="fas fa-bomb"></i> Reglas de Minas</h4><p>El riesgo aumenta en cada clic. ¡Los multiplicadores son <strong>exponenciales</strong>!</p></div></div>`,
+                crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div class="h-24 flex items-center justify-center mb-6"><div id="crash-rocket" class="text-4xl transition-all duration-100">🚀</div></div><input id="crash-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button><div class="instruction-card"><h4><i class="fas fa-rocket"></i> Reglas Aviator</h4><p>Cobra antes de que el cohete explote.</p></div></div>`,
+                tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div class="risk-badge" style="color: #fbbf24; background: rgba(251,191,36,0.1); border-color: rgba(251,191,36,0.2)"><i class="fas fa-bolt"></i> 1 Peligro por Piso</div><div id="tower-container" class="space-y-1.5 mb-4 flex flex-col-reverse overflow-y-auto max-h-[250px]"></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino text-xs">JUGAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino text-xs">COBRAR $0.00</button><div class="instruction-card"><h4><i class="fas fa-chess-rook"></i> Reglas Torre</h4><p>Cada piso es más difícil, pero paga mucho más.</p></div></div>`
             }
+        };
+
+        const Core = {
+            async init() { let p = 0; const i = setInterval(() => { p += 25; document.getElementById('boot-bar').style.width = `${p}%`; if(p >= 100) { clearInterval(i); this.check(); } }, 100); },
+            async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); } else { document.getElementById('auth-view').classList.remove('hidden-view'); } },
+            async loadBalance() { const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle(); State.balance = data ? data.saldo : 0; UI.updateBalance(); },
+            async confirmDeposit() {
+                const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value));
+                const fileInput = document.getElementById('receipt-input');
+                const file = fileInput.files[0];
+                if(!amt || amt <= 0 || !file) return UI.notify("Datos inválidos", "error");
+                try {
+                    UI.notify("Procesando...", "success");
+                    const btn = document.getElementById('btn-confirm-dep'); btn.disabled = true; btn.style.opacity = "0.5";
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${State.user.id}-${Date.now()}.${fileExt}`;
+                    const filePath = `depositos/${fileName}`;
+                    const { error: uploadError } = await sb.storage.from('comprobantes').upload(filePath, file);
+                    if (uploadError) throw uploadError;
+                    const { data: urlData } = sb.storage.from('comprobantes').getPublicUrl(filePath);
+                    await sb.from('history').insert([{ user_id: State.user.id, type: 'deposits', amount: amt, label: 'CARGA', status: 'pending', evidence_url: urlData.publicUrl }]);
+                    UI.notify("En revisión", "success"); UI.closeModal('modal-deposit'); this.fetchHistory();
+                } catch (e) { UI.notify("Error al enviar", "error"); } 
+                finally { const btn = document.getElementById('btn-confirm-dep'); btn.disabled = false; btn.style.opacity = "1"; }
+            },
+            async fetchHistory() {
+                const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20);
+                const d = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(20);
+                const container = document.getElementById('history-lists');
+                container.innerHTML = `
+                    <div class="glass overflow-hidden mb-4"><div onclick="UI.toggleAccordion('acc-bets','arrow-bets')" class="p-5 flex justify-between cursor-pointer"><div class="flex items-center gap-3"><i class="fas fa-history text-emerald-500"></i><span class="font-casino text-[10px]">Jugadas</span></div><i id="arrow-bets" class="fas fa-chevron-down text-zinc-700"></i></div><div id="acc-bets" class="hidden-view p-3 space-y-2 bg-black/40 history-scroll">${this.renderList(b.data || [], 'bets')}</div></div>
+                    <div class="glass overflow-hidden"><div onclick="UI.toggleAccordion('acc-deps','arrow-deps')" class="p-5 flex justify-between cursor-pointer"><div class="flex items-center gap-3"><i class="fas fa-wallet text-blue-400"></i><span class="font-casino text-[10px]">Depósitos</span></div><i id="arrow-deps" class="fas fa-chevron-down text-zinc-700"></i></div><div id="acc-deps" class="hidden-view p-3 space-y-2 bg-black/40 history-scroll">${this.renderList(d.data || [], 'deposits')}</div></div>`;
+            },
+            renderList(items, type) {
+                if(!items.length) return `<p class="text-[8px] text-center py-2 text-zinc-600">Sin registros</p>`;
+                return items.map(i => {
+                    let text = i.label, color = i.amount >= 0 ? 'text-emerald-500' : 'text-red-500', pulse = "";
+                    if(type==='deposits') {
+                        if(i.status==='pending') { text="Pendiente ⏳"; color="text-yellow-500"; pulse="pulse-pending"; }
+                        else if(i.status==='completed') { text="Confirmado ✅"; color="text-emerald-500"; }
+                        else if(i.status==='rejected') { text="Rechazado ❌"; color="text-red-500"; }
+                    }
+                    return `<div class="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5 ${pulse}"><div class="flex flex-col"><span class="text-[9px] font-bold uppercase">${text}</span><span class="text-[7px] text-zinc-600">${new Date(i.created_at).toLocaleDateString()}</span></div><div class="text-[10px] font-casino ${color}">$${Math.abs(i.amount).toFixed(2)}</div></div>`;
+                }).join('');
+            }
+        };
+
+        const UI = {
+            updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toFixed(2)}`; },
+            updateProfile() { document.getElementById('user-email-display').innerText = State.user.email; },
+            openModal(id) { playSfx('click'); document.getElementById(id).classList.remove('hidden-view'); document.getElementById('dep-step-1').classList.remove('hidden-view'); document.getElementById('dep-step-2').classList.add('hidden-view'); },
+            closeModal(id) { playSfx('click'); document.getElementById(id).classList.add('hidden-view'); },
+            toggleAccordion(accId, arrowId) { playSfx('click'); const acc = document.getElementById(accId); acc.classList.toggle('hidden-view'); document.getElementById(arrowId).style.transform = acc.classList.contains('hidden-view') ? 'rotate(0deg)' : 'rotate(180deg)'; },
+            depNextStep() { const amt = parseFloat(document.getElementById('dep-amount').value); if(isNaN(amt) || amt <= 0) return this.notify("Monto inválido", "error"); playSfx('click'); document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`; document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
+            copyClabe() { const clabe = document.getElementById('clabe-number').innerText; navigator.clipboard.writeText(clabe).then(() => { playSfx('click'); this.notify("CLABE Copiada", "success"); }); },
+            handleFile(input) { if(input.files && input.files[0]) { playSfx('click'); const label = document.getElementById('file-label'); label.innerText = "Recibo: " + input.files[0].name.substring(0, 15) + "..."; label.classList.replace('text-zinc-500', 'text-emerald-500'); } },
+            notify(m, t) { const n = document.createElement('div'); n.className = `p-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-2xl animate__animated animate__fadeInDown ${t==='success'?'bg-emerald-500 text-black':'bg-red-500 text-white'}`; n.innerText = m; document.getElementById('notif-container').appendChild(n); setTimeout(() => { n.classList.replace('animate__fadeInDown', 'animate__fadeOutUp'); setTimeout(()=>n.remove(), 500); }, 3000); }
+        };
+
+        const AuthManager = {
+            async login() { const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value; const { data, error } = await sb.auth.signInWithPassword({ email: e, password: p }); if(error) UI.notify(error.message, "error"); else location.reload(); },
+            async register() { if(!document.getElementById('terms-check').checked) return UI.notify("Acepta términos", "error"); const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value; const { data, error } = await sb.auth.signUp({ email: e, password: p }); if(error) UI.notify(error.message, "error"); else { await sb.from('usuarios').insert([{ id: data.user.id, email: e, saldo: 0 }]); UI.notify("Cuenta creada", "success"); location.reload(); } },
+            async logout() { await sb.auth.signOut(); location.reload(); },
+            switchTab(tab) { playSfx('click'); document.getElementById('login-container').classList.toggle('hidden-view', tab==='register'); document.getElementById('register-container').classList.toggle('hidden-view', tab==='login'); }
         };
 
         const GameLogic = {
@@ -165,160 +308,215 @@
                 init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); r.innerHTML = ''; Array(40).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); }); },
                 async play() {
                     if(State.isSpinning) return;
-                    const bet = parseFloat(document.getElementById('slots-bet').value);
-                    if(State.balance < bet) return UI.notify("Saldo insuficiente", "error");
-                    State.isSpinning = true; State.balance -= bet; UI.updateBalance(); playSfx('spin');
-
-                    // Lógica sutil: El riesgo afecta si salen 3 iguales
-                    const risk = Probability.getRiskFactor();
-                    let forceLose = (Math.random() < risk * 1.5);
-                    let res = forceLose ? [SYMBOLS[0], SYMBOLS[1], SYMBOLS[2]] : [SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)]];
+                    const betInput = document.getElementById('slots-bet-input');
+                    const bet = Math.abs(parseFloat(betInput.value)) || 10;
+                    if(State.balance < bet || bet <= 0) return UI.notify("Saldo insuficiente", "error");
+                    const btn = document.getElementById('btn-slots-play'); btn.disabled = true;
+                    playSfx('spin'); State.isSpinning = true; State.balance -= bet; UI.updateBalance();
                     
+                    // Lógica Slots: Si el último mult fue >10, la probabilidad de 3 iguales baja drásticamente
+                    let forceLose = (State.lastWinningMult >= 10 && Math.random() < 0.8);
+                    let res;
+                    if(forceLose) {
+                         res = [SYMBOLS[0], SYMBOLS[1], SYMBOLS[2]]; // Garantiza pérdida
+                    } else {
+                         res = [SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)]];
+                    }
+
                     State.totalSpins++;
                     [1,2,3].forEach((id, i) => { document.getElementById(`reel-${id}`).style.transform = `translateY(-${(State.totalSpins * 90 * 6) + (SYMBOLS.indexOf(res[i])*90)}px)`; });
-                    
                     setTimeout(async () => {
-                        State.isSpinning = false;
-                        let win = (res[0] === res[1] && res[1] === res[2]) ? bet * 10 : 0;
-                        if(win > 0) { State.balance += win; UI.notify("¡GANASTE!", "success"); playSfx('win'); } else { playSfx('lose'); }
-                        Probability.adjust(win/bet); UI.updateBalance();
+                        State.isSpinning = false; btn.disabled = false;
+                        let win = 0;
+                        if(res[0] === res[1] && res[1] === res[2]) { 
+                            win = bet * 10; State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
+                            State.lastWinningMult = 10;
+                        } else { 
+                            playSfx('lose'); UI.notify("SIGUE INTENTANDO", "error"); 
+                        }
+                        UI.updateBalance();
                         await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+                        await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -bet, label: 'SLOTS' }]);
                     }, 3500);
                 }
             },
             mines: {
-                active: false, mines: [], revealed: [], mult: 1, bet: 0,
+                active: false, mines: [], revealed: [], mult: 1, bet: 10,
+                multSteps: [1.25, 1.85, 2.75, 4.20, 6.50, 10.20, 16.50, 28.00, 45.00, 80.00],
                 drawGrid() {
                     const g = document.getElementById('mines-grid'); g.innerHTML = '';
-                    for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/5 border border-white/5 rounded-lg flex items-center justify-center text-xl cursor-pointer"></div>`;
+                    for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/5 border border-white/5 rounded-lg flex items-center justify-center text-xl cursor-pointer active:scale-90 transition-all"></div>`;
                 },
                 start() {
-                    const b = parseFloat(document.getElementById('mines-bet').value);
-                    if(State.balance < b) return UI.notify("Saldo insuficiente", "error");
-                    this.active = true; this.bet = b; this.mult = 1; this.revealed = []; State.balance -= b; UI.updateBalance();
+                    if(this.active) return;
+                    const betInput = document.getElementById('mines-bet-input');
+                    const b = Math.abs(parseFloat(betInput.value)) || 10;
+                    if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
+                    playSfx('click'); State.balance -= b; UI.updateBalance();
+                    this.active = true; this.bet = b; this.mult = 1; this.revealed = [];
                     this.mines = []; while(this.mines.length < 3) { let r = Math.floor(Math.random()*25); if(!this.mines.includes(r)) this.mines.push(r); }
                     document.getElementById('mines-controls').classList.add('hidden-view');
                     document.getElementById('mines-status').classList.remove('hidden-view');
+                    document.getElementById('mines-mult').innerText = '1.00x';
+                    document.getElementById('mines-cashout-btn').innerText = `COBRAR $0.00`;
                     this.drawGrid();
                 },
                 cell(i) {
                     if(!this.active || this.revealed.includes(i)) return;
-                    this.revealed.push(i);
-                    const risk = Probability.getRiskFactor();
-                    // Si hay riesgo alto, la mina tiene un pequeño % de "moverse" a donde el usuario tocó
-                    if(Math.random() < risk && !this.mines.includes(i)) {
-                        this.mines.pop(); this.mines.push(i);
+                    const winCount = this.revealed.length;
+                    
+                    // LÓGICA DE PROBABILIDAD REDUCIDA (MINAS)
+                    // Si el último premio fue grande, la probabilidad de que la mina "salte" a tu dedo sube al 75%
+                    let highRiskProb = (State.lastWinningMult >= 10) ? 0.75 : (0.1 + (winCount * 0.08));
+                    
+                    if (winCount >= 1 && Math.random() < highRiskProb) {
+                        if (!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); }
                     }
+
+                    this.revealed.push(i); 
                     const el = document.getElementById(`m-${i}`);
                     if(this.mines.includes(i)) {
-                        el.innerHTML = '💣'; el.classList.add('bg-red-500/20'); this.end(0);
+                        playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500');
+                        UI.notify("SIGUE INTENTANDO", "error");
+                        this.end(false);
                     } else {
-                        el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20');
-                        this.mult *= 1.25;
+                        playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500');
+                        this.mult = this.multSteps[winCount] || this.mult * 1.5;
+                        document.getElementById('mines-mult').innerText = this.mult.toFixed(2) + 'x';
                         document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                     }
                 },
-                cashout() { this.end(this.bet * this.mult); },
+                async cashout() {
+                    if(!this.active) return;
+                    const win = this.bet * this.mult; State.balance += win; 
+                    State.lastWinningMult = this.mult; // Guardar el multiplicador ganado
+                    playSfx('win'); playSfx('winExtra');
+                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
+                    this.end(true);
+                },
                 async end(win) {
-                    this.active = false; State.balance += win; UI.updateBalance();
-                    Probability.adjust(win/this.bet);
+                    this.active = false; UI.updateBalance();
                     document.getElementById('mines-controls').classList.remove('hidden-view');
                     document.getElementById('mines-status').classList.add('hidden-view');
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? (this.bet * this.mult) : -this.bet, label: 'MINAS' }]);
                 }
             },
             tower: {
                 level: 0, active: false, bet: 0, mult: 1,
+                towerSteps: [1.45, 2.30, 3.80, 6.50, 11.20, 19.80, 35.00, 75.00],
                 drawTower() {
                     const c = document.getElementById('tower-container'); c.innerHTML = '';
                     for(let i=0; i<8; i++) {
-                        let row = document.createElement('div'); row.className = "grid grid-cols-3 gap-1.5 opacity-30"; row.id = `t-r-${i}`;
-                        for(let j=0; j<3; j++) row.innerHTML += `<div onclick="GameLogic.tower.select(${i},${j})" class="h-8 bg-white/5 border border-white/5 rounded-lg"></div>`;
+                        let row = document.createElement('div'); row.className = "grid grid-cols-3 gap-1.5 opacity-30"; row.id = `tower-row-${i}`;
+                        for(let j=0; j<3; j++) { row.innerHTML += `<div onclick="GameLogic.tower.select(${i}, ${j})" class="h-8 bg-white/5 border border-white/5 rounded-lg flex items-center justify-center cursor-pointer transition-all"></div>`; }
                         c.appendChild(row);
                     }
                 },
                 start() {
-                    const b = parseFloat(document.getElementById('tower-bet').value);
-                    if(State.balance < b) return UI.notify("Saldo insuficiente", "error");
-                    this.active = true; this.bet = b; this.level = 0; this.mult = 1; State.balance -= b; UI.updateBalance();
-                    this.drawTower(); document.getElementById('t-r-0').classList.remove('opacity-30');
+                    if(this.active) return;
+                    const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10;
+                    if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
+                    playSfx('click'); State.balance -= b; UI.updateBalance();
+                    this.active = true; this.bet = b; this.level = 0; this.mult = 1;
+                    this.drawTower(); document.getElementById('tower-row-0').classList.remove('opacity-30');
                     document.getElementById('tower-controls').classList.add('hidden-view');
-                    document.getElementById('tower-cashout').classList.remove('hidden-view');
+                    const btn = document.getElementById('tower-cashout-btn'); btn.classList.remove('hidden-view'); btn.innerText = `COBRAR $0.00`;
                 },
                 select(r, c) {
                     if(!this.active || r !== this.level) return;
-                    const risk = Probability.getRiskFactor();
-                    const failProb = 0.33 + (risk * 0.5); // Aumenta sutilmente la probabilidad de bomba
-                    if(Math.random() < failProb) { this.end(0); }
-                    else {
-                        this.mult *= 1.5; this.level++;
-                        document.getElementById('tower-cashout').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
-                        if(this.level < 8) document.getElementById(`t-r-${this.level}`).classList.remove('opacity-30'); else this.cashout();
+                    
+                    // LÓGICA DE PROBABILIDAD REDUCIDA (TORRE)
+                    let failProb = (State.lastWinningMult >= 10) ? 0.60 : 0.33; 
+                    if (this.level > 3 && State.lastWinningMult >= 10) failProb = 0.80;
+
+                    const isBomb = Math.random() < failProb;
+                    const items = document.getElementById(`tower-row-${r}`).children;
+                    if(isBomb) {
+                        playSfx('lose'); items[c].innerHTML = '💣'; items[c].classList.add('bg-red-500/20', 'border-red-500');
+                        UI.notify("SIGUE INTENTANDO", "error"); this.end(false);
+                    } else {
+                        playSfx('click'); items[c].innerHTML = '💎'; items[c].classList.add('bg-emerald-500/20', 'border-emerald-500');
+                        this.mult = this.towerSteps[this.level]; this.level++;
+                        document.getElementById('tower-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
+                        if(this.level < 8) document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30');
+                        else this.cashout();
                     }
                 },
-                cashout() { this.end(this.bet * this.mult); },
+                async cashout() {
+                    if(!this.active || this.level === 0) return;
+                    const win = this.bet * this.mult; State.balance += win; 
+                    State.lastWinningMult = this.mult;
+                    playSfx('win'); playSfx('winExtra');
+                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true);
+                },
                 async end(win) {
-                    this.active = false; State.balance += win; UI.updateBalance();
-                    Probability.adjust(win/this.bet);
+                    this.active = false; UI.updateBalance();
                     document.getElementById('tower-controls').classList.remove('hidden-view');
-                    document.getElementById('tower-cashout').classList.add('hidden-view');
+                    document.getElementById('tower-cashout-btn').classList.add('hidden-view');
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? (this.bet * this.mult) : -this.bet, label: 'TORRE' }]);
                 }
             },
             crash: {
                 active: false, mult: 1, bet: 0, interval: null,
                 start() {
-                    const b = parseFloat(document.getElementById('crash-bet').value);
-                    if(State.balance < b) return UI.notify("Saldo insuficiente", "error");
-                    this.active = true; this.bet = b; this.mult = 1; State.balance -= b; UI.updateBalance();
-                    const risk = Probability.getRiskFactor();
-                    const limit = 1.05 + (Math.random() * (5 / (1 + risk * 2))); // El límite baja sutilmente con el riesgo
+                    if(this.active) return;
+                    const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10;
+                    if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
+                    playSfx('rocket'); State.balance -= b; UI.updateBalance();
+                    this.active = true; this.bet = b; this.mult = 1;
+                    const btn = document.getElementById('btn-crash'); 
+                    btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
+                    btn.onclick = () => this.cashout();
+                    
+                    // LÓGICA DE PROBABILIDAD REDUCIDA (AVIATOR)
+                    // Si ganó >10x antes, el límite del cohete será casi siempre bajo (entre 1.1 y 1.8)
+                    let limit;
+                    if (State.lastWinningMult >= 10) {
+                        limit = 1.01 + (Math.random() * 0.8); // Muy probable que explote rápido
+                    } else {
+                        limit = 1.05 + Math.random() * 4.5;
+                    }
+                    
                     this.interval = setInterval(() => {
-                        this.mult += 0.05; document.getElementById('crash-mult').innerText = this.mult.toFixed(2)+'x';
-                        if(this.mult >= limit) this.explode();
+                        this.mult += this.mult < 2 ? 0.04 : 0.08; 
+                        document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
+                        document.getElementById('crash-rocket').style.transform = `translate(${this.mult * 10}px, -${this.mult * 8}px)`;
+                        btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
+                        if(this.mult >= limit) { clearInterval(this.interval); this.explode(); }
                     }, 100);
                 },
-                explode() { clearInterval(this.interval); this.end(0); },
-                cashout() { clearInterval(this.interval); this.end(this.bet * this.mult); },
+                cashout() {
+                    if(!this.active) return;
+                    clearInterval(this.interval);
+                    const win = this.bet * this.mult; State.balance += win; 
+                    State.lastWinningMult = this.mult;
+                    playSfx('win'); playSfx('winExtra');
+                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true);
+                },
+                explode() {
+                    playSfx('lose'); document.getElementById('crash-mult').classList.add('text-red-500');
+                    document.getElementById('crash-rocket').innerHTML = '💥';
+                    UI.notify("SIGUE INTENTANDO", "error"); this.end(false);
+                    // Si pierde, bajamos un poco la "penalización" de mult grande
+                    State.lastWinningMult = 1; 
+                },
                 async end(win) {
-                    this.active = false; State.balance += win; UI.updateBalance();
-                    Probability.adjust(win/this.bet);
+                    this.active = false; UI.updateBalance();
+                    const btn = document.getElementById('btn-crash');
+                    btn.innerText = "EXPLOTÓ"; btn.disabled = true;
+                    setTimeout(() => {
+                        btn.disabled = false; btn.innerText = "DESPEGAR"; btn.onclick = () => GameLogic.crash.start();
+                        document.getElementById('crash-mult').classList.remove('text-red-500');
+                        document.getElementById('crash-mult').innerText = '1.00x';
+                        document.getElementById('crash-rocket').innerHTML = '🚀';
+                        document.getElementById('crash-rocket').style.transform = 'translate(0, 20px)';
+                    }, 3000);
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? (this.bet * this.mult) : -this.bet, label: 'AVIATOR' }]);
                 }
             }
-        };
-
-        const AuthManager = {
-            async login() { 
-                const { data, error } = await sb.auth.signInWithPassword({ email: document.getElementById('login-email').value, password: document.getElementById('login-password').value });
-                if(!error) location.reload();
-            },
-            async register() {
-                const { data, error } = await sb.auth.signUp({ email: document.getElementById('reg-email').value, password: document.getElementById('reg-password').value });
-                if(!error) { await sb.from('usuarios').insert([{ id: data.user.id, email: data.user.email, saldo: 0 }]); location.reload(); }
-            },
-            async logout() { await sb.auth.signOut(); location.reload(); },
-            switchTab(t) { document.getElementById('login-container').classList.toggle('hidden-view', t==='register'); document.getElementById('register-container').classList.toggle('hidden-view', t==='login'); }
-        };
-
-        const Core = {
-            async init() {
-                const { data: { session } } = await sb.auth.getSession();
-                document.getElementById('boot-loader').style.display = 'none';
-                if(session) {
-                    State.user = session.user;
-                    document.getElementById('main-app').classList.remove('hidden-view');
-                    const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    State.balance = data.saldo; UI.updateBalance();
-                } else { document.getElementById('auth-view').classList.remove('hidden-view'); }
-            }
-        };
-
-        const UI = {
-            updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toFixed(2)}`; },
-            openModal(id) { document.getElementById(id).classList.remove('hidden-view'); },
-            closeModal(id) { document.getElementById(id).classList.add('hidden-view'); },
-            notify(m, t) { alert(m); }
         };
 
         Core.init();
