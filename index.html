@@ -58,7 +58,6 @@
         .instruction-card p { font-size: 11px; color: #ccc; line-height: 1.6; font-weight: 500; }
         .instruction-card strong { color: white; font-weight: 800; }
         
-        /* Badge para cantidad de bombas */
         .risk-badge { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; margin-bottom: 10px; }
     </style>
 </head>
@@ -208,7 +207,8 @@
         };
         const playSfx = (key) => { sfx[key].currentTime = 0; sfx[key].play().catch(() => {}); };
 
-        let State = { user: null, balance: 0, isSpinning: false, totalSpins: 0 };
+        // STATE AGREGADO: lastWinningMult para controlar la probabilidad
+        let State = { user: null, balance: 0, isSpinning: false, totalSpins: 0, lastWinningMult: 1 };
 
         const Router = {
             showView(viewId) {
@@ -250,8 +250,7 @@
                 if(!amt || amt <= 0 || !file) return UI.notify("Datos inválidos", "error");
                 try {
                     UI.notify("Procesando...", "success");
-                    const btn = document.getElementById('btn-confirm-dep');
-                    btn.disabled = true; btn.style.opacity = "0.5";
+                    const btn = document.getElementById('btn-confirm-dep'); btn.disabled = true; btn.style.opacity = "0.5";
                     const fileExt = file.name.split('.').pop();
                     const fileName = `${State.user.id}-${Date.now()}.${fileExt}`;
                     const filePath = `depositos/${fileName}`;
@@ -259,9 +258,7 @@
                     if (uploadError) throw uploadError;
                     const { data: urlData } = sb.storage.from('comprobantes').getPublicUrl(filePath);
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'deposits', amount: amt, label: 'CARGA', status: 'pending', evidence_url: urlData.publicUrl }]);
-                    UI.notify("En revisión", "success");
-                    UI.closeModal('modal-deposit');
-                    this.fetchHistory();
+                    UI.notify("En revisión", "success"); UI.closeModal('modal-deposit'); this.fetchHistory();
                 } catch (e) { UI.notify("Error al enviar", "error"); } 
                 finally { const btn = document.getElementById('btn-confirm-dep'); btn.disabled = false; btn.style.opacity = "1"; }
             },
@@ -313,19 +310,30 @@
                     if(State.isSpinning) return;
                     const betInput = document.getElementById('slots-bet-input');
                     const bet = Math.abs(parseFloat(betInput.value)) || 10;
-                    betInput.value = bet;
                     if(State.balance < bet || bet <= 0) return UI.notify("Saldo insuficiente", "error");
-                    const btn = document.getElementById('btn-slots-play');
-                    btn.disabled = true;
+                    const btn = document.getElementById('btn-slots-play'); btn.disabled = true;
                     playSfx('spin'); State.isSpinning = true; State.balance -= bet; UI.updateBalance();
-                    const res = [SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)]];
+                    
+                    // Lógica Slots: Si el último mult fue >10, la probabilidad de 3 iguales baja drásticamente
+                    let forceLose = (State.lastWinningMult >= 10 && Math.random() < 0.8);
+                    let res;
+                    if(forceLose) {
+                         res = [SYMBOLS[0], SYMBOLS[1], SYMBOLS[2]]; // Garantiza pérdida
+                    } else {
+                         res = [SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)]];
+                    }
+
                     State.totalSpins++;
                     [1,2,3].forEach((id, i) => { document.getElementById(`reel-${id}`).style.transform = `translateY(-${(State.totalSpins * 90 * 6) + (SYMBOLS.indexOf(res[i])*90)}px)`; });
                     setTimeout(async () => {
                         State.isSpinning = false; btn.disabled = false;
                         let win = 0;
-                        if(res[0] === res[1] && res[1] === res[2]) { win = bet * 10; State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); } 
-                        else { playSfx('lose'); UI.notify("SIGUE INTENTANDO", "error"); }
+                        if(res[0] === res[1] && res[1] === res[2]) { 
+                            win = bet * 10; State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
+                            State.lastWinningMult = 10;
+                        } else { 
+                            playSfx('lose'); UI.notify("SIGUE INTENTANDO", "error"); 
+                        }
                         UI.updateBalance();
                         await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                         await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -bet, label: 'SLOTS' }]);
@@ -343,7 +351,6 @@
                     if(this.active) return;
                     const betInput = document.getElementById('mines-bet-input');
                     const b = Math.abs(parseFloat(betInput.value)) || 10;
-                    betInput.value = b;
                     if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
                     playSfx('click'); State.balance -= b; UI.updateBalance();
                     this.active = true; this.bet = b; this.mult = 1; this.revealed = [];
@@ -357,9 +364,15 @@
                 cell(i) {
                     if(!this.active || this.revealed.includes(i)) return;
                     const winCount = this.revealed.length;
-                    if (winCount > 2 && Math.random() < (0.1 + (winCount * 0.08))) {
+                    
+                    // LÓGICA DE PROBABILIDAD REDUCIDA (MINAS)
+                    // Si el último premio fue grande, la probabilidad de que la mina "salte" a tu dedo sube al 75%
+                    let highRiskProb = (State.lastWinningMult >= 10) ? 0.75 : (0.1 + (winCount * 0.08));
+                    
+                    if (winCount >= 1 && Math.random() < highRiskProb) {
                         if (!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); }
                     }
+
                     this.revealed.push(i); 
                     const el = document.getElementById(`m-${i}`);
                     if(this.mines.includes(i)) {
@@ -370,13 +383,13 @@
                         playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500');
                         this.mult = this.multSteps[winCount] || this.mult * 1.5;
                         document.getElementById('mines-mult').innerText = this.mult.toFixed(2) + 'x';
-                        // Actualizar botón de cobrar con la cantidad real
                         document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                     }
                 },
                 async cashout() {
                     if(!this.active) return;
                     const win = this.bet * this.mult; State.balance += win; 
+                    State.lastWinningMult = this.mult; // Guardar el multiplicador ganado
                     playSfx('win'); playSfx('winExtra');
                     UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
                     this.end(true);
@@ -402,9 +415,7 @@
                 },
                 start() {
                     if(this.active) return;
-                    const betInput = document.getElementById('tower-bet-input');
-                    const b = Math.abs(parseFloat(betInput.value)) || 10;
-                    betInput.value = b;
+                    const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10;
                     if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
                     playSfx('click'); State.balance -= b; UI.updateBalance();
                     this.active = true; this.bet = b; this.level = 0; this.mult = 1;
@@ -414,19 +425,19 @@
                 },
                 select(r, c) {
                     if(!this.active || r !== this.level) return;
-                    let failProb = 0.33;
-                    if (this.level > 2) failProb = 0.45;
-                    if (this.level > 5) failProb = 0.60;
+                    
+                    // LÓGICA DE PROBABILIDAD REDUCIDA (TORRE)
+                    let failProb = (State.lastWinningMult >= 10) ? 0.60 : 0.33; 
+                    if (this.level > 3 && State.lastWinningMult >= 10) failProb = 0.80;
+
                     const isBomb = Math.random() < failProb;
                     const items = document.getElementById(`tower-row-${r}`).children;
                     if(isBomb) {
                         playSfx('lose'); items[c].innerHTML = '💣'; items[c].classList.add('bg-red-500/20', 'border-red-500');
-                        UI.notify("SIGUE INTENTANDO", "error");
-                        this.end(false);
+                        UI.notify("SIGUE INTENTANDO", "error"); this.end(false);
                     } else {
                         playSfx('click'); items[c].innerHTML = '💎'; items[c].classList.add('bg-emerald-500/20', 'border-emerald-500');
-                        this.mult = this.towerSteps[this.level];
-                        this.level++;
+                        this.mult = this.towerSteps[this.level]; this.level++;
                         document.getElementById('tower-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                         if(this.level < 8) document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30');
                         else this.cashout();
@@ -435,9 +446,9 @@
                 async cashout() {
                     if(!this.active || this.level === 0) return;
                     const win = this.bet * this.mult; State.balance += win; 
+                    State.lastWinningMult = this.mult;
                     playSfx('win'); playSfx('winExtra');
-                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
-                    this.end(true);
+                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true);
                 },
                 async end(win) {
                     this.active = false; UI.updateBalance();
@@ -451,16 +462,23 @@
                 active: false, mult: 1, bet: 0, interval: null,
                 start() {
                     if(this.active) return;
-                    const betInput = document.getElementById('crash-bet-input');
-                    const b = Math.abs(parseFloat(betInput.value)) || 10;
-                    betInput.value = b;
+                    const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10;
                     if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
                     playSfx('rocket'); State.balance -= b; UI.updateBalance();
                     this.active = true; this.bet = b; this.mult = 1;
                     const btn = document.getElementById('btn-crash'); 
                     btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
                     btn.onclick = () => this.cashout();
-                    const limit = 1.05 + Math.random() * 4.5;
+                    
+                    // LÓGICA DE PROBABILIDAD REDUCIDA (AVIATOR)
+                    // Si ganó >10x antes, el límite del cohete será casi siempre bajo (entre 1.1 y 1.8)
+                    let limit;
+                    if (State.lastWinningMult >= 10) {
+                        limit = 1.01 + (Math.random() * 0.8); // Muy probable que explote rápido
+                    } else {
+                        limit = 1.05 + Math.random() * 4.5;
+                    }
+                    
                     this.interval = setInterval(() => {
                         this.mult += this.mult < 2 ? 0.04 : 0.08; 
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
@@ -473,16 +491,16 @@
                     if(!this.active) return;
                     clearInterval(this.interval);
                     const win = this.bet * this.mult; State.balance += win; 
+                    State.lastWinningMult = this.mult;
                     playSfx('win'); playSfx('winExtra');
-                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
-                    this.end(true);
+                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true);
                 },
                 explode() {
-                    playSfx('lose');
-                    document.getElementById('crash-mult').classList.add('text-red-500');
+                    playSfx('lose'); document.getElementById('crash-mult').classList.add('text-red-500');
                     document.getElementById('crash-rocket').innerHTML = '💥';
-                    UI.notify("SIGUE INTENTANDO", "error");
-                    this.end(false);
+                    UI.notify("SIGUE INTENTANDO", "error"); this.end(false);
+                    // Si pierde, bajamos un poco la "penalización" de mult grande
+                    State.lastWinningMult = 1; 
                 },
                 async end(win) {
                     this.active = false; UI.updateBalance();
