@@ -57,6 +57,9 @@
         .instruction-card h4 { font-family: 'Archivo Black', sans-serif; font-size: 12px; color: var(--mx-green); text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
         .instruction-card p { font-size: 11px; color: #ccc; line-height: 1.6; font-weight: 500; }
         .instruction-card strong { color: white; font-weight: 800; }
+        
+        /* Badge para cantidad de bombas */
+        .risk-badge { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; margin-bottom: 10px; }
     </style>
 </head>
 <body class="antialiased select-none">
@@ -230,29 +233,16 @@
             },
             templates: {
                 slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4><i class="fas fa-info-circle"></i> Reglas del Slot</h4><p>Alinea 3 símbolos iguales en el centro para ganar <strong>10x tu apuesta inicial</strong>.</p></div></div>`,
-                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view flex justify-between items-center p-3 mb-3 bg-emerald-500/10 rounded-xl"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><button onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-3 py-1 rounded-lg font-bold text-[9px]">COBRAR</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino text-xs">APOSTAR</button></div><div class="instruction-card"><h4><i class="fas fa-bomb"></i> Reglas de Minas</h4><p>El riesgo aumenta en cada clic. ¡Los multiplicadores son <strong>exponenciales</strong>!</p></div></div>`,
+                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div class="risk-badge"><i class="fas fa-bomb"></i> 3 Minas Activas</div><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view flex justify-between items-center p-3 mb-3 bg-emerald-500/10 rounded-xl"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><button id="mines-cashout-btn" onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-4 py-2 rounded-lg font-bold text-[9px] font-casino tracking-tighter">COBRAR $0.00</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino text-xs">APOSTAR</button></div><div class="instruction-card"><h4><i class="fas fa-bomb"></i> Reglas de Minas</h4><p>El riesgo aumenta en cada clic. ¡Los multiplicadores son <strong>exponenciales</strong>!</p></div></div>`,
                 crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div class="h-24 flex items-center justify-center mb-6"><div id="crash-rocket" class="text-4xl transition-all duration-100">🚀</div></div><input id="crash-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button><div class="instruction-card"><h4><i class="fas fa-rocket"></i> Reglas Aviator</h4><p>Cobra antes de que el cohete explote.</p></div></div>`,
-                tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div id="tower-container" class="space-y-1.5 mb-4 flex flex-col-reverse overflow-y-auto max-h-[250px]"></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino text-xs">JUGAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino text-xs">COBRAR $0.00</button><div class="instruction-card"><h4><i class="fas fa-chess-rook"></i> Reglas Torre</h4><p>Cada piso es más difícil, pero paga mucho más.</p></div></div>`
+                tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div class="risk-badge" style="color: #fbbf24; background: rgba(251,191,36,0.1); border-color: rgba(251,191,36,0.2)"><i class="fas fa-bolt"></i> 1 Peligro por Piso</div><div id="tower-container" class="space-y-1.5 mb-4 flex flex-col-reverse overflow-y-auto max-h-[250px]"></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino text-xs">JUGAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino text-xs">COBRAR $0.00</button><div class="instruction-card"><h4><i class="fas fa-chess-rook"></i> Reglas Torre</h4><p>Cada piso es más difícil, pero paga mucho más.</p></div></div>`
             }
         };
 
         const Core = {
-            async init() {
-                let p = 0; const i = setInterval(() => {
-                    p += 25; document.getElementById('boot-bar').style.width = `${p}%`;
-                    if(p >= 100) { clearInterval(i); this.check(); }
-                }, 100);
-            },
-            async check() {
-                const { data: { session } } = await sb.auth.getSession();
-                document.getElementById('boot-loader').style.display = 'none';
-                if(session) { State.user = session.user; document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); }
-                else { document.getElementById('auth-view').classList.remove('hidden-view'); }
-            },
-            async loadBalance() {
-                const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle();
-                State.balance = data ? data.saldo : 0; UI.updateBalance();
-            },
+            async init() { let p = 0; const i = setInterval(() => { p += 25; document.getElementById('boot-bar').style.width = `${p}%`; if(p >= 100) { clearInterval(i); this.check(); } }, 100); },
+            async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); } else { document.getElementById('auth-view').classList.remove('hidden-view'); } },
+            async loadBalance() { const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle(); State.balance = data ? data.saldo : 0; UI.updateBalance(); },
             async confirmDeposit() {
                 const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value));
                 const fileInput = document.getElementById('receipt-input');
@@ -344,7 +334,6 @@
             },
             mines: {
                 active: false, mines: [], revealed: [], mult: 1, bet: 10,
-                // Multiplicadores exponenciales estilo casino
                 multSteps: [1.25, 1.85, 2.75, 4.20, 6.50, 10.20, 16.50, 28.00, 45.00, 80.00],
                 drawGrid() {
                     const g = document.getElementById('mines-grid'); g.innerHTML = '';
@@ -358,38 +347,31 @@
                     if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
                     playSfx('click'); State.balance -= b; UI.updateBalance();
                     this.active = true; this.bet = b; this.mult = 1; this.revealed = [];
-                    // Posiciones iniciales de minas (3 minas)
                     this.mines = []; while(this.mines.length < 3) { let r = Math.floor(Math.random()*25); if(!this.mines.includes(r)) this.mines.push(r); }
                     document.getElementById('mines-controls').classList.add('hidden-view');
                     document.getElementById('mines-status').classList.remove('hidden-view');
                     document.getElementById('mines-mult').innerText = '1.00x';
+                    document.getElementById('mines-cashout-btn').innerText = `COBRAR $0.00`;
                     this.drawGrid();
                 },
                 cell(i) {
                     if(!this.active || this.revealed.includes(i)) return;
-                    
-                    // Lógica de Riesgo Dinámico: A mayor multiplicador, el sistema puede "re-ubicar" minas hacia tu posición
-                    // si tienes mala suerte estadísticamente (Probabilidad de 40% de que la mina se mueva a tu dedo si ya vas ganando mucho)
                     const winCount = this.revealed.length;
                     if (winCount > 2 && Math.random() < (0.1 + (winCount * 0.08))) {
-                        if (!this.mines.includes(i)) {
-                            this.mines.pop();
-                            this.mines.push(i);
-                        }
+                        if (!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); }
                     }
-
                     this.revealed.push(i); 
                     const el = document.getElementById(`m-${i}`);
-                    
                     if(this.mines.includes(i)) {
                         playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500');
                         UI.notify("SIGUE INTENTANDO", "error");
                         this.end(false);
                     } else {
                         playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500');
-                        // Usar pasos exponenciales o incremento agresivo
                         this.mult = this.multSteps[winCount] || this.mult * 1.5;
                         document.getElementById('mines-mult').innerText = this.mult.toFixed(2) + 'x';
+                        // Actualizar botón de cobrar con la cantidad real
+                        document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                     }
                 },
                 async cashout() {
@@ -409,7 +391,6 @@
             },
             tower: {
                 level: 0, active: false, bet: 0, mult: 1,
-                // Multiplicadores agresivos por piso
                 towerSteps: [1.45, 2.30, 3.80, 6.50, 11.20, 19.80, 35.00, 75.00],
                 drawTower() {
                     const c = document.getElementById('tower-container'); c.innerHTML = '';
@@ -433,15 +414,11 @@
                 },
                 select(r, c) {
                     if(!this.active || r !== this.level) return;
-                    
-                    // Riesgo progresivo: en pisos altos la probabilidad de bomba aumenta del 33% al 66%
                     let failProb = 0.33;
                     if (this.level > 2) failProb = 0.45;
                     if (this.level > 5) failProb = 0.60;
-
                     const isBomb = Math.random() < failProb;
                     const items = document.getElementById(`tower-row-${r}`).children;
-                    
                     if(isBomb) {
                         playSfx('lose'); items[c].innerHTML = '💣'; items[c].classList.add('bg-red-500/20', 'border-red-500');
                         UI.notify("SIGUE INTENTANDO", "error");
@@ -485,7 +462,7 @@
                     btn.onclick = () => this.cashout();
                     const limit = 1.05 + Math.random() * 4.5;
                     this.interval = setInterval(() => {
-                        this.mult += this.mult < 2 ? 0.04 : 0.08; // Acelera después de 2x
+                        this.mult += this.mult < 2 ? 0.04 : 0.08; 
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
                         document.getElementById('crash-rocket').style.transform = `translate(${this.mult * 10}px, -${this.mult * 8}px)`;
                         btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
