@@ -58,7 +58,6 @@
         .instruction-card p { font-size: 11px; color: #ccc; line-height: 1.6; font-weight: 500; }
         .instruction-card strong { color: white; font-weight: 800; }
         
-        /* Badge para cantidad de bombas */
         .risk-badge { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; margin-bottom: 10px; }
     </style>
 </head>
@@ -208,7 +207,8 @@
         };
         const playSfx = (key) => { sfx[key].currentTime = 0; sfx[key].play().catch(() => {}); };
 
-        let State = { user: null, balance: 0, isSpinning: false, totalSpins: 0 };
+        // State con luckFactor para balanceo de probabilidades
+        let State = { user: null, balance: 0, isSpinning: false, totalSpins: 0, luckFactor: 1.0 };
 
         const Router = {
             showView(viewId) {
@@ -307,6 +307,16 @@
         };
 
         const GameLogic = {
+            // SISTEMA APC (Adaptive Probability Control)
+            adjustLuck(winAmount, betAmount) {
+                if (winAmount > betAmount * 5) {
+                    State.luckFactor = 0.7; // Reduce suerte si gana mucho
+                } else {
+                    // Recupera suerte poco a poco
+                    State.luckFactor = Math.min(1.0, State.luckFactor + 0.05);
+                }
+            },
+
             slots: {
                 init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); r.innerHTML = ''; Array(40).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); }); },
                 async play() {
@@ -315,18 +325,33 @@
                     const bet = Math.abs(parseFloat(betInput.value)) || 10;
                     betInput.value = bet;
                     if(State.balance < bet || bet <= 0) return UI.notify("Saldo insuficiente", "error");
+                    
                     const btn = document.getElementById('btn-slots-play');
                     btn.disabled = true;
                     playSfx('spin'); State.isSpinning = true; State.balance -= bet; UI.updateBalance();
-                    const res = [SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)], SYMBOLS[Math.floor(Math.random()*6)]];
+
+                    // Lógica de símbolos con luckFactor
+                    const getSymbol = () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+                    const res = [getSymbol(), getSymbol()];
+                    
+                    // Si los dos primeros coinciden, el tercero depende de la suerte
+                    if (res[0] === res[1] && Math.random() > State.luckFactor) {
+                        res.push(SYMBOLS[(SYMBOLS.indexOf(res[0]) + 1) % SYMBOLS.length]); // Fuerza fallo
+                    } else {
+                        res.push(getSymbol());
+                    }
+
                     State.totalSpins++;
                     [1,2,3].forEach((id, i) => { document.getElementById(`reel-${id}`).style.transform = `translateY(-${(State.totalSpins * 90 * 6) + (SYMBOLS.indexOf(res[i])*90)}px)`; });
+                    
                     setTimeout(async () => {
                         State.isSpinning = false; btn.disabled = false;
                         let win = 0;
                         if(res[0] === res[1] && res[1] === res[2]) { win = bet * 10; State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); } 
                         else { playSfx('lose'); UI.notify("SIGUE INTENTANDO", "error"); }
+                        
                         UI.updateBalance();
+                        GameLogic.adjustLuck(win, bet); // Aplica APC
                         await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                         await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -bet, label: 'SLOTS' }]);
                     }, 3500);
@@ -357,9 +382,13 @@
                 cell(i) {
                     if(!this.active || this.revealed.includes(i)) return;
                     const winCount = this.revealed.length;
-                    if (winCount > 2 && Math.random() < (0.1 + (winCount * 0.08))) {
+                    
+                    // Probabilidad de fallo ajustada por APC
+                    let dynamicFail = (0.1 + (winCount * 0.08)) / State.luckFactor;
+                    if (winCount > 2 && Math.random() < dynamicFail) {
                         if (!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); }
                     }
+                    
                     this.revealed.push(i); 
                     const el = document.getElementById(`m-${i}`);
                     if(this.mines.includes(i)) {
@@ -370,7 +399,6 @@
                         playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500');
                         this.mult = this.multSteps[winCount] || this.mult * 1.5;
                         document.getElementById('mines-mult').innerText = this.mult.toFixed(2) + 'x';
-                        // Actualizar botón de cobrar con la cantidad real
                         document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                     }
                 },
@@ -382,11 +410,13 @@
                     this.end(true);
                 },
                 async end(win) {
+                    const winAmt = win ? (this.bet * this.mult) : 0;
+                    GameLogic.adjustLuck(winAmt, this.bet); // APC
                     this.active = false; UI.updateBalance();
                     document.getElementById('mines-controls').classList.remove('hidden-view');
                     document.getElementById('mines-status').classList.add('hidden-view');
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? (this.bet * this.mult) : -this.bet, label: 'MINAS' }]);
+                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'MINAS' }]);
                 }
             },
             tower: {
@@ -414,9 +444,7 @@
                 },
                 select(r, c) {
                     if(!this.active || r !== this.level) return;
-                    let failProb = 0.33;
-                    if (this.level > 2) failProb = 0.45;
-                    if (this.level > 5) failProb = 0.60;
+                    let failProb = (this.level > 5 ? 0.60 : this.level > 2 ? 0.45 : 0.33) / State.luckFactor;
                     const isBomb = Math.random() < failProb;
                     const items = document.getElementById(`tower-row-${r}`).children;
                     if(isBomb) {
@@ -440,11 +468,13 @@
                     this.end(true);
                 },
                 async end(win) {
+                    const winAmt = win ? (this.bet * this.mult) : 0;
+                    GameLogic.adjustLuck(winAmt, this.bet); // APC
                     this.active = false; UI.updateBalance();
                     document.getElementById('tower-controls').classList.remove('hidden-view');
                     document.getElementById('tower-cashout-btn').classList.add('hidden-view');
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? (this.bet * this.mult) : -this.bet, label: 'TORRE' }]);
+                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'TORRE' }]);
                 }
             },
             crash: {
@@ -460,7 +490,10 @@
                     const btn = document.getElementById('btn-crash'); 
                     btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
                     btn.onclick = () => this.cashout();
-                    const limit = 1.05 + Math.random() * 4.5;
+                    
+                    // Límite afectado por APC
+                    const limit = (1.05 + Math.random() * 4.5) * State.luckFactor;
+                    
                     this.interval = setInterval(() => {
                         this.mult += this.mult < 2 ? 0.04 : 0.08; 
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
@@ -485,6 +518,8 @@
                     this.end(false);
                 },
                 async end(win) {
+                    const winAmt = win ? (this.bet * this.mult) : 0;
+                    GameLogic.adjustLuck(winAmt, this.bet); // APC
                     this.active = false; UI.updateBalance();
                     const btn = document.getElementById('btn-crash');
                     btn.innerText = "EXPLOTÓ"; btn.disabled = true;
@@ -496,7 +531,7 @@
                         document.getElementById('crash-rocket').style.transform = 'translate(0, 20px)';
                     }, 3000);
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? (this.bet * this.mult) : -this.bet, label: 'AVIATOR' }]);
+                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR' }]);
                 }
             }
         };
