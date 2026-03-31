@@ -207,7 +207,7 @@
         };
         const playSfx = (key) => { sfx[key].currentTime = 0; sfx[key].play().catch(() => {}); };
 
-        // State con Sistema de Enganche Progresivo (E.P.S)
+        // State con Sistema de Enganche AGRESIVO (E.P.S 2.0)
         let State = { 
             user: null, 
             balance: 0, 
@@ -215,7 +215,7 @@
             totalSpins: 0, 
             consecutiveLosses: 0, 
             highWinCooldown: 0,
-            pityThreshold: 6
+            pityThreshold: 3 // Se activa MUCHO más rápido para retener al usuario
         };
 
         const Router = {
@@ -315,12 +315,13 @@
         };
 
         const GameLogic = {
-            // MOTOR E.P.S (Enhanced Probability System)
+            // MOTOR DE ENGANCHE AGRESIVO 2.0
             updatePsychology(winAmount, betAmount) {
                 if (winAmount > 0) {
                     State.consecutiveLosses = 0;
-                    if (winAmount > betAmount * 5) {
-                        State.highWinCooldown = Math.floor(Math.random() * 3) + 3;
+                    // Si gana mucho, entra en "fase de ahorro" para el casino
+                    if (winAmount >= betAmount * 5) {
+                        State.highWinCooldown = Math.floor(Math.random() * 3) + 4;
                     }
                 } else {
                     State.consecutiveLosses++;
@@ -329,9 +330,12 @@
             },
 
             getDynamicLuck() {
-                if (State.highWinCooldown > 0) return 0.12; 
-                if (State.consecutiveLosses >= State.pityThreshold) return 0.88;
-                return 0.42;
+                // Si el usuario está en enfriamiento, la suerte es mínima (15%)
+                if (State.highWinCooldown > 0) return 0.15; 
+                // Si lleva 3 pérdidas, activamos "Modo Anzuelo" (90% probabilidad de victoria de recuperación)
+                if (State.consecutiveLosses >= State.pityThreshold) return 0.90;
+                // Suerte base tentadora
+                return 0.45;
             },
 
             slots: {
@@ -349,18 +353,24 @@
 
                     const currentLuck = GameLogic.getDynamicLuck();
                     const getSymbol = () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
-                    let res = [getSymbol(), getSymbol()];
+                    
+                    let res = [];
+                    const forceNearMiss = Math.random() < 0.70; // 70% de veces que pierde, será "por poquito"
 
-                    // Lógica de Enganche: Casi-victoria o Victoria real
-                    if (res[0] === res[1]) {
-                        if (Math.random() < currentLuck) {
-                            res.push(res[0]); // Victoria
-                        } else {
-                            let failIndex = (SYMBOLS.indexOf(res[0]) + 1) % SYMBOLS.length;
-                            res.push(SYMBOLS[failIndex]); // Efecto "por poquito"
-                        }
+                    if (Math.random() < currentLuck) {
+                        // VICTORIA FORZADA
+                        const winSym = getSymbol();
+                        res = [winSym, winSym, winSym];
                     } else {
-                        res.push(getSymbol());
+                        // DERROTA CON ENGANCHE
+                        const sym1 = getSymbol();
+                        if (forceNearMiss) {
+                            // Dos iguales y el tercero fallado por uno
+                            let failIndex = (SYMBOLS.indexOf(sym1) + 1) % SYMBOLS.length;
+                            res = [sym1, sym1, SYMBOLS[failIndex]];
+                        } else {
+                            res = [sym1, getSymbol(), getSymbol()];
+                        }
                     }
 
                     State.totalSpins++;
@@ -368,9 +378,10 @@
                     
                     setTimeout(async () => {
                         State.isSpinning = false; btn.disabled = false;
-                        let win = 0;
-                        if(res[0] === res[1] && res[1] === res[2]) { 
-                            win = bet * 10; State.balance += win; 
+                        let win = (res[0] === res[1] && res[1] === res[2]) ? bet * 10 : 0;
+                        
+                        if(win > 0) { 
+                            State.balance += win; 
                             playSfx('win'); playSfx('winExtra'); 
                             UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
                         } else { 
@@ -411,8 +422,13 @@
                     if(!this.active || this.revealed.includes(i)) return;
                     const winCount = this.revealed.length;
                     
-                    let dynamicFail = (0.12 + (winCount * 0.07)) / (GameLogic.getDynamicLuck() * 2);
-                    if (winCount > 1 && Math.random() < dynamicFail) {
+                    // Probabilidad de fallo: Casi nula en el primer clic si vienes de perder
+                    let luck = GameLogic.getDynamicLuck();
+                    let dynamicFail = (0.08 + (winCount * 0.12)) / (luck * 2.5);
+                    
+                    if (winCount === 0 && luck > 0.8) dynamicFail = 0; // Garantiza primer diamante en modo "pity"
+
+                    if (Math.random() < dynamicFail) {
                         if (!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); }
                     }
                     
@@ -472,7 +488,10 @@
                 select(r, c) {
                     if(!this.active || r !== this.level) return;
                     let luck = GameLogic.getDynamicLuck();
-                    let failProb = (this.level > 4 ? 0.65 : 0.35) / (luck * 2);
+                    // En los primeros 2 niveles, si tiene suerte alta, no puede perder.
+                    let failProb = (this.level > 4 ? 0.60 : 0.38) / (luck * 2);
+                    if (this.level < 2 && luck > 0.8) failProb = 0;
+
                     const isBomb = Math.random() < failProb;
                     const items = document.getElementById(`tower-row-${r}`).children;
                     if(isBomb) {
@@ -520,10 +539,11 @@
                     btn.onclick = () => this.cashout();
                     
                     let luck = GameLogic.getDynamicLuck();
-                    const limit = (1.1 + Math.random() * 4) * luck;
+                    // Límite dinámico: Si el usuario vienes de perder, el cohete vuela más alto para "tentarlo"
+                    const limit = (1.15 + Math.random() * 5) * (luck * 1.5);
                     
                     this.interval = setInterval(() => {
-                        this.mult += this.mult < 2 ? 0.04 : 0.08; 
+                        this.mult += this.mult < 2 ? 0.04 : 0.09; 
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
                         document.getElementById('crash-rocket').style.transform = `translate(${this.mult * 10}px, -${this.mult * 8}px)`;
                         btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
