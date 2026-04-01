@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WinMX | Premium Casino</title>
     
+    <link rel="icon" href="data:,">
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
@@ -257,6 +259,14 @@
             async init() { let p = 0; const i = setInterval(() => { p += 25; document.getElementById('boot-bar').style.width = `${p}%`; if(p >= 100) { clearInterval(i); this.check(); } }, 100); },
             async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); } else { document.getElementById('auth-view').classList.remove('hidden-view'); } },
             async loadBalance() { const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle(); State.balance = data ? data.saldo : 0; UI.updateBalance(); },
+            
+            // Función auxiliar para actualizar saldo de forma segura y evitar Error 400
+            async updateDBSaldo() {
+                if(!State.user) return;
+                const { error } = await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+                if(error) console.error("Balance Update Error:", error.message);
+            },
+
             async confirmDeposit() {
                 const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value));
                 const fileInput = document.getElementById('receipt-input');
@@ -361,7 +371,7 @@
                         let win = (res[0] === res[1] && res[1] === res[2]) ? bet * 10 : 0;
                         if(win > 0) { State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`¡GRAN PREMIO! $${win.toFixed(2)}`, "success"); } else { playSfx('lose'); UI.notify("CASI...", "error"); }
                         UI.updateBalance(); GameLogic.adjustLuck(win, bet, win > 0 ? 10 : 0);
-                        await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+                        await Core.updateDBSaldo();
                         await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -bet, label: 'SLOTS' }]);
                     }, 3500);
                 }
@@ -414,7 +424,7 @@
                     this.active = false; UI.updateBalance();
                     document.getElementById('mines-controls').classList.remove('hidden-view');
                     document.getElementById('mines-status').classList.add('hidden-view');
-                    await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+                    await Core.updateDBSaldo();
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'MINAS' }]);
                 }
             },
@@ -470,7 +480,7 @@
                     this.active = false; UI.updateBalance();
                     document.getElementById('tower-controls').classList.remove('hidden-view');
                     document.getElementById('tower-status').classList.add('hidden-view');
-                    await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+                    await Core.updateDBSaldo();
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'TORRE' }]);
                 }
             },
@@ -512,7 +522,7 @@
                         document.getElementById('crash-mult').classList.remove('text-red-500'); document.getElementById('crash-mult').innerText = '1.00x';
                         document.getElementById('crash-rocket').innerHTML = '🚀';
                     }, 2500);
-                    await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+                    await Core.updateDBSaldo();
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR' }]);
                 }
             }
