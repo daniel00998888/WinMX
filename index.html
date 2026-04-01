@@ -205,7 +205,15 @@
             lose: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
             rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3')
         };
-        const playSfx = (key) => { sfx[key].currentTime = 0; sfx[key].play().catch(() => {}); };
+        
+        // FUNCIÓN DE SONIDO REFORZADA
+        const playSfx = (key) => { 
+            if (sfx[key]) {
+                sfx[key].pause(); // Detener si ya está sonando
+                sfx[key].currentTime = 0; // Reiniciar
+                sfx[key].play().catch(e => console.log("Audio play error:", e)); 
+            }
+        };
 
         let State = { 
             user: null, 
@@ -328,7 +336,7 @@
                     State.luckFactor = 1.6; 
                 } else {
                     const isScalping = State.winHistory.filter(h => h.bet >= 30 && h.mult < 1.15 && h.win > 0).length >= 2;
-                    if (isScalping) { State.luckFactor = 0.2; } // Castigo total al 1.03x
+                    if (isScalping) { State.luckFactor = 0.2; }
                     else { State.luckFactor = Math.min(1.0, State.luckFactor + 0.05); }
                 }
             },
@@ -350,7 +358,7 @@
                     setTimeout(async () => {
                         State.isSpinning = false; btn.disabled = false;
                         let win = (res[0] === res[1] && res[1] === res[2]) ? bet * 10 : 0;
-                        if(win > 0) { State.balance += win; playSfx('win'); UI.notify(`¡GRAN PREMIO! $${win.toFixed(2)}`, "success"); } else { playSfx('lose'); UI.notify("CASI...", "error"); }
+                        if(win > 0) { State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`¡GRAN PREMIO! $${win.toFixed(2)}`, "success"); } else { playSfx('lose'); UI.notify("CASI...", "error"); }
                         UI.updateBalance(); GameLogic.adjustLuck(win, bet, win > 0 ? 10 : 0);
                         await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                         await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -bet, label: 'SLOTS' }]);
@@ -394,7 +402,7 @@
                         document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                     }
                 },
-                async cashout() { if(!this.active) return; const win = this.bet * this.mult; State.balance += win; playSfx('win'); this.end(true); },
+                async cashout() { if(!this.active) return; const win = this.bet * this.mult; State.balance += win; playSfx('win'); playSfx('winExtra'); this.end(true); },
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
                     GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
@@ -438,7 +446,7 @@
                         if(this.level < 8) document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30'); else this.cashout();
                     }
                 },
-                async cashout() { if(!this.active || this.level === 0) return; const win = this.bet * this.mult; State.balance += win; playSfx('win'); this.end(true); },
+                async cashout() { if(!this.active || this.level === 0) return; const win = this.bet * this.mult; State.balance += win; playSfx('win'); playSfx('winExtra'); this.end(true); },
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
                     GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
@@ -460,23 +468,18 @@
                     const btn = document.getElementById('btn-crash'); btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
                     btn.onclick = () => this.cashout();
 
-                    // --- BLINDAJE ANTI-HACK 1.03x ---
-                    // 1. Probabilidad de Crash Instantáneo en 1.00x
                     if (Math.random() < 0.15 / State.luckFactor) { this.explode(); return; }
 
-                    // 2. Cálculo de límite con rango hasta 500x
                     let baseLimit;
                     const rng = Math.random();
-                    if (rng < 0.01) baseLimit = 100 + Math.random() * 400; // 1% de probabilidad de 100x-500x
-                    else if (rng < 0.05) baseLimit = 20 + Math.random() * 80; // 4% de probabilidad de 20x-100x
-                    else if (rng < 0.20) baseLimit = 2 + Math.random() * 18; // 15% de probabilidad de 2x-20x
-                    else baseLimit = 1.01 + Math.random() * 0.99; // 80% de probabilidad de 1x-2x
+                    if (rng < 0.01) baseLimit = 100 + Math.random() * 400; 
+                    else if (rng < 0.05) baseLimit = 20 + Math.random() * 80; 
+                    else if (rng < 0.20) baseLimit = 2 + Math.random() * 18; 
+                    else baseLimit = 1.01 + Math.random() * 0.99; 
 
-                    // Penalización extra si detecta scalping
                     if (State.luckFactor < 0.5) baseLimit = 1.01 + Math.random() * 0.05; 
 
                     this.interval = setInterval(() => {
-                        // Crecimiento acelerado
                         const step = this.mult < 2 ? 0.01 : this.mult < 10 ? 0.05 : 0.5;
                         this.mult += step;
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
@@ -489,7 +492,8 @@
                     if(!this.active) return;
                     clearInterval(this.interval);
                     const win = this.bet * this.mult; State.balance += win; 
-                    playSfx('win'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
+                    playSfx('win'); playSfx('winExtra'); // SONIDOS DE VICTORIA RE-ACTIVADOS
+                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
                     this.end(true);
                 },
                 explode() {
