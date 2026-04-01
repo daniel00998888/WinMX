@@ -467,77 +467,115 @@
                 }
             },
 
-            crash: {
-                active: false, mult: 1, bet: 0, interval: null,
-                start() {
-                    if(this.active) return;
-                    const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10;
-                    if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
-                    playSfx('rocket'); State.balance -= b; UI.updateBalance();
-                    this.active = true; this.bet = b; this.mult = 1.0;
-                    const btn = document.getElementById('btn-crash'); btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
-                    btn.onclick = () => this.cashout();
-                    if (Math.random() < 0.15 / State.luckFactor) { this.explode(); return; }
-                    let baseLimit;
-                    const rng = Math.random();
-                    if (rng < 0.01) baseLimit = 100 + Math.random() * 400; 
-                    else if (rng < 0.05) baseLimit = 20 + Math.random() * 80; 
-                    else if (rng < 0.20) baseLimit = 2 + Math.random() * 18; 
-                    else baseLimit = 1.01 + Math.random() * 0.99; 
-                    if (State.luckFactor < 0.5) baseLimit = 1.01 + Math.random() * 0.05; 
-                    
-                    this.interval = setInterval(() => {
-                        let step = 0.01;
-                        if (this.mult >= 2) step = 0.02;
-                        if (this.mult >= 5) step = 0.05;
-                        if (this.mult >= 10) step = 0.08; 
-                        if (this.mult >= 20) step = 0.15;
-                        
-                        this.mult += step;
-                        document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
-                        
-                        // --- LÓGICA DE FIJACIÓN DE CÁMARA (Para que no desaparezca) ---
-                        const posX = Math.min(this.mult * 5.5, 195); // Se queda fijo en 195px
-                        const posY = Math.min(this.mult * 4.5, 75);  // Se queda fijo en 75px
-                        document.getElementById('crash-rocket').style.transform = `translate(${posX}px, -${posY}px)`;
-                        
-                        btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
-                        if(this.mult >= baseLimit) { clearInterval(this.interval); this.explode(); }
-                    }, 80);
-                },
-                cashout() {
-                    if(!this.active) return;
-                    clearInterval(this.interval);
-                    const win = this.bet * this.mult; State.balance += win; 
-                    playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
-                    this.end(true);
-                },
-                explode() {
-                    clearInterval(this.interval);
-                    playSfx('lose'); UI.notify("¡EXPLOTÓ!", "error");
-                    document.getElementById('crash-mult').classList.add('text-red-500');
-                    document.getElementById('crash-rocket').innerHTML = '💥';
-                    this.end(false);
-                },
-                async end(win) {
-                    const winAmt = win ? (this.bet * this.mult) : 0;
-                    GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
-                    this.active = false; UI.updateBalance();
-                    const btn = document.getElementById('btn-crash');
-                    btn.innerText = "EXPLOTÓ"; btn.disabled = true;
-                    setTimeout(() => {
-                        btn.disabled = false; btn.innerText = "DESPEGAR"; btn.onclick = () => GameLogic.crash.start();
-                        document.getElementById('crash-mult').classList.remove('text-red-500');
-                        document.getElementById('crash-mult').innerText = '1.00x';
-                        document.getElementById('crash-rocket').innerHTML = '🚀';
-                        document.getElementById('crash-rocket').style.transform = 'translate(0, 20px)';
-                    }, 2500);
-                    await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR' }]);
-                }
-            }
-        };
+crash: {
+    active: false, mult: 1, bet: 0, interval: null,
+    start() {
+        if(this.active) return;
+        const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10;
+        if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
+        
+        playSfx('rocket'); State.balance -= b; UI.updateBalance();
+        this.active = true; this.bet = b; this.mult = 1.0;
+        
+        const btn = document.getElementById('btn-crash'); 
+        btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
+        btn.onclick = () => this.cashout();
 
+        // --- LÓGICA DE PROBABILIDAD REPARADA ---
+        if (Math.random() < 0.12 / State.luckFactor) { this.explode(); return; }
+
+        let baseLimit;
+        const rng = Math.random();
+        
+        if (rng < 0.01) {
+            // 1% de probabilidad: Súper Vuelo
+            baseLimit = 100 + Math.random() * 400; 
+        } else if (rng < 0.08) {
+            // 7% de probabilidad: Vuelo Alto
+            baseLimit = 15 + Math.random() * 85; 
+        } else if (rng < 0.35) {
+            // 27% de probabilidad: Vuelo Medio
+            baseLimit = 2.5 + Math.random() * 12.5; 
+        } else {
+            // 65% de probabilidad: Vuelo Estándar (Ahora llega hasta 3.8x)
+            baseLimit = 1.1 + Math.random() * 2.7; 
+        }
+
+        // Ajuste dinámico por suerte (Suave para no romper la experiencia)
+        if (State.luckFactor < 0.4) {
+            baseLimit = 1.05 + Math.random() * 1.5; 
+        }
+
+        this.interval = setInterval(() => {
+            let step = 0.01;
+            if (this.mult >= 2) step = 0.02;
+            if (this.mult >= 5) step = 0.05;
+            if (this.mult >= 10) step = 0.08; 
+            if (this.mult >= 20) step = 0.15;
+            
+            this.mult += step;
+            document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
+            
+            // --- LÓGICA DE FIJACIÓN DE CÁMARA (Original) ---
+            const posX = Math.min(this.mult * 5.5, 195); 
+            const posY = Math.min(this.mult * 4.5, 75);  
+            document.getElementById('crash-rocket').style.transform = `translate(${posX}px, -${posY}px)`;
+            
+            btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
+            
+            if(this.mult >= baseLimit) { 
+                clearInterval(this.interval); 
+                this.explode(); 
+            }
+        }, 80);
+    },
+    cashout() {
+        if(!this.active) return;
+        clearInterval(this.interval);
+        const win = this.bet * this.mult; 
+        State.balance += win; 
+        playSfx('win'); playSfx('winExtra'); 
+        UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
+        this.end(true);
+    },
+    explode() {
+        clearInterval(this.interval);
+        playSfx('lose'); 
+        UI.notify("¡EXPLOTÓ!", "error");
+        document.getElementById('crash-mult').classList.add('text-red-500');
+        document.getElementById('crash-rocket').innerHTML = '💥';
+        this.end(false);
+    },
+    async end(win) {
+        const winAmt = win ? (this.bet * this.mult) : 0;
+        GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
+        this.active = false; 
+        UI.updateBalance();
+        
+        const btn = document.getElementById('btn-crash');
+        btn.innerText = "EXPLOTÓ"; 
+        btn.disabled = true;
+
+        setTimeout(() => {
+            btn.disabled = false; 
+            btn.innerText = "DESPEGAR"; 
+            btn.onclick = () => GameLogic.crash.start();
+            document.getElementById('crash-mult').classList.remove('text-red-500');
+            document.getElementById('crash-mult').innerText = '1.00x';
+            document.getElementById('crash-rocket').innerHTML = '🚀';
+            document.getElementById('crash-rocket').style.transform = 'translate(0, 20px)';
+        }, 2500);
+
+        // Sincronización con Supabase (Infraestructura original)
+        await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+        await sb.from('history').insert([{ 
+            user_id: State.user.id, 
+            type: 'bets', 
+            amount: win ? winAmt : -this.bet, 
+            label: 'AVIATOR' 
+        }]);
+    }
+}
         Core.init();
     </script>
 </body>
