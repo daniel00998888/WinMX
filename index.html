@@ -204,37 +204,47 @@
         const sb = window.supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
         const SYMBOLS = ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'];
 
-        // INFRAESTRUCTURA DE AUDIO REFORZADA
-        const sfx = {
-            click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
-            spin: new Audio('https://assets.mixkit.co/active_storage/sfx/2014/2014-preview.mp3'),
-            win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
-            lose: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
-            rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3')
+        // SISTEMA DE AUDIO BLINDADO
+        const audioUrls = {
+            click: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3',
+            spin: 'https://assets.mixkit.co/active_storage/sfx/2014/2014-preview.mp3',
+            win: 'https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3',
+            lose: 'https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3',
+            rocket: 'https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3'
         };
 
-        // Pre-carga agresiva
-        Object.values(sfx).forEach(audio => { audio.preload = "auto"; audio.load(); });
+        const sfx = {};
+        for (const [key, url] of Object.entries(audioUrls)) {
+            sfx[key] = new Audio(url);
+            sfx[key].preload = "auto";
+        }
 
         const unlockAudio = () => {
-            Object.values(sfx).forEach(audio => {
-                const p = audio.play();
-                if (p !== undefined) { p.then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {}); }
-            });
+            for (const key in sfx) {
+                const p = sfx[key].play();
+                if (p !== undefined) {
+                    p.then(() => { sfx[key].pause(); sfx[key].currentTime = 0; }).catch(() => {});
+                }
+            }
             document.body.removeAttribute('onclick');
         };
 
+        // FUNCIÓN DE REPRODUCCIÓN FORZADA (CORRECCIÓN CRÍTICA PARA EL SONIDO DE VICTORIA)
         const playSfx = (key) => { 
-            const source = sfx[key];
-            if(source) { 
-                // Clonamos el audio para evitar colisiones de estado en el objeto original
-                const audioClone = source.cloneNode(); 
-                audioClone.volume = 1.0;
-                const playPromise = audioClone.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(e => console.warn("Playback blocked or failed:", key));
+            try {
+                // Si es victoria, forzamos un nuevo objeto para saltar el bloqueo de hilos
+                if (key === 'win') {
+                    const winAudio = new Audio(audioUrls.win);
+                    winAudio.play().catch(e => console.warn("Win sound blocked by browser"));
+                    return;
                 }
-            } 
+                
+                const audio = sfx[key];
+                if(audio) { 
+                    audio.currentTime = 0; 
+                    audio.play().catch(e => {}); 
+                } 
+            } catch (e) {}
         };
 
         let State = { user: null, balance: 0, isSpinning: false, totalSpins: 0, luckFactor: 1.0, winHistory: [], sessionLoss: 0 };
