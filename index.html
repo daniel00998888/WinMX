@@ -207,7 +207,15 @@
         };
         const playSfx = (key) => { sfx[key].currentTime = 0; sfx[key].play().catch(() => {}); };
 
-        let State = { user: null, balance: 0, isSpinning: false, totalSpins: 0, luckFactor: 1.0, winHistory: [] };
+        let State = { 
+            user: null, 
+            balance: 0, 
+            isSpinning: false, 
+            totalSpins: 0, 
+            luckFactor: 1.0, 
+            winHistory: [],
+            sessionLoss: 0 // Acumulador de pérdidas para retención
+        };
 
         const Router = {
             showView(viewId) {
@@ -306,19 +314,33 @@
         };
 
         const GameLogic = {
-            // SISTEMA APC REFORZADO (Anti-Scalping & Exposure Control)
+            // MOTOR DE ENGANCHE REFORZADO (Retención & Suerte Adaptativa)
             adjustLuck(winAmount, betAmount, multiplier = 1) {
-                // Registro de jugada para análisis de patrones
                 State.winHistory.push({ bet: betAmount, win: winAmount, mult: multiplier });
-                if(State.winHistory.length > 5) State.winHistory.shift();
+                if(State.winHistory.length > 8) State.winHistory.shift();
 
-                // Detección de Scalping: Si el usuario apuesta fuerte y retira antes de 1.5x repetidamente
-                const isScalping = State.winHistory.filter(h => h.bet >= 50 && h.mult < 1.6 && h.win > 0).length >= 2;
-                
-                if (winAmount > betAmount * 5 || isScalping) {
-                    State.luckFactor = isScalping ? 0.4 : 0.6; // Castigo severo al scalping
+                // 1. Detección de Pérdida Neta
+                if (winAmount === 0) {
+                    State.sessionLoss += betAmount;
                 } else {
-                    State.luckFactor = Math.min(1.0, State.luckFactor + 0.05);
+                    State.sessionLoss -= (winAmount - betAmount);
+                    if (State.sessionLoss < 0) State.sessionLoss = 0;
+                }
+
+                // 2. LÓGICA DE RETENCIÓN (Si el usuario ha perdido mucho, le damos un boost)
+                const consecutiveLosses = [...State.winHistory].reverse().findIndex(h => h.win > 0);
+                const hasLostSignificant = State.sessionLoss > 100; // Umbral de $100 perdidos
+
+                if ((consecutiveLosses >= 3 || hasLostSignificant) && State.balance > 0) {
+                    State.luckFactor = 1.5; // BOOST DE SUERTE para engancharlo
+                } else {
+                    // 3. PROTECCIÓN ANTI-SCALPING (Si gana poco con mucho, bajamos suerte)
+                    const isScalping = State.winHistory.filter(h => h.bet >= 50 && h.mult < 1.6 && h.win > 0).length >= 2;
+                    if (winAmount > betAmount * 5 || isScalping) {
+                        State.luckFactor = isScalping ? 0.3 : 0.6;
+                    } else {
+                        State.luckFactor = Math.min(1.0, State.luckFactor + 0.05);
+                    }
                 }
             },
 
@@ -337,8 +359,9 @@
                     const getSymbol = () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
                     const res = [getSymbol(), getSymbol()];
                     
-                    if (res[0] === res[1] && Math.random() > State.luckFactor) {
-                        res.push(SYMBOLS[(SYMBOLS.indexOf(res[0]) + 1) % SYMBOLS.length]); 
+                    // Si luckFactor es alto (Boost), forzamos victoria
+                    if (State.luckFactor >= 1.3 || (res[0] === res[1] && Math.random() < State.luckFactor)) {
+                        res[2] = res[0]; 
                     } else {
                         res.push(getSymbol());
                     }
@@ -350,9 +373,9 @@
                         State.isSpinning = false; btn.disabled = false;
                         let win = 0;
                         if(res[0] === res[1] && res[1] === res[2]) { 
-                            win = bet * 10; State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
+                            win = bet * 10; State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`¡GRAN PREMIO! $${win.toFixed(2)}`, "success"); 
                         } else { 
-                            playSfx('lose'); UI.notify("SIGUE INTENTANDO", "error"); 
+                            playSfx('lose'); UI.notify("CASI LO LOGRAS...", "error"); 
                         }
                         
                         UI.updateBalance();
@@ -387,8 +410,9 @@
                     if(!this.active || this.revealed.includes(i)) return;
                     const winCount = this.revealed.length;
                     
+                    // Si el usuario está en "Boost", reducimos la posibilidad de bomba a casi 0 los primeros clics
                     let dynamicFail = (0.12 + (winCount * 0.09)) / State.luckFactor;
-                    if (this.bet > 50) dynamicFail *= 1.2; // Aumenta riesgo por apuesta alta
+                    if (State.luckFactor > 1.3 && winCount < 4) dynamicFail = 0.01;
 
                     if (winCount > 1 && Math.random() < dynamicFail) {
                         if (!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); }
@@ -398,7 +422,7 @@
                     const el = document.getElementById(`m-${i}`);
                     if(this.mines.includes(i)) {
                         playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500');
-                        UI.notify("SIGUE INTENTANDO", "error");
+                        UI.notify("¡BOOM! INTENTA DE NUEVO", "error");
                         this.end(false);
                     } else {
                         playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500');
@@ -449,7 +473,7 @@
                 select(r, c) {
                     if(!this.active || r !== this.level) return;
                     let failProb = (this.level > 5 ? 0.65 : this.level > 2 ? 0.50 : 0.38) / State.luckFactor;
-                    if (this.bet > 80) failProb += 0.1; // Penalización por apuesta alta en torre
+                    if (State.luckFactor > 1.3 && this.level < 3) failProb = 0.05;
 
                     const isBomb = Math.random() < failProb;
                     const items = document.getElementById(`tower-row-${r}`).children;
@@ -496,9 +520,9 @@
                     btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
                     btn.onclick = () => this.cashout();
                     
-                    // ANTI-HACK: Crash instantáneo si hay apuestas muy altas o suerte baja
-                    let baseLimit = (1.00 + Math.random() * 400) * State.luckFactor;
-                    if (this.bet > 5 && Math.random() < 0.25) baseLimit = 1.01 + (Math.random() * 0.1); 
+                    // Si hay BOOST, el cohete vuela más alto garantizado
+                    let baseLimit = (1.10 + Math.random() * 4.5) * State.luckFactor;
+                    if (State.luckFactor > 1.3) baseLimit = 2.5 + Math.random() * 3; 
                     
                     this.interval = setInterval(() => {
                         this.mult += this.mult < 1.5 ? 0.03 : 0.07; 
@@ -520,7 +544,7 @@
                     playSfx('lose');
                     document.getElementById('crash-mult').classList.add('text-red-500');
                     document.getElementById('crash-rocket').innerHTML = '💥';
-                    UI.notify("SIGUE INTENTANDO", "error");
+                    UI.notify("EXPLOTÓ... ¡CASI!", "error");
                     this.end(false);
                 },
                 async end(win) {
