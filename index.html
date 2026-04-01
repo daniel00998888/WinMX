@@ -485,15 +485,21 @@
                     else if (rng < 0.20) baseLimit = 2 + Math.random() * 18; 
                     else baseLimit = 1.01 + Math.random() * 0.99; 
                     if (State.luckFactor < 0.5) baseLimit = 1.01 + Math.random() * 0.05; 
+                    
                     this.interval = setInterval(() => {
-                        const step = this.mult < 2 ? 0.01 : this.mult < 10 ? 0.05 : 0.5;
+                        // CORRECCIÓN: Velocidad de multiplicador más equilibrada
+                        let step = 0.01;
+                        if (this.mult >= 2) step = 0.02;
+                        if (this.mult >= 5) step = 0.05;
+                        if (this.mult >= 10) step = 0.08; // Antes era 0.5, por eso se disparaba
+                        if (this.mult >= 20) step = 0.15;
+                        
                         this.mult += step;
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
                         
-                        // CORRECCIÓN: Límites visuales (Clamping)
-                        // Calculamos la posición pero no dejamos que supere 180px en X o 70px en Y
-                        const posX = Math.min(this.mult * 5, 180); 
-                        const posY = Math.min(this.mult * 4, 70); 
+                        // CORRECCIÓN: Clamping visual para que el cohete no se salga del cuadro
+                        const posX = Math.min(this.mult * 5.5, 195); // Límite en eje X
+                        const posY = Math.min(this.mult * 4.5, 75);  // Límite en eje Y
                         document.getElementById('crash-rocket').style.transform = `translate(${posX}px, -${posY}px)`;
                         
                         btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
