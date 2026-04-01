@@ -306,15 +306,23 @@
             switchTab(tab) { playSfx('click'); document.getElementById('login-container').classList.toggle('hidden-view', tab==='register'); document.getElementById('register-container').classList.toggle('hidden-view', tab==='login'); }
         };
 
-        const GameLogic = {
-            // SISTEMA APC (Adaptive Probability Control)
+const GameLogic = {
+            // SISTEMA APC EVOLUTION (Anti-Scalping & Risk Control)
             adjustLuck(winAmount, betAmount) {
-                if (winAmount > betAmount * 5) {
-                    State.luckFactor = 0.7; // Reduce suerte si gana mucho
+                const profit = winAmount - betAmount;
+                
+                // Si el usuario está "ganando fácil" (profit positivo constante)
+                if (profit > 0) {
+                    // Reduce la suerte drásticamente según el tamaño de la ganancia
+                    // Si gana más de 5x, la suerte cae a 0.5. Si es menos, a 0.7
+                    State.luckFactor = winAmount > betAmount * 5 ? 0.5 : 0.7;
                 } else {
-                    // Recupera suerte poco a poco
-                    State.luckFactor = Math.min(1.0, State.luckFactor + 0.05);
+                    // Si pierde, recuperamos la suerte muy lentamente para evitar recuperaciones rápidas
+                    State.luckFactor = Math.min(1.0, State.luckFactor + 0.02);
                 }
+
+                // Barrera de Seguridad: Si el saldo es muy alto, la suerte nunca llega a 1.0
+                if (State.balance > 500) State.luckFactor = Math.min(0.8, State.luckFactor);
             },
 
             slots: {
@@ -330,13 +338,14 @@
                     btn.disabled = true;
                     playSfx('spin'); State.isSpinning = true; State.balance -= bet; UI.updateBalance();
 
-                    // Lógica de símbolos con luckFactor
                     const getSymbol = () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
                     const res = [getSymbol(), getSymbol()];
                     
-                    // Si los dos primeros coinciden, el tercero depende de la suerte
-                    if (res[0] === res[1] && Math.random() > State.luckFactor) {
-                        res.push(SYMBOLS[(SYMBOLS.indexOf(res[0]) + 1) % SYMBOLS.length]); // Fuerza fallo
+                    // Lógica Anti-Win: Si la apuesta es alta (>20% del saldo), aumenta probabilidad de fallo
+                    const riskPenalty = (bet / (State.balance + bet)) > 0.2 ? 0.4 : State.luckFactor;
+                    
+                    if (res[0] === res[1] && Math.random() > riskPenalty) {
+                        res.push(SYMBOLS[(SYMBOLS.indexOf(res[0]) + 1) % SYMBOLS.length]); 
                     } else {
                         res.push(getSymbol());
                     }
@@ -347,11 +356,13 @@
                     setTimeout(async () => {
                         State.isSpinning = false; btn.disabled = false;
                         let win = 0;
-                        if(res[0] === res[1] && res[1] === res[2]) { win = bet * 10; State.balance += win; play('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); } 
+                        if(res[0] === res[1] && res[1] === res[2]) { 
+                            win = bet * 10; State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
+                        } 
                         else { playSfx('lose'); UI.notify("SIGUE INTENTANDO", "error"); }
                         
                         UI.updateBalance();
-                        GameLogic.adjustLuck(win, bet); // Aplica APC
+                        GameLogic.adjustLuck(win, bet);
                         await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                         await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -bet, label: 'SLOTS' }]);
                     }, 3500);
@@ -383,9 +394,11 @@
                     if(!this.active || this.revealed.includes(i)) return;
                     const winCount = this.revealed.length;
                     
-                    // Probabilidad de fallo ajustada por APC
-                    let dynamicFail = (0.1 + (winCount * 0.08)) / State.luckFactor;
-                    if (winCount > 2 && Math.random() < dynamicFail) {
+                    // ANTI-HACK: Si el usuario apuesta fuerte, el primer clic tiene 15% de probabilidad de ser bomba
+                    // y el segundo un 30%, ignorando la posición real si es necesario.
+                    let safetyTrigger = (this.bet > 50 && winCount < 2 && Math.random() > State.luckFactor);
+                    
+                    if (safetyTrigger || (winCount > 1 && Math.random() < (0.15 + (winCount * 0.1) / State.luckFactor))) {
                         if (!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); }
                     }
                     
@@ -411,7 +424,7 @@
                 },
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
-                    GameLogic.adjustLuck(winAmt, this.bet); // APC
+                    GameLogic.adjustLuck(winAmt, this.bet);
                     this.active = false; UI.updateBalance();
                     document.getElementById('mines-controls').classList.remove('hidden-view');
                     document.getElementById('mines-status').classList.add('hidden-view');
@@ -444,8 +457,11 @@
                 },
                 select(r, c) {
                     if(!this.active || r !== this.level) return;
-                    let failProb = (this.level > 5 ? 0.60 : this.level > 2 ? 0.45 : 0.33) / State.luckFactor;
-                    const isBomb = Math.random() < failProb;
+                    // ANTI-SCALPING: Aumenta el fallo en pisos bajos si la apuesta es alta
+                    let baseFail = this.level > 5 ? 0.65 : 0.35;
+                    if (this.bet > 50 && this.level < 3) baseFail += 0.20; 
+                    
+                    const isBomb = Math.random() < (baseFail / State.luckFactor);
                     const items = document.getElementById(`tower-row-${r}`).children;
                     if(isBomb) {
                         playSfx('lose'); items[c].innerHTML = '💣'; items[c].classList.add('bg-red-500/20', 'border-red-500');
@@ -469,7 +485,7 @@
                 },
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
-                    GameLogic.adjustLuck(winAmt, this.bet); // APC
+                    GameLogic.adjustLuck(winAmt, this.bet);
                     this.active = false; UI.updateBalance();
                     document.getElementById('tower-controls').classList.remove('hidden-view');
                     document.getElementById('tower-cashout-btn').classList.add('hidden-view');
@@ -491,15 +507,20 @@
                     btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
                     btn.onclick = () => this.cashout();
                     
-                    // Límite afectado por APC
-                    const limit = (1.05 + Math.random() * 4.5) * State.luckFactor;
+                    // SISTEMA ANTI-DUPLICACIÓN: Si apuesta más de 100, el cohete tiene 60% de probabilidad de explotar ANTES de 1.2x
+                    let crashLimit;
+                    if (this.bet >= 100 && Math.random() < 0.6) {
+                        crashLimit = 1.01 + (Math.random() * 0.15); 
+                    } else {
+                        crashLimit = (1.05 + Math.random() * 3.5) * State.luckFactor;
+                    }
                     
                     this.interval = setInterval(() => {
                         this.mult += this.mult < 2 ? 0.04 : 0.08; 
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
                         document.getElementById('crash-rocket').style.transform = `translate(${this.mult * 10}px, -${this.mult * 8}px)`;
                         btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
-                        if(this.mult >= limit) { clearInterval(this.interval); this.explode(); }
+                        if(this.mult >= crashLimit) { clearInterval(this.interval); this.explode(); }
                     }, 100);
                 },
                 cashout() {
@@ -519,7 +540,7 @@
                 },
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
-                    GameLogic.adjustLuck(winAmt, this.bet); // APC
+                    GameLogic.adjustLuck(winAmt, this.bet);
                     this.active = false; UI.updateBalance();
                     const btn = document.getElementById('btn-crash');
                     btn.innerText = "EXPLOTÓ"; btn.disabled = true;
@@ -535,7 +556,6 @@
                 }
             }
         };
-
         Core.init();
     </script>
 </body>
