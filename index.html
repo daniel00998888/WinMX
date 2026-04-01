@@ -208,33 +208,28 @@
             click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
             spin: new Audio('https://assets.mixkit.co/active_storage/sfx/2014/2014-preview.mp3'),
             win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
-            winExtra: new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3'),
             lose: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
             rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3')
         };
 
         Object.values(sfx).forEach(audio => { audio.preload = "auto"; audio.load(); });
 
-        // Función para desbloquear el audio (requerida por navegadores)
         const unlockAudio = () => {
             Object.values(sfx).forEach(audio => {
-                audio.play().then(() => {
-                    audio.pause();
-                    audio.currentTime = 0;
-                }).catch(() => {});
+                audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {});
             });
-            document.body.removeAttribute('onclick'); // Solo ejecutar una vez
+            document.body.removeAttribute('onclick');
         };
 
         const playSfx = (key) => { 
             const audio = sfx[key];
             if(audio) { 
-                audio.pause(); 
+                // CRÍTICO: Detenemos cualquier audio antes de tocar el de victoria o derrota
+                Object.values(sfx).forEach(a => { a.pause(); });
                 audio.currentTime = 0; 
-                // Pequeño delay para asegurar que el navegador registre la interacción
                 const playPromise = audio.play();
                 if (playPromise !== undefined) {
-                    playPromise.catch(e => console.log("Audio play blocked by browser policy"));
+                    playPromise.catch(e => console.log("Audio Play Blocked"));
                 }
             } 
         };
@@ -297,22 +292,13 @@
             },
             subscribeToBalance() {
                 sb.channel('custom-balance-channel')
-                    .on(
-                        'postgres_changes',
-                        { event: 'UPDATE', schema: 'public', table: 'usuarios', filter: `id=eq.${State.user.id}` },
-                        (payload) => {
-                            if (payload.new && payload.new.saldo !== undefined) {
-                                State.balance = payload.new.saldo;
-                                UI.updateBalance();
-                            }
-                        }
-                    )
-                    .subscribe();
+                    .on('postgres_changes',{ event: 'UPDATE', schema: 'public', table: 'usuarios', filter: `id=eq.${State.user.id}` },
+                        (payload) => { if (payload.new && payload.new.saldo !== undefined) { State.balance = payload.new.saldo; UI.updateBalance(); } }
+                    ).subscribe();
             },
             async updateDBSaldo() {
                 if(!State.user) return;
-                const { error } = await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                if(error) console.error("Balance Update Error:", error.message);
+                await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
             },
             async confirmDeposit() {
                 const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value));
@@ -336,10 +322,7 @@
                     UI.closeModal('modal-deposit');
                     this.fetchHistory();
                 } catch (e) { UI.notify("Error al enviar", "error"); } 
-                finally { 
-                    const btn = document.getElementById('btn-confirm-dep'); 
-                    btn.disabled = false; btn.style.opacity = "1"; 
-                }
+                finally { const btn = document.getElementById('btn-confirm-dep'); btn.disabled = false; btn.style.opacity = "1"; }
             },
             async fetchHistory() {
                  const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20);
@@ -386,16 +369,15 @@
             adjustLuck(winAmount, betAmount, multiplier = 1) {
                 State.winHistory.push({ bet: betAmount, win: winAmount, mult: multiplier });
                 if(State.winHistory.length > 8) State.winHistory.shift();
-                if (winAmount === 0) { State.sessionLoss += betAmount; } 
+                if (winAmount === 0) State.sessionLoss += betAmount; 
                 else { State.sessionLoss -= (winAmount - betAmount); if (State.sessionLoss < 0) State.sessionLoss = 0; }
                 const consecutiveLosses = [...State.winHistory].reverse().findIndex(h => h.win > 0);
-                if ((consecutiveLosses >= 10 || State.sessionLoss > 150) && State.balance > 0) { State.luckFactor = 1.4; } 
+                if ((consecutiveLosses >= 10 || State.sessionLoss > 150) && State.balance > 0) State.luckFactor = 1.4;
                 else {
                     const isScalping = State.winHistory.filter(h => h.bet >= 30 && h.mult < 1.15 && h.win > 0).length >= 2;
-                    if (isScalping) { State.luckFactor = 0.2; } else { State.luckFactor = Math.min(1.0, State.luckFactor + 0.05); }
+                    if (isScalping) State.luckFactor = 0.2; else State.luckFactor = Math.min(1.0, State.luckFactor + 0.05);
                 }
             },
-
             slots: {
                 init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); r.innerHTML = ''; Array(10).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); }); },
                 async play() {
@@ -406,33 +388,24 @@
                     btn.disabled = true; playSfx('spin'); State.isSpinning = true; State.balance -= bet; UI.updateBalance();
                     const getSymbol = () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
                     const res = [getSymbol(), getSymbol()];
-                    if (State.luckFactor >= 1.4 || (res[0] === res[1] && Math.random() < State.luckFactor)) { res[2] = res[0]; } else { res.push(getSymbol()); }
-                    
+                    if (State.luckFactor >= 1.4 || (res[0] === res[1] && Math.random() < State.luckFactor)) res[2] = res[0]; else res.push(getSymbol());
                     [1,2,3].forEach((id, i) => { 
                         const reel = document.getElementById(`reel-${id}`);
                         const scrollDist = (SYMBOLS.length * 90 * 3) + (SYMBOLS.indexOf(res[i]) * 90); 
                         reel.style.transition = 'none'; reel.style.transform = 'translateY(0)';
                         setTimeout(() => { reel.style.transition = 'transform 3.5s cubic-bezier(0.15, 0, 0.05, 1)'; reel.style.transform = `translateY(-${scrollDist}px)`; }, 50);
                     });
-
                     setTimeout(async () => {
                         State.isSpinning = false; btn.disabled = false;
                         let win = (res[0] === res[1] && res[1] === res[2]) ? bet * 10 : 0;
-                        if(win > 0) { 
-                            State.balance += win; 
-                            playSfx('win');
-                            UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); 
-                        } else { 
-                            playSfx('lose'); 
-                            UI.notify(`Suerte la próxima`, "error");
-                        }
+                        if(win > 0) { State.balance += win; playSfx('win'); UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); } 
+                        else { playSfx('lose'); UI.notify(`Suerte la próxima`, "error"); }
                         UI.updateBalance(); GameLogic.adjustLuck(win, bet, win > 0 ? 10 : 0);
                         await Core.updateDBSaldo();
                         await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -bet, label: 'SLOTS' }]);
                     }, 3500);
                 }
             },
-
             mines: {
                 active: false, mines: [], revealed: [], mult: 1, bet: 10,
                 multSteps: [1.25, 1.85, 2.75, 4.20, 6.50, 10.20, 16.50, 28.00, 45.00, 80.00],
@@ -447,45 +420,30 @@
                     playSfx('click'); State.balance -= b; UI.updateBalance();
                     this.active = true; this.bet = b; this.mult = 1; this.revealed = [];
                     this.mines = []; while(this.mines.length < 3) { let r = Math.floor(Math.random()*25); if(!this.mines.includes(r)) this.mines.push(r); }
-                    document.getElementById('mines-controls').classList.add('hidden-view');
-                    document.getElementById('mines-status').classList.remove('hidden-view');
+                    document.getElementById('mines-controls').classList.add('hidden-view'); document.getElementById('mines-status').classList.remove('hidden-view');
                     this.drawGrid();
                 },
                 cell(i) {
                     if(!this.active || this.revealed.includes(i)) return;
                     this.revealed.push(i); const el = document.getElementById(`m-${i}`);
-                    if(this.mines.includes(i)) {
-                        playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500');
-                        UI.notify("¡BOOM!", "error");
-                        this.end(false);
-                    } else {
+                    if(this.mines.includes(i)) { playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500'); UI.notify("¡BOOM!", "error"); this.end(false); } 
+                    else {
                         playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500');
                         this.mult = this.multSteps[this.revealed.length-1] || this.mult * 1.5;
                         document.getElementById('mines-mult').innerText = this.mult.toFixed(2) + 'x';
-                        const nextVal = this.multSteps[this.revealed.length] || (this.mult * 1.7);
-                        document.getElementById('mines-next-hint').innerText = `Siguiente: x${nextVal.toFixed(2)}`;
                         document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                     }
                 },
-                async cashout() { 
-                    if(!this.active) return; 
-                    const win = this.bet * this.mult; 
-                    State.balance += win; 
-                    playSfx('win');
-                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
-                    this.end(true); 
-                },
+                async cashout() { if(!this.active) return; const win = this.bet * this.mult; State.balance += win; playSfx('win'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
                     GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
                     this.active = false; UI.updateBalance();
-                    document.getElementById('mines-controls').classList.remove('hidden-view');
-                    document.getElementById('mines-status').classList.add('hidden-view');
+                    document.getElementById('mines-controls').classList.remove('hidden-view'); document.getElementById('mines-status').classList.add('hidden-view');
                     await Core.updateDBSaldo();
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'MINAS' }]);
                 }
             },
-
             tower: {
                 level: 0, active: false, bet: 0, mult: 1,
                 towerSteps: [1.65, 2.80, 4.50, 7.80, 13.50, 24.00, 42.00, 95.00],
@@ -503,49 +461,31 @@
                     playSfx('click'); State.balance -= b; UI.updateBalance();
                     this.active = true; this.bet = b; this.level = 0; this.mult = 1;
                     this.drawTower(); document.getElementById('tower-row-0').classList.remove('opacity-30');
-                    document.getElementById('tower-controls').classList.add('hidden-view');
-                    document.getElementById('tower-status').classList.remove('hidden-view');
+                    document.getElementById('tower-controls').classList.add('hidden-view'); document.getElementById('tower-status').classList.remove('hidden-view');
                 },
                 select(r, c) {
                     if(!this.active || r !== this.level) return;
                     const isBomb = Math.random() < (this.level > 2 ? 0.55 : 0.40) / State.luckFactor;
                     const items = document.getElementById(`tower-row-${r}`).children;
-                    if(isBomb) { 
-                        playSfx('lose'); items[c].innerHTML = '💣'; 
-                        UI.notify("Caíste de la torre", "error");
-                        this.end(false); 
-                    } 
+                    if(isBomb) { playSfx('lose'); items[c].innerHTML = '💣'; UI.notify("Caíste de la torre", "error"); this.end(false); } 
                     else {
                         playSfx('click'); items[c].innerHTML = '💎'; items[c].classList.add('bg-emerald-500/20', 'border-emerald-500');
                         this.mult = this.towerSteps[this.level]; this.level++;
                         document.getElementById('tower-mult-display').innerText = this.mult.toFixed(2) + 'x';
-                        if(this.level < 8) {
-                            const nextVal = this.towerSteps[this.level];
-                            document.getElementById('tower-next-hint').innerText = `Siguiente: x${nextVal.toFixed(2)}`;
-                            document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30');
-                        } else { this.cashout(); }
+                        if(this.level < 8) document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30'); else this.cashout();
                         document.getElementById('tower-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                     }
                 },
-                async cashout() { 
-                    if(!this.active || this.level === 0) return; 
-                    const win = this.bet * this.mult; 
-                    State.balance += win; 
-                    playSfx('win');
-                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
-                    this.end(true); 
-                },
+                async cashout() { if(!this.active || this.level === 0) return; const win = this.bet * this.mult; State.balance += win; playSfx('win'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
                     GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
                     this.active = false; UI.updateBalance();
-                    document.getElementById('tower-controls').classList.remove('hidden-view');
-                    document.getElementById('tower-status').classList.add('hidden-view');
+                    document.getElementById('tower-controls').classList.remove('hidden-view'); document.getElementById('tower-status').classList.add('hidden-view');
                     await Core.updateDBSaldo();
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'TORRE' }]);
                 }
             },
-
             crash: {
                 active: false, mult: 1, bet: 0, interval: null, bgPos: 0,
                 start() {
@@ -567,23 +507,8 @@
                         if(this.mult >= baseLimit) this.explode();
                     }, 60); 
                 },
-                cashout() { 
-                    if(!this.active) return; 
-                    clearInterval(this.interval); 
-                    const win = this.bet * this.mult; 
-                    State.balance += win; 
-                    playSfx('win');
-                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
-                    this.end(true); 
-                },
-                explode() { 
-                    clearInterval(this.interval); 
-                    playSfx('lose'); 
-                    document.getElementById('crash-mult').classList.add('text-red-500'); 
-                    document.getElementById('crash-rocket').innerHTML = '💥'; 
-                    UI.notify("¡EXPLOTÓ!", "error");
-                    this.end(false); 
-                },
+                cashout() { if(!this.active) return; clearInterval(this.interval); const win = this.bet * this.mult; State.balance += win; playSfx('win'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
+                explode() { clearInterval(this.interval); playSfx('lose'); document.getElementById('crash-mult').classList.add('text-red-500'); document.getElementById('crash-rocket').innerHTML = '💥'; UI.notify("¡EXPLOTÓ!", "error"); this.end(false); },
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
                     GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
