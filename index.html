@@ -204,8 +204,8 @@
         const sb = window.supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
         const SYMBOLS = ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'];
 
-        // SISTEMA DE AUDIO BLINDADO
-        const audioUrls = {
+        // URLS DE SONIDOS
+        const AUDIO_FILES = {
             click: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3',
             spin: 'https://assets.mixkit.co/active_storage/sfx/2014/2014-preview.mp3',
             win: 'https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3',
@@ -214,37 +214,30 @@
         };
 
         const sfx = {};
-        for (const [key, url] of Object.entries(audioUrls)) {
-            sfx[key] = new Audio(url);
-            sfx[key].preload = "auto";
-        }
+        Object.keys(AUDIO_FILES).forEach(k => {
+            sfx[k] = new Audio(AUDIO_FILES[k]);
+            sfx[k].preload = "auto";
+        });
 
+        // DESBLOQUEO INICIAL (NECESARIO PARA NAVEGADORES)
         const unlockAudio = () => {
-            for (const key in sfx) {
-                const p = sfx[key].play();
-                if (p !== undefined) {
-                    p.then(() => { sfx[key].pause(); sfx[key].currentTime = 0; }).catch(() => {});
-                }
-            }
+            Object.values(sfx).forEach(a => {
+                a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
+            });
             document.body.removeAttribute('onclick');
         };
 
-        // FUNCIÓN DE REPRODUCCIÓN FORZADA (CORRECCIÓN CRÍTICA PARA EL SONIDO DE VICTORIA)
-        const playSfx = (key) => { 
-            try {
-                // Si es victoria, forzamos un nuevo objeto para saltar el bloqueo de hilos
-                if (key === 'win') {
-                    const winAudio = new Audio(audioUrls.win);
-                    winAudio.play().catch(e => console.warn("Win sound blocked by browser"));
-                    return;
-                }
-                
-                const audio = sfx[key];
-                if(audio) { 
-                    audio.currentTime = 0; 
-                    audio.play().catch(e => {}); 
-                } 
-            } catch (e) {}
+        // FUNCIÓN DE REPRODUCCIÓN CORREGIDA (ESPECIALMENTE PARA WIN)
+        const playSfx = (key) => {
+            if (key === 'win') {
+                // PARA LA VICTORIA: Creamos una instancia fresca cada vez para saltar el bloqueo
+                const winSound = new Audio(AUDIO_FILES.win);
+                winSound.volume = 1.0;
+                winSound.play().catch(e => console.error("Win audio blocked", e));
+            } else if (sfx[key]) {
+                sfx[key].currentTime = 0;
+                sfx[key].play().catch(() => {});
+            }
         };
 
         let State = { user: null, balance: 0, isSpinning: false, totalSpins: 0, luckFactor: 1.0, winHistory: [], sessionLoss: 0 };
