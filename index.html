@@ -214,7 +214,7 @@
             totalSpins: 0, 
             luckFactor: 1.0, 
             winHistory: [],
-            sessionLoss: 0 // Acumulador de pérdidas para retención
+            sessionLoss: 0 
         };
 
         const Router = {
@@ -314,33 +314,22 @@
         };
 
         const GameLogic = {
-            // MOTOR DE ENGANCHE REFORZADO (Retención & Suerte Adaptativa)
             adjustLuck(winAmount, betAmount, multiplier = 1) {
                 State.winHistory.push({ bet: betAmount, win: winAmount, mult: multiplier });
                 if(State.winHistory.length > 8) State.winHistory.shift();
 
-                // 1. Detección de Pérdida Neta
-                if (winAmount === 0) {
-                    State.sessionLoss += betAmount;
-                } else {
-                    State.sessionLoss -= (winAmount - betAmount);
-                    if (State.sessionLoss < 0) State.sessionLoss = 0;
-                }
+                if (winAmount === 0) { State.sessionLoss += betAmount; } 
+                else { State.sessionLoss -= (winAmount - betAmount); if (State.sessionLoss < 0) State.sessionLoss = 0; }
 
-                // 2. LÓGICA DE RETENCIÓN (Si el usuario ha perdido mucho, le damos un boost)
                 const consecutiveLosses = [...State.winHistory].reverse().findIndex(h => h.win > 0);
-                const hasLostSignificant = State.sessionLoss > 100; // Umbral de $100 perdidos
+                const hasLostSignificant = State.sessionLoss > 150;
 
-                if ((consecutiveLosses >= 3 || hasLostSignificant) && State.balance > 0) {
-                    State.luckFactor = 1.5; // BOOST DE SUERTE para engancharlo
+                if ((consecutiveLosses >= 4 || hasLostSignificant) && State.balance > 0) {
+                    State.luckFactor = 1.6; 
                 } else {
-                    // 3. PROTECCIÓN ANTI-SCALPING (Si gana poco con mucho, bajamos suerte)
-                    const isScalping = State.winHistory.filter(h => h.bet >= 50 && h.mult < 1.6 && h.win > 0).length >= 2;
-                    if (winAmount > betAmount * 5 || isScalping) {
-                        State.luckFactor = isScalping ? 0.3 : 0.6;
-                    } else {
-                        State.luckFactor = Math.min(1.0, State.luckFactor + 0.05);
-                    }
+                    const isScalping = State.winHistory.filter(h => h.bet >= 30 && h.mult < 1.15 && h.win > 0).length >= 2;
+                    if (isScalping) { State.luckFactor = 0.2; } // Castigo total al 1.03x
+                    else { State.luckFactor = Math.min(1.0, State.luckFactor + 0.05); }
                 }
             },
 
@@ -351,35 +340,18 @@
                     const betInput = document.getElementById('slots-bet-input');
                     const bet = Math.abs(parseFloat(betInput.value)) || 10;
                     if(State.balance < bet || bet <= 0) return UI.notify("Saldo insuficiente", "error");
-                    
                     const btn = document.getElementById('btn-slots-play');
-                    btn.disabled = true;
-                    playSfx('spin'); State.isSpinning = true; State.balance -= bet; UI.updateBalance();
-
+                    btn.disabled = true; playSfx('spin'); State.isSpinning = true; State.balance -= bet; UI.updateBalance();
                     const getSymbol = () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
                     const res = [getSymbol(), getSymbol()];
-                    
-                    // Si luckFactor es alto (Boost), forzamos victoria
-                    if (State.luckFactor >= 1.3 || (res[0] === res[1] && Math.random() < State.luckFactor)) {
-                        res[2] = res[0]; 
-                    } else {
-                        res.push(getSymbol());
-                    }
-
+                    if (State.luckFactor >= 1.4 || (res[0] === res[1] && Math.random() < State.luckFactor)) { res[2] = res[0]; } else { res.push(getSymbol()); }
                     State.totalSpins++;
                     [1,2,3].forEach((id, i) => { document.getElementById(`reel-${id}`).style.transform = `translateY(-${(State.totalSpins * 90 * 6) + (SYMBOLS.indexOf(res[i])*90)}px)`; });
-                    
                     setTimeout(async () => {
                         State.isSpinning = false; btn.disabled = false;
-                        let win = 0;
-                        if(res[0] === res[1] && res[1] === res[2]) { 
-                            win = bet * 10; State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`¡GRAN PREMIO! $${win.toFixed(2)}`, "success"); 
-                        } else { 
-                            playSfx('lose'); UI.notify("CASI LO LOGRAS...", "error"); 
-                        }
-                        
-                        UI.updateBalance();
-                        GameLogic.adjustLuck(win, bet, win > 0 ? 10 : 0);
+                        let win = (res[0] === res[1] && res[1] === res[2]) ? bet * 10 : 0;
+                        if(win > 0) { State.balance += win; playSfx('win'); UI.notify(`¡GRAN PREMIO! $${win.toFixed(2)}`, "success"); } else { playSfx('lose'); UI.notify("CASI...", "error"); }
+                        UI.updateBalance(); GameLogic.adjustLuck(win, bet, win > 0 ? 10 : 0);
                         await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                         await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -bet, label: 'SLOTS' }]);
                     }, 3500);
@@ -394,8 +366,7 @@
                 },
                 start() {
                     if(this.active) return;
-                    const betInput = document.getElementById('mines-bet-input');
-                    const b = Math.abs(parseFloat(betInput.value)) || 10;
+                    const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 10;
                     if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
                     playSfx('click'); State.balance -= b; UI.updateBalance();
                     this.active = true; this.bet = b; this.mult = 1; this.revealed = [];
@@ -409,20 +380,12 @@
                 cell(i) {
                     if(!this.active || this.revealed.includes(i)) return;
                     const winCount = this.revealed.length;
-                    
-                    // Si el usuario está en "Boost", reducimos la posibilidad de bomba a casi 0 los primeros clics
                     let dynamicFail = (0.12 + (winCount * 0.09)) / State.luckFactor;
-                    if (State.luckFactor > 1.3 && winCount < 4) dynamicFail = 0.01;
-
-                    if (winCount > 1 && Math.random() < dynamicFail) {
-                        if (!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); }
-                    }
-                    
-                    this.revealed.push(i); 
-                    const el = document.getElementById(`m-${i}`);
+                    if (State.luckFactor > 1.4 && winCount < 3) dynamicFail = 0.01;
+                    if (winCount > 1 && Math.random() < dynamicFail) { if (!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); } }
+                    this.revealed.push(i); const el = document.getElementById(`m-${i}`);
                     if(this.mines.includes(i)) {
                         playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500');
-                        UI.notify("¡BOOM! INTENTA DE NUEVO", "error");
                         this.end(false);
                     } else {
                         playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500');
@@ -431,13 +394,7 @@
                         document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                     }
                 },
-                async cashout() {
-                    if(!this.active) return;
-                    const win = this.bet * this.mult; State.balance += win; 
-                    playSfx('win'); playSfx('winExtra');
-                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
-                    this.end(true);
-                },
+                async cashout() { if(!this.active) return; const win = this.bet * this.mult; State.balance += win; playSfx('win'); this.end(true); },
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
                     GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
@@ -455,14 +412,12 @@
                     const c = document.getElementById('tower-container'); c.innerHTML = '';
                     for(let i=0; i<8; i++) {
                         let row = document.createElement('div'); row.className = "grid grid-cols-3 gap-1.5 opacity-30"; row.id = `tower-row-${i}`;
-                        for(let j=0; j<3; j++) { row.innerHTML += `<div onclick="GameLogic.tower.select(${i}, ${j})" class="h-8 bg-white/5 border border-white/5 rounded-lg flex items-center justify-center cursor-pointer transition-all"></div>`; }
+                        for(let j=0; j<3; j++) row.innerHTML += `<div onclick="GameLogic.tower.select(${i}, ${j})" class="h-8 bg-white/5 border border-white/5 rounded-lg flex items-center justify-center cursor-pointer transition-all"></div>`;
                         c.appendChild(row);
                     }
                 },
                 start() {
-                    if(this.active) return;
-                    const betInput = document.getElementById('tower-bet-input');
-                    const b = Math.abs(parseFloat(betInput.value)) || 10;
+                    const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10;
                     if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
                     playSfx('click'); State.balance -= b; UI.updateBalance();
                     this.active = true; this.bet = b; this.level = 0; this.mult = 1;
@@ -472,31 +427,18 @@
                 },
                 select(r, c) {
                     if(!this.active || r !== this.level) return;
-                    let failProb = (this.level > 5 ? 0.65 : this.level > 2 ? 0.50 : 0.38) / State.luckFactor;
-                    if (State.luckFactor > 1.3 && this.level < 3) failProb = 0.05;
-
+                    let failProb = (this.level > 2 ? 0.55 : 0.40) / State.luckFactor;
                     const isBomb = Math.random() < failProb;
                     const items = document.getElementById(`tower-row-${r}`).children;
-                    if(isBomb) {
-                        playSfx('lose'); items[c].innerHTML = '💣'; items[c].classList.add('bg-red-500/20', 'border-red-500');
-                        UI.notify("SIGUE INTENTANDO", "error");
-                        this.end(false);
-                    } else {
+                    if(isBomb) { playSfx('lose'); items[c].innerHTML = '💣'; this.end(false); } 
+                    else {
                         playSfx('click'); items[c].innerHTML = '💎'; items[c].classList.add('bg-emerald-500/20', 'border-emerald-500');
-                        this.mult = this.towerSteps[this.level];
-                        this.level++;
+                        this.mult = this.towerSteps[this.level]; this.level++;
                         document.getElementById('tower-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
-                        if(this.level < 8) document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30');
-                        else this.cashout();
+                        if(this.level < 8) document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30'); else this.cashout();
                     }
                 },
-                async cashout() {
-                    if(!this.active || this.level === 0) return;
-                    const win = this.bet * this.mult; State.balance += win; 
-                    playSfx('win'); playSfx('winExtra');
-                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
-                    this.end(true);
-                },
+                async cashout() { if(!this.active || this.level === 0) return; const win = this.bet * this.mult; State.balance += win; playSfx('win'); this.end(true); },
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
                     GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
@@ -511,40 +453,50 @@
                 active: false, mult: 1, bet: 0, interval: null,
                 start() {
                     if(this.active) return;
-                    const betInput = document.getElementById('crash-bet-input');
-                    const b = Math.abs(parseFloat(betInput.value)) || 10;
+                    const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10;
                     if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
                     playSfx('rocket'); State.balance -= b; UI.updateBalance();
-                    this.active = true; this.bet = b; this.mult = 1;
-                    const btn = document.getElementById('btn-crash'); 
-                    btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
+                    this.active = true; this.bet = b; this.mult = 1.0;
+                    const btn = document.getElementById('btn-crash'); btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
                     btn.onclick = () => this.cashout();
-                    
-                    // Si hay BOOST, el cohete vuela más alto garantizado
-                    let baseLimit = (1.10 + Math.random() * 4.5) * State.luckFactor;
-                    if (State.luckFactor > 1.3) baseLimit = 2.5 + Math.random() * 3; 
-                    
+
+                    // --- BLINDAJE ANTI-HACK 1.03x ---
+                    // 1. Probabilidad de Crash Instantáneo en 1.00x
+                    if (Math.random() < 0.15 / State.luckFactor) { this.explode(); return; }
+
+                    // 2. Cálculo de límite con rango hasta 500x
+                    let baseLimit;
+                    const rng = Math.random();
+                    if (rng < 0.01) baseLimit = 100 + Math.random() * 400; // 1% de probabilidad de 100x-500x
+                    else if (rng < 0.05) baseLimit = 20 + Math.random() * 80; // 4% de probabilidad de 20x-100x
+                    else if (rng < 0.20) baseLimit = 2 + Math.random() * 18; // 15% de probabilidad de 2x-20x
+                    else baseLimit = 1.01 + Math.random() * 0.99; // 80% de probabilidad de 1x-2x
+
+                    // Penalización extra si detecta scalping
+                    if (State.luckFactor < 0.5) baseLimit = 1.01 + Math.random() * 0.05; 
+
                     this.interval = setInterval(() => {
-                        this.mult += this.mult < 1.5 ? 0.03 : 0.07; 
+                        // Crecimiento acelerado
+                        const step = this.mult < 2 ? 0.01 : this.mult < 10 ? 0.05 : 0.5;
+                        this.mult += step;
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
-                        document.getElementById('crash-rocket').style.transform = `translate(${this.mult * 10}px, -${this.mult * 8}px)`;
+                        document.getElementById('crash-rocket').style.transform = `translate(${Math.min(this.mult * 5, 200)}px, -${Math.min(this.mult * 4, 150)}px)`;
                         btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
                         if(this.mult >= baseLimit) { clearInterval(this.interval); this.explode(); }
-                    }, 100);
+                    }, 80);
                 },
                 cashout() {
                     if(!this.active) return;
                     clearInterval(this.interval);
                     const win = this.bet * this.mult; State.balance += win; 
-                    playSfx('win'); playSfx('winExtra');
-                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
+                    playSfx('win'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
                     this.end(true);
                 },
                 explode() {
+                    clearInterval(this.interval);
                     playSfx('lose');
                     document.getElementById('crash-mult').classList.add('text-red-500');
                     document.getElementById('crash-rocket').innerHTML = '💥';
-                    UI.notify("EXPLOTÓ... ¡CASI!", "error");
                     this.end(false);
                 },
                 async end(win) {
@@ -559,7 +511,7 @@
                         document.getElementById('crash-mult').innerText = '1.00x';
                         document.getElementById('crash-rocket').innerHTML = '🚀';
                         document.getElementById('crash-rocket').style.transform = 'translate(0, 20px)';
-                    }, 3000);
+                    }, 2500);
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR' }]);
                 }
