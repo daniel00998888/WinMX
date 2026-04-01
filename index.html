@@ -68,7 +68,7 @@
         .risk-badge { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; margin-bottom: 10px; }
     </style>
 </head>
-<body class="antialiased select-none">
+<body class="antialiased select-none" onclick="unlockAudio()">
 
     <div id="boot-loader" class="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center">
         <div class="text-3xl font-casino italic mb-4 text-emerald-500 animate-pulse">WinMX</div>
@@ -215,14 +215,27 @@
 
         Object.values(sfx).forEach(audio => { audio.preload = "auto"; audio.load(); });
 
+        // Función para desbloquear el audio (requerida por navegadores)
+        const unlockAudio = () => {
+            Object.values(sfx).forEach(audio => {
+                audio.play().then(() => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                }).catch(() => {});
+            });
+            document.body.removeAttribute('onclick'); // Solo ejecutar una vez
+        };
+
         const playSfx = (key) => { 
             const audio = sfx[key];
             if(audio) { 
                 audio.pause(); 
                 audio.currentTime = 0; 
-                setTimeout(() => {
-                    audio.play().catch(e => console.log("Audio play blocked"));
-                }, 10);
+                // Pequeño delay para asegurar que el navegador registre la interacción
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(e => console.log("Audio play blocked by browser policy"));
+                }
             } 
         };
 
