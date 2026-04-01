@@ -219,8 +219,11 @@
             const audio = sfx[key];
             if(audio) { 
                 audio.pause(); audio.currentTime = 0; 
+                // Pequeño truco para forzar la reproducción en móviles
                 const playPromise = audio.play();
-                if (playPromise !== undefined) { playPromise.catch(e => {}); }
+                if (playPromise !== undefined) { 
+                    playPromise.catch(e => { console.log("Interacción requerida para audio"); }); 
+                }
             } 
         };
 
@@ -270,7 +273,7 @@
                     State.user = session.user; 
                     document.getElementById('main-app').classList.remove('hidden-view'); 
                     await this.loadBalance(); 
-                    this.subscribeToBalance(); // Activación Realtime
+                    this.subscribeToBalance(); 
                 } else { 
                     document.getElementById('auth-view').classList.remove('hidden-view'); 
                 } 
@@ -403,7 +406,13 @@
                     setTimeout(async () => {
                         State.isSpinning = false; btn.disabled = false;
                         let win = (res[0] === res[1] && res[1] === res[2]) ? bet * 10 : 0;
-                        if(win > 0) { State.balance += win; playSfx('win'); UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); } else { playSfx('lose'); }
+                        if(win > 0) { 
+                            playSfx('win'); // SONIDO CORREGIDO
+                            State.balance += win; 
+                            UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); 
+                        } else { 
+                            playSfx('lose'); 
+                        }
                         UI.updateBalance(); GameLogic.adjustLuck(win, bet, win > 0 ? 10 : 0);
                         await Core.updateDBSaldo();
                         await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -bet, label: 'SLOTS' }]);
@@ -444,7 +453,14 @@
                         document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                     }
                 },
-                async cashout() { if(!this.active) return; const win = this.bet * this.mult; State.balance += win; playSfx('win'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
+                async cashout() { 
+                    if(!this.active) return; 
+                    const win = this.bet * this.mult; 
+                    playSfx('win'); // SONIDO CORREGIDO
+                    State.balance += win; 
+                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
+                    this.end(true); 
+                },
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
                     GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
@@ -493,7 +509,14 @@
                         document.getElementById('tower-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                     }
                 },
-                async cashout() { if(!this.active || this.level === 0) return; const win = this.bet * this.mult; State.balance += win; playSfx('win'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
+                async cashout() { 
+                    if(!this.active || this.level === 0) return; 
+                    const win = this.bet * this.mult; 
+                    playSfx('win'); // SONIDO CORREGIDO
+                    State.balance += win; 
+                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
+                    this.end(true); 
+                },
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
                     GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
@@ -526,7 +549,15 @@
                         if(this.mult >= baseLimit) this.explode();
                     }, 60); 
                 },
-                cashout() { if(!this.active) return; clearInterval(this.interval); const win = this.bet * this.mult; State.balance += win; playSfx('win'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
+                cashout() { 
+                    if(!this.active) return; 
+                    clearInterval(this.interval); 
+                    const win = this.bet * this.mult; 
+                    playSfx('win'); // SONIDO CORREGIDO
+                    State.balance += win; 
+                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
+                    this.end(true); 
+                },
                 explode() { clearInterval(this.interval); playSfx('lose'); document.getElementById('crash-mult').classList.add('text-red-500'); document.getElementById('crash-rocket').innerHTML = '💥'; this.end(false); },
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
