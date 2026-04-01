@@ -43,7 +43,11 @@
 
         .input-bet { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 12px; width: 100%; text-align: center; color: white; font-family: 'Archivo Black', sans-serif; outline: none; margin-bottom: 12px; }
         
-        #crash-rocket { transform: translate(0, 20px); position: relative; transition: transform 0.1s linear; }
+        /* ESTILOS PARA EL FONDO INFINITO DEL CRASH */
+        #crash-area { position: relative; width: 100%; height: 120px; overflow: hidden; background: #050505; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.05); }
+        .bg-infinite { position: absolute; top: 0; left: 0; height: 100%; width: 200%; display: flex; }
+        .bg-part { width: 50%; height: 100%; background: linear-gradient(90deg, transparent 0%, rgba(16, 185, 129, 0.05) 50%, transparent 100%); background-size: 50px 50px; background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px); }
+        #crash-rocket { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); font-size: 2.5rem; z-index: 10; transition: top 0.3s ease; }
 
         .instruction-card { 
             background: rgba(16, 185, 129, 0.08); 
@@ -240,8 +244,8 @@
             },
             templates: {
                 slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4><i class="fas fa-info-circle"></i> Reglas del Slot</h4><p>Alinea 3 símbolos iguales en el centro para ganar <strong>10x tu apuesta inicial</strong>.</p></div></div>`,
-                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div class="risk-badge"><i class="fas fa-bomb"></i> 3 Minas Activas</div><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view flex justify-between items-center p-3 mb-3 bg-emerald-500/10 rounded-xl"><div class="flex flex-col items-start"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><span id="mines-next-hint" class="text-[7px] text-zinc-500 font-bold uppercase">Siguiente: --</span></div><button id="mines-cashout-btn" onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-4 py-2 rounded-lg font-bold text-[9px] font-casino tracking-tighter">COBRAR $0.00</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino text-xs">APOSTAR</button></div><div class="instruction-card"><h4><i class="fas fa-bomb"></i> Reglas de Minas</h4><p>El riesgo aumenta en cada clic. ¡Los multiplicadores son <strong>exponenciales</strong>!</p></div></div>`,
-                crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div class="h-24 flex items-center justify-center mb-6 overflow-hidden relative border border-white/5 rounded-xl bg-black/20"><div id="crash-rocket" class="text-4xl absolute bottom-2 left-4">🚀</div></div><input id="crash-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button><div class="instruction-card"><h4><i class="fas fa-rocket"></i> Reglas Aviator</h4><p>Cobra antes de que el cohete explote.</p></div></div>`,
+                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div class="risk-badge"><i class="fas fa-bomb"></i> 3 Minas Activas</div><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view flex justify-between items-center p-3 mb-3 bg-emerald-500/10 rounded-xl"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><button id="mines-cashout-btn" onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-4 py-2 rounded-lg font-bold text-[9px] font-casino tracking-tighter">COBRAR $0.00</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino text-xs">APOSTAR</button></div><div class="instruction-card"><h4><i class="fas fa-bomb"></i> Reglas de Minas</h4><p>El riesgo aumenta en cada clic. ¡Los multiplicadores son <strong>exponenciales</strong>!</p></div></div>`,
+                crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div id="crash-area"><div id="crash-bg" class="bg-infinite"><div class="bg-part"></div><div class="bg-part"></div></div><div id="crash-rocket">🚀</div></div><input id="crash-bet-input" type="number" value="10" min="1" class="input-bet mt-6"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button><div class="instruction-card"><h4><i class="fas fa-rocket"></i> Reglas Aviator</h4><p>Cobra antes de que el cohete explote.</p></div></div>`,
                 tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div class="risk-badge" style="color: #fbbf24; background: rgba(251,191,36,0.1); border-color: rgba(251,191,36,0.2)"><i class="fas fa-bolt"></i> 1 Peligro por Piso</div><div id="tower-container" class="space-y-1.5 mb-4 flex flex-col-reverse overflow-y-auto max-h-[250px]"></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino text-xs">JUGAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino text-xs">COBRAR $0.00</button><div class="instruction-card"><h4><i class="fas fa-chess-rook"></i> Reglas Torre</h4><p>Cada piso es más difícil, pero paga mucho más.</p></div></div>`
             }
         };
@@ -374,7 +378,7 @@
 
             mines: {
                 active: false, mines: [], revealed: [], mult: 1, bet: 10,
-                multSteps: [1.45, 2.15, 3.20, 4.85, 7.50, 11.80, 18.50, 29.00, 46.00, 75.00],
+                multSteps: [1.25, 1.85, 2.75, 4.20, 6.50, 10.20, 16.50, 28.00, 45.00, 80.00],
                 drawGrid() {
                     const g = document.getElementById('mines-grid'); g.innerHTML = '';
                     for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/5 border border-white/5 rounded-lg flex items-center justify-center text-xl cursor-pointer active:scale-90 transition-all"></div>`;
@@ -389,7 +393,6 @@
                     document.getElementById('mines-controls').classList.add('hidden-view');
                     document.getElementById('mines-status').classList.remove('hidden-view');
                     document.getElementById('mines-mult').innerText = '1.00x';
-                    document.getElementById('mines-next-hint').innerText = `Siguiente: x${this.multSteps[0].toFixed(2)}`;
                     document.getElementById('mines-cashout-btn').innerText = `COBRAR $0.00`;
                     this.drawGrid();
                 },
@@ -408,8 +411,6 @@
                         playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500');
                         this.mult = this.multSteps[winCount] || this.mult * 1.5;
                         document.getElementById('mines-mult').innerText = this.mult.toFixed(2) + 'x';
-                        const nextVal = this.multSteps[winCount+1] || (this.mult * 1.6);
-                        document.getElementById('mines-next-hint').innerText = `Siguiente: x${nextVal.toFixed(2)}`;
                         document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                     }
                 },
@@ -427,7 +428,7 @@
 
             tower: {
                 level: 0, active: false, bet: 0, mult: 1,
-                towerSteps: [1.65, 2.80, 4.50, 7.80, 13.50, 24.00, 42.00, 95.00],
+                towerSteps: [1.45, 2.30, 3.80, 6.50, 11.20, 19.80, 35.00, 75.00],
                 drawTower() {
                     const c = document.getElementById('tower-container'); c.innerHTML = '';
                     for(let i=0; i<8; i++) {
@@ -471,15 +472,16 @@
             },
 
             crash: {
-                active: false, mult: 1, bet: 0, interval: null,
+                active: false, mult: 1, bet: 0, interval: null, bgPos: 0,
                 start() {
                     if(this.active) return;
                     const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10;
                     if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
                     playSfx('rocket'); State.balance -= b; UI.updateBalance();
-                    this.active = true; this.bet = b; this.mult = 1.0;
+                    this.active = true; this.bet = b; this.mult = 1.0; this.bgPos = 0;
                     const btn = document.getElementById('btn-crash'); btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
                     btn.onclick = () => this.cashout();
+                    
                     if (Math.random() < 0.15 / State.luckFactor) { this.explode(); return; }
                     let baseLimit;
                     const rng = Math.random();
@@ -493,19 +495,25 @@
                         let step = 0.01;
                         if (this.mult >= 2) step = 0.02;
                         if (this.mult >= 5) step = 0.05;
-                        if (this.mult >= 10) step = 0.08; 
+                        if (this.mult >= 10) step = 0.08;
                         if (this.mult >= 20) step = 0.15;
                         
                         this.mult += step;
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
                         
-                        const posX = Math.min(this.mult * 5.5, 195); 
-                        const posY = Math.min(this.mult * 4.5, 75);  
-                        document.getElementById('crash-rocket').style.transform = `translate(${posX}px, -${posY}px)`;
+                        // LÓGICA DE FONDO INFINITO: Movemos el fondo en lugar del avión
+                        let speed = 2 + (this.mult * 2);
+                        this.bgPos -= speed;
+                        if (this.bgPos <= -100) this.bgPos = 0;
+                        document.getElementById('crash-bg').style.transform = `translateX(${this.bgPos}%)`;
+                        
+                        // EFECTO DE FLOTACIÓN PARA EL AVION ESTÁTICO
+                        let floatY = Math.sin(Date.now() / 200) * 8;
+                        document.getElementById('crash-rocket').style.top = `calc(50% + ${floatY}px)`;
                         
                         btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
                         if(this.mult >= baseLimit) { clearInterval(this.interval); this.explode(); }
-                    }, 80);
+                    }, 50);
                 },
                 cashout() {
                     if(!this.active) return;
@@ -532,7 +540,7 @@
                         document.getElementById('crash-mult').classList.remove('text-red-500');
                         document.getElementById('crash-mult').innerText = '1.00x';
                         document.getElementById('crash-rocket').innerHTML = '🚀';
-                        document.getElementById('crash-rocket').style.transform = 'translate(0, 20px)';
+                        document.getElementById('crash-rocket').style.top = '50%';
                     }, 2500);
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR' }]);
