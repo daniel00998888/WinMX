@@ -374,7 +374,7 @@
 
             mines: {
                 active: false, mines: [], revealed: [], mult: 1, bet: 10,
-                multSteps: [1.25, 1.85, 2.75, 4.20, 6.50, 10.20, 16.50, 28.00, 45.00, 80.00],
+                multSteps: [1.25, 1.40, 2.00, 3.20, 5.50, 8.20, 14.50, 24.00, 48.00, 80.00],
                 drawGrid() {
                     const g = document.getElementById('mines-grid'); g.innerHTML = '';
                     for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/5 border border-white/5 rounded-lg flex items-center justify-center text-xl cursor-pointer active:scale-90 transition-all"></div>`;
@@ -490,15 +490,15 @@
                         let step = 0.01;
                         if (this.mult >= 2) step = 0.02;
                         if (this.mult >= 5) step = 0.05;
-                        if (this.mult >= 10) step = 0.08;
+                        if (this.mult >= 10) step = 0.08; 
                         if (this.mult >= 20) step = 0.15;
                         
                         this.mult += step;
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
                         
-                        // CLAMPING VISUAL: Evita que el cohete salga del cuadro negro
-                        const posX = Math.min(this.mult * 5.5, 195); 
-                        const posY = Math.min(this.mult * 4.5, 75); 
+                        // --- LÓGICA DE FIJACIÓN DE CÁMARA (Para que no desaparezca) ---
+                        const posX = Math.min(this.mult * 5.5, 195); // Se queda fijo en 195px
+                        const posY = Math.min(this.mult * 4.5, 75);  // Se queda fijo en 75px
                         document.getElementById('crash-rocket').style.transform = `translate(${posX}px, -${posY}px)`;
                         
                         btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
