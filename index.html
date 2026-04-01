@@ -315,7 +315,7 @@ const GameLogic = {
                 if (profit > 0) {
                     // Reduce la suerte drásticamente según el tamaño de la ganancia
                     // Si gana más de 5x, la suerte cae a 0.5. Si es menos, a 0.7
-                    State.luckFactor = winAmount > betAmount * 5 ? 0.5 : 0.7;
+                    State.luckFactor = winAmount > betAmount * 5 ? 0.5 : 0.9;
                 } else {
                     // Si pierde, recuperamos la suerte muy lentamente para evitar recuperaciones rápidas
                     State.luckFactor = Math.min(1.0, State.luckFactor + 0.02);
