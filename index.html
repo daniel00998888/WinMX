@@ -376,7 +376,7 @@
                 if (winAmount === 0) { State.sessionLoss += betAmount; } 
                 else { State.sessionLoss -= (winAmount - betAmount); if (State.sessionLoss < 0) State.sessionLoss = 0; }
                 const consecutiveLosses = [...State.winHistory].reverse().findIndex(h => h.win > 0);
-                if ((consecutiveLosses >= 4 || State.sessionLoss > 150) && State.balance > 0) { State.luckFactor = 1.6; } 
+                if ((consecutiveLosses >= 10 || State.sessionLoss > 150) && State.balance > 0) { State.luckFactor = 1.4; } 
                 else {
                     const isScalping = State.winHistory.filter(h => h.bet >= 30 && h.mult < 1.15 && h.win > 0).length >= 2;
                     if (isScalping) { State.luckFactor = 0.2; } else { State.luckFactor = Math.min(1.0, State.luckFactor + 0.05); }
