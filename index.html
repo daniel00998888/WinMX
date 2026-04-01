@@ -318,7 +318,7 @@ const GameLogic = {
                     State.luckFactor = winAmount > betAmount * 5 ? 0.5 : 0.9;
                 } else {
                     // Si pierde, recuperamos la suerte muy lentamente para evitar recuperaciones rápidas
-                    State.luckFactor = Math.min(1.0, State.luckFactor + 0.02);
+                    State.luckFactor = Math.min(1.0, State.luckFactor + 0.08);
                 }
 
                 // Barrera de Seguridad: Si el saldo es muy alto, la suerte nunca llega a 1.0
