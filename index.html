@@ -205,20 +205,26 @@
         const SYMBOLS = ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'];
 
         const sfx = {
-            click: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3',
-            spin: 'https://assets.mixkit.co/active_storage/sfx/2014/2014-preview.mp3',
-            win: 'https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3',
-            winExtra: 'https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3',
-            lose: 'https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3',
-            rocket: 'https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3'
+            click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
+            spin: new Audio('https://assets.mixkit.co/active_storage/sfx/2014/2014-preview.mp3'),
+            win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
+            winExtra: new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3'),
+            lose: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
+            rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3')
         };
 
+        Object.values(sfx).forEach(audio => { audio.preload = "auto"; audio.load(); });
+
         const playSfx = (key) => { 
-            const url = sfx[key];
-            if(url) { 
-                const audio = new Audio(url);
-                audio.volume = 0.6;
-                audio.play().catch(e => console.log("Audio play blocked by browser. User must interact first."));
+            const audio = sfx[key];
+            if(audio) { 
+                audio.pause(); 
+                audio.currentTime = 0; 
+                // Pequeño truco para forzar la reproducción ignorando el hilo de ejecución principal
+                const p = audio.play();
+                if (p !== undefined) {
+                    p.catch(e => console.log("Audio play blocked: interaction required"));
+                }
             } 
         };
 
@@ -402,8 +408,8 @@
                         State.isSpinning = false; btn.disabled = false;
                         let win = (res[0] === res[1] && res[1] === res[2]) ? bet * 10 : 0;
                         if(win > 0) { 
-                            State.balance += win; 
                             playSfx('win');
+                            State.balance += win; 
                             UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); 
                         } else { 
                             playSfx('lose'); 
@@ -453,8 +459,8 @@
                 async cashout() { 
                     if(!this.active) return; 
                     const win = this.bet * this.mult; 
-                    State.balance += win; 
                     playSfx('win');
+                    State.balance += win; 
                     UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
                     this.end(true); 
                 },
@@ -513,8 +519,8 @@
                 async cashout() { 
                     if(!this.active || this.level === 0) return; 
                     const win = this.bet * this.mult; 
-                    State.balance += win; 
                     playSfx('win');
+                    State.balance += win; 
                     UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
                     this.end(true); 
                 },
@@ -554,8 +560,8 @@
                     if(!this.active) return; 
                     clearInterval(this.interval); 
                     const win = this.bet * this.mult; 
-                    State.balance += win; 
                     playSfx('win');
+                    State.balance += win; 
                     UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
                     this.end(true); 
                 },
