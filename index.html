@@ -209,6 +209,12 @@
 
         // State con luckFactor para balanceo de probabilidades
         let State = { user: null, balance: 0, isSpinning: false, totalSpins: 0, luckFactor: 1.0 };
+        const State = {
+            // ... tus otras variables (balance, user, etc)
+            luckFactor: 1.0,
+            consecutiveLosses: 0, // Nueva: Cuenta cuántas veces ha perdido seguido
+            totalLostSession: 0,   // Nueva: Acumula el dinero perdido en la racha
+        };
 
         const Router = {
             showView(viewId) {
@@ -307,22 +313,37 @@
         };
 
 const GameLogic = {
-            // SISTEMA APC EVOLUTION (Anti-Scalping & Risk Control)
+            // SISTEMA APC EVOLUTION v3 (Recovery & Hook Engine)
             adjustLuck(winAmount, betAmount) {
                 const profit = winAmount - betAmount;
                 
-                // Si el usuario está "ganando fácil" (profit positivo constante)
-                if (profit > 0) {
-                    // Reduce la suerte drásticamente según el tamaño de la ganancia
-                    // Si gana más de 5x, la suerte cae a 0.5. Si es menos, a 0.7
-                    State.luckFactor = winAmount > betAmount * 5 ? 0.5 : 0.9;
+                if (profit <= 0) {
+                    // EL JUGADOR PERDIÓ
+                    State.consecutiveLosses++;
+                    State.totalLostSession += Math.abs(profit);
+
+                    // Si ya perdió 3 veces o más de $100, activamos "SUERTE DIVINA" (> 1.0)
+                    if (State.consecutiveLosses >= 3 || State.totalLostSession > 100) {
+                        State.luckFactor = 1.5; // Suerte aumentada un 50% sobre lo normal
+                    } else {
+                        State.luckFactor = Math.min(1.0, State.luckFactor + 0.05);
+                    }
                 } else {
-                    // Si pierde, recuperamos la suerte muy lentamente para evitar recuperaciones rápidas
-                    State.luckFactor = Math.min(1.0, State.luckFactor + 0.08);
+                    // EL JUGADOR GANÓ
+                    // Si gana después de una racha de pérdida, reseteamos contadores
+                    State.consecutiveLosses = 0;
+                    State.totalLostSession = 0;
+
+                    // Si la ganancia fue muy grande (más de 5x), enfriamos la suerte
+                    if (winAmount > betAmount * 5) {
+                        State.luckFactor = 0.4; // Ajuste agresivo para proteger la casa
+                    } else {
+                        State.luckFactor = 0.7; // Suerte estándar post-victoria
+                    }
                 }
 
-                // Barrera de Seguridad: Si el saldo es muy alto, la suerte nunca llega a 1.0
-                if (State.balance > 500) State.luckFactor = Math.min(0.8, State.luckFactor);
+                // Barrera de Seguridad de Saldo (No cambia)
+                if (State.balance > 1000) State.luckFactor = Math.min(0.6, State.luckFactor);
             },
 
             slots: {
@@ -341,23 +362,29 @@ const GameLogic = {
                     const getSymbol = () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
                     const res = [getSymbol(), getSymbol()];
                     
-                    // Lógica Anti-Win: Si la apuesta es alta (>20% del saldo), aumenta probabilidad de fallo
-                    const riskPenalty = (bet / (State.balance + bet)) > 0.2 ? 0.4 : State.luckFactor;
-                    
-                    if (res[0] === res[1] && Math.random() > riskPenalty) {
-                        res.push(SYMBOLS[(SYMBOLS.indexOf(res[0]) + 1) % SYMBOLS.length]); 
+                    // Lógica de "Gancho": Si luckFactor es > 1.2, forzamos los 3 símbolos iguales
+                    if (State.luckFactor > 1.2 && Math.random() < 0.4) {
+                        const winSym = getSymbol();
+                        res[0] = winSym; res[1] = winSym; res.push(winSym);
                     } else {
-                        res.push(getSymbol());
+                        // Si los dos primeros coinciden, el tercero depende de la suerte actual
+                        if (res[0] === res[1] && Math.random() > State.luckFactor) {
+                            res.push(SYMBOLS[(SYMBOLS.indexOf(res[0]) + 1) % SYMBOLS.length]); 
+                        } else {
+                            res.push(getSymbol());
+                        }
                     }
 
                     State.totalSpins++;
-                    [1,2,3].forEach((id, i) => { document.getElementById(`reel-${id}`).style.transform = `translateY(-${(State.totalSpins * 90 * 6) + (SYMBOLS.indexOf(res[i])*90)}px)`; });
+                    [1,2,3].forEach((id, i) => { 
+                        document.getElementById(`reel-${id}`).style.transform = `translateY(-${(State.totalSpins * 90 * 6) + (SYMBOLS.indexOf(res[i])*90)}px)`; 
+                    });
                     
                     setTimeout(async () => {
                         State.isSpinning = false; btn.disabled = false;
                         let win = 0;
                         if(res[0] === res[1] && res[1] === res[2]) { 
-                            win = bet * 10; State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
+                            win = bet * 10; State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`¡RECUPERACIÓN! GANASTE $${win.toFixed(2)}`, "success"); 
                         } 
                         else { playSfx('lose'); UI.notify("SIGUE INTENTANDO", "error"); }
                         
@@ -368,9 +395,10 @@ const GameLogic = {
                     }, 3500);
                 }
             },
+
             mines: {
                 active: false, mines: [], revealed: [], mult: 1, bet: 10,
-                multSteps: [1.25, 1.85, 2.75, 4.20, 6.50, 10.20, 16.50, 28.00, 45.00, 80.00],
+                multSteps: [1.30, 2.10, 3.50, 5.20, 8.50, 14.20, 22.50, 40.00, 75.00, 150.0],
                 drawGrid() {
                     const g = document.getElementById('mines-grid'); g.innerHTML = '';
                     for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/5 border border-white/5 rounded-lg flex items-center justify-center text-xl cursor-pointer active:scale-90 transition-all"></div>`;
@@ -394,12 +422,22 @@ const GameLogic = {
                     if(!this.active || this.revealed.includes(i)) return;
                     const winCount = this.revealed.length;
                     
-                    // ANTI-HACK: Si el usuario apuesta fuerte, el primer clic tiene 15% de probabilidad de ser bomba
-                    // y el segundo un 30%, ignorando la posición real si es necesario.
-                    let safetyTrigger = (this.bet > 50 && winCount < 2 && Math.random() > State.luckFactor);
+                    // MECANISMO DE GANCHO: Si la suerte es alta, eliminamos bombas en el camino del jugador
+                    let failProb = (0.15 + (winCount * 0.12)) / State.luckFactor;
                     
-                    if (safetyTrigger || (winCount > 1 && Math.random() < (0.15 + (winCount * 0.1) / State.luckFactor))) {
+                    // Si el jugador ha perdido mucho, bajamos la probabilidad de bomba casi a cero en los primeros 3 clics
+                    if (State.luckFactor > 1.2 && winCount < 3) failProb = 0.01;
+
+                    if (Math.random() < failProb) {
                         if (!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); }
+                    } else {
+                        // Si iba a ser bomba pero la suerte es alta, la movemos a otro lado
+                        if (this.mines.includes(i) && State.luckFactor > 1.1) {
+                            this.mines = this.mines.filter(m => m !== i);
+                            let newPos = Math.floor(Math.random()*25);
+                            while(this.revealed.includes(newPos) || newPos === i) newPos = Math.floor(Math.random()*25);
+                            this.mines.push(newPos);
+                        }
                     }
                     
                     this.revealed.push(i); 
@@ -419,7 +457,7 @@ const GameLogic = {
                     if(!this.active) return;
                     const win = this.bet * this.mult; State.balance += win; 
                     playSfx('win'); playSfx('winExtra');
-                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
+                    UI.notify(`¡GRAN COBRO! $${win.toFixed(2)}`, "success");
                     this.end(true);
                 },
                 async end(win) {
@@ -432,6 +470,8 @@ const GameLogic = {
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'MINAS' }]);
                 }
             },
+            
+            // ... (Tower y Crash siguen la misma lógica usando el State.luckFactor actualizado)
             tower: {
                 level: 0, active: false, bet: 0, mult: 1,
                 towerSteps: [1.45, 2.30, 3.80, 6.50, 11.20, 19.80, 35.00, 75.00],
@@ -457,11 +497,10 @@ const GameLogic = {
                 },
                 select(r, c) {
                     if(!this.active || r !== this.level) return;
-                    // ANTI-SCALPING: Aumenta el fallo en pisos bajos si la apuesta es alta
-                    let baseFail = this.level > 5 ? 0.65 : 0.35;
-                    if (this.bet > 50 && this.level < 3) baseFail += 0.20; 
+                    // Suerte Dinámica en Torre
+                    let failProb = (this.level > 4 ? 0.60 : 0.33) / State.luckFactor;
                     
-                    const isBomb = Math.random() < (baseFail / State.luckFactor);
+                    const isBomb = Math.random() < failProb;
                     const items = document.getElementById(`tower-row-${r}`).children;
                     if(isBomb) {
                         playSfx('lose'); items[c].innerHTML = '💣'; items[c].classList.add('bg-red-500/20', 'border-red-500');
@@ -493,6 +532,7 @@ const GameLogic = {
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'TORRE' }]);
                 }
             },
+
             crash: {
                 active: false, mult: 1, bet: 0, interval: null,
                 start() {
@@ -507,12 +547,12 @@ const GameLogic = {
                     btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
                     btn.onclick = () => this.cashout();
                     
-                    // SISTEMA ANTI-DUPLICACIÓN: Si apuesta más de 100, el cohete tiene 60% de probabilidad de explotar ANTES de 1.2x
-                    let crashLimit;
-                    if (this.bet >= 100 && Math.random() < 0.6) {
-                        crashLimit = 1.01 + (Math.random() * 0.15); 
+                    // Si el luckFactor es alto (>1.2), el límite de crash sube garantizado a mínimo 2x
+                    let limit;
+                    if (State.luckFactor > 1.2) {
+                        limit = 2.1 + (Math.random() * 4.0); 
                     } else {
-                        crashLimit = (1.05 + Math.random() * 3.5) * State.luckFactor;
+                        limit = (1.05 + Math.random() * 3.5) * State.luckFactor;
                     }
                     
                     this.interval = setInterval(() => {
@@ -520,7 +560,7 @@ const GameLogic = {
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
                         document.getElementById('crash-rocket').style.transform = `translate(${this.mult * 10}px, -${this.mult * 8}px)`;
                         btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
-                        if(this.mult >= crashLimit) { clearInterval(this.interval); this.explode(); }
+                        if(this.mult >= limit) { clearInterval(this.interval); this.explode(); }
                     }, 100);
                 },
                 cashout() {
