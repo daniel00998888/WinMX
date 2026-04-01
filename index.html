@@ -48,9 +48,9 @@
         .bg-infinite { position: absolute; top: 0; left: 0; height: 100%; width: 200%; display: flex; }
         .bg-part { width: 50%; height: 100%; background-size: 50px 50px; background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px); }
         
-        /* CORRECCIÓN VISUAL: Centrado, inclinación vertical y flotación */
+        /* POSICIÓN: Centrado con flotación, pero orientación horizontal original */
         #crash-rocket-container { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 10; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; }
-        #crash-rocket { font-size: 3rem; transform: rotate(-45deg); display: inline-block; transition: transform 0.1s linear; }
+        #crash-rocket { font-size: 3rem; display: inline-block; transition: transform 0.1s linear; }
 
         .instruction-card { 
             background: rgba(16, 185, 129, 0.08); 
@@ -381,7 +381,7 @@
 
             mines: {
                 active: false, mines: [], revealed: [], mult: 1, bet: 10,
-                multSteps: [1.45, 2.15, 3.20, 4.85, 7.50, 11.80, 18.50, 29.00, 46.00, 75.00],
+                multSteps: [1.25, 1.85, 2.75, 4.20, 6.50, 10.20, 16.50, 28.00, 45.00, 80.00],
                 drawGrid() {
                     const g = document.getElementById('mines-grid'); g.innerHTML = '';
                     for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/5 border border-white/5 rounded-lg flex items-center justify-center text-xl cursor-pointer active:scale-90 transition-all"></div>`;
@@ -508,16 +508,16 @@
                         this.mult += step;
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
                         
-                        // LÓGICA DE FONDO INFINITO: Movemos el fondo en lugar del cohete
+                        // LÓGICA DE FONDO INFINITO
                         let speed = 2 + (this.mult * 2);
                         this.bgPos -= speed;
                         if (this.bgPos <= -100) this.bgPos = 0;
                         document.getElementById('crash-bg').style.transform = `translateX(${this.bgPos}%)`;
                         
-                        // CORRECCIÓN VISUAL: Centrado, inclinación vertical y flotación
+                        // EFECTO DE FLOTACIÓN (MANTENIENDO ORIENTACIÓN HORIZONTAL)
                         let floatY = Math.sin(Date.now() / 200) * 8;
-                        // Mantenemos la rotación de -45deg (vertical hacia arriba) y sumamos la flotación en translateY
-                        document.getElementById('crash-rocket').style.transform = `translateY(${floatY}px) rotate(-45deg)`;
+                        // Solo aplicamos traslación en Y para que flote de arriba a abajo
+                        document.getElementById('crash-rocket').style.transform = `translateY(${floatY}px)`;
                         
                         btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
                         if(this.mult >= baseLimit) { clearInterval(this.interval); this.explode(); }
@@ -535,8 +535,8 @@
                     playSfx('lose'); UI.notify("¡EXPLOTÓ!", "error");
                     document.getElementById('crash-mult').classList.add('text-red-500');
                     document.getElementById('crash-rocket').innerHTML = '💥';
-                    // Al explotar, quitamos la inclinación vertical
-                    document.getElementById('crash-rocket').style.transform = 'translateY(0) rotate(0deg)';
+                    // Al explotar, quitamos la flotación
+                    document.getElementById('crash-rocket').style.transform = 'translateY(0)';
                     this.end(false);
                 },
                 async end(win) {
@@ -550,8 +550,8 @@
                         document.getElementById('crash-mult').classList.remove('text-red-500');
                         document.getElementById('crash-mult').innerText = '1.00x';
                         document.getElementById('crash-rocket').innerHTML = '🚀';
-                        // Reseteamos a la posición y rotación vertical inicial
-                        document.getElementById('crash-rocket').style.transform = 'translateY(0) rotate(-45deg)';
+                        // Reseteamos posición
+                        document.getElementById('crash-rocket').style.transform = 'translateY(0)';
                     }, 2500);
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR' }]);
