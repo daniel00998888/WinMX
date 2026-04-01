@@ -317,13 +317,10 @@
             adjustLuck(winAmount, betAmount, multiplier = 1) {
                 State.winHistory.push({ bet: betAmount, win: winAmount, mult: multiplier });
                 if(State.winHistory.length > 8) State.winHistory.shift();
-
                 if (winAmount === 0) { State.sessionLoss += betAmount; } 
                 else { State.sessionLoss -= (winAmount - betAmount); if (State.sessionLoss < 0) State.sessionLoss = 0; }
-
                 const consecutiveLosses = [...State.winHistory].reverse().findIndex(h => h.win > 0);
                 const hasLostSignificant = State.sessionLoss > 150;
-
                 if ((consecutiveLosses >= 4 || hasLostSignificant) && State.balance > 0) {
                     State.luckFactor = 1.6; 
                 } else {
@@ -334,7 +331,13 @@
             },
 
             slots: {
-                init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); r.innerHTML = ''; Array(40).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); }); },
+                init() { 
+                    [1,2,3].forEach(id => { 
+                        const r = document.getElementById(`reel-${id}`); 
+                        r.innerHTML = ''; 
+                        Array(10).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); 
+                    }); 
+                },
                 async play() {
                     if(State.isSpinning) return;
                     const betInput = document.getElementById('slots-bet-input');
@@ -345,8 +348,19 @@
                     const getSymbol = () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
                     const res = [getSymbol(), getSymbol()];
                     if (State.luckFactor >= 1.4 || (res[0] === res[1] && Math.random() < State.luckFactor)) { res[2] = res[0]; } else { res.push(getSymbol()); }
-                    State.totalSpins++;
-                    [1,2,3].forEach((id, i) => { document.getElementById(`reel-${id}`).style.transform = `translateY(-${(State.totalSpins * 90 * 6) + (SYMBOLS.indexOf(res[i])*90)}px)`; });
+                    
+                    [1,2,3].forEach((id, i) => { 
+                        const targetPos = SYMBOLS.indexOf(res[i]);
+                        const scrollDist = (SYMBOLS.length * 90 * 3) + (targetPos * 90); 
+                        const reel = document.getElementById(`reel-${id}`);
+                        reel.style.transition = 'none';
+                        reel.style.transform = 'translateY(0)';
+                        setTimeout(() => {
+                            reel.style.transition = 'transform 3.5s cubic-bezier(0.15, 0, 0.05, 1)';
+                            reel.style.transform = `translateY(-${scrollDist}px)`;
+                        }, 50);
+                    });
+
                     setTimeout(async () => {
                         State.isSpinning = false; btn.disabled = false;
                         let win = (res[0] === res[1] && res[1] === res[2]) ? bet * 10 : 0;
@@ -357,6 +371,7 @@
                     }, 3500);
                 }
             },
+
             mines: {
                 active: false, mines: [], revealed: [], mult: 1, bet: 10,
                 multSteps: [1.25, 1.85, 2.75, 4.20, 6.50, 10.20, 16.50, 28.00, 45.00, 80.00],
@@ -386,7 +401,7 @@
                     this.revealed.push(i); const el = document.getElementById(`m-${i}`);
                     if(this.mines.includes(i)) {
                         playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500');
-                        UI.notify("¡BOMBA!", "error"); // NOTIFICACIÓN RESTAURADA
+                        UI.notify("¡BOMBA!", "error");
                         this.end(false);
                     } else {
                         playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500');
@@ -406,6 +421,7 @@
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'MINAS' }]);
                 }
             },
+
             tower: {
                 level: 0, active: false, bet: 0, mult: 1,
                 towerSteps: [1.45, 2.30, 3.80, 6.50, 11.20, 19.80, 35.00, 75.00],
@@ -450,6 +466,7 @@
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'TORRE' }]);
                 }
             },
+
             crash: {
                 active: false, mult: 1, bet: 0, interval: null,
                 start() {
@@ -460,18 +477,14 @@
                     this.active = true; this.bet = b; this.mult = 1.0;
                     const btn = document.getElementById('btn-crash'); btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
                     btn.onclick = () => this.cashout();
-
                     if (Math.random() < 0.15 / State.luckFactor) { this.explode(); return; }
-
                     let baseLimit;
                     const rng = Math.random();
                     if (rng < 0.01) baseLimit = 100 + Math.random() * 400; 
                     else if (rng < 0.05) baseLimit = 20 + Math.random() * 80; 
                     else if (rng < 0.20) baseLimit = 2 + Math.random() * 18; 
                     else baseLimit = 1.01 + Math.random() * 0.99; 
-
                     if (State.luckFactor < 0.5) baseLimit = 1.01 + Math.random() * 0.05; 
-
                     this.interval = setInterval(() => {
                         const step = this.mult < 2 ? 0.01 : this.mult < 10 ? 0.05 : 0.5;
                         this.mult += step;
@@ -490,7 +503,7 @@
                 },
                 explode() {
                     clearInterval(this.interval);
-                    playSfx('lose'); UI.notify("¡EXPLOTÓ!", "error"); // NOTIFICACIÓN RESTAURADA
+                    playSfx('lose'); UI.notify("¡EXPLOTÓ!", "error");
                     document.getElementById('crash-mult').classList.add('text-red-500');
                     document.getElementById('crash-rocket').innerHTML = '💥';
                     this.end(false);
