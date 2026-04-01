@@ -156,7 +156,7 @@
     </div>
 
     <div id="modal-deposit" class="fixed inset-0 bg-black/95 z-[100] hidden-view flex items-center justify-center p-6">
-        <div class="glass p-8 w-full max-w-sm bg-[#0a0a0a]">
+        <div class="glass p-8 w-full max-sm bg-[#0a0a0a]">
             <div id="dep-step-1">
                 <h2 class="font-casino text-emerald-500 text-center mb-6">Monto a cargar</h2>
                 <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-10 text-white">
@@ -218,12 +218,11 @@
         const playSfx = (key) => { 
             const audio = sfx[key];
             if(audio) { 
-                audio.pause(); audio.currentTime = 0; 
-                // Pequeño truco para forzar la reproducción en móviles
-                const playPromise = audio.play();
-                if (playPromise !== undefined) { 
-                    playPromise.catch(e => { console.log("Interacción requerida para audio"); }); 
-                }
+                audio.pause(); 
+                audio.currentTime = 0; 
+                setTimeout(() => {
+                    audio.play().catch(e => console.log("Audio play blocked"));
+                }, 10);
             } 
         };
 
@@ -407,11 +406,12 @@
                         State.isSpinning = false; btn.disabled = false;
                         let win = (res[0] === res[1] && res[1] === res[2]) ? bet * 10 : 0;
                         if(win > 0) { 
-                            playSfx('win'); // SONIDO CORREGIDO
                             State.balance += win; 
+                            playSfx('win');
                             UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); 
                         } else { 
                             playSfx('lose'); 
+                            UI.notify(`Suerte la próxima`, "error");
                         }
                         UI.updateBalance(); GameLogic.adjustLuck(win, bet, win > 0 ? 10 : 0);
                         await Core.updateDBSaldo();
@@ -443,6 +443,7 @@
                     this.revealed.push(i); const el = document.getElementById(`m-${i}`);
                     if(this.mines.includes(i)) {
                         playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500');
+                        UI.notify("¡BOOM!", "error");
                         this.end(false);
                     } else {
                         playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500');
@@ -456,8 +457,8 @@
                 async cashout() { 
                     if(!this.active) return; 
                     const win = this.bet * this.mult; 
-                    playSfx('win'); // SONIDO CORREGIDO
                     State.balance += win; 
+                    playSfx('win');
                     UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
                     this.end(true); 
                 },
@@ -496,7 +497,11 @@
                     if(!this.active || r !== this.level) return;
                     const isBomb = Math.random() < (this.level > 2 ? 0.55 : 0.40) / State.luckFactor;
                     const items = document.getElementById(`tower-row-${r}`).children;
-                    if(isBomb) { playSfx('lose'); items[c].innerHTML = '💣'; this.end(false); } 
+                    if(isBomb) { 
+                        playSfx('lose'); items[c].innerHTML = '💣'; 
+                        UI.notify("Caíste de la torre", "error");
+                        this.end(false); 
+                    } 
                     else {
                         playSfx('click'); items[c].innerHTML = '💎'; items[c].classList.add('bg-emerald-500/20', 'border-emerald-500');
                         this.mult = this.towerSteps[this.level]; this.level++;
@@ -512,8 +517,8 @@
                 async cashout() { 
                     if(!this.active || this.level === 0) return; 
                     const win = this.bet * this.mult; 
-                    playSfx('win'); // SONIDO CORREGIDO
                     State.balance += win; 
+                    playSfx('win');
                     UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
                     this.end(true); 
                 },
@@ -553,12 +558,19 @@
                     if(!this.active) return; 
                     clearInterval(this.interval); 
                     const win = this.bet * this.mult; 
-                    playSfx('win'); // SONIDO CORREGIDO
                     State.balance += win; 
+                    playSfx('win');
                     UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
                     this.end(true); 
                 },
-                explode() { clearInterval(this.interval); playSfx('lose'); document.getElementById('crash-mult').classList.add('text-red-500'); document.getElementById('crash-rocket').innerHTML = '💥'; this.end(false); },
+                explode() { 
+                    clearInterval(this.interval); 
+                    playSfx('lose'); 
+                    document.getElementById('crash-mult').classList.add('text-red-500'); 
+                    document.getElementById('crash-rocket').innerHTML = '💥'; 
+                    UI.notify("¡EXPLOTÓ!", "error");
+                    this.end(false); 
+                },
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
                     GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
