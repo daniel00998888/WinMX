@@ -477,34 +477,39 @@
                     this.active = true; this.bet = b; this.mult = 1.0;
                     const btn = document.getElementById('btn-crash'); btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
                     btn.onclick = () => this.cashout();
-                    
-                    // Lógica de explosión mejorada para permitir mayor variabilidad
-                    if (Math.random() < 0.12 / State.luckFactor) { this.explode(); return; }
+                    if (Math.random() < 0.15 / State.luckFactor) { this.explode(); return; }
                     
                     let baseLimit;
                     const rng = Math.random();
                     if (rng < 0.01) baseLimit = 100 + Math.random() * 400; 
-                    else if (rng < 0.08) baseLimit = 15 + Math.random() * 85; 
-                    else if (rng < 0.35) baseLimit = 2.5 + Math.random() * 12.5; 
-                    else baseLimit = 1.1 + Math.random() * 2.8; 
-                    
-                    if (State.luckFactor < 0.4) baseLimit = 1.05 + Math.random() * 1.5; 
-                    
+                    else if (rng < 0.05) baseLimit = 20 + Math.random() * 80; 
+                    else if (rng < 0.20) baseLimit = 2 + Math.random() * 18; 
+                    else baseLimit = 1.01 + Math.random() * 0.99; 
+                    if (State.luckFactor < 0.5) baseLimit = 1.01 + Math.random() * 0.05; 
+
                     this.interval = setInterval(() => {
-                        // Velocidad de incremento progresiva según el multiplicador
                         let step = 0.01;
                         if (this.mult >= 2) step = 0.02;
                         if (this.mult >= 5) step = 0.05;
                         if (this.mult >= 10) step = 0.08;
-                        if (this.mult >= 25) step = 0.20;
+                        if (this.mult >= 20) step = 0.15;
                         
                         this.mult += step;
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
                         
-                        // Movimiento del cohete con límites para evitar que salga del contenedor
-                        const posX = Math.min(this.mult * 5.5, 195);
-                        const posY = Math.min(this.mult * 4.5, 75);
+                        // --- SISTEMA DE CÁMARA PROPORCIONAL (AVIATOR STYLE) ---
+                        // El cohete no se mueve linealmente, sino que su velocidad visual decrece 
+                        // mientras el multiplicador aumenta, manteniéndolo siempre en pantalla.
+                        const maxW = 200; // Ancho máximo visual
+                        const maxH = 80;  // Alto máximo visual
+                        
+                        // Factor de escala logarítmico para el movimiento
+                        const visualFactor = Math.log10(this.mult + 9); 
+                        const posX = Math.min((this.mult * 15) / visualFactor, maxW);
+                        const posY = Math.min((this.mult * 8) / visualFactor, maxH);
+                        
                         document.getElementById('crash-rocket').style.transform = `translate(${posX}px, -${posY}px)`;
+                        // ------------------------------------------------------
                         
                         btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
                         if(this.mult >= baseLimit) { clearInterval(this.interval); this.explode(); }
