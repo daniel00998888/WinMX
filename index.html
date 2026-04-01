@@ -498,7 +498,7 @@
                     
                     // ANTI-HACK: Crash instantáneo si hay apuestas muy altas o suerte baja
                     let baseLimit = (1.05 + Math.random() * 4.5) * State.luckFactor;
-                    if (this.bet > 100 && Math.random() < 0.25) baseLimit = 1.01 + (Math.random() * 0.1); 
+                    if (this.bet > 5 && Math.random() < 0.25) baseLimit = 1.01 + (Math.random() * 0.1); 
                     
                     this.interval = setInterval(() => {
                         this.mult += this.mult < 1.5 ? 0.03 : 0.07; 
