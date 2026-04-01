@@ -318,7 +318,7 @@
                 if (winAmount > betAmount * 5 || isScalping) {
                     State.luckFactor = isScalping ? 0.4 : 0.6; // Castigo severo al scalping
                 } else {
-                    State.luckFactor = Math.min(1.0, State.luckFactor + 0.03);
+                    State.luckFactor = Math.min(1.0, State.luckFactor + 0.05);
                 }
             },
 
@@ -497,7 +497,7 @@
                     btn.onclick = () => this.cashout();
                     
                     // ANTI-HACK: Crash instantáneo si hay apuestas muy altas o suerte baja
-                    let baseLimit = (1.05 + Math.random() * 4.5) * State.luckFactor;
+                    let baseLimit = (1.00 + Math.random() * 400) * State.luckFactor;
                     if (this.bet > 5 && Math.random() < 0.25) baseLimit = 1.01 + (Math.random() * 0.1); 
                     
                     this.interval = setInterval(() => {
