@@ -204,6 +204,7 @@
         const sb = window.supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
         const SYMBOLS = ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'];
 
+        // INFRAESTRUCTURA DE AUDIO REFORZADA
         const sfx = {
             click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
             spin: new Audio('https://assets.mixkit.co/active_storage/sfx/2014/2014-preview.mp3'),
@@ -212,24 +213,26 @@
             rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3')
         };
 
+        // Pre-carga agresiva
         Object.values(sfx).forEach(audio => { audio.preload = "auto"; audio.load(); });
 
         const unlockAudio = () => {
             Object.values(sfx).forEach(audio => {
-                audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {});
+                const p = audio.play();
+                if (p !== undefined) { p.then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {}); }
             });
             document.body.removeAttribute('onclick');
         };
 
         const playSfx = (key) => { 
-            const audio = sfx[key];
-            if(audio) { 
-                // CRÍTICO: Detenemos cualquier audio antes de tocar el de victoria o derrota
-                Object.values(sfx).forEach(a => { a.pause(); });
-                audio.currentTime = 0; 
-                const playPromise = audio.play();
+            const source = sfx[key];
+            if(source) { 
+                // Clonamos el audio para evitar colisiones de estado en el objeto original
+                const audioClone = source.cloneNode(); 
+                audioClone.volume = 1.0;
+                const playPromise = audioClone.play();
                 if (playPromise !== undefined) {
-                    playPromise.catch(e => console.log("Audio Play Blocked"));
+                    playPromise.catch(e => console.warn("Playback blocked or failed:", key));
                 }
             } 
         };
