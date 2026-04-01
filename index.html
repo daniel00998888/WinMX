@@ -256,17 +256,49 @@
         };
 
         const Core = {
-            async init() { let p = 0; const i = setInterval(() => { p += 25; document.getElementById('boot-bar').style.width = `${p}%`; if(p >= 100) { clearInterval(i); this.check(); } }, 100); },
-            async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); } else { document.getElementById('auth-view').classList.remove('hidden-view'); } },
-            async loadBalance() { const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle(); State.balance = data ? data.saldo : 0; UI.updateBalance(); },
-            
-            // Función auxiliar para actualizar saldo de forma segura y evitar Error 400
+            async init() { 
+                let p = 0; 
+                const i = setInterval(() => { 
+                    p += 25; document.getElementById('boot-bar').style.width = `${p}%`; 
+                    if(p >= 100) { clearInterval(i); this.check(); } 
+                }, 100); 
+            },
+            async check() { 
+                const { data: { session } } = await sb.auth.getSession(); 
+                document.getElementById('boot-loader').style.display = 'none'; 
+                if(session) { 
+                    State.user = session.user; 
+                    document.getElementById('main-app').classList.remove('hidden-view'); 
+                    await this.loadBalance(); 
+                    this.subscribeToBalance(); // Activación Realtime
+                } else { 
+                    document.getElementById('auth-view').classList.remove('hidden-view'); 
+                } 
+            },
+            async loadBalance() { 
+                const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle(); 
+                State.balance = data ? data.saldo : 0; 
+                UI.updateBalance(); 
+            },
+            subscribeToBalance() {
+                sb.channel('custom-balance-channel')
+                    .on(
+                        'postgres_changes',
+                        { event: 'UPDATE', schema: 'public', table: 'usuarios', filter: `id=eq.${State.user.id}` },
+                        (payload) => {
+                            if (payload.new && payload.new.saldo !== undefined) {
+                                State.balance = payload.new.saldo;
+                                UI.updateBalance();
+                            }
+                        }
+                    )
+                    .subscribe();
+            },
             async updateDBSaldo() {
                 if(!State.user) return;
                 const { error } = await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                 if(error) console.error("Balance Update Error:", error.message);
             },
-
             async confirmDeposit() {
                 const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value));
                 const fileInput = document.getElementById('receipt-input');
@@ -282,14 +314,19 @@
                     const { error: uploadError } = await sb.storage.from('comprobantes').upload(filePath, file);
                     if (uploadError) throw uploadError;
                     const { data: urlData } = sb.storage.from('comprobantes').getPublicUrl(filePath);
-                    await sb.from('history').insert([{ user_id: State.user.id, type: 'deposits', amount: amt, label: 'CARGA', status: 'pending', evidence_url: urlData.publicUrl }]);
+                    await sb.from('history').insert([{ 
+                        user_id: State.user.id, type: 'deposits', amount: amt, label: 'CARGA', status: 'pending', evidence_url: urlData.publicUrl 
+                    }]);
                     UI.notify("En revisión", "success");
                     UI.closeModal('modal-deposit');
                     this.fetchHistory();
                 } catch (e) { UI.notify("Error al enviar", "error"); } 
-                finally { const btn = document.getElementById('btn-confirm-dep'); btn.disabled = false; btn.style.opacity = "1"; }
+                finally { 
+                    const btn = document.getElementById('btn-confirm-dep'); 
+                    btn.disabled = false; btn.style.opacity = "1"; 
+                }
             },
-           async fetchHistory() {
+            async fetchHistory() {
                  const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20);
                  const d = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(20);
                  const container = document.getElementById('history-lists');
@@ -337,8 +374,7 @@
                 if (winAmount === 0) { State.sessionLoss += betAmount; } 
                 else { State.sessionLoss -= (winAmount - betAmount); if (State.sessionLoss < 0) State.sessionLoss = 0; }
                 const consecutiveLosses = [...State.winHistory].reverse().findIndex(h => h.win > 0);
-                const hasLostSignificant = State.sessionLoss > 150;
-                if ((consecutiveLosses >= 4 || hasLostSignificant) && State.balance > 0) { State.luckFactor = 1.6; } 
+                if ((consecutiveLosses >= 4 || State.sessionLoss > 150) && State.balance > 0) { State.luckFactor = 1.6; } 
                 else {
                     const isScalping = State.winHistory.filter(h => h.bet >= 30 && h.mult < 1.15 && h.win > 0).length >= 2;
                     if (isScalping) { State.luckFactor = 0.2; } else { State.luckFactor = Math.min(1.0, State.luckFactor + 0.05); }
@@ -349,8 +385,7 @@
                 init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); r.innerHTML = ''; Array(10).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); }); },
                 async play() {
                     if(State.isSpinning) return;
-                    const betInput = document.getElementById('slots-bet-input');
-                    const bet = Math.abs(parseFloat(betInput.value)) || 10;
+                    const bet = Math.abs(parseFloat(document.getElementById('slots-bet-input').value)) || 10;
                     if(State.balance < bet || bet <= 0) return UI.notify("Saldo insuficiente", "error");
                     const btn = document.getElementById('btn-slots-play');
                     btn.disabled = true; playSfx('spin'); State.isSpinning = true; State.balance -= bet; UI.updateBalance();
@@ -359,9 +394,8 @@
                     if (State.luckFactor >= 1.4 || (res[0] === res[1] && Math.random() < State.luckFactor)) { res[2] = res[0]; } else { res.push(getSymbol()); }
                     
                     [1,2,3].forEach((id, i) => { 
-                        const targetPos = SYMBOLS.indexOf(res[i]);
-                        const scrollDist = (SYMBOLS.length * 90 * 3) + (targetPos * 90); 
                         const reel = document.getElementById(`reel-${id}`);
+                        const scrollDist = (SYMBOLS.length * 90 * 3) + (SYMBOLS.indexOf(res[i]) * 90); 
                         reel.style.transition = 'none'; reel.style.transform = 'translateY(0)';
                         setTimeout(() => { reel.style.transition = 'transform 3.5s cubic-bezier(0.15, 0, 0.05, 1)'; reel.style.transform = `translateY(-${scrollDist}px)`; }, 50);
                     });
@@ -369,7 +403,7 @@
                     setTimeout(async () => {
                         State.isSpinning = false; btn.disabled = false;
                         let win = (res[0] === res[1] && res[1] === res[2]) ? bet * 10 : 0;
-                        if(win > 0) { State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`¡GRAN PREMIO! $${win.toFixed(2)}`, "success"); } else { playSfx('lose'); UI.notify("CASI...", "error"); }
+                        if(win > 0) { State.balance += win; playSfx('win'); UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); } else { playSfx('lose'); }
                         UI.updateBalance(); GameLogic.adjustLuck(win, bet, win > 0 ? 10 : 0);
                         await Core.updateDBSaldo();
                         await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -bet, label: 'SLOTS' }]);
@@ -393,31 +427,24 @@
                     this.mines = []; while(this.mines.length < 3) { let r = Math.floor(Math.random()*25); if(!this.mines.includes(r)) this.mines.push(r); }
                     document.getElementById('mines-controls').classList.add('hidden-view');
                     document.getElementById('mines-status').classList.remove('hidden-view');
-                    document.getElementById('mines-mult').innerText = '1.00x';
-                    document.getElementById('mines-next-hint').innerText = `Siguiente: x${this.multSteps[0].toFixed(2)}`;
-                    document.getElementById('mines-cashout-btn').innerText = `COBRAR $0.00`;
                     this.drawGrid();
                 },
                 cell(i) {
                     if(!this.active || this.revealed.includes(i)) return;
-                    const winCount = this.revealed.length;
-                    let dynamicFail = (0.12 + (winCount * 0.09)) / State.luckFactor;
-                    if (State.luckFactor > 1.4 && winCount < 3) dynamicFail = 0.01;
-                    if (winCount > 1 && Math.random() < dynamicFail) { if (!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); } }
                     this.revealed.push(i); const el = document.getElementById(`m-${i}`);
                     if(this.mines.includes(i)) {
                         playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500');
-                        UI.notify("¡BOMBA!", "error"); this.end(false);
+                        this.end(false);
                     } else {
                         playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500');
-                        this.mult = this.multSteps[winCount] || this.mult * 1.5;
+                        this.mult = this.multSteps[this.revealed.length-1] || this.mult * 1.5;
                         document.getElementById('mines-mult').innerText = this.mult.toFixed(2) + 'x';
-                        const nextVal = this.multSteps[winCount + 1] || (this.mult * 1.7);
+                        const nextVal = this.multSteps[this.revealed.length] || (this.mult * 1.7);
                         document.getElementById('mines-next-hint').innerText = `Siguiente: x${nextVal.toFixed(2)}`;
                         document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                     }
                 },
-                async cashout() { if(!this.active) return; const win = this.bet * this.mult; State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
+                async cashout() { if(!this.active) return; const win = this.bet * this.mult; State.balance += win; playSfx('win'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
                     GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
@@ -448,16 +475,12 @@
                     this.drawTower(); document.getElementById('tower-row-0').classList.remove('opacity-30');
                     document.getElementById('tower-controls').classList.add('hidden-view');
                     document.getElementById('tower-status').classList.remove('hidden-view');
-                    document.getElementById('tower-mult-display').innerText = '1.00x';
-                    document.getElementById('tower-next-hint').innerText = `Siguiente: x${this.towerSteps[0].toFixed(2)}`;
-                    document.getElementById('tower-cashout-btn').innerText = `COBRAR $0.00`;
                 },
                 select(r, c) {
                     if(!this.active || r !== this.level) return;
-                    let failProb = (this.level > 2 ? 0.55 : 0.40) / State.luckFactor;
-                    const isBomb = Math.random() < failProb;
+                    const isBomb = Math.random() < (this.level > 2 ? 0.55 : 0.40) / State.luckFactor;
                     const items = document.getElementById(`tower-row-${r}`).children;
-                    if(isBomb) { playSfx('lose'); items[c].innerHTML = '💣'; UI.notify("PERDISTE", "error"); this.end(false); } 
+                    if(isBomb) { playSfx('lose'); items[c].innerHTML = '💣'; this.end(false); } 
                     else {
                         playSfx('click'); items[c].innerHTML = '💎'; items[c].classList.add('bg-emerald-500/20', 'border-emerald-500');
                         this.mult = this.towerSteps[this.level]; this.level++;
@@ -466,14 +489,11 @@
                             const nextVal = this.towerSteps[this.level];
                             document.getElementById('tower-next-hint').innerText = `Siguiente: x${nextVal.toFixed(2)}`;
                             document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30');
-                        } else {
-                            document.getElementById('tower-next-hint').innerText = "¡MÁXIMO!";
-                            this.cashout();
-                        }
+                        } else { this.cashout(); }
                         document.getElementById('tower-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                     }
                 },
-                async cashout() { if(!this.active || this.level === 0) return; const win = this.bet * this.mult; State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
+                async cashout() { if(!this.active || this.level === 0) return; const win = this.bet * this.mult; State.balance += win; playSfx('win'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
                     GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
@@ -495,23 +515,19 @@
                     this.active = true; this.bet = b; this.mult = 1.0; this.bgPos = 0;
                     const btn = document.getElementById('btn-crash'); btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
                     btn.onclick = () => this.cashout();
-                    if (Math.random() < 0.15 / State.luckFactor) { this.explode(); return; }
-                    let baseLimit; const rng = Math.random();
-                    if (rng < 0.01) baseLimit = 100 + Math.random() * 400; else if (rng < 0.05) baseLimit = 20 + Math.random() * 80; 
-                    else if (rng < 0.20) baseLimit = 2 + Math.random() * 18; else baseLimit = 1.01 + Math.random() * 0.99; 
+                    let baseLimit = (Math.random() < 0.20) ? 1.01 + Math.random() * 0.99 : 2 + Math.random() * 18;
                     if (State.luckFactor < 0.5) baseLimit = 1.01 + Math.random() * 0.05; 
                     this.interval = setInterval(() => {
-                        let step = 0.003; if (this.mult >= 2) step = 0.006; if (this.mult >= 5) step = 0.012; if (this.mult >= 10) step = 0.025; if (this.mult >= 20) step = 0.05;
-                        this.mult += step; document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
-                        let speed = 2 + (this.mult * 2); this.bgPos -= speed; if (this.bgPos <= -100) this.bgPos = 0;
+                        this.mult += 0.004 * (this.mult > 5 ? 3 : 1); 
+                        document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
+                        this.bgPos -= (2 + this.mult); if (this.bgPos <= -100) this.bgPos = 0;
                         document.getElementById('crash-bg').style.transform = `translateX(${this.bgPos}%)`;
-                        let floatY = Math.sin(Date.now() / 200) * 8; document.getElementById('crash-rocket').style.transform = `translateY(${floatY}px)`;
                         btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
-                        if(this.mult >= baseLimit) { clearInterval(this.interval); this.explode(); }
+                        if(this.mult >= baseLimit) this.explode();
                     }, 60); 
                 },
-                cashout() { if(!this.active) return; clearInterval(this.interval); const win = this.bet * this.mult; State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
-                explode() { clearInterval(this.interval); playSfx('lose'); UI.notify("¡EXPLOTÓ!", "error"); document.getElementById('crash-mult').classList.add('text-red-500'); document.getElementById('crash-rocket').innerHTML = '💥'; this.end(false); },
+                cashout() { if(!this.active) return; clearInterval(this.interval); const win = this.bet * this.mult; State.balance += win; playSfx('win'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
+                explode() { clearInterval(this.interval); playSfx('lose'); document.getElementById('crash-mult').classList.add('text-red-500'); document.getElementById('crash-rocket').innerHTML = '💥'; this.end(false); },
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
                     GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
