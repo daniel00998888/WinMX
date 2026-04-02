@@ -220,11 +220,7 @@
             if(audio) { 
                 audio.pause(); 
                 audio.currentTime = 0; 
-                // Pequeño truco para forzar la reproducción ignorando el hilo de ejecución principal
-                const p = audio.play();
-                if (p !== undefined) {
-                    p.catch(e => console.log("Audio play blocked: interaction required"));
-                }
+                audio.play().catch(e => console.log("Audio play blocked"));
             } 
         };
 
@@ -408,8 +404,8 @@
                         State.isSpinning = false; btn.disabled = false;
                         let win = (res[0] === res[1] && res[1] === res[2]) ? bet * 10 : 0;
                         if(win > 0) { 
-                            playSfx('win');
                             State.balance += win; 
+                            playSfx('win');
                             UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); 
                         } else { 
                             playSfx('lose'); 
@@ -459,8 +455,8 @@
                 async cashout() { 
                     if(!this.active) return; 
                     const win = this.bet * this.mult; 
-                    playSfx('win');
                     State.balance += win; 
+                    playSfx('win');
                     UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
                     this.end(true); 
                 },
@@ -519,8 +515,8 @@
                 async cashout() { 
                     if(!this.active || this.level === 0) return; 
                     const win = this.bet * this.mult; 
-                    playSfx('win');
                     State.balance += win; 
+                    playSfx('win');
                     UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
                     this.end(true); 
                 },
@@ -560,8 +556,8 @@
                     if(!this.active) return; 
                     clearInterval(this.interval); 
                     const win = this.bet * this.mult; 
-                    playSfx('win');
                     State.balance += win; 
+                    playSfx('win');
                     UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
                     this.end(true); 
                 },
