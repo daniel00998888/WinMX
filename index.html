@@ -205,25 +205,7 @@
             rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3')
         };
 
-        // Función para desbloquear audio (Corrección de error de consola)
-        let audioUnlocked = false;
-        const unlockAudio = () => {
-            if (audioUnlocked) return;
-            Object.values(sfx).forEach(audio => {
-                audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {});
-            });
-            audioUnlocked = true;
-            console.log("Audio Unlocked");
-        };
-
-        const playSfx = (key) => { 
-            const audio = sfx[key];
-            if(audio) { 
-                audio.pause(); 
-                audio.currentTime = 0; 
-                audio.play().catch(e => console.log("Audio play blocked: Esperando interacción"));
-            } 
-        };
+        const playSfx = (key) => { if(sfx[key]) { sfx[key].currentTime = 0; sfx[key].play().catch(()=>{}); } };
 
         let State = { user: null, balance: 0, isSpinning: false, totalSpins: 0, luckFactor: 1.0, winHistory: [], sessionLoss: 0 };
 
