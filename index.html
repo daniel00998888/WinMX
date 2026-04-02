@@ -389,14 +389,10 @@
                 }
             },
 
-mines: {
+            mines: {
                 active: false, mines: [], revealed: [], mult: 1, bet: 10,
-                // Curva exponencial recalculada para 22 pasos hasta x500
-                multSteps: [
-                    1.15, 1.35, 1.60, 1.95, 2.40, 3.00, 3.80, 4.90, 6.40, 8.50, 
-                    11.50, 16.00, 23.00, 34.00, 52.00, 82.00, 135.00, 210.00, 290.00, 380.00, 
-                    450.00, 500.00
-                ],
+                // Array extendido a 22 pasos con tope en x500.00
+                multSteps: [1.25, 1.85, 2.75, 4.20, 6.50, 10.20, 16.50, 28.00, 45.00, 68.00, 95.00, 130.00, 175.00, 225.00, 280.00, 330.00, 375.00, 415.00, 445.00, 470.00, 490.00, 500.00],
                 drawGrid() {
                     const g = document.getElementById('mines-grid'); g.innerHTML = '';
                     for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/5 border border-white/5 rounded-lg flex items-center justify-center text-xl cursor-pointer active:scale-90 transition-all"></div>`;
@@ -411,8 +407,6 @@ mines: {
                     document.getElementById('mines-controls').classList.add('hidden-view');
                     document.getElementById('mines-status').classList.remove('hidden-view');
                     document.getElementById('mines-mult').innerText = '1.00x';
-                    
-                    // Mostrar el primer multiplicador posible
                     const nextVal = this.multSteps[0];
                     document.getElementById('mines-next-hint').innerText = `Siguiente: x${nextVal.toFixed(2)}`;
                     document.getElementById('mines-cashout-btn').innerText = `COBRAR $0.00`;
@@ -421,12 +415,9 @@ mines: {
                 cell(i) {
                     if(!this.active || this.revealed.includes(i)) return;
                     const winCount = this.revealed.length;
-                    
-                    // Lógica de probabilidad basada en LuckFactor
-                    let dynamicFail = (0.12 + (winCount * 0.04)) / State.luckFactor;
+                    let dynamicFail = (0.12 + (winCount * 0.09)) / State.luckFactor;
                     if (State.luckFactor > 1.4 && winCount < 3) dynamicFail = 0.01;
                     if (winCount > 1 && Math.random() < dynamicFail) { if (!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); } }
-                    
                     this.revealed.push(i); const el = document.getElementById(`m-${i}`);
                     if(this.mines.includes(i)) {
                         playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500');
@@ -434,23 +425,11 @@ mines: {
                         this.end(false);
                     } else {
                         playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500');
-                        
-                        // Asignar multiplicador del array
-                        this.mult = this.multSteps[winCount];
+                        this.mult = this.multSteps[winCount] || 500.00;
                         document.getElementById('mines-mult').innerText = this.mult.toFixed(2) + 'x';
-                        
-                        // Actualizar el "Siguiente"
-                        if(winCount + 1 < this.multSteps.length) {
-                            const nextVal = this.multSteps[winCount + 1];
-                            document.getElementById('mines-next-hint').innerText = `Siguiente: x${nextVal.toFixed(2)}`;
-                        } else {
-                            document.getElementById('mines-next-hint').innerText = `¡MÁXIMO NIVEL!`;
-                        }
-                        
+                        const nextVal = this.multSteps[winCount + 1] || 500.00;
+                        document.getElementById('mines-next-hint').innerText = `Siguiente: x${nextVal.toFixed(2)}`;
                         document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
-                        
-                        // Si llega al final (22 diamantes), cobra automático
-                        if(this.revealed.length === 22) this.cashout();
                     }
                 },
                 async cashout() { if(!this.active) return; const win = this.bet * this.mult; State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
