@@ -6,90 +6,134 @@
     <title>Panel de Control | WinMX Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>body { background: #050505; color: white; font-family: 'Inter', sans-serif; }</style>
+    <style>
+        body { background: #050505; color: white; font-family: 'Inter', sans-serif; }
+        .tab-active { border-bottom: 4px solid #10b981; color: #10b981; }
+    </style>
 </head>
 <body class="p-10">
-    <h1 class="text-4xl font-black mb-10 text-emerald-500 uppercase tracking-tighter italic">WinMX Admin <span class="text-white text-sm font-normal">Control de Depósitos</span></h1>
+    <h1 class="text-4xl font-black mb-6 text-emerald-500 uppercase tracking-tighter italic">
+        WinMX Admin <span class="text-white text-sm font-normal">Gestión de Transacciones</span>
+    </h1>
+
+    <div class="flex gap-8 mb-10 border-b border-white/10">
+        <button onclick="changeView('deposits')" id="btn-dep" class="pb-4 font-bold uppercase tracking-widest tab-active">Depósitos</button>
+        <button onclick="changeView('withdrawals')" id="btn-with" class="pb-4 font-bold uppercase tracking-widest text-zinc-500">Retiros</button>
+    </div>
 
     <div class="grid grid-cols-1 gap-6" id="pending-list">
         </div>
 
     <script>
         const sb = window.supabase.createClient("https://dakhnqriwbzihlzhtfcb.supabase.co", "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs");
+        let currentType = 'deposits';
+
+        function changeView(type) {
+            currentType = type;
+            document.getElementById('btn-dep').classList.toggle('tab-active', type === 'deposits');
+            document.getElementById('btn-dep').classList.toggle('text-zinc-500', type !== 'deposits');
+            document.getElementById('btn-with').classList.toggle('tab-active', type === 'withdrawals');
+            document.getElementById('btn-with').classList.toggle('text-zinc-500', type !== 'withdrawals');
+            loadPending();
+        }
 
         async function loadPending() {
-            // EL CAMBIO ESTÁ AQUÍ: .eq('type', 'deposits') asegura que no entren apuestas
             const { data, error } = await sb.from('history')
                 .select('*, usuarios(saldo)')
-                .eq('type', 'deposits') // <--- ESTO FILTRA SOLO LAS RECARGAS
+                .eq('type', currentType)
                 .eq('status', 'pending')
                 .order('created_at', { ascending: false });
 
             const container = document.getElementById('pending-list');
             if(error) return console.error(error);
             
-            container.innerHTML = (!data || data.length === 0) ? '<p class="text-zinc-600">No hay depósitos pendientes.</p>' : '';
+            container.innerHTML = (!data || data.length === 0) ? 
+                `<p class="text-zinc-600">No hay ${currentType === 'deposits' ? 'depósitos' : 'retiros'} pendientes.</p>` : '';
 
-            data.forEach(dep => {
-                // Obtenemos el saldo actual del objeto relacional 'usuarios'
-                const currentSaldo = dep.usuarios ? dep.usuarios.saldo : 0;
+            data.forEach(item => {
+                const currentSaldo = item.usuarios ? item.usuarios.saldo : 0;
+                const isDeposit = currentType === 'deposits';
 
                 container.innerHTML += `
-                    <div class="bg-zinc-900 p-6 rounded-[2rem] border border-white/5 flex items-center justify-between animate__animated animate__fadeIn">
+                    <div class="bg-zinc-900 p-6 rounded-[2rem] border border-white/5 flex items-center justify-between">
                         <div class="flex gap-6 items-center">
                             <div class="w-32 h-32 bg-zinc-800 rounded-2xl flex items-center justify-center overflow-hidden border border-white/10">
-                                ${dep.evidence_url ? `<img src="${dep.evidence_url}" class="w-full h-full object-cover cursor-pointer" onclick="window.open('${dep.evidence_url}')">` : '<i class="fas fa-image text-zinc-700"></i>'}
+                                ${isDeposit && item.evidence_url ? 
+                                    `<img src="${item.evidence_url}" class="w-full h-full object-cover cursor-pointer" onclick="window.open('${item.evidence_url}')">` : 
+                                    `<div class="text-center"><p class="text-[10px] text-zinc-500 uppercase">Solicitud de</p><p class="font-black text-red-500">RETIRO</p></div>`}
                             </div>
+                            
                             <div>
-                                <p class="text-emerald-500 font-bold text-2xl">$${dep.amount}</p>
-                                <p class="text-[10px] text-zinc-500 font-mono">USUARIO ID: ${dep.user_id}</p>
-                                <p class="text-[10px] text-zinc-400">SALDO ACTUAL: $${currentSaldo}</p>
+                                <p class="${isDeposit ? 'text-emerald-500' : 'text-red-500'} font-bold text-2xl tracking-tighter">
+                                    ${isDeposit ? '+' : '-'}$${item.amount}
+                                </p>
+                                <div class="mt-2 space-y-1">
+                                    <p class="text-[10px] text-zinc-500 font-mono">USUARIO ID: ${item.user_id}</p>
+                                    <p class="text-[11px] text-white font-bold bg-white/5 px-2 py-1 rounded w-fit">BANCO: ${item.bank_name || 'No especificado'}</p>
+                                    <p class="text-[11px] text-zinc-300 italic">TITULAR: ${item.account_holder || 'No especificado'}</p>
+                                    <p class="text-[10px] text-zinc-400 uppercase">SALDO ACTUAL: $${currentSaldo}</p>
+                                </div>
                             </div>
                         </div>
+
                         <div class="flex gap-4">
-                            <button onclick="approve('${dep.id}', '${dep.user_id}', ${dep.amount}, ${currentSaldo})" class="bg-emerald-500 text-black px-8 py-4 rounded-2xl font-black hover:bg-emerald-400 transition-all">APROBAR</button>
-                            <button onclick="reject('${dep.id}')" class="bg-red-500/10 text-red-500 px-8 py-4 rounded-2xl font-black border border-red-500/20 hover:bg-red-500 hover:text-white transition-all">RECHAZAR</button>
+                            <button onclick="approveTransaction('${item.id}', '${item.user_id}', ${item.amount}, ${currentSaldo})" 
+                                class="${isDeposit ? 'bg-emerald-500' : 'bg-red-500'} text-black px-8 py-4 rounded-2xl font-black hover:opacity-80 transition-all uppercase text-sm">
+                                ${isDeposit ? 'Aprobar Carga' : 'Confirmar Envío'}
+                            </button>
+                            <button onclick="rejectTransaction('${item.id}')" 
+                                class="bg-zinc-800 text-zinc-400 px-8 py-4 rounded-2xl font-black border border-white/5 hover:bg-white/10 hover:text-white transition-all text-sm">
+                                RECHAZAR
+                            </button>
                         </div>
                     </div>
                 `;
             });
         }
 
-        async function approve(historyId, userId, amount, currentSaldo) {
-            if(!confirm(`¿Aprobar carga de $${amount}? El nuevo saldo será $${currentSaldo + amount}`)) return;
+        async function approveTransaction(historyId, userId, amount, currentSaldo) {
+            const isDeposit = currentType === 'deposits';
+            const actionText = isDeposit ? "aprobar este depósito" : "confirmar que ya enviaste el retiro";
             
-            const newSaldo = currentSaldo + amount;
+            if(!confirm(`¿Deseas ${actionText}?`)) return;
 
-            // 1. Actualizamos el saldo del usuario
+            // Lógica de saldo: Depósito suma (+), Retiro resta (-)
+            // Nota: Si al solicitar el retiro ya restaste el saldo en el cliente, 
+            // aquí solo marcarías como completado. Aquí asumo que lo restamos al aprobar:
+            const newSaldo = isDeposit ? (currentSaldo + amount) : (currentSaldo - amount);
+
+            if (!isDeposit && currentSaldo < amount) {
+                alert("Error: El usuario no tiene saldo suficiente para este retiro.");
+                return;
+            }
+
+            // 1. Actualizamos saldo
             const { error: errSaldo } = await sb.from('usuarios').update({ saldo: newSaldo }).eq('id', userId);
             
-            // 2. Marcamos el depósito como completado
+            // 2. Actualizamos historial
             const { error: errHist } = await sb.from('history').update({ 
                 status: 'completed', 
-                label: 'DEPÓSITO APROBADO' 
+                label: isDeposit ? 'DEPÓSITO APROBADO' : 'RETIRO ENVIADO' 
             }).eq('id', historyId);
 
             if(!errSaldo && !errHist) {
-                alert("¡Depósito aprobado y saldo actualizado!");
+                alert("Transacción finalizada con éxito.");
                 loadPending();
             } else {
-                alert("Error al procesar. Revisa la consola.");
-                console.log(errSaldo, errHist);
+                alert("Hubo un error. Revisa la consola.");
+                console.error(errSaldo, errHist);
             }
         }
 
-        async function reject(id) {
-            if(!confirm("¿Rechazar este depósito?")) return;
-            await sb.from('history').update({ 
-                status: 'rejected', 
-                label: 'DEPÓSITO RECHAZADO' 
-            }).eq('id', id);
+        async function rejectTransaction(id) {
+            if(!confirm("¿Rechazar esta solicitud?")) return;
+            const label = currentType === 'deposits' ? 'DEPÓSITO RECHAZADO' : 'RETIRO RECHAZADO';
+            
+            await sb.from('history').update({ status: 'rejected', label: label }).eq('id', id);
             loadPending();
         }
 
-        // Carga inicial
         loadPending();
-        // Auto-refresh cada 15 segundos para no saturar
         setInterval(loadPending, 15000);
     </script>
 </body>
