@@ -311,15 +311,66 @@
             }
         };
 
-        const UI = {
+const UI = {
             updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toFixed(2)}`; },
             updateProfile() { document.getElementById('user-email-display').innerText = State.user.email; },
-            openModal(id) { playSfx('click'); document.getElementById(id).classList.remove('hidden-view'); document.getElementById('dep-step-1').classList.remove('hidden-view'); document.getElementById('dep-step-2').classList.add('hidden-view'); },
+            openModal(id) { 
+                playSfx('click'); 
+                document.getElementById(id).classList.remove('hidden-view'); 
+                document.getElementById('dep-step-1').classList.remove('hidden-view'); 
+                document.getElementById('dep-step-2').classList.add('hidden-view'); 
+                this.switchDepTab('deposit');
+            },
             closeModal(id) { playSfx('click'); document.getElementById(id).classList.add('hidden-view'); },
             toggleAccordion(accId, arrowId) { playSfx('click'); const acc = document.getElementById(accId); acc.classList.toggle('hidden-view'); document.getElementById(arrowId).style.transform = acc.classList.contains('hidden-view') ? 'rotate(0deg)' : 'rotate(180deg)'; },
-            depNextStep() { const amt = parseFloat(document.getElementById('dep-amount').value); if(isNaN(amt) || amt <= 0) return this.notify("Monto inválido", "error"); playSfx('click'); document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`; document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
+            switchDepTab(tab) {
+                playSfx('click');
+                State.activeDepTab = tab;
+                const isDep = tab === 'deposit';
+                document.getElementById('tab-dep').className = isDep ? 'flex-1 py-2 text-center border-b-2 border-emerald-500 text-emerald-500 font-bold' : 'flex-1 py-2 text-center text-zinc-500';
+                document.getElementById('tab-wit').className = !isDep ? 'flex-1 py-2 text-center border-b-2 border-emerald-500 text-emerald-500 font-bold' : 'flex-1 py-2 text-center text-zinc-500';
+                document.getElementById('dep-btn-text').innerText = isDep ? 'CONTINUAR DEPÓSITO' : 'SOLICITAR RETIRO';
+                document.getElementById('bank-name-label').innerText = isDep ? 'Banco emisor:' : 'Banco receptor:';
+                document.getElementById('holder-name-label').innerText = isDep ? 'Nombre del titular (quien envía):' : 'Nombre del beneficiario:';
+            },
+            depNextStep() { 
+                const amt = parseFloat(document.getElementById('dep-amount').value); 
+                const bank = document.getElementById('bank-name').value.trim();
+                const holder = document.getElementById('holder-name').value.trim();
+                if(isNaN(amt) || amt <= 0) return this.notify("Monto inválido", "error"); 
+                if(!bank || !holder) return this.notify("Completa todos los campos", "error");
+                
+                playSfx('click'); 
+                if(State.activeDepTab === 'withdraw') {
+                    if(State.balance < amt) return this.notify("Saldo insuficiente", "error");
+                    this.sendWithdrawal(amt, bank, holder);
+                } else {
+                    document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`; 
+                    document.getElementById('dep-step-1').classList.add('hidden-view'); 
+                    document.getElementById('dep-step-2').classList.remove('hidden-view'); 
+                }
+            },
+            async sendWithdrawal(amt, bank, holder) {
+                const { error } = await sb.from('history').insert([{ 
+                    user_id: State.user.id, 
+                    type: 'withdrawals', 
+                    amount: -amt, 
+                    label: 'PENDIENTE',
+                    metadata: { bank, holder, email: State.user.email }
+                }]);
+                if(error) return UI.notify("Error al procesar", "error");
+                UI.notify("Solicitud enviada", "success");
+                this.closeModal('modal-deposit');
+            },
             copyClabe() { const clabe = document.getElementById('clabe-number').innerText; navigator.clipboard.writeText(clabe).then(() => { playSfx('click'); this.notify("CLABE Copiada", "success"); }); },
-            handleFile(input) { if(input.files && input.files[0]) { playSfx('click'); const label = document.getElementById('file-label'); label.innerText = "Recibo: " + input.files[0].name.substring(0, 15) + "..."; label.classList.replace('text-zinc-500', 'text-emerald-500'); } },
+            handleFile(input) { 
+                if(input.files && input.files[0]) { 
+                    playSfx('click'); 
+                    const label = document.getElementById('file-label'); 
+                    label.innerText = "Recibo: " + input.files[0].name.substring(0, 15) + "..."; 
+                    label.classList.replace('text-zinc-500', 'text-emerald-500'); 
+                } 
+            },
             notify(m, t) { const n = document.createElement('div'); n.className = `p-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-2xl animate__animated animate__fadeInDown ${t==='success'?'bg-emerald-500 text-black':'bg-red-500 text-white'}`; n.innerText = m; document.getElementById('notif-container').appendChild(n); setTimeout(() => { n.classList.replace('animate__fadeInDown', 'animate__fadeOutUp'); setTimeout(()=>n.remove(), 500); }, 3000); }
         };
 
@@ -365,14 +416,13 @@
                     btn.disabled = true; playSfx('spin'); State.isSpinning = true; 
                     State.balance -= bet; UI.updateBalance();
 
-                    // Sistema de Probabilidades por Pesos (LuckFactor Integrado)
                     const weightedSymbols = [
-                        { s: '🍒', w: 40 }, // Común
+                        { s: '🍒', w: 40 },
                         { s: '🍋', w: 25 },
                         { s: '🔔', w: 15 },
                         { s: '⭐️', w: 10 },
                         { s: '💎', w: 7 },
-                        { s: '7️⃣', w: 3 }   // Raro
+                        { s: '7️⃣', w: 3 }
                     ];
 
                     const getWeightedSymbol = () => {
@@ -385,22 +435,17 @@
                         return SYMBOLS[0];
                     };
 
-                    // Generar resultado inicial
                     let res = [getWeightedSymbol(), getWeightedSymbol()];
-                    
-                    // Lógica de Gane forzado por LuckFactor o Puro Azar
                     const forceWin = (State.luckFactor >= 1.5 && Math.random() < 0.4) || (Math.random() < (0.1 * State.luckFactor));
                     
                     if (forceWin) {
-                        res[2] = res[0]; // Forzamos el tercero igual al primero
+                        res[2] = res[0];
                     } else if (res[0] === res[1] && Math.random() > 0.3) {
-                        // Si por azar salieron dos iguales, hay chance de que el 3ero sea distinto
                         res.push(getWeightedSymbol());
                     } else {
                         res.push(getWeightedSymbol());
                     }
 
-                    // Ejecutar Animación
                     [1,2,3].forEach((id, i) => { 
                         const targetPos = SYMBOLS.indexOf(res[i]);
                         const scrollDist = (SYMBOLS.length * 90 * 3) + (targetPos * 90); 
@@ -625,6 +670,48 @@
                 }
             }
         };
+
+        // UI HTML Injection for Deposit/Withdrawals
+        const depositModalContent = `
+        <div id="modal-deposit" class="modal-base hidden-view z-[100] flex items-center justify-center p-4">
+            <div class="bg-zinc-900 w-full max-w-md rounded-3xl border border-white/10 overflow-hidden animate__animated animate__zoomIn">
+                <div class="p-6 border-b border-white/5 flex justify-between items-center bg-zinc-900/50">
+                    <h2 class="text-xl font-black italic tracking-tighter">TRANSACCIONES</h2>
+                    <button onclick="UI.closeModal('modal-deposit')" class="text-zinc-500 hover:text-white">✕</button>
+                </div>
+                
+                <div id="dep-step-1" class="p-6 space-y-4">
+                    <div class="flex bg-black/40 p-1 rounded-xl">
+                        <button id="tab-dep" onclick="UI.switchDepTab('deposit')" class="flex-1 py-2 text-center border-b-2 border-emerald-500 text-emerald-500 font-bold">DEPOSITAR</button>
+                        <button id="tab-wit" onclick="UI.switchDepTab('withdraw')" class="flex-1 py-2 text-center text-zinc-500">RETIRAR</button>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="space-y-1">
+                            <label class="text-[10px] text-zinc-500 uppercase font-bold px-1">Monto (MXN)</label>
+                            <input id="dep-amount" type="number" placeholder="0.00" class="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-emerald-500 font-bold focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div class="space-y-1">
+                            <label id="bank-name-label" class="text-[10px] text-zinc-500 uppercase font-bold px-1">Banco:</label>
+                            <input id="bank-name" type="text" placeholder="Ej: BBVA, Santander..." class="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white font-bold focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div class="space-y-1">
+                            <label id="holder-name-label" class="text-[10px] text-zinc-500 uppercase font-bold px-1">Titular:</label>
+                            <input id="holder-name" type="text" placeholder="Nombre Completo" class="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white font-bold focus:outline-none focus:border-emerald-500">
+                        </div>
+                    </div>
+                    
+                    <button id="dep-btn-text" onclick="UI.depNextStep()" class="w-full bg-emerald-500 text-black py-4 rounded-2xl font-black italic hover:bg-emerald-400">CONTINUAR</button>
+                </div>
+
+                <div id="dep-step-2" class="p-6 space-y-6 hidden-view">
+                    <div class="text-center">
+                        <div class="text-4xl font-black text-emerald-500" id="display-dep-amount">$0.00</div>
+                        <div class="text-xs text-zinc-500 uppercase font-bold">Total a transferir</div>
+                    </div>
+                    </div>
+            </div>
+        </div>`;
 
         Core.init();
     </script>
