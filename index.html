@@ -30,29 +30,47 @@
         .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 1.5rem; }
         .btn-action { background: var(--mx-green); color: black; font-weight: 900; border-radius: 1.2rem; transition: 0.2s; border: none; }
         .btn-action:disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
-        
-        .tab-btn { padding: 12px; font-family: 'Archivo Black', sans-serif; font-size: 10px; color: #444; border-bottom: 2px solid transparent; transition: 0.3s; flex: 1; text-align: center; cursor: pointer; text-transform: uppercase; }
-        .tab-btn.active { color: var(--mx-green); border-color: var(--mx-green); }
-
         .balance-pill { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 99px; padding: 4px 4px 4px 12px; display: flex; align-items: center; gap: 8px; }
         .btn-plus { width: 32px; height: 32px; background: var(--mx-green); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
         
-        .input-premium { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 12px; width: 100%; text-align: center; color: white; outline: none; font-size: 12px; }
-        .input-bet { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 12px; width: 100%; text-align: center; color: white; font-family: 'Archivo Black', sans-serif; outline: none; margin-bottom: 12px; }
+        .history-scroll { max-height: 280px; overflow-y: auto; scrollbar-width: none; }
+        .history-scroll::-webkit-scrollbar { display: none; }
+
+        .slot-box { height: 90px; overflow: hidden; background: #000; border-radius: 1rem; border: 1px solid #1a1a1a; }
+        .slot-item { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
+        .slot-reel { transition: transform 3.5s cubic-bezier(0.15, 0, 0.05, 1); }
         
         .pulse-pending { animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
+        .input-bet { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 12px; width: 100%; text-align: center; color: white; font-family: 'Archivo Black', sans-serif; outline: none; margin-bottom: 12px; }
+        
         #crash-area { position: relative; width: 100%; height: 160px; overflow: hidden; background: #050505; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.05); }
         .bg-infinite { position: absolute; top: 0; left: 0; height: 100%; width: 200%; display: flex; }
         .bg-part { width: 50%; height: 100%; background-size: 50px 50px; background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px); }
+        
         #crash-rocket-container { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 10; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; }
         #crash-rocket { font-size: 3rem; display: inline-block; transition: transform 0.1s linear; }
 
-        .instruction-card { background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 1.2rem; padding: 20px; margin-top: 24px; text-align: left; }
-        .slot-box { height: 90px; overflow: hidden; background: #000; border-radius: 1rem; border: 1px solid #1a1a1a; }
-        .slot-item { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
-        .slot-reel { transition: transform 3.5s cubic-bezier(0.15, 0, 0.05, 1); }
+        .instruction-card { 
+            background: rgba(16, 185, 129, 0.08); 
+            border: 1px solid rgba(16, 185, 129, 0.3); 
+            border-radius: 1.2rem; 
+            padding: 20px; 
+            margin-top: 24px; 
+            text-align: left;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .instruction-card h4 { font-family: 'Archivo Black', sans-serif; font-size: 12px; color: var(--mx-green); text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .instruction-card p { font-size: 11px; color: #ccc; line-height: 1.6; font-weight: 500; }
+        .instruction-card strong { color: white; font-weight: 800; }
+        
+        .risk-badge { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; margin-bottom: 10px; }
+
+        /* Estilos para el sistema de Retiro */
+        .tab-btn { flex: 1; padding: 12px; font-family: 'Archivo Black', sans-serif; font-size: 10px; text-transform: uppercase; color: #666; border-bottom: 2px solid transparent; transition: 0.3s; }
+        .tab-btn.active { color: var(--mx-green); border-bottom-color: var(--mx-green); }
+        .input-form { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 12px; width: 100%; color: white; font-size: 12px; outline: none; margin-bottom: 10px; }
     </style>
 </head>
 <body class="antialiased select-none">
@@ -80,7 +98,9 @@
                 <input id="reg-email" type="email" placeholder="Correo electrónico" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
                 <input id="reg-password" type="password" placeholder="Crea una contraseña" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
                 <div class="bg-white/5 border border-white/5 p-4 rounded-xl space-y-3">
-                    <p class="text-[9px] text-zinc-400 leading-relaxed uppercase font-bold">⚠️ AVISO: Riesgo real de capital. Juega con responsabilidad.</p>
+                    <p class="text-[9px] text-zinc-400 leading-relaxed uppercase font-bold">
+                        ⚠️ AVISO: Riesgo real de capital. Juega con responsabilidad.
+                    </p>
                     <label class="flex items-center gap-3 cursor-pointer">
                         <input type="checkbox" id="terms-check" class="w-4 h-4 accent-emerald-500">
                         <span class="text-[10px] text-white font-bold uppercase">Acepto términos y soy mayor de edad</span>
@@ -97,7 +117,7 @@
             <span class="font-casino italic text-xl tracking-tighter">WIN<span class="text-emerald-500">MX</span></span>
             <div class="balance-pill">
                 <span id="balance-display" class="font-casino text-emerald-500 text-lg tracking-tight">$0.00</span>
-                <div id="open-cashier-trigger" class="btn-plus active:scale-90 transition-transform cursor-pointer"><i class="fas fa-wallet"></i></div>
+                <div id="open-dep-trigger" class="btn-plus active:scale-90 transition-transform cursor-pointer"><i class="fas fa-plus"></i></div>
             </div>
         </header>
 
@@ -108,8 +128,8 @@
             </div>
             <div class="grid grid-cols-2 gap-4">
                 <div data-game="slots" class="game-card glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🎰</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Slots</span></div>
-                <div data-game="mines" class="game-card glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">bomb</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Minas</span></div>
-                <div data-game="crash" class="game-card glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">rocket</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Aviator</span></div>
+                <div data-game="mines" class="game-card glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">💣</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Minas</span></div>
+                <div data-game="crash" class="game-card glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🚀</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Aviator</span></div>
                 <div data-game="tower" class="game-card glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🗼</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Torre</span></div>
             </div>
         </div>
@@ -140,39 +160,68 @@
         </nav>
     </div>
 
-    <div id="modal-cashier" class="fixed inset-0 bg-black/95 z-[100] hidden-view flex items-center justify-center p-6">
-        <div class="glass p-6 w-full max-w-sm bg-[#0a0a0a]">
+    <div id="modal-deposit" class="fixed inset-0 bg-black/95 z-[100] hidden-view flex items-center justify-center p-6">
+        <div class="glass p-8 w-full max-w-sm bg-[#0a0a0a]">
+            
             <div class="flex mb-6 border-b border-white/5">
-                <div id="tab-dep" class="tab-btn active">Depositar</div>
-                <div id="tab-with" class="tab-btn">Retirar</div>
+                <button id="tab-deposit" class="tab-btn active">Depositar</button>
+                <button id="tab-withdraw" class="tab-btn">Retirar</button>
             </div>
 
-            <div id="cashier-form" class="space-y-4">
-                <input id="cashier-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-4xl font-casino outline-none text-white mb-2">
+            <div id="dep-step-1">
+                <h2 id="modal-title" class="font-casino text-emerald-500 text-center mb-6 text-xs">Monto a Operar</h2>
+                <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-6 text-white">
                 
-                <div class="space-y-3">
-                    <input id="cashier-bank" type="text" placeholder="Nombre del Banco" class="input-premium">
-                    <input id="cashier-holder" type="text" placeholder="Nombre del Beneficiario" class="input-premium">
+                <div class="space-y-3 mb-6">
+                    <input id="bank-name" type="text" placeholder="Nombre del Banco" class="input-form">
+                    <input id="bank-owner" type="text" placeholder="Nombre del Beneficiario" class="input-form">
                 </div>
 
-                <div id="dep-instructions" class="hidden-view animate__animated animate__fadeIn">
-                    <div class="instruction-card !mt-0 !mb-4 bg-emerald-500/5 border-emerald-500/20">
-                        <p class="text-[10px] mb-2 text-zinc-400">Transfiere a esta CLABE:</p>
-                        <div class="bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 flex justify-between items-center">
-                            <span id="clabe-number" class="text-xs font-mono font-bold">722969020533491161</span>
-                            <button id="btn-copy-clabe" class="text-emerald-500"><i class="fas fa-copy"></i></button>
+                <button id="btn-dep-next" class="btn-action w-full py-4 font-casino">Continuar</button>
+            </div>
+
+            <div id="dep-step-2" class="hidden-view space-y-4 text-center">
+                <div class="instruction-card !mt-0 !mb-4 bg-emerald-500/5 border-emerald-500/20">
+                    <h4><i class="fas fa-university"></i> Instrucciones de Pago</h4>
+                    <p class="text-[10px] mb-2 text-zinc-400">Transfiere con estos datos exactos:</p>
+                    <div class="space-y-2 text-[11px]">
+                        <div class="flex justify-between border-b border-white/5 pb-1">
+                            <span class="text-zinc-500 uppercase">Monto:</span>
+                            <span class="text-emerald-500 font-bold" id="display-dep-amount">$0.00</span>
                         </div>
                     </div>
-                    <input type="file" id="receipt-input" class="hidden" accept="image/*">
-                    <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-2xl p-4 block cursor-pointer text-center">
-                        <p id="file-label" class="text-[8px] font-bold text-zinc-500 uppercase">Subir Comprobante</p>
-                    </label>
                 </div>
-
-                <button id="btn-cashier-main" class="btn-action w-full py-4 font-casino mt-4">Continuar</button>
+                <div class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
+                    <p class="text-[8px] font-bold text-emerald-500 mb-1 uppercase">CLABE (STP)</p>
+                    <div class="flex items-center justify-center gap-3">
+                        <span id="clabe-number" class="text-xs font-mono font-bold">722969020533491161</span>
+                        <button id="btn-copy-clabe" class="text-emerald-500 active:scale-90 transition-transform">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                <input type="file" id="receipt-input" class="hidden" accept="image/*">
+                <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-2xl p-4 block cursor-pointer">
+                    <i class="fas fa-camera text-xl mb-1 text-zinc-600"></i>
+                    <p id="file-label" class="text-[8px] font-bold text-zinc-500 uppercase text-center">Subir Comprobante</p>
+                </label>
+                <button id="btn-confirm-dep" class="btn-action w-full py-4 font-casino">Confirmar Depósito</button>
             </div>
 
-            <button id="btn-close-cashier" class="w-full mt-4 text-[9px] text-zinc-700 font-bold uppercase tracking-widest text-center">Cerrar</button>
+            <div id="withdraw-step-2" class="hidden-view space-y-4 text-center">
+                <div class="instruction-card !mt-0 !mb-4 bg-red-500/5 border-red-500/20">
+                    <h4><i class="fas fa-hand-holding-usd"></i> Solicitud de Retiro</h4>
+                    <p class="text-[10px] mb-2 text-zinc-400">Tu retiro será procesado a:</p>
+                    <div class="space-y-2 text-[11px] text-left">
+                        <div class="flex justify-between border-b border-white/5 pb-1"><span class="text-zinc-500">BANCO:</span><span id="confirm-withdraw-bank" class="text-white font-bold">--</span></div>
+                        <div class="flex justify-between border-b border-white/5 pb-1"><span class="text-zinc-500">TITULAR:</span><span id="confirm-withdraw-owner" class="text-white font-bold">--</span></div>
+                        <div class="flex justify-between border-b border-white/5 pb-1"><span class="text-zinc-500">MONTO:</span><span id="confirm-withdraw-amount" class="text-red-500 font-bold">$0.00</span></div>
+                    </div>
+                </div>
+                <button id="btn-confirm-withdraw" class="btn-action w-full py-4 font-casino bg-red-500 text-white">Solicitar Retiro</button>
+            </div>
+
+            <button id="btn-close-dep" class="w-full mt-4 text-[9px] text-zinc-700 font-bold uppercase tracking-widest">Cerrar</button>
         </div>
     </div>
 
@@ -197,8 +246,13 @@
             const playSfx = (key) => { if(sfx[key]) { sfx[key].currentTime = 0; sfx[key].play().catch(()=>{}); } };
 
             let State = { 
-                user: null, balance: 0, isSpinning: false, luckFactor: 1.0, 
-                winHistory: [], sessionLoss: 0, cashierMode: 'deposit' 
+                user: null, 
+                balance: 0, 
+                isSpinning: false, 
+                luckFactor: 1.0, 
+                winHistory: [],
+                sessionLoss: 0,
+                cashierTab: 'deposit' 
             };
 
             const UI = {
@@ -210,20 +264,53 @@
                     n.innerText = m; document.getElementById('notif-container').appendChild(n); 
                     setTimeout(() => { n.classList.replace('animate__fadeInDown', 'animate__fadeOutUp'); setTimeout(()=>n.remove(), 500); }, 3000); 
                 },
-                openCashier() {
-                    playSfx('click');
-                    document.getElementById('modal-cashier').classList.remove('hidden-view');
-                    this.switchCashierMode('deposit');
+                openModal(id) { 
+                    playSfx('click'); 
+                    document.getElementById(id).classList.remove('hidden-view'); 
+                    this.switchCashierTab('deposit');
                 },
-                switchCashierMode(mode) {
-                    State.cashierMode = mode;
-                    document.getElementById('tab-dep').classList.toggle('active', mode === 'deposit');
-                    document.getElementById('tab-with').classList.toggle('active', mode === 'withdraw');
-                    document.getElementById('dep-instructions').classList.add('hidden-view');
-                    document.getElementById('cashier-amount').value = '';
-                    document.getElementById('cashier-bank').value = '';
-                    document.getElementById('cashier-holder').value = '';
-                    document.getElementById('btn-cashier-main').innerText = mode === 'deposit' ? 'Continuar' : 'Solicitar Retiro';
+                closeModal(id) { playSfx('click'); document.getElementById(id).classList.add('hidden-view'); },
+                switchCashierTab(tab) {
+                    State.cashierTab = tab;
+                    const isDep = tab === 'deposit';
+                    document.getElementById('tab-deposit').classList.toggle('active', isDep);
+                    document.getElementById('tab-withdraw').classList.toggle('active', !isDep);
+                    document.getElementById('dep-step-1').classList.remove('hidden-view');
+                    document.getElementById('dep-step-2').classList.add('hidden-view');
+                    document.getElementById('withdraw-step-2').classList.add('hidden-view');
+                    document.getElementById('bank-name').placeholder = isDep ? "Banco desde el que depositas" : "Banco al que retiras";
+                    document.getElementById('bank-owner').placeholder = isDep ? "Nombre de quien transfiere" : "Nombre de quien recibe";
+                    document.getElementById('btn-dep-next').innerText = isDep ? "Continuar Depósito" : "Continuar Retiro";
+                    document.getElementById('btn-dep-next').style.backgroundColor = isDep ? '#10b981' : '#ef4444';
+                }
+            };
+
+            const Router = {
+                showView(viewId) {
+                    if(State.isSpinning) return;
+                    playSfx('click');
+                    document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden-view'));
+                    document.getElementById(`view-${viewId}`).classList.remove('hidden-view');
+                    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                    const navId = {'lobby':'nav-home','history':'nav-history','profile':'nav-profile'}[viewId];
+                    if(navId) document.getElementById(navId).classList.add('active');
+                    if(viewId === 'history') Core.fetchHistory();
+                    if(viewId === 'profile') UI.updateProfile();
+                },
+                openGame(game) {
+                    playSfx('click');
+                    this.showView('game');
+                    document.getElementById('game-mount').innerHTML = this.templates[game];
+                    document.getElementById('view-game').scrollTop = 0;
+                    if(game === 'slots') GameLogic.slots.init();
+                    if(game === 'mines') GameLogic.mines.drawGrid();
+                    if(game === 'tower') GameLogic.tower.drawTower();
+                },
+                templates: {
+                    slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-slots-play" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4><i class="fas fa-info-circle"></i> Reglas del Slot</h4><p>Alinea 3 símbolos iguales en el centro para ganar <strong>10x tu apuesta inicial</strong>.</p></div></div>`,
+                    mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div class="risk-badge"><i class="fas fa-bomb"></i> 3 Minas Activas</div><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view flex justify-between items-center p-3 mb-3 bg-emerald-500/10 rounded-xl"><div class="flex flex-col items-start"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><span id="mines-next-hint" class="text-[7px] text-zinc-500 font-bold uppercase">Siguiente: --</span></div><button id="mines-cashout-btn" class="bg-emerald-500 text-black px-4 py-2 rounded-lg font-bold text-[9px] font-casino tracking-tighter">COBRAR $0.00</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-mines-start" class="btn-action w-full py-4 font-casino text-xs">APOSTAR</button></div><div class="instruction-card"><h4><i class="fas fa-bomb"></i> Reglas de Minas</h4><p>El riesgo aumenta en cada clic. ¡Los multiplicadores son <strong>exponenciales</strong>!</p></div></div>`,
+                    crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div id="crash-area"><div id="crash-bg" class="bg-infinite"><div class="bg-part"></div><div class="bg-part"></div></div><div id="crash-rocket-container"><div id="crash-rocket">🚀</div></div></div><input id="crash-bet-input" type="number" value="10" min="1" class="input-bet mt-6"><button id="btn-crash" class="btn-action w-full py-4 font-casino">DESPEGAR</button><div class="instruction-card"><h4><i class="fas fa-rocket"></i> Reglas Aviator</h4><p>Cobra antes de que el cohete explote.</p></div></div>`,
+                    tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div class="risk-badge" style="color: #fbbf24; background: rgba(251,191,36,0.1); border-color: rgba(251,191,36,0.2)"><i class="fas fa-bolt"></i> 1 Peligro por Piso</div><div id="tower-container" class="space-y-1.5 mb-4 flex flex-col-reverse overflow-y-auto max-h-[250px]"></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-tower-start" class="btn-action w-full py-4 font-casino text-xs">JUGAR</button></div><button id="tower-cashout-btn" class="hidden-view btn-action w-full py-4 font-casino text-xs">COBRAR $0.00</button><div class="instruction-card"><h4><i class="fas fa-chess-rook"></i> Reglas Torre</h4><p>Cada piso es más difícil, pero paga mucho más.</p></div></div>`
                 }
             };
 
@@ -387,8 +474,10 @@
                         this.active = true; this.bet = b; this.mult = 1.0; this.bgPos = 0;
                         const btn = document.getElementById('btn-crash'); btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
                         btn.onclick = () => this.cashout();
+                        
                         let baseLimit = (Math.random() < 0.10) ? (1.0 + Math.random() * 0.1) : (1.05 + Math.random() * 5.0);
                         if (State.luckFactor < 0.5) baseLimit = 1.01 + Math.random() * 0.2;
+                        
                         this.interval = setInterval(() => {
                             this.mult += (this.mult < 2 ? 0.01 : this.mult < 5 ? 0.03 : 0.07);
                             document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
@@ -428,12 +517,17 @@
                     document.getElementById('btn-register-trigger').onclick = () => AuthManager.register();
                     document.getElementById('btn-to-register').onclick = () => AuthManager.switchTab('register');
                     document.getElementById('btn-to-login').onclick = () => AuthManager.switchTab('login');
-                    document.getElementById('open-cashier-trigger').onclick = () => UI.openCashier();
-                    document.getElementById('tab-dep').onclick = () => UI.switchCashierMode('deposit');
-                    document.getElementById('tab-with').onclick = () => UI.switchCashierMode('withdraw');
-                    document.getElementById('btn-cashier-main').onclick = () => this.handleCashierAction();
+                    
+                    document.getElementById('open-dep-trigger').onclick = () => UI.openModal('modal-deposit');
+                    document.getElementById('tab-deposit').onclick = () => UI.switchCashierTab('deposit');
+                    document.getElementById('tab-withdraw').onclick = () => UI.switchCashierTab('withdraw');
+                    
+                    document.getElementById('btn-dep-next').onclick = () => this.handleCashierStep1();
                     document.getElementById('btn-copy-clabe').onclick = () => this.copyClabe();
-                    document.getElementById('btn-close-cashier').onclick = () => document.getElementById('modal-cashier').classList.add('hidden-view');
+                    document.getElementById('btn-confirm-dep').onclick = () => this.confirmDeposit();
+                    document.getElementById('btn-confirm-withdraw').onclick = () => this.confirmWithdraw();
+                    
+                    document.getElementById('btn-close-dep').onclick = () => UI.closeModal('modal-deposit');
                     document.getElementById('btn-logout-trigger').onclick = () => AuthManager.logout();
                     document.getElementById('btn-game-back').onclick = () => Router.showView('lobby');
                     document.getElementById('receipt-input').onchange = (e) => this.handleFile(e.target);
@@ -450,72 +544,123 @@
                 subscribeBalance() {
                     sb.channel('balance_realtime').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'usuarios', filter: `id=eq.${State.user.id}` }, (p) => { if (p.new && typeof p.new.saldo !== 'undefined') { State.balance = p.new.saldo; UI.updateBalance(); } }).subscribe();
                 },
-                handleCashierAction() {
-                    const amt = parseFloat(document.getElementById('cashier-amount').value);
-                    const bank = document.getElementById('cashier-bank').value;
-                    const holder = document.getElementById('cashier-holder').value;
-                    if(isNaN(amt) || amt <= 0 || !bank || !holder) return UI.notify("Completa todos los campos", "error");
+                
+                handleCashierStep1() {
+                    const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value));
+                    const bank = document.getElementById('bank-name').value;
+                    const owner = document.getElementById('bank-owner').value;
 
-                    if(State.cashierMode === 'deposit') {
-                        const instructions = document.getElementById('dep-instructions');
-                        if(instructions.classList.contains('hidden-view')) {
-                            playSfx('click'); instructions.classList.remove('hidden-view');
-                            document.getElementById('btn-cashier-main').innerText = "Confirmar Depósito";
-                        } else { this.confirmDeposit(amt, bank, holder); }
+                    if(!amt || amt <= 0) return UI.notify("Monto inválido", "error");
+                    if(!bank || !owner) return UI.notify("Completa los datos bancarios", "error");
+
+                    playSfx('click');
+                    document.getElementById('dep-step-1').classList.add('hidden-view');
+
+                    if(State.cashierTab === 'deposit') {
+                        document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`;
+                        document.getElementById('dep-step-2').classList.remove('hidden-view');
                     } else {
                         if(amt > State.balance) return UI.notify("Saldo insuficiente", "error");
-                        this.confirmWithdrawal(amt, bank, holder);
+                        document.getElementById('confirm-withdraw-bank').innerText = bank;
+                        document.getElementById('confirm-withdraw-owner').innerText = owner;
+                        document.getElementById('confirm-withdraw-amount').innerText = `$${amt.toFixed(2)}`;
+                        document.getElementById('withdraw-step-2').classList.remove('hidden-view');
                     }
                 },
-                async confirmDeposit(amt, bank, holder) {
+
+                async confirmWithdraw() {
+                    const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value));
+                    const bank = document.getElementById('bank-name').value;
+                    const owner = document.getElementById('bank-owner').value;
+                    
+                    try {
+                        UI.notify("Solicitando retiro...", "success");
+                        const btn = document.getElementById('btn-confirm-withdraw');
+                        btn.disabled = true;
+
+                        // Descontar saldo inmediatamente para evitar abusos
+                        State.balance -= amt;
+                        UI.updateBalance();
+                        await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+
+                        await sb.from('history').insert([{ 
+                            user_id: State.user.id, 
+                            type: 'withdrawals', 
+                            amount: -amt, 
+                            label: 'RETIRO', 
+                            status: 'pending',
+                            bank_name: bank, // Asegúrate que tu tabla history tenga esta columna
+                            bank_owner: owner // Asegúrate que tu tabla history tenga esta columna
+                        }]);
+
+                        UI.notify("Retiro en revisión", "success");
+                        UI.closeModal('modal-deposit');
+                    } catch (e) {
+                        UI.notify("Error al retirar", "error");
+                    } finally {
+                        document.getElementById('btn-confirm-withdraw').disabled = false;
+                    }
+                },
+
+                copyClabe() { const clabe = document.getElementById('clabe-number').innerText; navigator.clipboard.writeText(clabe).then(() => { playSfx('click'); UI.notify("CLABE Copiada", "success"); }); },
+                handleFile(input) { if(input.files && input.files[0]) { playSfx('click'); const label = document.getElementById('file-label'); label.innerText = "Recibo: " + input.files[0].name.substring(0, 15) + "..."; label.classList.replace('text-zinc-500', 'text-emerald-500'); } },
+                
+                async confirmDeposit() {
+                    const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value));
+                    const bank = document.getElementById('bank-name').value;
+                    const owner = document.getElementById('bank-owner').value;
                     const fileInput = document.getElementById('receipt-input');
-                    if(!fileInput.files[0]) return UI.notify("Sube el comprobante", "error");
+                    const file = fileInput.files[0];
+                    
+                    if(!amt || amt <= 0 || !file) return UI.notify("Datos o comprobante faltantes", "error");
+                    
                     try {
                         UI.notify("Enviando...", "success");
-                        const file = fileInput.files[0];
-                        const filePath = `depositos/${State.user.id}-${Date.now()}.${file.name.split('.').pop()}`;
+                        const btn = document.getElementById('btn-confirm-dep'); btn.disabled = true;
+                        
+                        const fileExt = file.name.split('.').pop();
+                        const fileName = `${State.user.id}-${Date.now()}.${fileExt}`;
+                        const filePath = `depositos/${fileName}`;
+                        
                         await sb.storage.from('comprobantes').upload(filePath, file);
                         const { data: urlData } = sb.storage.from('comprobantes').getPublicUrl(filePath);
+                        
                         await sb.from('history').insert([{ 
-                            user_id: State.user.id, type: 'deposits', amount: amt, label: 'DEPOSITO', 
-                            status: 'pending', evidence_url: urlData.publicUrl,
-                            meta: { banco_origen: bank, beneficiario: holder } 
+                            user_id: State.user.id, 
+                            type: 'deposits', 
+                            amount: amt, 
+                            label: 'DEPÓSITO', 
+                            status: 'pending', 
+                            evidence_url: urlData.publicUrl,
+                            bank_name: bank,
+                            bank_owner: owner
                         }]);
-                        UI.notify("En revisión", "success");
-                        document.getElementById('modal-cashier').classList.add('hidden-view');
-                    } catch (e) { UI.notify("Error de red", "error"); }
+
+                        UI.notify("En revisión", "success"); 
+                        UI.closeModal('modal-deposit');
+                    } catch (e) { UI.notify("Error al enviar", "error"); } finally { document.getElementById('btn-confirm-dep').disabled = false; }
                 },
-                async confirmWithdrawal(amt, bank, holder) {
-                    try {
-                        UI.notify("Procesando...", "success");
-                        State.balance -= amt; UI.updateBalance();
-                        await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                        await sb.from('history').insert([{ 
-                            user_id: State.user.id, type: 'withdrawals', amount: -amt, label: 'RETIRO', 
-                            status: 'pending', meta: { banco_destino: bank, beneficiario: holder } 
-                        }]);
-                        UI.notify("Solicitud enviada", "success");
-                        document.getElementById('modal-cashier').classList.add('hidden-view');
-                    } catch (e) { UI.notify("Error", "error"); }
-                },
-                copyClabe() { navigator.clipboard.writeText("722969020533491161").then(() => { playSfx('click'); UI.notify("CLABE Copiada", "success"); }); },
-                handleFile(input) { if(input.files[0]) { document.getElementById('file-label').innerText = "✓ " + input.files[0].name.substring(0,10); } },
+
                 async fetchHistory() {
-                    const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20);
-                    const d = await sb.from('history').select('*').neq('type', 'bets').eq('user_id', State.user.id).order('created_at', { ascending: false }).limit(20);
+                    const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(15);
+                    const d = await sb.from('history').select('*').eq('user_id', State.user.id).in('type', ['deposits', 'withdrawals']).order('created_at', { ascending: false }).limit(15);
+                    
                     document.getElementById('history-lists').innerHTML = `
                         <div class="glass overflow-hidden mb-4"><div id="h-acc-bets" class="p-5 flex justify-between cursor-pointer"><div class="flex items-center gap-3"><i class="fas fa-history text-emerald-500"></i><span class="font-casino text-[10px]">Jugadas</span></div><i class="fas fa-chevron-down text-zinc-700"></i></div><div id="acc-bets" class="hidden-view p-3 space-y-2 bg-black/40 history-scroll">${this.renderList(b.data || [], 'bets')}</div></div>
-                        <div class="glass overflow-hidden"><div id="h-acc-deps" class="p-5 flex justify-between cursor-pointer"><div class="flex items-center gap-3"><i class="fas fa-wallet text-blue-400"></i><span class="font-casino text-[10px]">Caja (Movimientos)</span></div><i class="fas fa-chevron-down text-zinc-700"></i></div><div id="acc-deps" class="hidden-view p-3 space-y-2 bg-black/40 history-scroll">${this.renderList(d.data || [], 'cashier')}</div></div>`;
+                        <div class="glass overflow-hidden"><div id="h-acc-deps" class="p-5 flex justify-between cursor-pointer"><div class="flex items-center gap-3"><i class="fas fa-wallet text-blue-400"></i><span class="font-casino text-[10px]">Cajero</span></div><i class="fas fa-chevron-down text-zinc-700"></i></div><div id="acc-deps" class="hidden-view p-3 space-y-2 bg-black/40 history-scroll">${this.renderList(d.data || [], 'cashier')}</div></div>`;
+                    
                     document.getElementById('h-acc-bets').onclick = () => this.toggleAccordion('acc-bets', 'h-acc-bets');
                     document.getElementById('h-acc-deps').onclick = () => this.toggleAccordion('acc-deps', 'h-acc-deps');
                 },
+
                 renderList(items, type) {
                     if(!items.length) return `<p class="text-[8px] text-center py-2 text-zinc-600">Sin registros</p>`;
                     return items.map(i => {
                         let text = i.label, color = i.amount >= 0 ? 'text-emerald-500' : 'text-red-500', pulse = "";
                         if(type==='cashier') {
-                            if(i.status==='pending') { text=`${i.label} (Pendiente)`; color="text-yellow-500"; pulse="pulse-pending"; }
-                            else if(i.status==='completed') { text=`${i.label} (Listo)`; color="text-emerald-500"; }
+                            if(i.status==='pending') { text=`Pendiente ${i.type === 'withdrawals' ? '📤' : '📥'}`; color="text-yellow-500"; pulse="pulse-pending"; }
+                            else if(i.status==='completed') { text="Confirmado ✅"; color="text-emerald-500"; }
+                            else if(i.status==='rejected') { text="Rechazado ❌"; color="text-red-500"; }
                         }
                         return `<div class="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5 ${pulse}"><div class="flex flex-col"><span class="text-[9px] font-bold uppercase">${text}</span><span class="text-[7px] text-zinc-600">${new Date(i.created_at).toLocaleDateString()}</span></div><div class="text-[10px] font-casino ${color}">$${Math.abs(i.amount).toFixed(2)}</div></div>`;
                     }).join('');
@@ -523,22 +668,11 @@
                 toggleAccordion(accId, headerId) { playSfx('click'); const acc = document.getElementById(accId); acc.classList.toggle('hidden-view'); document.querySelector(`#${headerId} .fa-chevron-down`).style.transform = acc.classList.contains('hidden-view') ? 'rotate(0deg)' : 'rotate(180deg)'; }
             };
 
-            const Router = {
-                showView(v) { document.querySelectorAll('.view-content').forEach(x => x.classList.add('hidden-view')); document.getElementById(`view-${v}`).classList.remove('hidden-view'); if(v==='history') Core.fetchHistory(); if(v==='profile') UI.updateProfile(); },
-                openGame(g) { this.showView('game'); document.getElementById('game-mount').innerHTML = this.templates[g]; if(g==='slots') GameLogic.slots.init(); if(g==='mines') GameLogic.mines.drawGrid(); if(g==='tower') GameLogic.tower.drawTower(); },
-                templates: {
-                    slots: `<div class="glass p-6 text-center"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" class="input-bet"><button id="btn-slots-play" class="btn-action w-full py-5 font-casino">GIRAR</button></div>`,
-                    mines: `<div class="glass p-4 text-center max-w-[300px] mx-auto"><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view mb-3"><span id="mines-mult" class="font-casino text-emerald-500">1.00x</span><button id="mines-cashout-btn" class="bg-emerald-500 text-black px-4 py-2 ml-4 rounded font-casino text-[9px]">COBRAR</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" class="input-bet"><button id="btn-mines-start" class="btn-action w-full py-4 font-casino">APOSTAR</button></div></div>`,
-                    crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div id="crash-area"><div id="crash-bg" class="bg-infinite"><div class="bg-part"></div><div class="bg-part"></div></div><div id="crash-rocket-container"><div id="crash-rocket">🚀</div></div></div><input id="crash-bet-input" type="number" value="10" class="input-bet mt-6"><button id="btn-crash" class="btn-action w-full py-4 font-casino">DESPEGAR</button></div>`,
-                    tower: `<div class="glass p-4 max-w-[280px] mx-auto text-center"><div id="tower-container" class="space-y-1.5 mb-4 flex flex-col-reverse"></div><input id="tower-bet-input" type="number" value="10" class="input-bet"><button id="btn-tower-start" class="btn-action w-full py-4 font-casino">JUGAR</button><button id="tower-cashout-btn" class="hidden-view btn-action w-full py-4 font-casino">COBRAR</button></div>`
-                }
-            };
-
             const AuthManager = {
-                async login() { const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value; const { error } = await sb.auth.signInWithPassword({ email: e, password: p }); if(error) UI.notify(error.message, "error"); else location.reload(); },
-                async register() { if(!document.getElementById('terms-check').checked) return UI.notify("Acepta términos", "error"); const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value; const { data, error } = await sb.auth.signUp({ email: e, password: p }); if(error) UI.notify(error.message, "error"); else { await sb.from('usuarios').insert([{ id: data.user.id, email: e, saldo: 0 }]); location.reload(); } },
+                async login() { const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value; const { data, error } = await sb.auth.signInWithPassword({ email: e, password: p }); if(error) UI.notify(error.message, "error"); else location.reload(); },
+                async register() { if(!document.getElementById('terms-check').checked) return UI.notify("Acepta términos", "error"); const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value; const { data, error } = await sb.auth.signUp({ email: e, password: p }); if(error) UI.notify(error.message, "error"); else { await sb.from('usuarios').insert([{ id: data.user.id, email: e, saldo: 0 }]); UI.notify("Cuenta creada", "success"); location.reload(); } },
                 async logout() { await sb.auth.signOut(); location.reload(); },
-                switchTab(t) { document.getElementById('login-container').classList.toggle('hidden-view', t==='register'); document.getElementById('register-container').classList.toggle('hidden-view', t==='login'); }
+                switchTab(tab) { playSfx('click'); document.getElementById('login-container').classList.toggle('hidden-view', tab==='register'); document.getElementById('register-container').classList.toggle('hidden-view', tab==='login'); }
             };
 
             Core.init();
