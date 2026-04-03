@@ -287,7 +287,7 @@
 
                         this.notify("Solicitud enviada con éxito", "success");
                         this.toggleWalletModal(false);
-                        location.reload();
+                        //location.reload(); // Removido para mejor UX, pero puedes dejarlo si prefieres
                     } catch (e) {
                         this.notify("Error de conexión", "error");
                     }
@@ -466,7 +466,6 @@
                         State.crash.multiplier += 0.01;
                         multText.innerText = `${State.crash.multiplier.toFixed(2)}x`;
                         
-                        // Movimiento del cohete
                         rocket.style.left = `${20 + (State.crash.multiplier * 5)}%`;
                         rocket.style.bottom = `${20 + (State.crash.multiplier * 8)}%`;
 
@@ -590,7 +589,7 @@
                         await sb.from('history').update({ status: status }).eq('id', id);
                         if(status === 'COMPLETED' && type === 'deposits') {
                             const { data } = await sb.from('usuarios').select('saldo').eq('id', uid).single();
-                            await sb.from('usuarios').update({ saldo: data.saldo + amt }).eq('id', uid);
+                            await sb.from('usuarios').update({ saldo: (data.saldo || 0) + amt }).eq('id', uid);
                         }
                         UI.notify("Operación completada", "success");
                         this.loadAdminRequests();
