@@ -67,11 +67,14 @@
         
         .risk-badge { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; margin-bottom: 10px; }
 
-        /* Estilos Pestañas Modal */
-        .modal-tabs { display: flex; background: rgba(255,255,255,0.05); border-radius: 1rem; padding: 4px; margin-bottom: 20px; }
-        .modal-tab-btn { flex: 1; padding: 10px; font-size: 10px; font-weight: 900; text-transform: uppercase; border-radius: 0.8rem; transition: 0.3s; color: #666; }
-        .modal-tab-btn.active { background: var(--mx-green); color: black; }
-        .input-wallet { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 14px; width: 100%; color: white; font-size: 12px; outline: none; margin-bottom: 10px; }
+        /* Estilos Sistema de Pestañas Wallet */
+        .wallet-tabs { display: flex; background: rgba(255,255,255,0.05); border-radius: 1rem; padding: 4px; margin-bottom: 20px; }
+        .wallet-tab-btn { flex: 1; padding: 12px; font-size: 10px; font-weight: 900; text-transform: uppercase; border-radius: 0.8rem; transition: 0.3s; color: #555; }
+        .wallet-tab-btn.active { background: var(--mx-green); color: black; }
+        .input-wallet-info { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 14px; width: 100%; color: white; font-size: 12px; outline: none; margin-bottom: 10px; }
+
+        /* Panel Admin */
+        #admin-panel-view { position: fixed; inset: 0; background: black; z-index: 1000; padding: 20px; overflow-y: auto; }
     </style>
 </head>
 <body class="antialiased select-none">
@@ -150,7 +153,7 @@
                 <div class="w-24 h-24 bg-emerald-500 rounded-full mx-auto mb-6 flex items-center justify-center text-black text-4xl font-black"><i class="fas fa-user"></i></div>
                 <p id="user-email-display" class="text-sm font-bold text-zinc-300 truncate mb-1">Cargando...</p>
                 <p class="text-[9px] text-emerald-500 font-bold uppercase tracking-[0.2em]">Usuario Activo</p>
-                <button id="btn-admin-view" class="mt-4 text-[8px] text-zinc-600 font-bold uppercase border border-zinc-800 px-3 py-1 rounded-lg">Panel de Control</button>
+                <button id="btn-admin-access" class="mt-4 text-[8px] text-zinc-700 font-bold uppercase border border-zinc-800 px-3 py-1 rounded-lg">Panel de Control</button>
             </div>
             <button id="btn-logout-trigger" class="w-full p-5 rounded-2xl border border-red-500/20 text-red-500 font-casino text-[10px] bg-red-500/5 mt-6 active:scale-95 transition-transform">Cerrar Sesión</button>
         </div>
@@ -165,24 +168,24 @@
     <div id="modal-deposit" class="fixed inset-0 bg-black/95 z-[100] hidden-view flex items-center justify-center p-6 overflow-y-auto">
         <div class="glass p-8 w-full max-w-sm bg-[#0a0a0a] my-auto">
             
-            <div class="modal-tabs">
-                <button id="tab-dep" class="modal-tab-btn active">Depositar</button>
-                <button id="tab-with" class="modal-tab-btn">Retirar</button>
+            <div class="wallet-tabs">
+                <button id="tab-deposit" class="wallet-tab-btn active">Depositar</button>
+                <button id="tab-withdraw" class="wallet-tab-btn">Retirar</button>
             </div>
 
-            <div id="wallet-step-1">
-                <h2 id="wallet-title" class="font-casino text-emerald-500 text-center mb-6">Monto a cargar</h2>
-                <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-6 text-white">
+            <div id="wallet-main-step">
+                <h2 id="wallet-modal-title" class="font-casino text-emerald-500 text-center mb-6">Monto a cargar</h2>
+                <input id="wallet-amount-input" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-6 text-white">
                 
-                <div class="space-y-3">
-                    <input id="wallet-bank" type="text" placeholder="Nombre del banco" class="input-wallet">
-                    <input id="wallet-holder" type="text" placeholder="Nombre del beneficiario" class="input-wallet">
+                <div class="space-y-2">
+                    <input id="wallet-bank-name" type="text" placeholder="Nombre del banco" class="input-wallet-info">
+                    <input id="wallet-holder-name" type="text" placeholder="Nombre del beneficiario" class="input-wallet-info">
                 </div>
 
-                <button id="btn-wallet-next" class="btn-action w-full py-4 font-casino mt-4">Continuar</button>
+                <button id="btn-wallet-continue" class="btn-action w-full py-4 font-casino mt-4">Continuar</button>
             </div>
 
-            <div id="dep-step-2" class="hidden-view space-y-4 text-center">
+            <div id="dep-step-confirm" class="hidden-view space-y-4 text-center">
                 <div class="instruction-card !mt-0 !mb-4 bg-emerald-500/5 border-emerald-500/20">
                     <h4><i class="fas fa-university"></i> Instrucciones de Pago</h4>
                     <p class="text-[10px] mb-2 text-zinc-400">Transfiere con estos datos exactos:</p>
@@ -207,19 +210,19 @@
                     <i class="fas fa-camera text-xl mb-1 text-zinc-600"></i>
                     <p id="file-label" class="text-[8px] font-bold text-zinc-500 uppercase text-center">Subir Comprobante</p>
                 </label>
-                <button id="btn-confirm-dep" class="btn-action w-full py-4 font-casino">Confirmar Depósito</button>
+                <button id="btn-confirm-final" class="btn-action w-full py-4 font-casino">Confirmar Depósito</button>
             </div>
 
-            <button id="btn-close-dep" class="w-full mt-4 text-[9px] text-zinc-700 font-bold uppercase tracking-widest">Cerrar</button>
+            <button id="btn-close-deposit" class="w-full mt-4 text-[9px] text-zinc-700 font-bold uppercase tracking-widest">Cerrar</button>
         </div>
     </div>
 
-    <div id="view-admin" class="fixed inset-0 bg-black z-[200] hidden-view flex flex-col p-6 overflow-y-auto">
+    <div id="admin-panel-view" class="hidden-view flex flex-col">
         <header class="flex justify-between items-center mb-8">
             <h2 class="font-casino text-emerald-500 text-xl italic">WinMX Admin</h2>
-            <button id="btn-admin-close" class="text-[9px] font-bold text-zinc-600 uppercase border border-zinc-800 p-2 rounded-lg">Salir</button>
+            <button id="btn-admin-exit" class="text-[9px] font-bold text-zinc-500 uppercase border border-zinc-800 p-2 rounded-lg">Salir</button>
         </header>
-        <div id="admin-list" class="space-y-4">
+        <div id="admin-requests-list" class="space-y-4">
             </div>
     </div>
 
@@ -250,7 +253,7 @@
                 luckFactor: 1.0, 
                 winHistory: [],
                 sessionLoss: 0,
-                walletMode: 'deposit' // 'deposit' o 'withdraw'
+                walletMode: 'deposit' // 'deposit' | 'withdraw'
             };
 
             const UI = {
@@ -265,10 +268,30 @@
                 openModal(id) { 
                     playSfx('click'); 
                     document.getElementById(id).classList.remove('hidden-view'); 
-                    document.getElementById('wallet-step-1').classList.remove('hidden-view'); 
-                    document.getElementById('dep-step-2').classList.add('hidden-view'); 
+                    document.getElementById('wallet-main-step').classList.remove('hidden-view'); 
+                    document.getElementById('dep-step-confirm').classList.add('hidden-view'); 
+                    this.switchWalletMode('deposit');
                 },
-                closeModal(id) { playSfx('click'); document.getElementById(id).classList.add('hidden-view'); }
+                closeModal(id) { playSfx('click'); document.getElementById(id).classList.add('hidden-view'); },
+                switchWalletMode(mode) {
+                    State.walletMode = mode;
+                    document.getElementById('tab-deposit').classList.toggle('active', mode === 'deposit');
+                    document.getElementById('tab-withdraw').classList.toggle('active', mode === 'withdraw');
+                    
+                    const titleEl = document.getElementById('wallet-modal-title');
+                    const bankInput = document.getElementById('wallet-bank-name');
+                    const holderInput = document.getElementById('wallet-holder-name');
+
+                    if(mode === 'deposit') {
+                        titleEl.innerText = "Monto a cargar";
+                        bankInput.placeholder = "Nombre del banco emisor";
+                        holderInput.placeholder = "Nombre del beneficiario";
+                    } else {
+                        titleEl.innerText = "Monto a retirar";
+                        bankInput.placeholder = "Nombre del banco a retirar";
+                        holderInput.placeholder = "Nombre del beneficiario de la cuenta";
+                    }
+                }
             };
 
             const Router = {
@@ -505,78 +528,53 @@
                     document.getElementById('btn-to-login').onclick = () => AuthManager.switchTab('login');
                     document.getElementById('open-dep-trigger').onclick = () => UI.openModal('modal-deposit');
                     
-                    // Manejo de pestañas Wallet
-                    document.getElementById('tab-dep').onclick = () => this.switchWallet('deposit');
-                    document.getElementById('tab-with').onclick = () => this.switchWallet('withdraw');
-
-                    document.getElementById('btn-wallet-next').onclick = () => this.walletNextStep();
+                    document.getElementById('tab-deposit').onclick = () => UI.switchWalletMode('deposit');
+                    document.getElementById('tab-withdraw').onclick = () => UI.switchWalletMode('withdraw');
+                    
+                    document.getElementById('btn-wallet-continue').onclick = () => this.walletContinue();
                     document.getElementById('btn-copy-clabe').onclick = () => this.copyClabe();
-                    document.getElementById('btn-confirm-dep').onclick = () => this.confirmWalletAction();
-                    document.getElementById('btn-close-dep').onclick = () => UI.closeModal('modal-deposit');
+                    document.getElementById('btn-confirm-final').onclick = () => this.processWalletAction();
+                    document.getElementById('btn-close-deposit').onclick = () => UI.closeModal('modal-deposit');
                     document.getElementById('btn-logout-trigger').onclick = () => AuthManager.logout();
                     document.getElementById('btn-game-back').onclick = () => Router.showView('lobby');
                     document.getElementById('receipt-input').onchange = (e) => this.handleFile(e.target);
                     document.querySelectorAll('.nav-item').forEach(el => el.onclick = () => Router.showView(el.dataset.view));
                     document.querySelectorAll('.game-card').forEach(el => el.onclick = () => Router.openGame(el.dataset.game));
 
-                    // Eventos Admin
-                    document.getElementById('btn-admin-view').onclick = () => this.openAdmin();
-                    document.getElementById('btn-admin-close').onclick = () => document.getElementById('view-admin').classList.add('hidden-view');
+                    document.getElementById('btn-admin-access').onclick = () => this.openAdminPanel();
+                    document.getElementById('btn-admin-exit').onclick = () => document.getElementById('admin-panel-view').classList.add('hidden-view');
                 },
-                switchWallet(mode) {
-                    State.walletMode = mode;
-                    document.getElementById('tab-dep').classList.toggle('active', mode==='deposit');
-                    document.getElementById('tab-with').classList.toggle('active', mode==='withdraw');
-                    
-                    const title = document.getElementById('wallet-title');
-                    const bankInput = document.getElementById('wallet-bank');
-                    const holderInput = document.getElementById('wallet-holder');
-                    
-                    if(mode === 'deposit') {
-                        title.innerText = "Monto a cargar";
-                        bankInput.placeholder = "Banco emisor";
-                        holderInput.placeholder = "Nombre del beneficiario";
-                    } else {
-                        title.innerText = "Monto a retirar";
-                        bankInput.placeholder = "Banco destino";
-                        holderInput.placeholder = "Beneficiario (Nombre Titular)";
-                    }
-                    playSfx('click');
-                },
-                walletNextStep() {
-                    const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value));
-                    const bank = document.getElementById('wallet-bank').value;
-                    const holder = document.getElementById('wallet-holder').value;
+                walletContinue() {
+                    const amt = Math.abs(parseFloat(document.getElementById('wallet-amount-input').value));
+                    const bank = document.getElementById('wallet-bank-name').value;
+                    const holder = document.getElementById('wallet-holder-name').value;
 
                     if(!amt || amt <= 0 || !bank || !holder) return UI.notify("Completa todos los campos", "error");
                     
-                    if(State.walletMode === 'withdraw' && amt > State.balance) return UI.notify("Saldo insuficiente para retirar", "error");
-
-                    if(State.walletMode === 'deposit') {
-                        document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`;
-                        document.getElementById('wallet-step-1').classList.add('hidden-view');
-                        document.getElementById('dep-step-2').classList.remove('hidden-view');
+                    if(State.walletMode === 'withdraw') {
+                        if(amt > State.balance) return UI.notify("Saldo insuficiente", "error");
+                        this.processWalletAction(); // Retiro no necesita paso de comprobante
                     } else {
-                        this.confirmWalletAction();
+                        document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`;
+                        document.getElementById('wallet-main-step').classList.add('hidden-view');
+                        document.getElementById('dep-step-confirm').classList.remove('hidden-view');
                     }
                     playSfx('click');
                 },
-                async confirmWalletAction() {
-                    const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value));
-                    const bank = document.getElementById('wallet-bank').value;
-                    const holder = document.getElementById('wallet-holder').value;
-                    const type = State.walletMode === 'deposit' ? 'deposits' : 'withdrawals';
-                    const label = State.walletMode === 'deposit' ? 'CARGA' : 'RETIRO';
-
+                async processWalletAction() {
+                    const amt = Math.abs(parseFloat(document.getElementById('wallet-amount-input').value));
+                    const bank = document.getElementById('wallet-bank-name').value;
+                    const holder = document.getElementById('wallet-holder-name').value;
+                    const btn = document.getElementById('btn-confirm-final');
+                    
                     try {
-                        const btn = document.getElementById('btn-confirm-dep');
                         btn.disabled = true;
-                        UI.notify("Procesando...", "success");
-
                         let evidenceUrl = null;
+
                         if(State.walletMode === 'deposit') {
                             const fileInput = document.getElementById('receipt-input');
-                            if(!fileInput.files[0]) return UI.notify("Sube el comprobante", "error");
+                            if(!fileInput.files[0]) return UI.notify("Sube tu comprobante", "error");
+                            UI.notify("Subiendo comprobante...", "success");
                             const file = fileInput.files[0];
                             const fileExt = file.name.split('.').pop();
                             const fileName = `${State.user.id}-${Date.now()}.${fileExt}`;
@@ -584,7 +582,7 @@
                             const { data: urlData } = sb.storage.from('comprobantes').getPublicUrl(`depositos/${fileName}`);
                             evidenceUrl = urlData.publicUrl;
                         } else {
-                            // Descontar saldo preventivamente en retiro
+                            // Descontar saldo preventivamente para retiro
                             State.balance -= amt;
                             UI.updateBalance();
                             await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
@@ -592,31 +590,31 @@
 
                         await sb.from('history').insert([{ 
                             user_id: State.user.id, 
-                            type: type, 
+                            type: State.walletMode === 'deposit' ? 'deposits' : 'withdrawals', 
                             amount: amt, 
-                            label: label, 
+                            label: State.walletMode === 'deposit' ? 'CARGA' : 'RETIRO',
                             status: 'pending',
                             bank_info: bank,
                             holder_info: holder,
                             evidence_url: evidenceUrl
                         }]);
 
-                        UI.notify("Solicitud enviada", "success");
+                        UI.notify("Solicitud enviada con éxito", "success");
                         UI.closeModal('modal-deposit');
-                    } catch (e) { 
-                        UI.notify("Error de red", "error"); 
-                    } finally { 
-                        document.getElementById('btn-confirm-dep').disabled = false; 
+                    } catch (e) {
+                        UI.notify("Error al procesar", "error");
+                    } finally {
+                        btn.disabled = false;
                     }
                 },
-                async openAdmin() {
+                async openAdminPanel() {
                     playSfx('click');
-                    document.getElementById('view-admin').classList.remove('hidden-view');
+                    document.getElementById('admin-panel-view').classList.remove('hidden-view');
                     this.loadAdminRequests();
                 },
                 async loadAdminRequests() {
-                    const list = document.getElementById('admin-list');
-                    list.innerHTML = `<p class='text-center text-[10px] animate-pulse'>Sincronizando...</p>`;
+                    const list = document.getElementById('admin-requests-list');
+                    list.innerHTML = `<p class="text-center text-zinc-500 animate-pulse text-[10px]">Cargando solicitudes...</p>`;
                     
                     const { data, error } = await sb.from('history')
                         .select('*, usuarios(email)')
@@ -624,8 +622,8 @@
                         .eq('status', 'pending')
                         .order('created_at', { ascending: false });
 
-                    if(!data || !data.length) {
-                        list.innerHTML = `<p class='text-center text-zinc-700 text-[10px] mt-10'>No hay solicitudes pendientes</p>`;
+                    if(!data || data.length === 0) {
+                        list.innerHTML = `<p class="text-center text-zinc-700 mt-10 text-[10px] uppercase font-bold">Sin solicitudes pendientes</p>`;
                         return;
                     }
 
@@ -633,16 +631,19 @@
                         <div class="glass p-5 border-l-4 ${req.type === 'deposits' ? 'border-emerald-500' : 'border-blue-500'}">
                             <div class="flex justify-between items-start mb-4">
                                 <div>
-                                    <h3 class="text-[10px] font-casino ${req.type === 'deposits' ? 'text-emerald-500' : 'text-blue-500'}">${req.type === 'deposits' ? 'DEPÓSITO' : 'RETIRO'}</h3>
-                                    <p class="text-[9px] text-zinc-400 truncate w-40">${req.usuarios.email}</p>
+                                    <h3 class="text-[9px] font-casino ${req.type === 'deposits' ? 'text-emerald-500' : 'text-blue-500'}">${req.type === 'deposits' ? 'DEPÓSITO' : 'RETIRO'}</h3>
+                                    <p class="text-[8px] text-zinc-500 uppercase font-bold truncate w-40">${req.usuarios.email}</p>
                                 </div>
                                 <div class="text-right font-casino text-sm">$${req.amount.toFixed(2)}</div>
                             </div>
-                            <div class="grid grid-cols-2 gap-2 text-[8px] uppercase font-bold text-zinc-500 mb-4 bg-white/5 p-3 rounded-lg">
-                                <div>Banco: <span class="text-white">${req.bank_info || 'N/A'}</span></div>
-                                <div>Beneficiario: <span class="text-white">${req.holder_info || 'N/A'}</span></div>
+                            
+                            <div class="grid grid-cols-2 gap-2 text-[8px] uppercase font-bold text-zinc-600 mb-4">
+                                <div class="bg-white/5 p-2 rounded">Banco: <span class="text-white">${req.bank_info || '---'}</span></div>
+                                <div class="bg-white/5 p-2 rounded">Titular: <span class="text-white">${req.holder_info || '---'}</span></div>
                             </div>
+
                             ${req.evidence_url ? `<a href="${req.evidence_url}" target="_blank" class="block w-full text-center py-2 bg-emerald-500/10 text-emerald-500 text-[8px] font-bold rounded-lg mb-4 uppercase tracking-widest"><i class="fas fa-image mr-1"></i> Ver Comprobante</a>` : ''}
+                            
                             <div class="flex gap-2">
                                 <button onclick="window.AdminAction('${req.id}', 'completed', '${req.type}', ${req.user_id}, ${req.amount})" class="flex-1 py-3 bg-emerald-500 text-black font-casino text-[9px] rounded-xl">Aprobar</button>
                                 <button onclick="window.AdminAction('${req.id}', 'rejected', '${req.type}', ${req.user_id}, ${req.amount})" class="flex-1 py-3 bg-red-500/10 text-red-500 border border-red-500/20 font-casino text-[9px] rounded-xl">Rechazar</button>
@@ -661,7 +662,7 @@
                     sb.channel('balance_realtime').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'usuarios', filter: `id=eq.${State.user.id}` }, (p) => { if (p.new && typeof p.new.saldo !== 'undefined') { State.balance = p.new.saldo; UI.updateBalance(); } }).subscribe();
                 },
                 copyClabe() { const clabe = document.getElementById('clabe-number').innerText; navigator.clipboard.writeText(clabe).then(() => { playSfx('click'); UI.notify("CLABE Copiada", "success"); }); },
-                handleFile(input) { if(input.files && input.files[0]) { playSfx('click'); const label = document.getElementById('file-label'); label.innerText = "Recibo: " + input.files[0].name.substring(0, 15) + "..."; label.classList.replace('text-zinc-500', 'text-emerald-500'); } },
+                handleFile(input) { if(input.files && input.files[0]) { playSfx('click'); const label = document.getElementById('file-label'); label.innerText = "Archivo: " + input.files[0].name.substring(0, 10) + "..."; label.classList.replace('text-zinc-500', 'text-emerald-500'); } },
                 async fetchHistory() {
                     const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20);
                     const d = await sb.from('history').select('*').eq('user_id', State.user.id).in('type', ['deposits', 'withdrawals']).order('created_at', { ascending: false }).limit(20);
@@ -686,33 +687,33 @@
                 toggleAccordion(accId, headerId) { playSfx('click'); const acc = document.getElementById(accId); acc.classList.toggle('hidden-view'); document.querySelector(`#${headerId} .fa-chevron-down`).style.transform = acc.classList.contains('hidden-view') ? 'rotate(0deg)' : 'rotate(180deg)'; }
             };
 
-            // Acción Global para el Panel de Admin
+            // Global Admin Actions
             window.AdminAction = async (id, status, type, userId, amount) => {
                 playSfx('click');
-                const confirmBtn = event.target;
-                confirmBtn.disabled = true;
-                
+                const btn = event.target;
+                btn.disabled = true;
+
                 try {
-                    // 1. Actualizar estado de la solicitud
+                    // Actualizar el estado de la solicitud
                     await sb.from('history').update({ status: status }).eq('id', id);
 
-                    // 2. Si es depósito y se aprueba, sumar saldo
+                    // Si se aprueba un depósito, sumar saldo
                     if(type === 'deposits' && status === 'completed') {
                         const { data: user } = await sb.from('usuarios').select('saldo').eq('id', userId).single();
                         await sb.from('usuarios').update({ saldo: user.saldo + amount }).eq('id', userId);
                     }
-                    
-                    // 3. Si es retiro y se rechaza, devolver saldo
+
+                    // Si se rechaza un retiro, devolver el saldo
                     if(type === 'withdrawals' && status === 'rejected') {
                         const { data: user } = await sb.from('usuarios').select('saldo').eq('id', userId).single();
                         await sb.from('usuarios').update({ saldo: user.saldo + amount }).eq('id', userId);
                     }
 
-                    UI.notify("Acción procesada", "success");
+                    UI.notify("Acción completada", "success");
                     Core.loadAdminRequests();
                 } catch (e) {
-                    UI.notify("Error en servidor", "error");
-                    confirmBtn.disabled = false;
+                    UI.notify("Error de servidor", "error");
+                    btn.disabled = false;
                 }
             };
 
