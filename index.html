@@ -66,11 +66,6 @@
         .instruction-card strong { color: white; font-weight: 800; }
         
         .risk-badge { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; margin-bottom: 10px; }
-
-        /* Estilos para el sistema de Retiro */
-        .tab-btn { flex: 1; padding: 12px; font-family: 'Archivo Black', sans-serif; font-size: 10px; text-transform: uppercase; color: #666; border-bottom: 2px solid transparent; transition: 0.3s; }
-        .tab-btn.active { color: var(--mx-green); border-bottom-color: var(--mx-green); }
-        .input-form { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 12px; width: 100%; color: white; font-size: 12px; outline: none; margin-bottom: 10px; }
     </style>
 </head>
 <body class="antialiased select-none">
@@ -162,24 +157,11 @@
 
     <div id="modal-deposit" class="fixed inset-0 bg-black/95 z-[100] hidden-view flex items-center justify-center p-6">
         <div class="glass p-8 w-full max-w-sm bg-[#0a0a0a]">
-            
-            <div class="flex mb-6 border-b border-white/5">
-                <button id="tab-deposit" class="tab-btn active">Depositar</button>
-                <button id="tab-withdraw" class="tab-btn">Retirar</button>
-            </div>
-
             <div id="dep-step-1">
-                <h2 id="modal-title" class="font-casino text-emerald-500 text-center mb-6 text-xs">Monto a Operar</h2>
-                <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-6 text-white">
-                
-                <div class="space-y-3 mb-6">
-                    <input id="bank-name" type="text" placeholder="Nombre del Banco" class="input-form">
-                    <input id="bank-owner" type="text" placeholder="Nombre del Beneficiario" class="input-form">
-                </div>
-
+                <h2 class="font-casino text-emerald-500 text-center mb-6">Monto a cargar</h2>
+                <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-10 text-white">
                 <button id="btn-dep-next" class="btn-action w-full py-4 font-casino">Continuar</button>
             </div>
-
             <div id="dep-step-2" class="hidden-view space-y-4 text-center">
                 <div class="instruction-card !mt-0 !mb-4 bg-emerald-500/5 border-emerald-500/20">
                     <h4><i class="fas fa-university"></i> Instrucciones de Pago</h4>
@@ -188,6 +170,10 @@
                         <div class="flex justify-between border-b border-white/5 pb-1">
                             <span class="text-zinc-500 uppercase">Monto:</span>
                             <span class="text-emerald-500 font-bold" id="display-dep-amount">$0.00</span>
+                        </div>
+                        <div class="flex justify-between border-b border-white/5 pb-1">
+                            <span class="text-zinc-500 uppercase">Concepto:</span>
+                            <span class="text-white font-bold uppercase">Transferencia</span>
                         </div>
                     </div>
                 </div>
@@ -205,22 +191,8 @@
                     <i class="fas fa-camera text-xl mb-1 text-zinc-600"></i>
                     <p id="file-label" class="text-[8px] font-bold text-zinc-500 uppercase text-center">Subir Comprobante</p>
                 </label>
-                <button id="btn-confirm-dep" class="btn-action w-full py-4 font-casino">Confirmar Depósito</button>
+                <button id="btn-confirm-dep" class="btn-action w-full py-4 font-casino">Confirmar</button>
             </div>
-
-            <div id="withdraw-step-2" class="hidden-view space-y-4 text-center">
-                <div class="instruction-card !mt-0 !mb-4 bg-red-500/5 border-red-500/20">
-                    <h4><i class="fas fa-hand-holding-usd"></i> Solicitud de Retiro</h4>
-                    <p class="text-[10px] mb-2 text-zinc-400">Tu retiro será procesado a:</p>
-                    <div class="space-y-2 text-[11px] text-left">
-                        <div class="flex justify-between border-b border-white/5 pb-1"><span class="text-zinc-500">BANCO:</span><span id="confirm-withdraw-bank" class="text-white font-bold">--</span></div>
-                        <div class="flex justify-between border-b border-white/5 pb-1"><span class="text-zinc-500">TITULAR:</span><span id="confirm-withdraw-owner" class="text-white font-bold">--</span></div>
-                        <div class="flex justify-between border-b border-white/5 pb-1"><span class="text-zinc-500">MONTO:</span><span id="confirm-withdraw-amount" class="text-red-500 font-bold">$0.00</span></div>
-                    </div>
-                </div>
-                <button id="btn-confirm-withdraw" class="btn-action w-full py-4 font-casino bg-red-500 text-white">Solicitar Retiro</button>
-            </div>
-
             <button id="btn-close-dep" class="w-full mt-4 text-[9px] text-zinc-700 font-bold uppercase tracking-widest">Cerrar</button>
         </div>
     </div>
@@ -251,8 +223,7 @@
                 isSpinning: false, 
                 luckFactor: 1.0, 
                 winHistory: [],
-                sessionLoss: 0,
-                cashierTab: 'deposit' 
+                sessionLoss: 0 
             };
 
             const UI = {
@@ -264,25 +235,8 @@
                     n.innerText = m; document.getElementById('notif-container').appendChild(n); 
                     setTimeout(() => { n.classList.replace('animate__fadeInDown', 'animate__fadeOutUp'); setTimeout(()=>n.remove(), 500); }, 3000); 
                 },
-                openModal(id) { 
-                    playSfx('click'); 
-                    document.getElementById(id).classList.remove('hidden-view'); 
-                    this.switchCashierTab('deposit');
-                },
-                closeModal(id) { playSfx('click'); document.getElementById(id).classList.add('hidden-view'); },
-                switchCashierTab(tab) {
-                    State.cashierTab = tab;
-                    const isDep = tab === 'deposit';
-                    document.getElementById('tab-deposit').classList.toggle('active', isDep);
-                    document.getElementById('tab-withdraw').classList.toggle('active', !isDep);
-                    document.getElementById('dep-step-1').classList.remove('hidden-view');
-                    document.getElementById('dep-step-2').classList.add('hidden-view');
-                    document.getElementById('withdraw-step-2').classList.add('hidden-view');
-                    document.getElementById('bank-name').placeholder = isDep ? "Banco desde el que depositas" : "Banco al que retiras";
-                    document.getElementById('bank-owner').placeholder = isDep ? "Nombre de quien transfiere" : "Nombre de quien recibe";
-                    document.getElementById('btn-dep-next').innerText = isDep ? "Continuar Depósito" : "Continuar Retiro";
-                    document.getElementById('btn-dep-next').style.backgroundColor = isDep ? '#10b981' : '#ef4444';
-                }
+                openModal(id) { playSfx('click'); document.getElementById(id).classList.remove('hidden-view'); document.getElementById('dep-step-1').classList.remove('hidden-view'); document.getElementById('dep-step-2').classList.add('hidden-view'); },
+                closeModal(id) { playSfx('click'); document.getElementById(id).classList.add('hidden-view'); }
             };
 
             const Router = {
@@ -517,16 +471,10 @@
                     document.getElementById('btn-register-trigger').onclick = () => AuthManager.register();
                     document.getElementById('btn-to-register').onclick = () => AuthManager.switchTab('register');
                     document.getElementById('btn-to-login').onclick = () => AuthManager.switchTab('login');
-                    
                     document.getElementById('open-dep-trigger').onclick = () => UI.openModal('modal-deposit');
-                    document.getElementById('tab-deposit').onclick = () => UI.switchCashierTab('deposit');
-                    document.getElementById('tab-withdraw').onclick = () => UI.switchCashierTab('withdraw');
-                    
-                    document.getElementById('btn-dep-next').onclick = () => this.handleCashierStep1();
+                    document.getElementById('btn-dep-next').onclick = () => this.depNextStep();
                     document.getElementById('btn-copy-clabe').onclick = () => this.copyClabe();
                     document.getElementById('btn-confirm-dep').onclick = () => this.confirmDeposit();
-                    document.getElementById('btn-confirm-withdraw').onclick = () => this.confirmWithdraw();
-                    
                     document.getElementById('btn-close-dep').onclick = () => UI.closeModal('modal-deposit');
                     document.getElementById('btn-logout-trigger').onclick = () => AuthManager.logout();
                     document.getElementById('btn-game-back').onclick = () => Router.showView('lobby');
@@ -544,121 +492,73 @@
                 subscribeBalance() {
                     sb.channel('balance_realtime').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'usuarios', filter: `id=eq.${State.user.id}` }, (p) => { if (p.new && typeof p.new.saldo !== 'undefined') { State.balance = p.new.saldo; UI.updateBalance(); } }).subscribe();
                 },
-                
-                handleCashierStep1() {
-                    const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value));
-                    const bank = document.getElementById('bank-name').value;
-                    const owner = document.getElementById('bank-owner').value;
-
-                    if(!amt || amt <= 0) return UI.notify("Monto inválido", "error");
-                    if(!bank || !owner) return UI.notify("Completa los datos bancarios", "error");
-
-                    playSfx('click');
-                    document.getElementById('dep-step-1').classList.add('hidden-view');
-
-                    if(State.cashierTab === 'deposit') {
-                        document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`;
-                        document.getElementById('dep-step-2').classList.remove('hidden-view');
-                    } else {
-                        if(amt > State.balance) return UI.notify("Saldo insuficiente", "error");
-                        document.getElementById('confirm-withdraw-bank').innerText = bank;
-                        document.getElementById('confirm-withdraw-owner').innerText = owner;
-                        document.getElementById('confirm-withdraw-amount').innerText = `$${amt.toFixed(2)}`;
-                        document.getElementById('withdraw-step-2').classList.remove('hidden-view');
-                    }
-                },
-
-                async confirmWithdraw() {
-                    const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value));
-                    const bank = document.getElementById('bank-name').value;
-                    const owner = document.getElementById('bank-owner').value;
-                    
-                    try {
-                        UI.notify("Solicitando retiro...", "success");
-                        const btn = document.getElementById('btn-confirm-withdraw');
-                        btn.disabled = true;
-
-                        // Descontar saldo inmediatamente para evitar abusos
-                        State.balance -= amt;
-                        UI.updateBalance();
-                        await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-
-                        await sb.from('history').insert([{ 
-                            user_id: State.user.id, 
-                            type: 'withdrawals', 
-                            amount: -amt, 
-                            label: 'RETIRO', 
-                            status: 'pending',
-                            bank_name: bank, // Asegúrate que tu tabla history tenga esta columna
-                            bank_owner: owner // Asegúrate que tu tabla history tenga esta columna
-                        }]);
-
-                        UI.notify("Retiro en revisión", "success");
-                        UI.closeModal('modal-deposit');
-                    } catch (e) {
-                        UI.notify("Error al retirar", "error");
-                    } finally {
-                        document.getElementById('btn-confirm-withdraw').disabled = false;
-                    }
-                },
-
+                depNextStep() { const amt = parseFloat(document.getElementById('dep-amount').value); if(isNaN(amt) || amt <= 0) return UI.notify("Monto inválido", "error"); playSfx('click'); document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`; document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
                 copyClabe() { const clabe = document.getElementById('clabe-number').innerText; navigator.clipboard.writeText(clabe).then(() => { playSfx('click'); UI.notify("CLABE Copiada", "success"); }); },
                 handleFile(input) { if(input.files && input.files[0]) { playSfx('click'); const label = document.getElementById('file-label'); label.innerText = "Recibo: " + input.files[0].name.substring(0, 15) + "..."; label.classList.replace('text-zinc-500', 'text-emerald-500'); } },
                 
                 async confirmDeposit() {
                     const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value));
-                    const bank = document.getElementById('bank-name').value;
-                    const owner = document.getElementById('bank-owner').value;
                     const fileInput = document.getElementById('receipt-input');
                     const file = fileInput.files[0];
                     
-                    if(!amt || amt <= 0 || !file) return UI.notify("Datos o comprobante faltantes", "error");
+                    // Definimos valores para las nuevas columnas requeridas
+                    const bankName = "STP / WinMX"; 
+                    const bankOwner = State.user.email;
+
+                    if(!amt || amt <= 0 || !file) return UI.notify("Datos inválidos", "error");
                     
                     try {
-                        UI.notify("Enviando...", "success");
-                        const btn = document.getElementById('btn-confirm-dep'); btn.disabled = true;
+                        UI.notify("Procesando...", "success");
+                        const btn = document.getElementById('btn-confirm-dep'); 
+                        btn.disabled = true;
                         
                         const fileExt = file.name.split('.').pop();
                         const fileName = `${State.user.id}-${Date.now()}.${fileExt}`;
                         const filePath = `depositos/${fileName}`;
                         
+                        // Subida del archivo al Storage
                         await sb.storage.from('comprobantes').upload(filePath, file);
                         const { data: urlData } = sb.storage.from('comprobantes').getPublicUrl(filePath);
                         
-                        await sb.from('history').insert([{ 
+                        // Inserción en la tabla history con las nuevas columnas
+                        const { error } = await sb.from('history').insert([{ 
                             user_id: State.user.id, 
                             type: 'deposits', 
                             amount: amt, 
-                            label: 'DEPÓSITO', 
+                            label: 'CARGA', 
                             status: 'pending', 
                             evidence_url: urlData.publicUrl,
-                            bank_name: bank,
-                            bank_owner: owner
+                            bank_name: bankName,
+                            bank_owner: bankOwner
                         }]);
+
+                        if(error) throw error;
 
                         UI.notify("En revisión", "success"); 
                         UI.closeModal('modal-deposit');
-                    } catch (e) { UI.notify("Error al enviar", "error"); } finally { document.getElementById('btn-confirm-dep').disabled = false; }
+                    } catch (e) { 
+                        console.error(e);
+                        UI.notify("Error al enviar", "error"); 
+                    } finally { 
+                        document.getElementById('btn-confirm-dep').disabled = false; 
+                    }
                 },
 
                 async fetchHistory() {
-                    const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(15);
-                    const d = await sb.from('history').select('*').eq('user_id', State.user.id).in('type', ['deposits', 'withdrawals']).order('created_at', { ascending: false }).limit(15);
-                    
+                    const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20);
+                    const d = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(20);
                     document.getElementById('history-lists').innerHTML = `
                         <div class="glass overflow-hidden mb-4"><div id="h-acc-bets" class="p-5 flex justify-between cursor-pointer"><div class="flex items-center gap-3"><i class="fas fa-history text-emerald-500"></i><span class="font-casino text-[10px]">Jugadas</span></div><i class="fas fa-chevron-down text-zinc-700"></i></div><div id="acc-bets" class="hidden-view p-3 space-y-2 bg-black/40 history-scroll">${this.renderList(b.data || [], 'bets')}</div></div>
-                        <div class="glass overflow-hidden"><div id="h-acc-deps" class="p-5 flex justify-between cursor-pointer"><div class="flex items-center gap-3"><i class="fas fa-wallet text-blue-400"></i><span class="font-casino text-[10px]">Cajero</span></div><i class="fas fa-chevron-down text-zinc-700"></i></div><div id="acc-deps" class="hidden-view p-3 space-y-2 bg-black/40 history-scroll">${this.renderList(d.data || [], 'cashier')}</div></div>`;
-                    
+                        <div class="glass overflow-hidden"><div id="h-acc-deps" class="p-5 flex justify-between cursor-pointer"><div class="flex items-center gap-3"><i class="fas fa-wallet text-blue-400"></i><span class="font-casino text-[10px]">Depósitos</span></div><i class="fas fa-chevron-down text-zinc-700"></i></div><div id="acc-deps" class="hidden-view p-3 space-y-2 bg-black/40 history-scroll">${this.renderList(d.data || [], 'deposits')}</div></div>`;
                     document.getElementById('h-acc-bets').onclick = () => this.toggleAccordion('acc-bets', 'h-acc-bets');
                     document.getElementById('h-acc-deps').onclick = () => this.toggleAccordion('acc-deps', 'h-acc-deps');
                 },
-
                 renderList(items, type) {
                     if(!items.length) return `<p class="text-[8px] text-center py-2 text-zinc-600">Sin registros</p>`;
                     return items.map(i => {
                         let text = i.label, color = i.amount >= 0 ? 'text-emerald-500' : 'text-red-500', pulse = "";
-                        if(type==='cashier') {
-                            if(i.status==='pending') { text=`Pendiente ${i.type === 'withdrawals' ? '📤' : '📥'}`; color="text-yellow-500"; pulse="pulse-pending"; }
+                        if(type==='deposits') {
+                            if(i.status==='pending') { text="Pendiente ⏳"; color="text-yellow-500"; pulse="pulse-pending"; }
                             else if(i.status==='completed') { text="Confirmado ✅"; color="text-emerald-500"; }
                             else if(i.status==='rejected') { text="Rechazado ❌"; color="text-red-500"; }
                         }
