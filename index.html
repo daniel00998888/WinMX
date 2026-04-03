@@ -495,55 +495,23 @@
                 depNextStep() { const amt = parseFloat(document.getElementById('dep-amount').value); if(isNaN(amt) || amt <= 0) return UI.notify("Monto inválido", "error"); playSfx('click'); document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`; document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
                 copyClabe() { const clabe = document.getElementById('clabe-number').innerText; navigator.clipboard.writeText(clabe).then(() => { playSfx('click'); UI.notify("CLABE Copiada", "success"); }); },
                 handleFile(input) { if(input.files && input.files[0]) { playSfx('click'); const label = document.getElementById('file-label'); label.innerText = "Recibo: " + input.files[0].name.substring(0, 15) + "..."; label.classList.replace('text-zinc-500', 'text-emerald-500'); } },
-                
                 async confirmDeposit() {
                     const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value));
                     const fileInput = document.getElementById('receipt-input');
                     const file = fileInput.files[0];
-                    
-                    // Definimos valores para las nuevas columnas requeridas
-                    const bankName = "STP / WinMX"; 
-                    const bankOwner = State.user.email;
-
                     if(!amt || amt <= 0 || !file) return UI.notify("Datos inválidos", "error");
-                    
                     try {
                         UI.notify("Procesando...", "success");
-                        const btn = document.getElementById('btn-confirm-dep'); 
-                        btn.disabled = true;
-                        
+                        const btn = document.getElementById('btn-confirm-dep'); btn.disabled = true;
                         const fileExt = file.name.split('.').pop();
                         const fileName = `${State.user.id}-${Date.now()}.${fileExt}`;
                         const filePath = `depositos/${fileName}`;
-                        
-                        // Subida del archivo al Storage
                         await sb.storage.from('comprobantes').upload(filePath, file);
                         const { data: urlData } = sb.storage.from('comprobantes').getPublicUrl(filePath);
-                        
-                        // Inserción en la tabla history con las nuevas columnas
-                        const { error } = await sb.from('history').insert([{ 
-                            user_id: State.user.id, 
-                            type: 'deposits', 
-                            amount: amt, 
-                            label: 'CARGA', 
-                            status: 'pending', 
-                            evidence_url: urlData.publicUrl,
-                            bank_name: bankName,
-                            bank_owner: bankOwner
-                        }]);
-
-                        if(error) throw error;
-
-                        UI.notify("En revisión", "success"); 
-                        UI.closeModal('modal-deposit');
-                    } catch (e) { 
-                        console.error(e);
-                        UI.notify("Error al enviar", "error"); 
-                    } finally { 
-                        document.getElementById('btn-confirm-dep').disabled = false; 
-                    }
+                        await sb.from('history').insert([{ user_id: State.user.id, type: 'deposits', amount: amt, label: 'CARGA', status: 'pending', evidence_url: urlData.publicUrl }]);
+                        UI.notify("En revisión", "success"); UI.closeModal('modal-deposit');
+                    } catch (e) { UI.notify("Error al enviar", "error"); } finally { document.getElementById('btn-confirm-dep').disabled = false; }
                 },
-
                 async fetchHistory() {
                     const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20);
                     const d = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(20);
