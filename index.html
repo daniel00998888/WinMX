@@ -347,10 +347,11 @@
         };
 
         const AuthManager = {
-            switchTab(tab) {
-                document.getElementById('login-container').classList.toggle('hidden-view', tab === 'register');
-                document.getElementById('register-container').classList.toggle('hidden-view', tab === 'login');
-            },
+            async login() { const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value; const { data, error } = await sb.auth.signInWithPassword({ email: e, password: p }); if(error) UI.notify(error.message, "error"); else location.reload(); },
+            async register() { if(!document.getElementById('terms-check').checked) return UI.notify("Acepta términos", "error"); const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value; const { data, error } = await sb.auth.signUp({ email: e, password: p }); if(error) UI.notify(error.message, "error"); else { await sb.from('usuarios').insert([{ id: data.user.id, email: e, saldo: 0 }]); UI.notify("Cuenta creada", "success"); location.reload(); } },
+            async logout() { await sb.auth.signOut(); location.reload(); },
+            switchTab(tab) { playSfx('click'); document.getElementById('login-container').classList.toggle('hidden-view', tab==='register'); document.getElementById('register-container').classList.toggle('hidden-view', tab==='login'); }
+        };
             async login() {
                 const email = document.getElementById('login-email').value;
                 const pass = document.getElementById('login-password').value;
