@@ -67,10 +67,10 @@
         
         .risk-badge { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; margin-bottom: 10px; }
 
-        /* Estilos nuevos para el selector de Depósito/Retiro */
-        .type-selector { display: flex; background: rgba(255,255,255,0.05); border-radius: 1rem; padding: 4px; margin-bottom: 20px; }
-        .type-btn { flex: 1; padding: 10px; font-size: 10px; font-weight: 900; border-radius: 0.8rem; text-align: center; cursor: pointer; transition: 0.3s; }
-        .type-btn.active { background: var(--mx-green); color: black; }
+        /* Estilos para el selector de tipo de transacción */
+        .tx-selector { display: flex; gap: 10px; margin-bottom: 20px; background: rgba(255,255,255,0.05); padding: 5px; border-radius: 1rem; }
+        .tx-option { flex: 1; padding: 10px; text-align: center; font-size: 10px; font-weight: 900; border-radius: 0.8rem; cursor: pointer; transition: 0.3s; }
+        .tx-option.active { background: var(--mx-green); color: black; }
     </style>
 </head>
 <body class="antialiased select-none">
@@ -162,14 +162,14 @@
     <div id="modal-deposit" class="fixed inset-0 bg-black/95 z-[100] hidden-view flex items-center justify-center p-6">
         <div class="glass p-8 w-full max-w-sm bg-[#0a0a0a]">
             <div id="dep-step-1">
-                <div class="type-selector">
-                    <div onclick="UI.toggleTxType('dep')" id="type-dep" class="type-btn active">DEPOSITAR</div>
-                    <div onclick="UI.toggleTxType('ret')" id="type-ret" class="type-btn">RETIRAR</div>
+                <div class="tx-selector">
+                    <div onclick="UI.setTxType('deposit')" id="opt-deposit" class="tx-option active">DEPOSITAR</div>
+                    <div onclick="UI.setTxType('withdrawal')" id="opt-withdrawal" class="tx-option">RETIRAR</div>
                 </div>
-                <h2 id="modal-title" class="font-casino text-emerald-500 text-center mb-6">Monto a cargar</h2>
+                <h2 id="modal-title-text" class="font-casino text-emerald-500 text-center mb-6">Monto a cargar</h2>
                 <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-6 text-white">
                 
-                <div class="space-y-4 mb-8">
+                <div class="space-y-3 mb-6">
                     <input id="bank-name" type="text" placeholder="Nombre del Banco" class="w-full bg-white/5 border border-white/10 p-3 rounded-xl outline-none text-white text-[11px] font-bold uppercase">
                     <input id="beneficiary-name" type="text" placeholder="Nombre del Beneficiario" class="w-full bg-white/5 border border-white/10 p-3 rounded-xl outline-none text-white text-[11px] font-bold uppercase">
                 </div>
@@ -177,7 +177,7 @@
                 <button onclick="UI.depNextStep()" class="btn-action w-full py-4 font-casino">Continuar</button>
             </div>
             <div id="dep-step-2" class="hidden-view space-y-4 text-center">
-                <div id="instr-dep" class="space-y-4">
+                <div id="deposit-instructions">
                     <div class="instruction-card !mt-0 !mb-4 bg-emerald-500/5 border-emerald-500/20">
                         <h4><i class="fas fa-university"></i> Instrucciones de Pago</h4>
                         <p class="text-[10px] mb-2 text-zinc-400">Transfiere con estos datos exactos:</p>
@@ -186,13 +186,9 @@
                                 <span class="text-zinc-500 uppercase">Monto:</span>
                                 <span class="text-emerald-500 font-bold" id="display-dep-amount">$0.00</span>
                             </div>
-                            <div class="flex justify-between border-b border-white/5 pb-1">
-                                <span class="text-zinc-500 uppercase">Concepto:</span>
-                                <span class="text-white font-bold uppercase">Transferencia</span>
-                            </div>
                         </div>
                     </div>
-                    <div class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
+                    <div class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 mb-4">
                         <p class="text-[8px] font-bold text-emerald-500 mb-1 uppercase">CLABE (STP)</p>
                         <div class="flex items-center justify-center gap-3">
                             <span id="clabe-number" class="text-xs font-mono font-bold">722969020533491161</span>
@@ -208,15 +204,15 @@
                     </label>
                 </div>
                 
-                <div id="instr-ret" class="hidden-view">
+                <div id="withdrawal-instructions" class="hidden-view">
                     <div class="instruction-card !mt-0 !mb-4 bg-red-500/5 border-red-500/20">
                         <h4 class="!text-red-500"><i class="fas fa-hand-holding-usd"></i> Solicitud de Retiro</h4>
-                        <p class="text-[10px] text-zinc-400">Tu solicitud será procesada en un lapso de 1 a 24 horas hábiles.</p>
+                        <p class="text-[10px] text-zinc-400 italic">Tu retiro será procesado en breve tras la verificación.</p>
                     </div>
-                    <div class="bg-white/5 p-4 rounded-xl border border-white/10 text-left space-y-2">
-                        <p class="text-[9px] text-zinc-500 uppercase font-bold">Resumen de cuenta:</p>
-                        <p id="ret-summary-bank" class="text-[11px] text-white font-black uppercase"></p>
-                        <p id="ret-summary-user" class="text-[11px] text-white font-black uppercase"></p>
+                    <div class="bg-white/5 p-4 rounded-xl border border-white/10 text-left text-[11px] space-y-1">
+                        <p class="text-zinc-500 font-bold uppercase text-[9px]">Confirmación de datos:</p>
+                        <p id="confirm-bank" class="text-white font-black uppercase"></p>
+                        <p id="confirm-user" class="text-white font-black uppercase"></p>
                     </div>
                 </div>
 
@@ -235,7 +231,7 @@
         const sfx = { click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'), spin: new Audio('https://assets.mixkit.co/active_storage/sfx/2014/2014-preview.mp3'), win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'), winExtra: new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3'), lose: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'), rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3') };
         const playSfx = (key) => { if(sfx[key]) { sfx[key].currentTime = 0; sfx[key].play().catch(() => {}); } };
 
-        let State = { user: null, balance: 0, pending: false, currentTxType: 'dep' };
+        let State = { user: null, balance: 0, pending: false, txType: 'deposit' };
 
         const Core = {
             async init() {
@@ -265,17 +261,17 @@
             },
             async confirmTransaction() {
                 const amount = parseFloat(document.getElementById('dep-amount').value);
-                const banco = document.getElementById('bank-name').value.trim();
-                const beneficiario = document.getElementById('beneficiary-name').value.trim();
+                const bank = document.getElementById('bank-name').value.trim();
+                const beneficiary = document.getElementById('beneficiary-name').value.trim();
 
-                if(!amount || amount <= 0 || !banco || !beneficiario) return UI.notify("Completa todos los campos", "error");
+                if(!amount || amount <= 0 || !bank || !beneficiary) return UI.notify("Completa todos los campos", "error");
                 
                 const btn = document.getElementById('btn-confirm-dep');
                 btn.disabled = true; btn.innerText = "PROCESANDO...";
 
                 try {
                     let receiptUrl = null;
-                    if(State.currentTxType === 'dep') {
+                    if(State.txType === 'deposit') {
                         const file = document.getElementById('receipt-input').files[0];
                         if(!file) throw new Error("Sube tu comprobante");
                         const fName = `${Date.now()}_${State.user.id}.jpg`;
@@ -286,20 +282,20 @@
 
                     const { error } = await sb.from('history').insert([{
                         user_id: State.user.id,
-                        type: State.currentTxType === 'dep' ? 'deposit' : 'withdrawal',
+                        type: State.txType,
                         amount: amount,
-                        label: State.currentTxType === 'dep' ? 'Depósito Pendiente' : 'Retiro Pendiente',
+                        label: State.txType === 'deposit' ? 'Depósito Pendiente' : 'Retiro Pendiente',
                         status: 'pending',
                         receipt_url: receiptUrl,
-                        bank_details: {
-                            banco: banco,
-                            beneficiario: beneficiario
+                        bank_details: { // Se guardan los nuevos datos aquí
+                            banco: bank,
+                            beneficiario: beneficiary
                         }
                     }]);
 
                     if(error) throw error;
 
-                    UI.notify(State.currentTxType === 'dep' ? "Depósito enviado a revisión" : "Solicitud de retiro enviada", "success");
+                    UI.notify(State.txType === 'deposit' ? "Depósito enviado" : "Retiro solicitado", "success");
                     UI.closeModal('modal-deposit');
                 } catch(e) {
                     UI.notify(e.message, "error");
@@ -381,44 +377,41 @@
                 document.getElementById(id).classList.remove('hidden-view');
                 document.getElementById('dep-step-1').classList.remove('hidden-view');
                 document.getElementById('dep-step-2').classList.add('hidden-view');
-                document.getElementById('dep-amount').value = '';
-                document.getElementById('bank-name').value = '';
-                document.getElementById('beneficiary-name').value = '';
-                this.toggleTxType('dep');
+                this.setTxType('deposit');
             },
             closeModal(id) { document.getElementById(id).classList.add('hidden-view'); },
-            toggleTxType(type) {
-                State.currentTxType = type;
-                document.getElementById('type-dep').className = `type-btn ${type === 'dep' ? 'active' : ''}`;
-                document.getElementById('type-ret').className = `type-btn ${type === 'ret' ? 'active' : ''}`;
-                document.getElementById('modal-title').innerText = type === 'dep' ? 'Monto a cargar' : 'Monto a retirar';
-                document.getElementById('bank-name').placeholder = type === 'dep' ? 'Nombre del banco desde el cual depositas' : 'Nombre del banco al cual retiras';
-                document.getElementById('beneficiary-name').placeholder = type === 'dep' ? 'Nombre del titular de la cuenta origen' : 'Nombre del titular de la cuenta destino';
+            setTxType(type) {
+                State.txType = type;
+                document.getElementById('opt-deposit').classList.toggle('active', type === 'deposit');
+                document.getElementById('opt-withdrawal').classList.toggle('active', type === 'withdrawal');
+                document.getElementById('modal-title-text').innerText = type === 'deposit' ? 'Monto a cargar' : 'Monto a retirar';
+                document.getElementById('bank-name').placeholder = type === 'deposit' ? 'Banco desde el que envías' : 'Banco donde recibirás';
+                document.getElementById('beneficiary-name').placeholder = type === 'deposit' ? 'Titular que envía' : 'Titular que recibe';
             },
             depNextStep() {
                 const amt = parseFloat(document.getElementById('dep-amount').value);
-                const bnk = document.getElementById('bank-name').value.trim();
-                const ben = document.getElementById('beneficiary-name').value.trim();
+                const bnk = document.getElementById('bank-name').value;
+                const ben = document.getElementById('beneficiary-name').value;
 
-                if(!amt || amt <= 0 || !bnk || !ben) return this.notify("Completa todos los campos", "error");
-                if(State.currentTxType === 'ret' && amt > State.balance) return this.notify("Saldo insuficiente", "error");
+                if(!amt || amt <= 0 || !bnk || !ben) return this.notify("Datos incompletos", "error");
+                if(State.txType === 'withdrawal' && amt > State.balance) return this.notify("Saldo insuficiente", "error");
 
                 document.getElementById('dep-step-1').classList.add('hidden-view');
                 document.getElementById('dep-step-2').classList.remove('hidden-view');
                 
-                if(State.currentTxType === 'dep') {
+                if(State.txType === 'deposit') {
                     document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`;
-                    document.getElementById('instr-dep').classList.remove('hidden-view');
-                    document.getElementById('instr-ret').classList.add('hidden-view');
+                    document.getElementById('deposit-instructions').classList.remove('hidden-view');
+                    document.getElementById('withdrawal-instructions').classList.add('hidden-view');
                 } else {
-                    document.getElementById('instr-dep').classList.add('hidden-view');
-                    document.getElementById('instr-ret').classList.remove('hidden-view');
-                    document.getElementById('ret-summary-bank').innerText = `BANCO: ${bnk}`;
-                    document.getElementById('ret-summary-user').innerText = `A NOMBRE DE: ${ben}`;
+                    document.getElementById('deposit-instructions').classList.add('hidden-view');
+                    document.getElementById('withdrawal-instructions').classList.remove('hidden-view');
+                    document.getElementById('confirm-bank').innerText = `BANCO: ${bnk}`;
+                    document.getElementById('confirm-user').innerText = `TITULAR: ${ben}`;
                 }
             },
             copyClabe() { navigator.clipboard.writeText('722969020533491161'); this.notify("CLABE copiada"); },
-            handleFile(input) { if(input.files[0]) document.getElementById('file-label').innerText = "✅ ARCHIVO LISTO"; },
+            handleFile(input) { if(input.files[0]) document.getElementById('file-label').innerText = "✅ COMPROBANTE LISTO"; },
             async loadHistory() {
                 const list = document.getElementById('history-lists');
                 list.innerHTML = '<p class="text-center text-[9px] text-zinc-600 animate-pulse uppercase font-bold">Sincronizando...</p>';
@@ -479,8 +472,7 @@
                         await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                         await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -bet, label: 'SLOTS' }]);
                     }, 3600);
-                },
-                adjustLuck: (w, b, m) => GameLogic.adjustLuck(w, b, m)
+                }
             },
             mines: {
                 active: false, bet: 0, mines: [], revealed: [],
@@ -602,22 +594,21 @@
                     playSfx('lose');
                     document.getElementById('crash-mult').classList.add('text-red-500');
                     document.getElementById('crash-rocket').innerHTML = '💥';
-                    document.getElementById('crash-rocket').style.transform = 'translateY(0)';
                     this.end(false);
                 },
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
                     GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
-                    this.active = false; UI.updateBalance();
+                    this.active = false;
                     const btn = document.getElementById('btn-crash');
-                    btn.innerText = "EXPLOTÓ"; btn.disabled = true;
+                    btn.innerText = "REINICIANDO..."; btn.disabled = true;
                     setTimeout(() => {
                         btn.disabled = false; btn.innerText = "DESPEGAR"; btn.onclick = () => GameLogic.crash.start();
                         document.getElementById('crash-mult').classList.remove('text-red-500');
                         document.getElementById('crash-mult').innerText = '1.00x';
                         document.getElementById('crash-rocket').innerHTML = '🚀';
                         document.getElementById('crash-rocket').style.transform = 'translateY(0)';
-                    }, 2500);
+                    }, 2000);
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR' }]);
                 }
