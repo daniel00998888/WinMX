@@ -67,10 +67,10 @@
         
         .risk-badge { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; margin-bottom: 10px; }
 
-        /* Estilos para el nuevo selector de Depósito/Retiro */
-        .tx-toggle { display: flex; background: rgba(255,255,255,0.05); border-radius: 1rem; padding: 4px; margin-bottom: 20px; }
-        .tx-toggle button { flex: 1; padding: 10px; border-radius: 0.8rem; font-size: 10px; font-weight: 900; transition: 0.3s; }
-        .tx-toggle button.active { background: var(--mx-green); color: black; }
+        /* Estilos específicos para la nueva sección de transacción */
+        .tx-selector { display: flex; background: rgba(255,255,255,0.05); border-radius: 1rem; padding: 4px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); }
+        .tx-tab { flex: 1; text-align: center; padding: 10px; border-radius: 0.8rem; font-size: 10px; font-weight: 900; transition: 0.3s; cursor: pointer; color: #666; }
+        .tx-tab.active { background: var(--mx-green); color: black; }
     </style>
 </head>
 <body class="antialiased select-none">
@@ -106,7 +106,8 @@
                         <span class="text-[10px] text-white font-bold uppercase">Acepto términos y soy mayor de edad</span>
                     </label>
                 </div>
-                <button onclick="AuthManager.register()" class="btn-action w-full py-4 font-casino mt-2">Crear Cuenta</button> <button onclick="AuthManager.switchTab('login')" class="w-full py-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-2 text-center underline decoration-zinc-700">Ya tengo cuenta</button>
+                <button onclick="AuthManager.register()" class="btn-action w-full py-4 font-casino mt-2">Crear Cuenta</button> 
+                <button onclick="AuthManager.switchTab('login')" class="w-full py-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-2 text-center underline decoration-zinc-700">Ya tengo cuenta</button>
             </div>
         </div>
     </div>
@@ -162,26 +163,25 @@
     <div id="modal-deposit" class="fixed inset-0 bg-black/95 z-[100] hidden-view flex items-center justify-center p-6">
         <div class="glass p-8 w-full max-w-sm bg-[#0a0a0a]">
             <div id="dep-step-1">
-                <div class="tx-toggle">
-                    <button id="toggle-dep" onclick="UI.switchTx('deposit')" class="active">DEPOSITAR</button>
-                    <button id="toggle-ret" onclick="UI.switchTx('withdrawal')">RETIRAR</button>
+                <div class="tx-selector">
+                    <div id="tab-deposit" onclick="UI.setTxType('deposit')" class="tx-tab active">DEPOSITAR</div>
+                    <div id="tab-withdrawal" onclick="UI.setTxType('withdrawal')" class="tx-tab">RETIRAR</div>
                 </div>
 
                 <h2 id="tx-title" class="font-casino text-emerald-500 text-center mb-6">Monto a cargar</h2>
                 <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-6 text-white">
                 
                 <div class="space-y-3 mb-6">
-                    <input id="bank-name" type="text" placeholder="Nombre del Banco" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none text-white text-[10px] font-bold uppercase">
-                    <input id="account-holder" type="text" placeholder="Nombre del Beneficiario" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none text-white text-[10px] font-bold uppercase">
+                    <input id="bank-name" type="text" placeholder="Nombre del banco emisor" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none text-white text-[10px] font-bold uppercase">
+                    <input id="beneficiary-name" type="text" placeholder="Nombre del beneficiario" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none text-white text-[10px] font-bold uppercase">
                 </div>
 
                 <button onclick="UI.depNextStep()" class="btn-action w-full py-4 font-casino">Continuar</button>
             </div>
             <div id="dep-step-2" class="hidden-view space-y-4 text-center">
-                <div id="dep-instructions-ui">
+                <div id="deposit-info">
                     <div class="instruction-card !mt-0 !mb-4 bg-emerald-500/5 border-emerald-500/20">
-                        <h4><i class="fas fa-university"></i> Instrucciones de Pago</h4>
-                        <p class="text-[10px] mb-2 text-zinc-400">Transfiere con estos datos exactos:</p>
+                        <h4><i class="fas fa-university"></i> Datos de Transferencia</h4>
                         <div class="space-y-2 text-[11px]">
                             <div class="flex justify-between border-b border-white/5 pb-1">
                                 <span class="text-zinc-500 uppercase">Monto:</span>
@@ -192,10 +192,8 @@
                     <div class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 mb-4">
                         <p class="text-[8px] font-bold text-emerald-500 mb-1 uppercase">CLABE (STP)</p>
                         <div class="flex items-center justify-center gap-3">
-                            <span id="clabe-number" class="text-xs font-mono font-bold">722969020533491161</span>
-                            <button onclick="UI.copyClabe()" class="text-emerald-500 active:scale-90 transition-transform">
-                                <i class="fas fa-copy"></i>
-                            </button>
+                            <span class="text-xs font-mono font-bold">722969020533491161</span>
+                            <button onclick="UI.copyClabe()" class="text-emerald-500"><i class="fas fa-copy"></i></button>
                         </div>
                     </div>
                     <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
@@ -204,11 +202,11 @@
                         <p id="file-label" class="text-[8px] font-bold text-zinc-500 uppercase text-center">Subir Comprobante</p>
                     </label>
                 </div>
-                
-                <div id="ret-instructions-ui" class="hidden-view">
-                    <div class="instruction-card !mt-0 !mb-4 bg-emerald-500/5 border-emerald-500/20 text-center">
+
+                <div id="withdrawal-info" class="hidden-view">
+                    <div class="instruction-card !mt-0 !mb-4 bg-emerald-500/5 border-emerald-500/20">
                         <h4><i class="fas fa-clock"></i> Solicitud de Retiro</h4>
-                        <p class="text-[10px] text-zinc-400">Tu retiro será procesado por un administrador en breve.</p>
+                        <p class="text-[10px] text-zinc-400">Tu solicitud será revisada por administración. El tiempo estimado es de 1 a 24 horas.</p>
                     </div>
                 </div>
 
@@ -227,7 +225,7 @@
         const sfx = { click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'), spin: new Audio('https://assets.mixkit.co/active_storage/sfx/2014/2014-preview.mp3'), win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'), winExtra: new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3'), lose: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'), rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3') };
         const playSfx = (key) => { if(sfx[key]) { sfx[key].currentTime = 0; sfx[key].play().catch(() => {}); } };
 
-        let State = { user: null, balance: 0, pending: false, currentTxType: 'deposit' };
+        let State = { user: null, balance: 0, currentTx: 'deposit' };
 
         const Core = {
             async init() {
@@ -257,17 +255,17 @@
             },
             async confirmTransaction() {
                 const amount = parseFloat(document.getElementById('dep-amount').value);
-                const banco = document.getElementById('bank-name').value;
-                const beneficiario = document.getElementById('account-holder').value;
+                const bank = document.getElementById('bank-name').value;
+                const beneficiary = document.getElementById('beneficiary-name').value;
 
-                if(!amount || amount <= 0 || !banco || !beneficiario) return UI.notify("Completa todos los campos", "error");
+                if(!amount || amount <= 0 || !bank || !beneficiary) return UI.notify("Completa todos los campos", "error");
                 
                 const btn = document.getElementById('btn-confirm-dep');
                 btn.disabled = true; btn.innerText = "PROCESANDO...";
 
                 try {
                     let receiptUrl = null;
-                    if(State.currentTxType === 'deposit') {
+                    if(State.currentTx === 'deposit') {
                         const file = document.getElementById('receipt-input').files[0];
                         if(!file) throw new Error("Sube tu comprobante");
                         const fName = `${Date.now()}_${State.user.id}.jpg`;
@@ -276,20 +274,18 @@
                         receiptUrl = sb.storage.from('comprobantes').getPublicUrl(fName).data.publicUrl;
                     }
 
-                    // Se añaden banco y beneficiario al insert del historial
                     const { error } = await sb.from('history').insert([{
                         user_id: State.user.id,
-                        type: State.currentTxType,
+                        type: State.currentTx,
                         amount: amount,
-                        label: State.currentTxType === 'deposit' ? 'Depósito Pendiente' : 'Retiro Pendiente',
+                        label: State.currentTx === 'deposit' ? 'Depósito Pendiente' : 'Retiro Pendiente',
                         status: 'pending',
                         receipt_url: receiptUrl,
-                        bank_details: { banco, beneficiario }
+                        bank_details: { banco: bank, beneficiario: beneficiary }
                     }]);
 
                     if(error) throw error;
-
-                    UI.notify(State.currentTxType === 'deposit' ? "Depósito enviado" : "Retiro solicitado", "success");
+                    UI.notify("Solicitud enviada correctamente", "success");
                     UI.closeModal('modal-deposit');
                 } catch(e) {
                     UI.notify(e.message, "error");
@@ -371,34 +367,32 @@
                 document.getElementById(id).classList.remove('hidden-view');
                 document.getElementById('dep-step-1').classList.remove('hidden-view');
                 document.getElementById('dep-step-2').classList.add('hidden-view');
-                this.switchTx('deposit');
+                this.setTxType('deposit');
             },
             closeModal(id) { document.getElementById(id).classList.add('hidden-view'); },
-            switchTx(type) {
-                State.currentTxType = type;
-                const isDep = type === 'deposit';
-                document.getElementById('toggle-dep').className = isDep ? 'active' : '';
-                document.getElementById('toggle-ret').className = !isDep ? 'active' : '';
-                document.getElementById('tx-title').innerText = isDep ? 'Monto a cargar' : 'Monto a retirar';
-                document.getElementById('bank-name').placeholder = isDep ? 'Banco desde el que envías' : 'Banco donde recibirás';
-                document.getElementById('account-holder').placeholder = isDep ? 'Nombre del Beneficiario' : 'Nombre del Titular';
+            setTxType(type) {
+                State.currentTx = type;
+                document.getElementById('tab-deposit').classList.toggle('active', type === 'deposit');
+                document.getElementById('tab-withdrawal').classList.toggle('active', type === 'withdrawal');
+                document.getElementById('tx-title').innerText = type === 'deposit' ? 'Monto a cargar' : 'Monto a retirar';
+                document.getElementById('bank-name').placeholder = type === 'deposit' ? 'Nombre del banco emisor' : 'Nombre del banco receptor';
+                document.getElementById('beneficiary-name').placeholder = type === 'deposit' ? 'Nombre del beneficiario' : 'Nombre del titular de cuenta';
             },
             depNextStep() {
                 const amt = parseFloat(document.getElementById('dep-amount').value);
                 const bnk = document.getElementById('bank-name').value;
-                const hld = document.getElementById('account-holder').value;
+                const ben = document.getElementById('beneficiary-name').value;
                 
-                if(!amt || amt <= 0 || !bnk || !hld) return this.notify("Datos incompletos", "error");
-                if(State.currentTxType === 'withdrawal' && amt > State.balance) return this.notify("Saldo insuficiente", "error");
+                if(!amt || amt <= 0 || !bnk || !ben) return this.notify("Datos incompletos", "error");
+                if(State.currentTx === 'withdrawal' && amt > State.balance) return this.notify("Saldo insuficiente", "error");
 
                 document.getElementById('dep-step-1').classList.add('hidden-view');
                 document.getElementById('dep-step-2').classList.remove('hidden-view');
                 
-                const isDep = State.currentTxType === 'deposit';
-                document.getElementById('dep-instructions-ui').classList.toggle('hidden-view', !isDep);
-                document.getElementById('ret-instructions-ui').classList.toggle('hidden-view', isDep);
-
-                if(isDep) document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`;
+                document.getElementById('deposit-info').classList.toggle('hidden-view', State.currentTx !== 'deposit');
+                document.getElementById('withdrawal-info').classList.toggle('hidden-view', State.currentTx !== 'withdrawal');
+                
+                if(State.currentTx === 'deposit') document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`;
             },
             copyClabe() { navigator.clipboard.writeText('722969020533491161'); this.notify("CLABE copiada"); },
             handleFile(input) { if(input.files[0]) document.getElementById('file-label').innerText = "✅ COMPROBANTE LISTO"; },
@@ -410,7 +404,7 @@
                 data.forEach(h => {
                     const card = document.createElement('div');
                     card.className = 'glass p-4 flex justify-between items-center animate__animated animate__fadeIn';
-                    const isNeg = h.amount < 0 || h.type === 'withdrawal';
+                    const isNeg = h.type === 'bets' ? h.amount < 0 : h.type === 'withdrawal';
                     const statusText = h.status === 'pending' ? '<span class="text-[8px] text-orange-500 font-black ml-2 pulse-pending italic">PENDIENTE</span>' : '';
                     card.innerHTML = `<div><p class="text-[10px] font-black uppercase text-zinc-400">${h.label}${statusText}</p><p class="text-[8px] text-zinc-600">${new Date(h.created_at).toLocaleString()}</p></div><div class="text-right"><p class="font-casino text-xs ${isNeg ? 'text-red-500' : 'text-emerald-500'}">${isNeg ? '-' : '+'}$${Math.abs(h.amount).toFixed(2)}</p></div>`;
                     list.appendChild(card);
@@ -591,14 +585,14 @@
                     GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
                     this.active = false;
                     const btn = document.getElementById('btn-crash');
-                    btn.innerText = "REINICIANDO..."; btn.disabled = true;
+                    btn.innerText = "EXPLOTÓ"; btn.disabled = true;
                     setTimeout(() => {
                         btn.disabled = false; btn.innerText = "DESPEGAR"; btn.onclick = () => GameLogic.crash.start();
                         document.getElementById('crash-mult').classList.remove('text-red-500');
                         document.getElementById('crash-mult').innerText = '1.00x';
                         document.getElementById('crash-rocket').innerHTML = '🚀';
                         document.getElementById('crash-rocket').style.transform = 'translateY(0)';
-                    }, 2000);
+                    }, 2500);
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR' }]);
                 }
