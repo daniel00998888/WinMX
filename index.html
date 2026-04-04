@@ -443,225 +443,177 @@
         };
 
         const GameLogic = {
-            adjustLuck(winAmount, betAmount, multiplier = 1) {
-                State.winHistory.push({ bet: betAmount, win: winAmount, mult: multiplier });
-                if(State.winHistory.length > 8) State.winHistory.shift();
-                if (winAmount === 0) { State.sessionLoss += betAmount; } 
-                else { State.sessionLoss -= (winAmount - betAmount); if (State.sessionLoss < 0) State.sessionLoss = 0; }
-                const consecutiveLosses = [...State.winHistory].reverse().findIndex(h => h.win > 0);
-                const hasLostSignificant = State.sessionLoss > 150;
-                if ((consecutiveLosses >= 4 || hasLostSignificant) && State.balance > 0) {
-                    State.luckFactor = 1.6; 
-                } else {
-                    const isScalping = State.winHistory.filter(h => h.bet >= 30 && h.mult < 1.15 && h.win > 0).length >= 2;
-                    if (isScalping) { State.luckFactor = 0.2; }
-                    else { State.luckFactor = Math.min(1.0, State.luckFactor + 0.05); }
-                }
+            adjustLuck(winAmt, bet, mult) {
+                const win = winAmt > 0;
+                if(win) { State.balance += winAmt; playSfx(mult > 5 ? 'winExtra' : 'win'); }
+                else { State.balance -= bet; playSfx('lose'); }
+                UI.updateBalance();
             },
-
             slots: {
-                init() { 
-                    [1,2,3].forEach(id => { 
-                        const r = document.getElementById(`reel-${id}`); 
-                        r.innerHTML = ''; 
-                        Array(10).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); 
-                    }); 
-                },
-                async play() {
-                    if(State.isSpinning) return;
-                    const betInput = document.getElementById('slots-bet-input');
-                    const bet = Math.abs(parseFloat(betInput.value)) || 10;
-                    if(State.balance < bet || bet <= 0) return UI.notify("Saldo insuficiente", "error");
-                    const btn = document.getElementById('btn-slots-play');
-                    btn.disabled = true; playSfx('spin'); State.isSpinning = true; State.balance -= bet; UI.updateBalance();
-                    const getSymbol = () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
-                    const res = [getSymbol(), getSymbol()];
-                    if (State.luckFactor >= 1.4 || (res[0] === res[1] && Math.random() < State.luckFactor)) { res[2] = res[0]; } else { res.push(getSymbol()); }
+                active: false,
+                spin() {
+                    if(this.active) return;
+                    const bet = parseFloat(document.getElementById('bet-amt').value);
+                    if(bet > State.balance || bet <= 0) return UI.notify("Saldo insuficiente", "error");
                     
-                    [1,2,3].forEach((id, i) => { 
-                        const targetPos = SYMBOLS.indexOf(res[i]);
-                        const scrollDist = (SYMBOLS.length * 90 * 3) + (targetPos * 90); 
-                        const reel = document.getElementById(`reel-${id}`);
-                        reel.style.transition = 'none';
-                        reel.style.transform = 'translateY(0)';
-                        setTimeout(() => {
-                            reel.style.transition = 'transform 3.5s cubic-bezier(0.15, 0, 0.05, 1)';
-                            reel.style.transform = `translateY(-${scrollDist}px)`;
-                        }, 50);
+                    this.active = true; playSfx('spin');
+                    const btn = document.getElementById('btn-spin');
+                    btn.disabled = true; btn.innerText = "GIRANDO...";
+
+                    const results = [Math.floor(Math.random()*6), Math.floor(Math.random()*6), Math.floor(Math.random()*6)];
+                    [0,1,2].forEach(i => {
+                        const r = document.getElementById(`reel-${i}`);
+                        r.innerHTML = '';
+                        for(let s=0; s<30; s++) {
+                            const item = document.createElement('div');
+                            item.className = 'slot-item';
+                            item.innerText = SYMBOLS[Math.floor(Math.random()*6)];
+                            r.appendChild(item);
+                        }
+                        const winSym = document.createElement('div');
+                        winSym.className = 'slot-item';
+                        winSym.innerText = SYMBOLS[results[i]];
+                        r.appendChild(winSym);
+                        r.style.transition = 'none'; r.style.transform = 'translateY(0)';
+                        setTimeout(() => { r.style.transition = 'transform 3.5s cubic-bezier(0.15, 0, 0.05, 1)'; r.style.transform = `translateY(-${30 * 90}px)`; }, 50);
                     });
 
                     setTimeout(async () => {
-                        State.isSpinning = false; btn.disabled = false;
-                        let win = (res[0] === res[1] && res[1] === res[2]) ? bet * 10 : 0;
-                        if(win > 0) { State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`¡GRAN PREMIO! $${win.toFixed(2)}`, "success"); } else { playSfx('lose'); UI.notify("CASI...", "error"); }
-                        UI.updateBalance(); GameLogic.adjustLuck(win, bet, win > 0 ? 10 : 0);
+                        const win = results[0] === results[1] && results[1] === results[2];
+                        const winAmt = win ? bet * 10 : 0;
+                        this.adjustLuck(winAmt, bet, win ? 10 : 0);
+                        this.active = false; btn.disabled = false; btn.innerText = "GIRAR";
                         await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                        await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -bet, label: 'SLOTS' }]);
-                    }, 3500);
+                        await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -bet, label: 'SLOTS' }]);
+                    }, 3600);
                 }
             },
-
             mines: {
-                active: false, mines: [], revealed: [], mult: 1, bet: 10,
-                // Array extendido a 22 pasos con tope en x500.00
-                multSteps: [1.25, 1.30, 1.75, 2.00, 5.50, 10.20, 16.50, 28.00, 45.00, 68.00, 95.00, 130.00, 175.00, 225.00, 280.00, 330.00, 375.00, 415.00, 445.00, 470.00, 490.00, 500.00],
-                drawGrid() {
-                    const g = document.getElementById('mines-grid'); g.innerHTML = '';
-                    for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/5 border border-white/5 rounded-lg flex items-center justify-center text-xl cursor-pointer active:scale-90 transition-all"></div>`;
-                },
+                active: false, bet: 0, mines: [], revealed: [],
                 start() {
-                    if(this.active) return;
-                    const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 10;
-                    if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
-                    playSfx('click'); State.balance -= b; UI.updateBalance();
-                    this.active = true; this.bet = b; this.mult = 1; this.revealed = [];
-                    this.mines = []; while(this.mines.length < 3) { let r = Math.floor(Math.random()*25); if(!this.mines.includes(r)) this.mines.push(r); }
-                    document.getElementById('mines-controls').classList.add('hidden-view');
-                    document.getElementById('mines-status').classList.remove('hidden-view');
-                    document.getElementById('mines-mult').innerText = '1.00x';
-                    const nextVal = this.multSteps[0];
-                    document.getElementById('mines-next-hint').innerText = `Siguiente: x${nextVal.toFixed(2)}`;
-                    document.getElementById('mines-cashout-btn').innerText = `COBRAR $0.00`;
-                    this.drawGrid();
+                    if(this.active) return this.cashout();
+                    this.bet = parseFloat(document.getElementById('mine-bet').value);
+                    if(this.bet > State.balance || this.bet <= 0) return UI.notify("Saldo insuficiente", "error");
+                    
+                    this.active = true; this.revealed = [];
+                    const grid = document.getElementById('mines-grid'); grid.innerHTML = '';
+                    this.mines = Array.from({length: 25}, (_, i) => i).sort(() => Math.random() - 0.5).slice(0, 3);
+                    
+                    for(let i=0; i<25; i++) {
+                        const tile = document.createElement('div');
+                        tile.className = 'glass h-12 flex items-center justify-center cursor-pointer text-sm active:scale-90 transition-transform';
+                        tile.onclick = () => this.reveal(i, tile);
+                        grid.appendChild(tile);
+                    }
+                    document.getElementById('btn-mine').innerText = "RETIRAR $0.00";
                 },
-                cell(i) {
+                reveal(i, el) {
                     if(!this.active || this.revealed.includes(i)) return;
-                    const winCount = this.revealed.length;
-                    let dynamicFail = (0.12 + (winCount * 0.09)) / State.luckFactor;
-                    if (State.luckFactor > 1.4 && winCount < 3) dynamicFail = 0.01;
-                    if (winCount > 1 && Math.random() < dynamicFail) { if (!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); } }
-                    this.revealed.push(i); const el = document.getElementById(`m-${i}`);
+                    this.revealed.push(i);
                     if(this.mines.includes(i)) {
-                        playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500');
-                        UI.notify("¡BOMBA!", "error");
+                        el.innerHTML = '💣'; el.classList.add('bg-red-500/20');
                         this.end(false);
                     } else {
-                        playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500');
-                        this.mult = this.multSteps[winCount] || 500.00;
-                        document.getElementById('mines-mult').innerText = this.mult.toFixed(2) + 'x';
-                        const nextVal = this.multSteps[winCount + 1] || 500.00;
-                        document.getElementById('mines-next-hint').innerText = `Siguiente: x${nextVal.toFixed(2)}`;
-                        document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
+                        el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20');
+                        playSfx('win');
+                        const mult = 1 + (this.revealed.length * 0.2);
+                        document.getElementById('btn-mine').innerText = `RETIRAR $${(this.bet * mult).toFixed(2)}`;
                     }
                 },
-                async cashout() { if(!this.active) return; const win = this.bet * this.mult; State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
-                async end(win) {
-                    const winAmt = win ? (this.bet * this.mult) : 0;
-                    GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
-                    this.active = false; UI.updateBalance();
-                    document.getElementById('mines-controls').classList.remove('hidden-view');
-                    document.getElementById('mines-status').classList.add('hidden-view');
+                async cashout() {
+                    const mult = 1 + (this.revealed.length * 0.2);
+                    this.end(true, mult);
+                },
+                async end(win, mult = 0) {
+                    const winAmt = win ? (this.bet * mult) - this.bet : 0;
+                    GameLogic.adjustLuck(winAmt, this.bet, mult);
+                    this.active = false;
+                    document.getElementById('btn-mine').innerText = "EMPEZAR";
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'MINAS' }]);
                 }
             },
-
             tower: {
-                level: 0, active: false, bet: 0, mult: 1,
-                towerSteps: [1.65, 2.80, 4.50, 7.80, 13.50, 24.00, 42.00, 95.00],
-                drawTower() {
-                    const c = document.getElementById('tower-container'); c.innerHTML = '';
-                    for(let i=0; i<8; i++) {
-                        let row = document.createElement('div'); row.className = "grid grid-cols-3 gap-1.5 opacity-30"; row.id = `tower-row-${i}`;
-                        for(let j=0; j<3; j++) row.innerHTML += `<div onclick="GameLogic.tower.select(${i}, ${j})" class="h-8 bg-white/5 border border-white/5 rounded-lg flex items-center justify-center cursor-pointer transition-all"></div>`;
-                        c.appendChild(row);
-                    }
-                },
+                active: false, bet: 0, level: 0,
                 start() {
-                    const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10;
-                    if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
-                    playSfx('click'); State.balance -= b; UI.updateBalance();
-                    this.active = true; this.bet = b; this.level = 0; this.mult = 1;
-                    this.drawTower(); document.getElementById('tower-row-0').classList.remove('opacity-30');
-                    document.getElementById('tower-controls').classList.add('hidden-view');
-                    const btn = document.getElementById('tower-cashout-btn'); btn.classList.remove('hidden-view'); btn.innerText = `COBRAR $0.00`;
+                    this.bet = parseFloat(document.getElementById('tower-bet').value);
+                    if(this.bet > State.balance || this.bet <= 0) return UI.notify("Saldo insuficiente", "error");
+                    this.active = true; this.level = 0;
+                    this.render();
+                    document.getElementById('btn-tower').innerText = "RETIRAR $0.00";
+                    document.getElementById('btn-tower').onclick = () => this.cashout();
                 },
-                select(r, c) {
-                    if(!this.active || r !== this.level) return;
-                    let failProb = (this.level > 2 ? 0.55 : 0.40) / State.luckFactor;
-                    const isBomb = Math.random() < failProb;
-                    const items = document.getElementById(`tower-row-${r}`).children;
-                    if(isBomb) { playSfx('lose'); items[c].innerHTML = '💣'; UI.notify("PERDISTE", "error"); this.end(false); } 
-                    else {
-                        playSfx('click'); items[c].innerHTML = '💎'; items[c].classList.add('bg-emerald-500/20', 'border-emerald-500');
-                        this.mult = this.towerSteps[this.level]; this.level++;
-                        document.getElementById('tower-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
-                        if(this.level < 8) document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30'); else this.cashout();
+                render() {
+                    const grid = document.getElementById('tower-grid'); grid.innerHTML = '';
+                    for(let l=7; l>=0; l--) {
+                        const row = document.createElement('div');
+                        row.className = `flex gap-2 ${this.level === l ? 'opacity-100' : 'opacity-30'}`;
+                        for(let c=0; c<3; c++) {
+                            const btn = document.createElement('div');
+                            btn.className = 'flex-1 glass py-3 text-center cursor-pointer';
+                            btn.innerHTML = '❓';
+                            if(this.level === l) btn.onclick = () => this.play(c);
+                            row.appendChild(btn);
+                        }
+                        grid.appendChild(row);
                     }
                 },
-                async cashout() { if(!this.active || this.level === 0) return; const win = this.bet * this.mult; State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
-                async end(win) {
-                    const winAmt = win ? (this.bet * this.mult) : 0;
-                    GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
-                    this.active = false; UI.updateBalance();
-                    document.getElementById('tower-controls').classList.remove('hidden-view');
-                    document.getElementById('tower-cashout-btn').classList.add('hidden-view');
+                play(c) {
+                    const mine = Math.floor(Math.random()*3);
+                    if(c === mine) { this.end(false); }
+                    else {
+                        this.level++;
+                        playSfx('win');
+                        if(this.level === 8) return this.cashout();
+                        this.render();
+                        const mult = Math.pow(1.5, this.level);
+                        document.getElementById('btn-tower').innerText = `RETIRAR $${(this.bet * mult).toFixed(2)}`;
+                    }
+                },
+                async cashout() {
+                    const mult = Math.pow(1.5, this.level);
+                    this.end(true, mult);
+                },
+                async end(win, mult = 0) {
+                    const winAmt = win ? (this.bet * mult) - this.bet : 0;
+                    GameLogic.adjustLuck(winAmt, this.bet, mult);
+                    this.active = false;
+                    const btn = document.getElementById('btn-tower');
+                    btn.innerText = "JUGAR"; btn.onclick = () => this.start();
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'TORRE' }]);
                 }
             },
-
             crash: {
-                active: false, mult: 1, bet: 0, interval: null, bgPos: 0,
+                active: false, bet: 0, mult: 1.0,
                 start() {
-                    if(this.active) return;
-                    const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10;
-                    if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
-                    playSfx('rocket'); State.balance -= b; UI.updateBalance();
-                    this.active = true; this.bet = b; this.mult = 1.0; this.bgPos = 0;
-                    const btn = document.getElementById('btn-crash'); btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
-                    btn.onclick = () => this.cashout();
-                    
-                    if (Math.random() < 0.15 / State.luckFactor) { this.explode(); return; }
-                    let baseLimit;
-                    const rng = Math.random();
-                    if (rng < 0.01) baseLimit = 100 + Math.random() * 400; 
-                    else if (rng < 0.05) baseLimit = 20 + Math.random() * 80; 
-                    else if (rng < 0.20) baseLimit = 2 + Math.random() * 18; 
-                    else baseLimit = 1.01 + Math.random() * 0.99; 
-                    if (State.luckFactor < 0.5) baseLimit = 1.01 + Math.random() * 0.05; 
-                    
-                    this.interval = setInterval(() => {
-                        let step = 0.01;
-                        if (this.mult >= 2) step = 0.02;
-                        if (this.mult >= 5) step = 0.05;
-                        if (this.mult >= 10) step = 0.08;
-                        if (this.mult >= 20) step = 0.15;
-                        
-                        this.mult += step;
-                        document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
-                        
-                        let speed = 2 + (this.mult * 2);
-                        this.bgPos -= speed;
-                        if (this.bgPos <= -100) this.bgPos = 0;
-                        document.getElementById('crash-bg').style.transform = `translateX(${this.bgPos}%)`;
-                        
-                        let floatY = Math.sin(Date.now() / 200) * 8;
-                        document.getElementById('crash-rocket').style.transform = `translateY(${floatY}px)`;
-                        
-                        btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
-                        if(this.mult >= baseLimit) { clearInterval(this.interval); this.explode(); }
-                    }, 50);
+                    this.bet = parseFloat(document.getElementById('crash-bet').value);
+                    if(this.bet > State.balance || this.bet <= 0) return UI.notify("Saldo insuficiente", "error");
+                    this.active = true; this.mult = 1.0;
+                    const btn = document.getElementById('btn-crash');
+                    btn.innerText = "COBRAR"; btn.onclick = () => this.end(true);
+                    playSfx('rocket');
+                    this.loop();
                 },
-                cashout() {
+                loop() {
                     if(!this.active) return;
-                    clearInterval(this.interval);
-                    const win = this.bet * this.mult; State.balance += win; 
-                    playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
-                    this.end(true);
+                    this.mult += 0.01;
+                    document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
+                    const y = (this.mult - 1) * -30;
+                    document.getElementById('crash-rocket').style.transform = `translateY(${y}px)`;
+                    if(Math.random() < 0.005) return this.explode();
+                    requestAnimationFrame(() => this.loop());
                 },
                 explode() {
-                    clearInterval(this.interval);
-                    playSfx('lose'); UI.notify("¡EXPLOTÓ!", "error");
+                    playSfx('lose');
                     document.getElementById('crash-mult').classList.add('text-red-500');
                     document.getElementById('crash-rocket').innerHTML = '💥';
-                    document.getElementById('crash-rocket').style.transform = 'translateY(0)';
                     this.end(false);
                 },
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
                     GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
-                    this.active = false; UI.updateBalance();
+                    this.active = false;
                     const btn = document.getElementById('btn-crash');
                     btn.innerText = "EXPLOTÓ"; btn.disabled = true;
                     setTimeout(() => {
