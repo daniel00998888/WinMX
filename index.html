@@ -311,25 +311,31 @@
 
                 if(!amount || amount <= 0 || !bank || !beneficiary) return UI.notify("Completa todos los campos", "error");
                 
+                const btn = document.getElementById('btn-confirm-dep');
+                btn.disabled = true; btn.innerText = "PROCESANDO...";
 
                 try {
-                    UI.notify("Procesando...", "success");
-                    const btn = document.getElementById('btn-confirm-dep');
-                    btn.disabled = true; btn.style.opacity = "0.5";
-                    const fileExt = file.name.split('.').pop();
-                    const fileName = `${State.user.id}-${Date.now()}.${fileExt}`;
-                    const filePath = `depositos/${fileName}`;
-                    const { error: uploadError } = await sb.storage.from('comprobantes').upload(filePath, file);
-                    if (uploadError) throw uploadError;
-                    const { data: urlData } = sb.storage.from('comprobantes').getPublicUrl(filePath);
-                    await sb.from('history').insert([{ user_id: State.user.id, type: 'deposits', amount: amt, label: 'CARGA', status: 'pending', evidence_url: urlData.publicUrl }]);
-                    UI.notify("En revisión", "success");
-                    UI.closeModal('modal-deposit');
-                    this.fetchHistory();
-                } catch (e) { UI.notify("Error al enviar", "error"); } 
-                finally { const btn = document.getElementById('btn-confirm-dep'); btn.disabled = false; btn.style.opacity = "1"; }
-            },
-                if(error) throw error;
+                    let evidence_url = null;
+                    if(State.currentTx === 'deposit') {
+                        const file = document.getElementById('receipt-input').files[0];
+                        if(!file) throw new Error("Sube tu comprobante");
+                        const fName = `${Date.now()}_${State.user.id}.jpg`;
+                        const { error: upErr } = await sb.storage.from('comprobantes').upload(fName, file);
+                        if(upErr) throw upErr;
+                        evidence_url = sb.storage.from('comprobantes').getPublicUrl(fName).data.publicUrl;
+                    }
+
+                    const { error } = await sb.from('history').insert([{
+                        user_id: State.user.id,
+                        type: State.currentTx,
+                        amount: amount,
+                        label: State.currentTx === 'deposit' ? 'Depósito Pendiente' : 'Retiro Pendiente',
+                        status: 'pending',
+                        evidence_url: evidence_urll,
+                        bank_details: { banco: bank, beneficiario: beneficiary }
+                    }]);
+
+                    if(error) throw error;
                     UI.notify("Solicitud enviada correctamente", "success");
                     UI.closeModal('modal-deposit');
                 } catch(e) {
