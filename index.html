@@ -305,15 +305,18 @@
                     return `<div class="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5 ${pulse}"><div class="flex flex-col"><span class="text-[9px] font-bold uppercase">${text}</span><span class="text-[7px] text-zinc-600">${new Date(i.created_at).toLocaleDateString()}</span></div><div class="text-[10px] font-casino ${color}">$${Math.abs(i.amount).toFixed(2)}</div></div>`;
                 }).join('');
             }
-            async confirmTransaction() {
-                const amount = parseFloat(document.getElementById('dep-amount').value);
-                const bank = document.getElementById('bank-name').value;
-                const beneficiary = document.getElementById('beneficiary-name').value;
+            async function confirmTransaction() {
+             const amount = parseFloat(document.getElementById('dep-amount').value);
+             const bank = document.getElementById('bank-name').value;
+             const beneficiary = document.getElementById('beneficiary-name').value;
 
-                if(!amount || amount <= 0 || !bank || !beneficiary) return UI.notify("Completa todos los campos", "error");
-                
-                const btn = document.getElementById('btn-confirm-dep');
-                btn.disabled = true; btn.innerText = "PROCESANDO...";
+             if(!amount || amount <= 0 || !bank || !beneficiary) 
+               return UI.notify("Completa todos los campos", "error");
+    
+             const btn = document.getElementById('btn-confirm-dep');
+             btn.disabled = true; 
+             btn.innerText = "PROCESANDO...";
+        }
 
                 try {
                     let evidence_url = null;
