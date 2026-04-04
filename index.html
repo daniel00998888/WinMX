@@ -388,7 +388,7 @@
                 document.getElementById('bank-name').placeholder = type === 'deposit' ? 'Nombre del banco emisor' : 'Nombre del banco receptor';
                 document.getElementById('beneficiary-name').placeholder = type === 'deposit' ? 'Nombre del beneficiario' : 'Nombre del titular de cuenta';
             },
-            depNextStep() {
+            depNextStep() 
                 const amt = parseFloat(document.getElementById('dep-amount').value);
                 const bnk = document.getElementById('bank-name').value;
                 const ben = document.getElementById('beneficiary-name').value;
