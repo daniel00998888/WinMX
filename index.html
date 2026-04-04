@@ -66,10 +66,11 @@
         .instruction-card strong { color: white; font-weight: 800; }
         
         .risk-badge { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; margin-bottom: 10px; }
-    
-        /* Estilos para los tabs de Depósito/Retiro */
-        .tab-btn { flex: 1; padding: 12px; font-family: 'Archivo Black', sans-serif; font-size: 10px; text-transform: uppercase; border-radius: 1rem; color: #444; transition: 0.3s; }
-        .tab-btn.active { background: var(--mx-green); color: black; }
+
+        /* Estilos nuevos para el selector de Depósito/Retiro */
+        .type-selector { display: flex; background: rgba(255,255,255,0.05); border-radius: 1rem; padding: 4px; margin-bottom: 20px; }
+        .type-btn { flex: 1; padding: 10px; font-size: 10px; font-weight: 900; border-radius: 0.8rem; text-align: center; cursor: pointer; transition: 0.3s; }
+        .type-btn.active { background: var(--mx-green); color: black; }
     </style>
 </head>
 <body class="antialiased select-none">
@@ -105,8 +106,7 @@
                         <span class="text-[10px] text-white font-bold uppercase">Acepto términos y soy mayor de edad</span>
                     </label>
                 </div>
-                <button onclick="AuthManager.register()" class="btn-action w-full py-4 font-casino mt-2">Crear Cuenta</button>
-                <button onclick="AuthManager.switchTab('login')" class="w-full py-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-2 text-center underline decoration-zinc-700">Ya tengo cuenta</button>
+                <button onclick="AuthManager.register()" class="btn-action w-full py-4 font-casino mt-2">Crear Cuenta</button> <button onclick="AuthManager.switchTab('login')" class="w-full py-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-2 text-center underline decoration-zinc-700">Ya tengo cuenta</button>
             </div>
         </div>
     </div>
@@ -161,53 +161,66 @@
 
     <div id="modal-deposit" class="fixed inset-0 bg-black/95 z-[100] hidden-view flex items-center justify-center p-6">
         <div class="glass p-8 w-full max-w-sm bg-[#0a0a0a]">
-            <div class="flex bg-white/5 p-1 rounded-2xl mb-6">
-                <button id="tab-deposit" onclick="UI.switchTransaction('deposit')" class="tab-btn active">Depositar</button>
-                <button id="tab-withdraw" onclick="UI.switchTransaction('withdraw')" class="tab-btn">Retirar</button>
-            </div>
-
             <div id="dep-step-1">
+                <div class="type-selector">
+                    <div onclick="UI.toggleTxType('dep')" id="type-dep" class="type-btn active">DEPOSITAR</div>
+                    <div onclick="UI.toggleTxType('ret')" id="type-ret" class="type-btn">RETIRAR</div>
+                </div>
                 <h2 id="modal-title" class="font-casino text-emerald-500 text-center mb-6">Monto a cargar</h2>
                 <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-6 text-white">
                 
-                <div class="space-y-3 mb-6">
-                    <input id="bank-name" type="text" placeholder="Nombre del banco" class="w-full bg-white/5 border border-white/10 p-3 rounded-xl outline-none text-white text-xs text-center">
-                    <input id="beneficiary-name" type="text" placeholder="Nombre del beneficiario" class="w-full bg-white/5 border border-white/10 p-3 rounded-xl outline-none text-white text-xs text-center">
+                <div class="space-y-4 mb-8">
+                    <input id="bank-name" type="text" placeholder="Nombre del Banco" class="w-full bg-white/5 border border-white/10 p-3 rounded-xl outline-none text-white text-[11px] font-bold uppercase">
+                    <input id="beneficiary-name" type="text" placeholder="Nombre del Beneficiario" class="w-full bg-white/5 border border-white/10 p-3 rounded-xl outline-none text-white text-[11px] font-bold uppercase">
                 </div>
 
                 <button onclick="UI.depNextStep()" class="btn-action w-full py-4 font-casino">Continuar</button>
             </div>
-            
             <div id="dep-step-2" class="hidden-view space-y-4 text-center">
-                <div id="instruction-area" class="instruction-card !mt-0 !mb-4 bg-emerald-500/5 border-emerald-500/20">
-                    <h4><i class="fas fa-university"></i> Instrucciones</h4>
-                    <p id="instruction-text" class="text-[10px] mb-2 text-zinc-400">Transfiere con estos datos exactos:</p>
-                    <div class="space-y-2 text-[11px]">
-                        <div class="flex justify-between border-b border-white/5 pb-1">
-                            <span class="text-zinc-500 uppercase">Monto:</span>
-                            <span class="text-emerald-500 font-bold" id="display-dep-amount">$0.00</span>
-                        </div>
-                        <div class="flex justify-between border-b border-white/5 pb-1">
-                            <span class="text-zinc-500 uppercase">Concepto:</span>
-                            <span class="text-white font-bold uppercase">Transferencia</span>
+                <div id="instr-dep" class="space-y-4">
+                    <div class="instruction-card !mt-0 !mb-4 bg-emerald-500/5 border-emerald-500/20">
+                        <h4><i class="fas fa-university"></i> Instrucciones de Pago</h4>
+                        <p class="text-[10px] mb-2 text-zinc-400">Transfiere con estos datos exactos:</p>
+                        <div class="space-y-2 text-[11px]">
+                            <div class="flex justify-between border-b border-white/5 pb-1">
+                                <span class="text-zinc-500 uppercase">Monto:</span>
+                                <span class="text-emerald-500 font-bold" id="display-dep-amount">$0.00</span>
+                            </div>
+                            <div class="flex justify-between border-b border-white/5 pb-1">
+                                <span class="text-zinc-500 uppercase">Concepto:</span>
+                                <span class="text-white font-bold uppercase">Transferencia</span>
+                            </div>
                         </div>
                     </div>
+                    <div class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
+                        <p class="text-[8px] font-bold text-emerald-500 mb-1 uppercase">CLABE (STP)</p>
+                        <div class="flex items-center justify-center gap-3">
+                            <span id="clabe-number" class="text-xs font-mono font-bold">722969020533491161</span>
+                            <button onclick="UI.copyClabe()" class="text-emerald-500 active:scale-90 transition-transform">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
+                    <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-2xl p-4 block cursor-pointer">
+                        <i class="fas fa-camera text-xl mb-1 text-zinc-600"></i>
+                        <p id="file-label" class="text-[8px] font-bold text-zinc-500 uppercase text-center">Subir Comprobante</p>
+                    </label>
                 </div>
-                <div id="clabe-area" class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
-                    <p class="text-[8px] font-bold text-emerald-500 mb-1 uppercase">CLABE (STP)</p>
-                    <div class="flex items-center justify-center gap-3">
-                        <span id="clabe-number" class="text-xs font-mono font-bold">722969020533491161</span>
-                        <button onclick="UI.copyClabe()" class="text-emerald-500 active:scale-90 transition-transform">
-                            <i class="fas fa-copy"></i>
-                        </button>
+                
+                <div id="instr-ret" class="hidden-view">
+                    <div class="instruction-card !mt-0 !mb-4 bg-red-500/5 border-red-500/20">
+                        <h4 class="!text-red-500"><i class="fas fa-hand-holding-usd"></i> Solicitud de Retiro</h4>
+                        <p class="text-[10px] text-zinc-400">Tu solicitud será procesada en un lapso de 1 a 24 horas hábiles.</p>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-xl border border-white/10 text-left space-y-2">
+                        <p class="text-[9px] text-zinc-500 uppercase font-bold">Resumen de cuenta:</p>
+                        <p id="ret-summary-bank" class="text-[11px] text-white font-black uppercase"></p>
+                        <p id="ret-summary-user" class="text-[11px] text-white font-black uppercase"></p>
                     </div>
                 </div>
-                <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
-                <label id="label-receipt" for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-2xl p-4 block cursor-pointer">
-                    <i class="fas fa-camera text-xl mb-1 text-zinc-600"></i>
-                    <p id="file-label" class="text-[8px] font-bold text-zinc-500 uppercase text-center">Subir Comprobante</p>
-                </label>
-                <button id="btn-confirm-dep" onclick="Core.confirmDeposit()" class="btn-action w-full py-4 font-casino">Confirmar</button>
+
+                <button id="btn-confirm-dep" onclick="Core.confirmTransaction()" class="btn-action w-full py-4 font-casino">Confirmar</button>
             </div>
             <button onclick="UI.closeModal('modal-deposit')" class="w-full mt-4 text-[9px] text-zinc-700 font-bold uppercase tracking-widest">Cerrar</button>
         </div>
@@ -219,471 +232,371 @@
         const DB_CONFIG = { url: "https://dakhnqriwbzihlzhtfcb.supabase.co", key: "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs" };
         const sb = window.supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
         const SYMBOLS = ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'];
+        const sfx = { click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'), spin: new Audio('https://assets.mixkit.co/active_storage/sfx/2014/2014-preview.mp3'), win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'), winExtra: new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3'), lose: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'), rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3') };
+        const playSfx = (key) => { if(sfx[key]) { sfx[key].currentTime = 0; sfx[key].play().catch(() => {}); } };
 
-        const sfx = {
-            click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
-            spin: new Audio('https://assets.mixkit.co/active_storage/sfx/2014/2014-preview.mp3'),
-            win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
-            winExtra: new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3'),
-            lose: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
-            rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3')
+        let State = { user: null, balance: 0, pending: false, currentTxType: 'dep' };
+
+        const Core = {
+            async init() {
+                const { data: { session } } = await sb.auth.getSession();
+                if(session) { this.loadUser(session.user); } else { Router.showView('auth'); }
+                UI.hideLoader();
+            },
+            async loadUser(user) {
+                State.user = user;
+                const { data } = await sb.from('usuarios').select('*').eq('id', user.id).single();
+                if(!data) {
+                    await sb.from('usuarios').insert([{ id: user.id, email: user.email, saldo: 0 }]);
+                    State.balance = 0;
+                } else {
+                    State.balance = data.saldo;
+                }
+                UI.updateBalance();
+                document.getElementById('user-email-display').innerText = user.email;
+                Router.showView('lobby');
+                this.listenBalance();
+            },
+            listenBalance() {
+                sb.channel('db-changes').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'usuarios', filter: `id=eq.${State.user.id}` }, payload => {
+                    State.balance = payload.new.saldo;
+                    UI.updateBalance();
+                }).subscribe();
+            },
+            async confirmTransaction() {
+                const amount = parseFloat(document.getElementById('dep-amount').value);
+                const banco = document.getElementById('bank-name').value.trim();
+                const beneficiario = document.getElementById('beneficiary-name').value.trim();
+
+                if(!amount || amount <= 0 || !banco || !beneficiario) return UI.notify("Completa todos los campos", "error");
+                
+                const btn = document.getElementById('btn-confirm-dep');
+                btn.disabled = true; btn.innerText = "PROCESANDO...";
+
+                try {
+                    let receiptUrl = null;
+                    if(State.currentTxType === 'dep') {
+                        const file = document.getElementById('receipt-input').files[0];
+                        if(!file) throw new Error("Sube tu comprobante");
+                        const fName = `${Date.now()}_${State.user.id}.jpg`;
+                        const { error: upErr } = await sb.storage.from('comprobantes').upload(fName, file);
+                        if(upErr) throw upErr;
+                        receiptUrl = sb.storage.from('comprobantes').getPublicUrl(fName).data.publicUrl;
+                    }
+
+                    const { error } = await sb.from('history').insert([{
+                        user_id: State.user.id,
+                        type: State.currentTxType === 'dep' ? 'deposit' : 'withdrawal',
+                        amount: amount,
+                        label: State.currentTxType === 'dep' ? 'Depósito Pendiente' : 'Retiro Pendiente',
+                        status: 'pending',
+                        receipt_url: receiptUrl,
+                        bank_details: {
+                            banco: banco,
+                            beneficiario: beneficiario
+                        }
+                    }]);
+
+                    if(error) throw error;
+
+                    UI.notify(State.currentTxType === 'dep' ? "Depósito enviado a revisión" : "Solicitud de retiro enviada", "success");
+                    UI.closeModal('modal-deposit');
+                } catch(e) {
+                    UI.notify(e.message, "error");
+                } finally {
+                    btn.disabled = false; btn.innerText = "CONFIRMAR";
+                }
+            }
         };
-        const playSfx = (key) => { if(sfx[key]) { sfx[key].currentTime = 0; sfx[key].play().catch(()=>{}); } };
-
-        let State = { user: null, balance: 0, isSpinning: false, totalSpins: 0, luckFactor: 1.0, winHistory: [], sessionLoss: 0, currentTransType: 'deposit' };
 
         const Router = {
             showView(viewId) {
-                if(State.isSpinning) return;
-                playSfx('click');
-                document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden-view'));
-                document.getElementById(`view-${viewId}`).classList.remove('hidden-view');
+                document.querySelectorAll('.view-content, #auth-view').forEach(v => v.classList.add('hidden-view'));
+                document.getElementById(viewId === 'auth' ? 'auth-view' : `view-${viewId}`).classList.remove('hidden-view');
+                if(viewId !== 'auth') document.getElementById('main-app').classList.remove('hidden-view');
                 document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-                const navId = {'lobby':'nav-home','history':'nav-history','profile':'nav-profile'}[viewId];
-                if(navId) document.getElementById(navId).classList.add('active');
-                if(viewId === 'history') Core.fetchHistory();
-                if(viewId === 'profile') UI.updateProfile();
+                const nav = document.getElementById(`nav-${viewId}`);
+                if(nav) nav.classList.add('active');
+                if(viewId === 'history') UI.loadHistory();
             },
             openGame(game) {
-                playSfx('click');
                 this.showView('game');
-                document.getElementById('game-mount').innerHTML = this.templates[game];
-                document.getElementById('view-game').scrollTop = 0;
-                if(game === 'slots') GameLogic.slots.init();
-                if(game === 'mines') GameLogic.mines.drawGrid();
-                if(game === 'tower') GameLogic.tower.drawTower();
-                if(game === 'crash') GameLogic.crash.init();
+                const mount = document.getElementById('game-mount');
+                mount.innerHTML = `<div class="animate__animated animate__fadeInUp">${this.getGameHtml(game)}</div>`;
             },
-            templates: {
-                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4><i class="fas fa-info-circle"></i> Reglas del Slot</h4><p>Alinea 3 símbolos iguales en el centro para ganar <strong>10x tu apuesta inicial</strong>.</p></div></div>`,
-                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px] animate__animated animate__fadeIn"><div id="mines-grid" class="grid grid-cols-5 gap-2 mb-6 aspect-square"></div><input id="mines-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino mb-3">COMENZAR</button><button id="btn-mines-cashout" onclick="GameLogic.mines.cashout()" class="hidden w-full py-4 rounded-2xl bg-white text-black font-casino mb-3">RETIRAR</button></div>`,
-                tower: `<div class="glass p-4 text-center animate__animated animate__fadeIn"><div id="tower-grid" class="flex flex-col-reverse gap-2 mb-6"></div><input id="tower-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino">EMPEZAR TORRE</button></div>`,
-                crash: `<div class="glass p-4 text-center animate__animated animate__fadeIn"><div id="crash-area" class="mb-6"><div class="bg-infinite" id="crash-bg"><div class="bg-part"></div><div class="bg-part"></div></div><div id="crash-rocket-container"><div id="crash-rocket">🚀</div></div><div id="crash-mult" class="absolute top-4 left-0 right-0 text-4xl font-casino italic text-emerald-500 z-20">1.00x</div></div><input id="crash-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-5 font-casino text-xl">DESPEGAR</button></div>`
+            getGameHtml(game) {
+                if(game === 'slots') return `<div class="glass p-6 text-center"><h3 class="font-casino text-emerald-500 mb-6 italic">Turbo Slots</h3><div class="flex justify-center gap-2 mb-8"><div class="slot-box w-20"><div id="reel-0" class="slot-reel"></div></div><div class="slot-box w-20"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box w-20"><div id="reel-2" class="slot-reel"></div></div></div><input id="bet-amt" type="number" value="10" class="input-bet"><button onclick="GameLogic.slots.spin()" id="btn-spin" class="btn-action w-full py-5 font-casino text-lg">GIRAR</button></div>`;
+                if(game === 'mines') return `<div class="glass p-6 text-center"><h3 class="font-casino text-emerald-500 mb-4 italic">Mina Real</h3><div class="grid grid-cols-5 gap-2 mb-6" id="mines-grid"></div><input id="mine-bet" type="number" value="10" class="input-bet"><button onclick="GameLogic.mines.start()" id="btn-mine" class="btn-action w-full py-4 font-casino">EMPEZAR</button></div>`;
+                if(game === 'crash') return `<div class="glass p-6 text-center"><h3 class="font-casino text-emerald-500 mb-4 italic">Aviator MX</h3><div id="crash-area" class="mb-6"><div class="bg-infinite" id="crash-bg"><div class="bg-part"></div><div class="bg-part"></div></div><div id="crash-rocket-container"><div id="crash-rocket">🚀</div></div><div id="crash-mult" class="absolute top-4 left-0 right-0 text-4xl font-casino z-20">1.00x</div></div><input id="crash-bet" type="number" value="10" class="input-bet"><button onclick="GameLogic.crash.start()" id="btn-crash" class="btn-action w-full py-4 font-casino">DESPEGAR</button></div>`;
+                if(game === 'tower') return `<div class="glass p-6 text-center"><h3 class="font-casino text-emerald-500 mb-4 italic">Torre de Cristal</h3><div id="tower-grid" class="space-y-2 mb-6"></div><input id="tower-bet" type="number" value="10" class="input-bet"><button onclick="GameLogic.tower.start()" id="btn-tower" class="btn-action w-full py-4 font-casino">JUGAR</button></div>`;
             }
         };
 
         const AuthManager = {
             switchTab(tab) {
-                playSfx('click');
-                document.getElementById('login-container').classList.add('hidden-view');
-                document.getElementById('register-container').classList.add('hidden-view');
-                document.getElementById(`${tab}-container`).classList.remove('hidden-view');
+                document.getElementById('login-container').classList.toggle('hidden-view', tab === 'register');
+                document.getElementById('register-container').classList.toggle('hidden-view', tab === 'login');
             },
             async login() {
                 const email = document.getElementById('login-email').value;
-                const password = document.getElementById('login-password').value;
-                const { data, error } = await sb.auth.signInWithPassword({ email, password });
+                const pass = document.getElementById('login-password').value;
+                const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
                 if(error) return UI.notify(error.message, 'error');
-                location.reload();
+                Core.loadUser(data.user);
             },
             async register() {
-                if(!document.getElementById('terms-check').checked) return UI.notify('Acepta los términos', 'error');
+                if(!document.getElementById('terms-check').checked) return UI.notify("Acepta los términos", "error");
                 const email = document.getElementById('reg-email').value;
-                const password = document.getElementById('reg-password').value;
-                const { data, error } = await sb.auth.signUp({ email, password });
+                const pass = document.getElementById('reg-password').value;
+                const { data, error } = await sb.auth.signUp({ email, password: pass });
                 if(error) return UI.notify(error.message, 'error');
-                
-                const user = data.user;
-                await sb.from('usuarios').insert([{ id: user.id, email: user.email, saldo: 0 }]);
-                UI.notify('Cuenta creada, inicia sesión');
+                UI.notify("Cuenta creada. Ya puedes entrar.", "success");
                 this.switchTab('login');
             },
-            async logout() {
-                await sb.auth.signOut();
-                location.reload();
-            }
+            async logout() { await sb.auth.signOut(); location.reload(); }
         };
 
         const UI = {
-            notify(msg, type = 'success') {
-                const div = document.createElement('div');
-                div.className = `p-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest animate__animated animate__fadeInDown ${type === 'success' ? 'bg-emerald-500 text-black' : 'bg-red-500 text-white'}`;
-                div.innerHTML = msg;
-                document.getElementById('notif-container').appendChild(div);
-                setTimeout(() => { div.classList.replace('animate__fadeInDown', 'animate__fadeOutUp'); setTimeout(() => div.remove(), 500); }, 3000);
+            hideLoader() {
+                let p = 0;
+                const iv = setInterval(() => {
+                    p += 10; document.getElementById('boot-bar').style.width = p+'%';
+                    if(p >= 100) { clearInterval(iv); document.getElementById('boot-loader').style.opacity = '0'; setTimeout(() => document.getElementById('boot-loader').remove(), 500); }
+                }, 50);
             },
-            openModal(id) { document.getElementById(id).classList.remove('hidden-view'); },
-            closeModal(id) { 
-                document.getElementById(id).classList.add('hidden-view'); 
+            updateBalance() { 
+                const el = document.getElementById('balance-display');
+                el.innerText = `$${State.balance.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+                el.classList.add('animate__animated', 'animate__pulse');
+                setTimeout(() => el.classList.remove('animate__pulse'), 500);
+            },
+            notify(msg, type = 'success') {
+                const n = document.createElement('div');
+                n.className = `glass p-4 text-[10px] font-bold uppercase tracking-widest animate__animated animate__fadeInDown border-l-4 ${type === 'success' ? 'border-emerald-500 bg-emerald-500/10' : 'border-red-500 bg-red-500/10'}`;
+                n.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle text-emerald-500' : 'fa-exclamation-circle text-red-500'} mr-2"></i> ${msg}`;
+                document.getElementById('notif-container').appendChild(n);
+                setTimeout(() => { n.classList.replace('animate__fadeInDown', 'animate__fadeOutUp'); setTimeout(() => n.remove(), 500); }, 3000);
+            },
+            openModal(id) { 
+                document.getElementById(id).classList.remove('hidden-view');
                 document.getElementById('dep-step-1').classList.remove('hidden-view');
                 document.getElementById('dep-step-2').classList.add('hidden-view');
+                document.getElementById('dep-amount').value = '';
+                document.getElementById('bank-name').value = '';
+                document.getElementById('beneficiary-name').value = '';
+                this.toggleTxType('dep');
             },
-            switchTransaction(type) {
-                State.currentTransType = type;
-                playSfx('click');
-                document.getElementById('tab-deposit').className = type === 'deposit' ? 'tab-btn active' : 'tab-btn';
-                document.getElementById('tab-withdraw').className = type === 'withdraw' ? 'tab-btn active' : 'tab-btn';
-                
-                const title = document.getElementById('modal-title');
-                const bankInput = document.getElementById('bank-name');
-                const beneficiaryInput = document.getElementById('beneficiary-name');
-                
-                if(type === 'deposit') {
-                    title.innerText = "Monto a cargar";
-                    bankInput.placeholder = "Nombre del banco desde el cual depositas";
-                    beneficiaryInput.placeholder = "Nombre del beneficiario que transfiere";
-                    document.getElementById('instruction-text').innerText = "Transfiere con estos datos exactos:";
-                    document.getElementById('clabe-area').classList.remove('hidden');
-                    document.getElementById('label-receipt').classList.remove('hidden');
-                } else {
-                    title.innerText = "Monto a retirar";
-                    bankInput.placeholder = "Nombre del banco a recibir el retiro";
-                    beneficiaryInput.placeholder = "Nombre del beneficiario de la cuenta";
-                    document.getElementById('instruction-text').innerText = "Se enviará el retiro a los datos proporcionados:";
-                    document.getElementById('clabe-area').classList.add('hidden');
-                    document.getElementById('label-receipt').classList.add('hidden');
-                }
+            closeModal(id) { document.getElementById(id).classList.add('hidden-view'); },
+            toggleTxType(type) {
+                State.currentTxType = type;
+                document.getElementById('type-dep').className = `type-btn ${type === 'dep' ? 'active' : ''}`;
+                document.getElementById('type-ret').className = `type-btn ${type === 'ret' ? 'active' : ''}`;
+                document.getElementById('modal-title').innerText = type === 'dep' ? 'Monto a cargar' : 'Monto a retirar';
+                document.getElementById('bank-name').placeholder = type === 'dep' ? 'Nombre del banco desde el cual depositas' : 'Nombre del banco al cual retiras';
+                document.getElementById('beneficiary-name').placeholder = type === 'dep' ? 'Nombre del titular de la cuenta origen' : 'Nombre del titular de la cuenta destino';
             },
             depNextStep() {
-                const amt = document.getElementById('dep-amount').value;
-                const bank = document.getElementById('bank-name').value;
-                const beneficiary = document.getElementById('beneficiary-name').value;
-                
-                if(!amt || amt <= 0 || !bank || !beneficiary) return this.notify('Completa todos los campos', 'error');
-                
-                if(State.currentTransType === 'withdraw' && amt > State.balance) return this.notify('Saldo insuficiente', 'error');
+                const amt = parseFloat(document.getElementById('dep-amount').value);
+                const bnk = document.getElementById('bank-name').value.trim();
+                const ben = document.getElementById('beneficiary-name').value.trim();
 
-                playSfx('click');
+                if(!amt || amt <= 0 || !bnk || !ben) return this.notify("Completa todos los campos", "error");
+                if(State.currentTxType === 'ret' && amt > State.balance) return this.notify("Saldo insuficiente", "error");
+
                 document.getElementById('dep-step-1').classList.add('hidden-view');
                 document.getElementById('dep-step-2').classList.remove('hidden-view');
-                document.getElementById('display-dep-amount').innerText = `$${parseFloat(amt).toFixed(2)}`;
-            },
-            handleFile(input) {
-                if(input.files && input.files[0]) {
-                    document.getElementById('file-label').innerText = "✓ IMAGEN LISTA";
-                    document.getElementById('file-label').classList.add('text-emerald-500');
-                }
-            },
-            copyClabe() {
-                const clabe = document.getElementById('clabe-number').innerText;
-                navigator.clipboard.writeText(clabe);
-                this.notify('CLABE Copiada');
-            },
-            updateBalance() {
-                document.getElementById('balance-display').innerText = `$${State.balance.toFixed(2)}`;
-            },
-            updateProfile() {
-                document.getElementById('user-email-display').innerText = State.user.email;
-            }
-        };
-
-        const Core = {
-            async init() {
-                const { data: { user } } = await sb.auth.getUser();
-                setTimeout(() => {
-                    document.getElementById('boot-bar').style.width = '100%';
-                    setTimeout(() => {
-                        document.getElementById('boot-loader').classList.add('hidden-view');
-                        if(user) {
-                            State.user = user;
-                            this.loadUserData();
-                            document.getElementById('main-app').classList.remove('hidden-view');
-                        } else {
-                            document.getElementById('auth-view').classList.remove('hidden-view');
-                        }
-                    }, 500);
-                }, 1000);
-            },
-            async loadUserData() {
-                const { data } = await sb.from('usuarios').select('*').eq('id', State.user.id).single();
-                if(data) {
-                    State.balance = data.saldo;
-                    UI.updateBalance();
-                }
-            },
-            async confirmDeposit() {
-                const amt = document.getElementById('dep-amount').value;
-                const bank = document.getElementById('bank-name').value;
-                const beneficiary = document.getElementById('beneficiary-name').value;
-                const file = document.getElementById('receipt-input').files[0];
                 
-                if(State.currentTransType === 'deposit' && !file) return UI.notify('Sube tu comprobante', 'error');
-
-                const btn = document.getElementById('btn-confirm-dep');
-                btn.disabled = true;
-                btn.innerText = "PROCESANDO...";
-
-                try {
-                    let fileUrl = null;
-                    if(file) {
-                        const fileName = `${Date.now()}_${State.user.id}.jpg`;
-                        const { data: uploadData } = await sb.storage.from('comprobantes').upload(fileName, file);
-                        if(uploadData) {
-                            const { data: urlData } = sb.storage.from('comprobantes').getPublicUrl(fileName);
-                            fileUrl = urlData.publicUrl;
-                        }
-                    }
-
-                    // Insertamos los nuevos datos (banco y beneficiario) en la tabla history para que lleguen al panel
-                    await sb.from('history').insert([{
-                        user_id: State.user.id,
-                        type: State.currentTransType === 'deposit' ? 'deposit_pending' : 'withdraw_pending',
-                        amount: parseFloat(amt),
-                        label: State.currentTransType === 'deposit' ? 'DEPÓSITO' : 'RETIRO',
-                        screenshot_url: fileUrl,
-                        bank_name: bank,
-                        beneficiary_name: beneficiary
-                    }]);
-
-                    UI.notify(State.currentTransType === 'deposit' ? 'Depósito enviado a revisión' : 'Retiro enviado a revisión');
-                    UI.closeModal('modal-deposit');
-                } catch(e) {
-                    UI.notify('Error al procesar', 'error');
-                } finally {
-                    btn.disabled = false;
-                    btn.innerText = "Confirmar";
+                if(State.currentTxType === 'dep') {
+                    document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`;
+                    document.getElementById('instr-dep').classList.remove('hidden-view');
+                    document.getElementById('instr-ret').classList.add('hidden-view');
+                } else {
+                    document.getElementById('instr-dep').classList.add('hidden-view');
+                    document.getElementById('instr-ret').classList.remove('hidden-view');
+                    document.getElementById('ret-summary-bank').innerText = `BANCO: ${bnk}`;
+                    document.getElementById('ret-summary-user').innerText = `A NOMBRE DE: ${ben}`;
                 }
             },
-            async fetchHistory() {
+            copyClabe() { navigator.clipboard.writeText('722969020533491161'); this.notify("CLABE copiada"); },
+            handleFile(input) { if(input.files[0]) document.getElementById('file-label').innerText = "✅ ARCHIVO LISTO"; },
+            async loadHistory() {
+                const list = document.getElementById('history-lists');
+                list.innerHTML = '<p class="text-center text-[9px] text-zinc-600 animate-pulse uppercase font-bold">Sincronizando...</p>';
                 const { data } = await sb.from('history').select('*').eq('user_id', State.user.id).order('created_at', { ascending: false });
-                const container = document.getElementById('history-lists');
-                container.innerHTML = data.length ? '' : '<p class="text-center text-zinc-800 py-10 font-bold uppercase text-[10px]">Sin movimientos</p>';
-                
-                data.forEach(item => {
-                    const isWin = item.amount > 0;
-                    const isPending = item.type.includes('pending');
-                    const div = document.createElement('div');
-                    div.className = `glass p-4 flex justify-between items-center ${isPending ? 'pulse-pending' : ''}`;
-                    div.innerHTML = `
-                        <div>
-                            <p class="text-[10px] font-casino ${isWin ? 'text-emerald-500' : 'text-zinc-500'}">${item.label}</p>
-                            <p class="text-[8px] text-zinc-600 font-bold uppercase">${new Date(item.created_at).toLocaleString()}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-casino ${isWin ? 'text-emerald-500' : 'text-red-500'} text-xs">${isWin ? '+' : ''}${item.amount.toFixed(2)}</p>
-                            ${isPending ? '<span class="text-[7px] text-emerald-500/50 font-black italic">PENDIENTE</span>' : ''}
-                        </div>
-                    `;
-                    container.appendChild(div);
+                list.innerHTML = data.length ? '' : '<p class="text-center text-[9px] text-zinc-600 uppercase font-bold">Sin actividad reciente</p>';
+                data.forEach(h => {
+                    const card = document.createElement('div');
+                    card.className = 'glass p-4 flex justify-between items-center animate__animated animate__fadeIn';
+                    const isNeg = h.amount < 0 || h.type === 'withdrawal';
+                    const statusText = h.status === 'pending' ? '<span class="text-[8px] text-orange-500 font-black ml-2 pulse-pending italic">PENDIENTE</span>' : '';
+                    card.innerHTML = `<div><p class="text-[10px] font-black uppercase text-zinc-400">${h.label}${statusText}</p><p class="text-[8px] text-zinc-600">${new Date(h.created_at).toLocaleString()}</p></div><div class="text-right"><p class="font-casino text-xs ${isNeg ? 'text-red-500' : 'text-emerald-500'}">${isNeg ? '-' : '+'}$${Math.abs(h.amount).toFixed(2)}</p></div>`;
+                    list.appendChild(card);
                 });
             }
         };
 
         const GameLogic = {
             adjustLuck(winAmt, bet, mult) {
-                if(winAmt > 0) {
-                    State.balance += winAmt;
-                    State.sessionLoss = 0;
-                    State.luckFactor = Math.max(0.3, State.luckFactor - 0.15);
-                } else {
-                    State.balance -= bet;
-                    State.sessionLoss += bet;
-                    State.luckFactor = Math.min(2.0, State.luckFactor + 0.08);
-                }
+                const win = winAmt > 0;
+                if(win) { State.balance += winAmt; playSfx(mult > 5 ? 'winExtra' : 'win'); }
+                else { State.balance -= bet; playSfx('lose'); }
                 UI.updateBalance();
             },
             slots: {
-                init() {
-                    ['reel-1','reel-2','reel-3'].forEach(id => {
-                        const reel = document.getElementById(id);
-                        reel.innerHTML = '';
-                        for(let i=0; i<30; i++) {
+                active: false,
+                spin() {
+                    if(this.active) return;
+                    const bet = parseFloat(document.getElementById('bet-amt').value);
+                    if(bet > State.balance || bet <= 0) return UI.notify("Saldo insuficiente", "error");
+                    
+                    this.active = true; playSfx('spin');
+                    const btn = document.getElementById('btn-spin');
+                    btn.disabled = true; btn.innerText = "GIRANDO...";
+
+                    const results = [Math.floor(Math.random()*6), Math.floor(Math.random()*6), Math.floor(Math.random()*6)];
+                    [0,1,2].forEach(i => {
+                        const r = document.getElementById(`reel-${i}`);
+                        r.innerHTML = '';
+                        for(let s=0; s<30; s++) {
                             const item = document.createElement('div');
                             item.className = 'slot-item';
-                            item.innerText = SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)];
-                            reel.appendChild(item);
+                            item.innerText = SYMBOLS[Math.floor(Math.random()*6)];
+                            r.appendChild(item);
                         }
+                        const winSym = document.createElement('div');
+                        winSym.className = 'slot-item';
+                        winSym.innerText = SYMBOLS[results[i]];
+                        r.appendChild(winSym);
+                        r.style.transition = 'none'; r.style.transform = 'translateY(0)';
+                        setTimeout(() => { r.style.transition = 'transform 3.5s cubic-bezier(0.15, 0, 0.05, 1)'; r.style.transform = `translateY(-${30 * 90}px)`; }, 50);
                     });
-                },
-                async play() {
-                    const bet = parseFloat(document.getElementById('slots-bet-input').value);
-                    if(bet > State.balance || State.isSpinning) return UI.notify('Saldo insuficiente', 'error');
-
-                    State.isSpinning = true;
-                    playSfx('spin');
-                    const btn = document.getElementById('btn-slots-play');
-                    btn.disabled = true;
-
-                    const results = [
-                        Math.floor(Math.random() * SYMBOLS.length),
-                        Math.floor(Math.random() * SYMBOLS.length),
-                        Math.floor(Math.random() * SYMBOLS.length)
-                    ];
-
-                    const isWin = Math.random() < (0.15 * State.luckFactor);
-                    if(isWin) {
-                        const winSym = Math.floor(Math.random() * SYMBOLS.length);
-                        results.fill(winSym);
-                    }
-
-                    for(let i=1; i<=3; i++) {
-                        const reel = document.getElementById(`reel-${i}`);
-                        const targetY = (27 * 90);
-                        reel.style.transition = 'none';
-                        reel.style.transform = `translateY(0)`;
-                        const lastItem = reel.lastElementChild;
-                        lastItem.innerText = SYMBOLS[results[i-1]];
-                        setTimeout(() => {
-                            reel.style.transition = `transform ${2 + i*0.5}s cubic-bezier(0.15, 0, 0.05, 1)`;
-                            reel.style.transform = `translateY(-${targetY}px)`;
-                        }, 50);
-                    }
 
                     setTimeout(async () => {
-                        State.isSpinning = false;
-                        btn.disabled = false;
                         const win = results[0] === results[1] && results[1] === results[2];
-                        if(win) {
-                            playSfx('winExtra');
-                            UI.notify(`¡GANASTE $${(bet*10).toFixed(2)}!`);
-                        } else {
-                            playSfx('lose');
-                        }
-                        GameLogic.adjustLuck(win ? bet*10 : 0, bet, win ? 10 : 0);
+                        const winAmt = win ? bet * 10 : 0;
+                        this.adjustLuck(winAmt, bet, win ? 10 : 0);
+                        this.active = false; btn.disabled = false; btn.innerText = "GIRAR";
                         await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                        await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? bet*9 : -bet, label: 'SLOTS' }]);
-                    }, 4000);
-                }
+                        await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -bet, label: 'SLOTS' }]);
+                    }, 3600);
+                },
+                adjustLuck: (w, b, m) => GameLogic.adjustLuck(w, b, m)
             },
             mines: {
                 active: false, bet: 0, mines: [], revealed: [],
                 start() {
-                    this.bet = parseFloat(document.getElementById('mines-bet-input').value);
-                    if(this.bet > State.balance) return UI.notify('Saldo insuficiente', 'error');
-                    this.active = true;
-                    this.revealed = [];
-                    this.mines = [];
-                    while(this.mines.length < 5) {
-                        const r = Math.floor(Math.random()*25);
-                        if(!this.mines.includes(r)) this.mines.push(r);
-                    }
-                    document.getElementById('btn-mines-start').classList.add('hidden');
-                    document.getElementById('btn-mines-cashout').classList.remove('hidden');
-                    document.getElementById('btn-mines-cashout').innerText = `RETIRAR $${this.bet.toFixed(2)}`;
-                    this.drawGrid();
-                },
-                drawGrid() {
-                    const grid = document.getElementById('mines-grid');
-                    grid.innerHTML = '';
+                    if(this.active) return this.cashout();
+                    this.bet = parseFloat(document.getElementById('mine-bet').value);
+                    if(this.bet > State.balance || this.bet <= 0) return UI.notify("Saldo insuficiente", "error");
+                    
+                    this.active = true; this.revealed = [];
+                    const grid = document.getElementById('mines-grid'); grid.innerHTML = '';
+                    this.mines = Array.from({length: 25}, (_, i) => i).sort(() => Math.random() - 0.5).slice(0, 3);
+                    
                     for(let i=0; i<25; i++) {
-                        const btn = document.createElement('div');
-                        btn.className = 'glass flex items-center justify-center text-xl cursor-pointer active:scale-90 transition-transform';
-                        if(this.revealed.includes(i)) {
-                            btn.innerText = this.mines.includes(i) ? '💣' : '💎';
-                            btn.classList.add(this.mines.includes(i) ? 'bg-red-500/20' : 'bg-emerald-500/20');
-                        }
-                        btn.onclick = () => this.click(i);
-                        grid.appendChild(btn);
+                        const tile = document.createElement('div');
+                        tile.className = 'glass h-12 flex items-center justify-center cursor-pointer text-sm active:scale-90 transition-transform';
+                        tile.onclick = () => this.reveal(i, tile);
+                        grid.appendChild(tile);
                     }
+                    document.getElementById('btn-mine').innerText = "RETIRAR $0.00";
                 },
-                async click(i) {
+                reveal(i, el) {
                     if(!this.active || this.revealed.includes(i)) return;
                     this.revealed.push(i);
                     if(this.mines.includes(i)) {
-                        this.active = false;
-                        playSfx('lose');
-                        this.drawGrid();
-                        UI.notify('¡BOMBA! Perdiste', 'error');
-                        GameLogic.adjustLuck(0, this.bet, 0);
-                        setTimeout(() => {
-                            document.getElementById('btn-mines-start').classList.remove('hidden');
-                            document.getElementById('btn-mines-cashout').classList.add('hidden');
-                        }, 1000);
+                        el.innerHTML = '💣'; el.classList.add('bg-red-500/20');
+                        this.end(false);
                     } else {
+                        el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20');
                         playSfx('win');
-                        const mult = 1 + (this.revealed.length * 0.25);
-                        document.getElementById('btn-mines-cashout').innerText = `RETIRAR $${(this.bet * mult).toFixed(2)}`;
-                        this.drawGrid();
+                        const mult = 1 + (this.revealed.length * 0.2);
+                        document.getElementById('btn-mine').innerText = `RETIRAR $${(this.bet * mult).toFixed(2)}`;
                     }
                 },
                 async cashout() {
-                    if(!this.active) return;
-                    this.active = false;
-                    const mult = 1 + (this.revealed.length * 0.25);
-                    const winAmt = this.bet * mult;
-                    playSfx('winExtra');
-                    UI.notify(`RETIRASTE $${winAmt.toFixed(2)}`);
+                    const mult = 1 + (this.revealed.length * 0.2);
+                    this.end(true, mult);
+                },
+                async end(win, mult = 0) {
+                    const winAmt = win ? (this.bet * mult) - this.bet : 0;
                     GameLogic.adjustLuck(winAmt, this.bet, mult);
-                    document.getElementById('btn-mines-start').classList.remove('hidden');
-                    document.getElementById('btn-mines-cashout').classList.add('hidden');
+                    this.active = false;
+                    document.getElementById('btn-mine').innerText = "EMPEZAR";
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: winAmt - this.bet, label: 'MINAS' }]);
+                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'MINAS' }]);
                 }
             },
             tower: {
-                level: 0, active: false, bet: 0,
+                active: false, bet: 0, level: 0,
                 start() {
-                    this.bet = parseFloat(document.getElementById('tower-bet-input').value);
-                    if(this.bet > State.balance) return UI.notify('Saldo insuficiente', 'error');
+                    this.bet = parseFloat(document.getElementById('tower-bet').value);
+                    if(this.bet > State.balance || this.bet <= 0) return UI.notify("Saldo insuficiente", "error");
                     this.active = true; this.level = 0;
-                    document.getElementById('btn-tower-start').disabled = true;
-                    this.drawTower();
+                    this.render();
+                    document.getElementById('btn-tower').innerText = "RETIRAR $0.00";
+                    document.getElementById('btn-tower').onclick = () => this.cashout();
                 },
-                drawTower() {
-                    const grid = document.getElementById('tower-grid');
-                    grid.innerHTML = '';
-                    for(let i=0; i<8; i++) {
+                render() {
+                    const grid = document.getElementById('tower-grid'); grid.innerHTML = '';
+                    for(let l=7; l>=0; l--) {
                         const row = document.createElement('div');
-                        row.className = `grid grid-cols-3 gap-2 ${this.level === i ? 'opacity-100' : 'opacity-40'}`;
-                        for(let j=0; j<3; j++) {
-                            const cell = document.createElement('div');
-                            cell.className = 'glass h-12 flex items-center justify-center cursor-pointer';
-                            cell.innerText = '❓';
-                            if(this.level === i) cell.onclick = () => this.play(j);
-                            row.appendChild(cell);
+                        row.className = `flex gap-2 ${this.level === l ? 'opacity-100' : 'opacity-30'}`;
+                        for(let c=0; c<3; c++) {
+                            const btn = document.createElement('div');
+                            btn.className = 'flex-1 glass py-3 text-center cursor-pointer';
+                            btn.innerHTML = '❓';
+                            if(this.level === l) btn.onclick = () => this.play(c);
+                            row.appendChild(btn);
                         }
                         grid.appendChild(row);
                     }
                 },
-                async play(j) {
-                    if(!this.active) return;
-                    const bomb = Math.floor(Math.random()*3);
-                    if(j === bomb) {
-                        this.active = false;
-                        playSfx('lose');
-                        UI.notify('Caíste de la torre', 'error');
-                        GameLogic.adjustLuck(0, this.bet, 0);
-                        document.getElementById('btn-tower-start').disabled = false;
-                        this.drawTower();
-                    } else {
-                        playSfx('win');
+                play(c) {
+                    const mine = Math.floor(Math.random()*3);
+                    if(c === mine) { this.end(false); }
+                    else {
                         this.level++;
-                        if(this.level === 8) {
-                            const winAmt = this.bet * 15;
-                            UI.notify('¡CUMBRE ALCANZADA! $'+winAmt);
-                            GameLogic.adjustLuck(winAmt, this.bet, 15);
-                            this.active = false;
-                            document.getElementById('btn-tower-start').disabled = false;
-                        }
-                        this.drawTower();
+                        playSfx('win');
+                        if(this.level === 8) return this.cashout();
+                        this.render();
+                        const mult = Math.pow(1.5, this.level);
+                        document.getElementById('btn-tower').innerText = `RETIRAR $${(this.bet * mult).toFixed(2)}`;
                     }
+                },
+                async cashout() {
+                    const mult = Math.pow(1.5, this.level);
+                    this.end(true, mult);
+                },
+                async end(win, mult = 0) {
+                    const winAmt = win ? (this.bet * mult) - this.bet : 0;
+                    GameLogic.adjustLuck(winAmt, this.bet, mult);
+                    this.active = false;
+                    const btn = document.getElementById('btn-tower');
+                    btn.innerText = "JUGAR"; btn.onclick = () => this.start();
+                    await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'TORRE' }]);
                 }
             },
             crash: {
-                active: false, mult: 1.0, bet: 0,
-                init() {
-                    this.mult = 1.0;
-                    document.getElementById('crash-mult').innerText = '1.00x';
-                },
-                async start() {
-                    this.bet = parseFloat(document.getElementById('crash-bet-input').value);
-                    if(this.bet > State.balance) return UI.notify('Saldo insuficiente', 'error');
+                active: false, bet: 0, mult: 1.0,
+                start() {
+                    this.bet = parseFloat(document.getElementById('crash-bet').value);
+                    if(this.bet > State.balance || this.bet <= 0) return UI.notify("Saldo insuficiente", "error");
                     this.active = true; this.mult = 1.0;
                     const btn = document.getElementById('btn-crash');
-                    btn.innerText = "COBRAR";
-                    btn.classList.replace('btn-action', 'bg-white');
-                    btn.onclick = () => this.cashout();
-                    
-                    const limit = 1 + (Math.random() * 5 * State.luckFactor);
-                    
-                    this.loop = setInterval(() => {
-                        this.mult += 0.01;
-                        document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
-                        document.getElementById('crash-rocket').style.transform = `translateY(-${(this.mult-1)*20}px) rotate(${(this.mult-1)*5}deg)`;
-                        
-                        if(this.mult >= limit) {
-                            clearInterval(this.loop);
-                            this.explode();
-                        }
-                    }, 50);
+                    btn.innerText = "COBRAR"; btn.onclick = () => this.end(true);
+                    playSfx('rocket');
+                    this.loop();
                 },
-                async cashout() {
+                loop() {
                     if(!this.active) return;
-                    clearInterval(this.loop);
-                    const winAmt = this.bet * this.mult;
-                    UI.notify(`COBRASTE ${this.mult.toFixed(2)}x`);
-                    playSfx('winExtra');
-                    this.end(true);
+                    this.mult += 0.01;
+                    document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
+                    const y = (this.mult - 1) * -30;
+                    document.getElementById('crash-rocket').style.transform = `translateY(${y}px)`;
+                    if(Math.random() < 0.005) return this.explode();
+                    requestAnimationFrame(() => this.loop());
                 },
                 explode() {
                     playSfx('lose');
@@ -699,16 +612,14 @@
                     const btn = document.getElementById('btn-crash');
                     btn.innerText = "EXPLOTÓ"; btn.disabled = true;
                     setTimeout(() => {
-                        btn.disabled = false; btn.innerText = "DESPEGAR"; 
-                        btn.classList.replace('bg-white', 'btn-action');
-                        btn.onclick = () => GameLogic.crash.start();
+                        btn.disabled = false; btn.innerText = "DESPEGAR"; btn.onclick = () => GameLogic.crash.start();
                         document.getElementById('crash-mult').classList.remove('text-red-500');
                         document.getElementById('crash-mult').innerText = '1.00x';
                         document.getElementById('crash-rocket').innerHTML = '🚀';
                         document.getElementById('crash-rocket').style.transform = 'translateY(0)';
                     }, 2500);
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt - this.bet : -this.bet, label: 'AVIATOR' }]);
+                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR' }]);
                 }
             }
         };
