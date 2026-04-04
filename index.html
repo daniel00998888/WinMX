@@ -352,24 +352,6 @@
             async logout() { await sb.auth.signOut(); location.reload(); },
             switchTab(tab) { playSfx('click'); document.getElementById('login-container').classList.toggle('hidden-view', tab==='register'); document.getElementById('register-container').classList.toggle('hidden-view', tab==='login'); }
         };
-            async login() {
-                const email = document.getElementById('login-email').value;
-                const pass = document.getElementById('login-password').value;
-                const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-                if(error) return UI.notify(error.message, 'error');
-                Core.loadUser(data.user);
-            },
-            async register() {
-                if(!document.getElementById('terms-check').checked) return UI.notify("Acepta los términos", "error");
-                const email = document.getElementById('reg-email').value;
-                const pass = document.getElementById('reg-password').value;
-                const { data, error } = await sb.auth.signUp({ email, password: pass });
-                if(error) return UI.notify(error.message, 'error');
-                UI.notify("Cuenta creada. Ya puedes entrar.", "success");
-                this.switchTab('login');
-            },
-            async logout() { await sb.auth.signOut(); location.reload(); }
-        };
 
         const UI = {
             hideLoader() {
