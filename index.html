@@ -362,12 +362,6 @@
             async logout() { await sb.auth.signOut(); location.reload(); },
             switchTab(tab) { playSfx('click'); document.getElementById('login-container').classList.toggle('hidden-view', tab==='register'); document.getElementById('register-container').classList.toggle('hidden-view', tab==='login'); }
         };
-            updateBalance() { 
-                const el = document.getElementById('balance-display');
-                el.innerText = `$${State.balance.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
-                el.classList.add('animate__animated', 'animate__pulse');
-                setTimeout(() => el.classList.remove('animate__pulse'), 500);
-            };
             notify(msg, type = 'success') {
                 const n = document.createElement('div');
                 n.className = `glass p-4 text-[10px] font-bold uppercase tracking-widest animate__animated animate__fadeInDown border-l-4 ${type === 'success' ? 'border-emerald-500 bg-emerald-500/10' : 'border-red-500 bg-red-500/10'}`;
