@@ -329,17 +329,7 @@
                 } catch (e) { UI.notify("Error al enviar", "error"); } 
                 finally { const btn = document.getElementById('btn-confirm-dep'); btn.disabled = false; btn.style.opacity = "1"; }
             },
-                    const { error } = await sb.from('history').insert([{
-                        user_id: State.user.id,
-                        type: State.currentTx,
-                        amount: amount,
-                        label: State.currentTx === 'deposit' ? 'Depósito Pendiente' : 'Retiro Pendiente',
-                        status: 'pending',
-                        evidence_url: evidence_urll,
-                        bank_details: { banco: bank, beneficiario: beneficiary }
-                    }]);
-
-                    if(error) throw error;
+                if(error) throw error;
                     UI.notify("Solicitud enviada correctamente", "success");
                     UI.closeModal('modal-deposit');
                 } catch(e) {
