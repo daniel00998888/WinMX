@@ -345,16 +345,6 @@
                 }
             }
         };
-
-
-            getGameHtml(game) {
-                if(game === 'slots') return `<div class="glass p-6 text-center"><h3 class="font-casino text-emerald-500 mb-6 italic">Turbo Slots</h3><div class="flex justify-center gap-2 mb-8"><div class="slot-box w-20"><div id="reel-0" class="slot-reel"></div></div><div class="slot-box w-20"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box w-20"><div id="reel-2" class="slot-reel"></div></div></div><input id="bet-amt" type="number" value="10" class="input-bet"><button onclick="GameLogic.slots.spin()" id="btn-spin" class="btn-action w-full py-5 font-casino text-lg">GIRAR</button></div>`;
-                if(game === 'mines') return `<div class="glass p-6 text-center"><h3 class="font-casino text-emerald-500 mb-4 italic">Mina Real</h3><div class="grid grid-cols-5 gap-2 mb-6" id="mines-grid"></div><input id="mine-bet" type="number" value="10" class="input-bet"><button onclick="GameLogic.mines.start()" id="btn-mine" class="btn-action w-full py-4 font-casino">EMPEZAR</button></div>`;
-                if(game === 'crash') return `<div class="glass p-6 text-center"><h3 class="font-casino text-emerald-500 mb-4 italic">Aviator MX</h3><div id="crash-area" class="mb-6"><div class="bg-infinite" id="crash-bg"><div class="bg-part"></div><div class="bg-part"></div></div><div id="crash-rocket-container"><div id="crash-rocket">🚀</div></div><div id="crash-mult" class="absolute top-4 left-0 right-0 text-4xl font-casino z-20">1.00x</div></div><input id="crash-bet" type="number" value="10" class="input-bet"><button onclick="GameLogic.crash.start()" id="btn-crash" class="btn-action w-full py-4 font-casino">DESPEGAR</button></div>`;
-                if(game === 'tower') return `<div class="glass p-6 text-center"><h3 class="font-casino text-emerald-500 mb-4 italic">Torre de Cristal</h3><div id="tower-grid" class="space-y-2 mb-6"></div><input id="tower-bet" type="number" value="10" class="input-bet"><button onclick="GameLogic.tower.start()" id="btn-tower" class="btn-action w-full py-4 font-casino">JUGAR</button></div>`;
-            }
-        };
-
         const AuthManager = {
             switchTab(tab) {
                 document.getElementById('login-container').classList.toggle('hidden-view', tab === 'register');
