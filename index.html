@@ -304,68 +304,54 @@
                     UI.updateBalance();
                 }).subscribe();
             },
-    async function confirmTransaction() {
-    const amount = parseFloat(document.getElementById('dep-amount').value);
-    const bank = document.getElementById('bank-name').value;
-    const beneficiary = document.getElementById('beneficiary-name').value;
+          async confirmTransaction() {
+        const amount = parseFloat(document.getElementById('dep-amount').value);
+        const bank = document.getElementById('bank-name').value;
+        const beneficiary = document.getElementById('beneficiary-name').value;
 
-    if(!amount || amount <= 0 || !bank || !beneficiary) {
-        return UI.notify("Completa todos los campos", "error");
-    }
-
-    const btn = document.getElementById('btn-confirm-dep');
-    btn.disabled = true;
-    btn.innerText = "PROCESANDO...";
-
-    try {
-        let evidence_url = null;
-
-        if(State.currentTx === 'deposit') {
-            const file = document.getElementById('receipt-input').files[0];
-            if(!file) throw new Error("Sube tu comprobante");
-
-            const fName = `${Date.now()}_${State.user.id}.jpg`;
-
-            const uploadRes = await sb.storage.from('comprobantes').upload(fName, file);
-            if(uploadRes.error) throw uploadRes.error;
-
-            const pub = sb.storage.from('comprobantes').getPublicUrl(fName);
-            evidence_url = pub.data.publicUrl;
+        if(!amount || amount <= 0 || !bank || !beneficiary) {
+            return UI.notify("Completa todos los campos", "error");
         }
 
-        const res = await sb.from('history').insert([{
-            user_id: State.user.id,
-            type: State.currentTx,
-            amount: amount,
-            label: State.currentTx === 'deposit' ? 'Depósito Pendiente' : 'Retiro Pendiente',
-            status: 'pending',
-            evidence_url: evidence_url,
-            bank_details: { banco: bank, beneficiario: beneficiary }
-        }]);
+        const btn = document.getElementById('btn-confirm-dep');
+        btn.disabled = true;
+        btn.innerText = "PROCESANDO...";
 
-        if(res.error) throw res.error;
+        try {
+            let evidence_url = null;
 
-        UI.notify("Solicitud enviada correctamente", "success");
-        UI.closeModal('modal-deposit');
+            if(State.currentTx === 'deposit') {
+                const file = document.getElementById('receipt-input').files[0];
+                if(!file) throw new Error("Sube tu comprobante");
 
-    } catch(e) {
-        UI.notify(e.message, "error");
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "CONFIRMAR";
-    }
-}
-              const { error } = await sb.from('history').insert([{
+                const fName = `${Date.now()}_${State.user.id}.jpg`;
+
+                const uploadRes = await sb.storage
+                    .from('comprobantes')
+                    .upload(fName, file);
+
+                if(uploadRes.error) throw uploadRes.error;
+
+                const pub = sb.storage.from('comprobantes').getPublicUrl(fName);
+                evidence_url = pub.data.publicUrl;
+            }
+
+            const res = await sb.from('history').insert([{
                 user_id: State.user.id,
                 type: State.currentTx,
                 amount: amount,
-                label: State.currentTx === 'deposit' ? 'Depósito Pendiente' : 'Retiro Pendiente',
+                label: State.currentTx === 'deposit'
+                    ? 'Depósito Pendiente'
+                    : 'Retiro Pendiente',
                 status: 'pending',
-                evidence_url: evidence_url, // 🔥 aquí tenías typo también
-                bank_details: { banco: bank, beneficiario: beneficiary }
+                evidence_url: evidence_url,
+                bank_details: {
+                    banco: bank,
+                    beneficiario: beneficiary
+                }
             }]);
 
-            if(error) throw error;
+            if(res.error) throw res.error;
 
             UI.notify("Solicitud enviada correctamente", "success");
             UI.closeModal('modal-deposit');
@@ -379,13 +365,15 @@
     },
 
     async fetchHistory() {
-        const b = await sb.from('history').select('*')
+        const b = await sb.from('history')
+            .select('*')
             .eq('user_id', State.user.id)
             .eq('type', 'bets')
             .order('created_at', { ascending: false })
             .limit(20);
 
-        const d = await sb.from('history').select('*')
+        const d = await sb.from('history')
+            .select('*')
             .eq('user_id', State.user.id)
             .eq('type', 'deposits')
             .order('created_at', { ascending: false })
@@ -394,9 +382,46 @@
         const container = document.getElementById('history-lists');
 
         container.innerHTML = `
-            <div>...</div>
+            <div class="glass mb-4">
+                <h3>Jugadas</h3>
+                ${App.renderList(b.data || [], 'bets')}
+            </div>
+
+            <div class="glass">
+                <h3>Depósitos</h3>
+                ${App.renderList(d.data || [], 'deposits')}
+            </div>
         `;
     },
+
+    renderList(items, type) {
+        if(!items.length) {
+            return `<p class="text-center text-zinc-500">Sin registros</p>`;
+        }
+
+        return items.map(i => {
+            let text = i.label;
+            let color = i.amount >= 0 ? 'green' : 'red';
+
+            if(type === 'deposits') {
+                if(i.status === 'pending') text = "Pendiente ⏳";
+                if(i.status === 'completed') text = "Confirmado ✅";
+                if(i.status === 'rejected') text = "Rechazado ❌";
+            }
+
+            return `
+                <div style="display:flex;justify-content:space-between;">
+                    <span>${text}</span>
+                    <span style="color:${color}">
+                        $${Math.abs(i.amount).toFixed(2)}
+                    </span>
+                </div>
+            `;
+        }).join('');
+    }
+
+};
+
         const UI = {
             updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toFixed(2)}`; },
             updateProfile() { document.getElementById('user-email-display').innerText = State.user.email; },
