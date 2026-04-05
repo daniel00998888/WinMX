@@ -2,121 +2,220 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>WinMX Casino - Original Structure</title>
+    <title>Casino WinMX - Original Interface</title>
     <style>
-        /* Mantenemos tu interfaz original intacta */
-        body { margin: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; }
-        
-        #game-screen {
+        /* INTERFAZ ORIGINAL: Full Screen y Colores de Casino */
+        body { 
+            margin: 0; 
+            background: #0b0d17; 
+            color: white; 
+            font-family: 'Arial Black', sans-serif; 
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Contenedor Principal (Marco del Juego) */
+        #main-wrapper {
             position: relative;
             width: 100vw;
             height: 100vh;
-            background: #1a1a1a; /* Tu color de fondo original */
+            background: radial-gradient(circle, #1a1c2c 0%, #000 100%);
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
         }
 
-        /* Este es el contenedor que el script busca */
-        #game-container {
+        /* Pantalla de Juego (Donde caen las frutas) */
+        #game-screen {
             position: relative;
-            width: 800px;  /* Ajusta a tu medida original */
-            height: 600px; /* Ajusta a tu medida original */
-            border: 2px solid #444;
+            width: 800px;
+            height: 500px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 4px solid #3d445f;
+            border-radius: 10px;
             overflow: hidden;
-            background: #000;
+            box-shadow: inset 0 0 50px #000;
         }
 
+        /* Panel de Control Inferior (Botones e Interfaz) */
+        #ui-panel {
+            width: 800px;
+            height: 100px;
+            background: #1e2132;
+            border: 3px solid #3d445f;
+            border-top: none;
+            border-radius: 0 0 15px 15px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        .stat-box {
+            text-align: center;
+            background: #0b0d17;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid #4e5571;
+            min-width: 120px;
+        }
+
+        .stat-label { font-size: 10px; color: #8e94ad; text-transform: uppercase; }
+        .stat-value { font-size: 20px; color: #00ff88; }
+
+        /* Botón de Giro (Spin) Estilo Original */
+        #spin-btn {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #ffcc00, #ff9900);
+            border: 4px solid #fff;
+            border-radius: 50%;
+            color: #000;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(255, 153, 0, 0.5);
+            transition: 0.1s;
+        }
+
+        #spin-btn:active { transform: scale(0.9); }
+
+        /* Estilo de las Frutas */
         .fruit {
             position: absolute;
             width: 80px;
             height: 80px;
-            font-size: 50px;
+            font-size: 55px;
             display: flex;
             justify-content: center;
             align-items: center;
-            will-change: transform;
+            user-select: none;
+            z-index: 10;
         }
     </style>
 </head>
 <body>
 
-<div id="game-screen">
-    <div id="game-container"></div>
+<div id="main-wrapper">
+    <div id="game-screen">
+        <div id="game-container"></div>
+    </div>
+
+    <div id="ui-panel">
+        <div class="stat-box">
+            <div class="stat-label">Saldo</div>
+            <div id="balance" class="stat-value">$1,000.00</div>
+        </div>
+
+        <button id="spin-btn" onclick="playGame()">SPIN</button>
+
+        <div class="stat-box">
+            <div class="stat-label">Premio</div>
+            <div id="win-amount" class="stat-value">$0.00</div>
+        </div>
+    </div>
 </div>
 
 <script>
-    // Variables de configuración originales
-    const gameContainer = document.getElementById('game-container');
-    const symbols = ['🍎', '🍋', '🍇', '🍉', '⭐', '💎']; // Usamos estos como fallback seguro
-    
-    // Tu lógica de inicialización original
-    function initGame() {
-        if (!gameContainer) return;
-        spawnFruits();
-        tumbleLoop();
-    }
+    // Configuración del Juego
+    const container = document.getElementById('game-container');
+    const symbols = ['🍎', '🍋', '🍇', '🍉', '⭐', '💎'];
+    let isSpinning = false;
 
-    function spawnFruits() {
-        gameContainer.innerHTML = '';
-        for (let i = 0; i < 20; i++) {
-            const fruit = document.createElement('div');
-            fruit.className = 'fruit';
-            fruit.innerHTML = symbols[Math.floor(Math.random() * symbols.length)];
-            
-            // Posicionamiento inicial según tu lógica de columnas
-            const col = i % 5;
-            const row = Math.floor(i / 5);
-            
-            fruit.style.left = (col * 160) + 'px';
-            fruit.style.top = -(row * 150 + 100) + 'px';
-            fruit.dataset.y = parseFloat(fruit.style.top);
-            fruit.dataset.vy = "0";
-            
-            gameContainer.appendChild(fruit);
-        }
-    }
-
-    // EL FIX: Esta es la función que daba error. 
-    // Ahora valida 'container' y 'children' antes de operar.
-    function applyTumblePhysics() {
-        const container = document.getElementById('game-container');
+    // 1. Función para iniciar el juego (Igual a tu flujo original)
+    function playGame() {
+        if (isSpinning) return;
+        isSpinning = true;
         
-        // Si el contenedor no existe aún, salimos de la función sin dar error
-        if (!container || !container.children) return;
+        // Limpiar pantalla anterior
+        container.innerHTML = '';
+        
+        // Crear cuadrícula de frutas (5x4)
+        for (let col = 0; col < 5; col++) {
+            for (let row = 0; row < 4; row++) {
+                spawnFruit(col, row);
+            }
+        }
 
-        const children = container.children;
+        // Liberar el botón después de la caída inicial
+        setTimeout(() => { isSpinning = false; }, 1000);
+    }
+
+    // 2. Creación de Fruta con posición original
+    function spawnFruit(col, row) {
+        const fruit = document.createElement('div');
+        fruit.className = 'fruit';
+        fruit.innerHTML = symbols[Math.floor(Math.random() * symbols.length)];
+        
+        const xPos = col * 160 + 40;
+        const startY = -(row * 120 + 100); // Aparecen arriba para caer
+        
+        fruit.style.left = xPos + 'px';
+        fruit.style.top = startY + 'px';
+        
+        // Datos para el motor de física
+        fruit.dataset.y = startY;
+        fruit.dataset.vy = "0";
+        
+        container.appendChild(fruit);
+    }
+
+    // 3. MOTOR DE FÍSICA (El arreglo al error 'children')
+    function applyTumblePhysics() {
+        const gameContainer = document.getElementById('game-container');
+        
+        // VALIDACIÓN: Si no hay frutas o el contenedor falló, no hace nada (evita el crash)
+        if (!gameContainer || !gameContainer.children || gameContainer.children.length === 0) {
+            return;
+        }
+
+        const fruits = gameContainer.children;
         const gravity = 0.8;
-        const bounce = -0.3;
-        const floor = container.clientHeight - 90;
+        const bounce = -0.2; // Un pequeño rebote para realismo
+        const floorBase = 420; // Altura del suelo dentro del cuadro
 
-        for (let i = 0; i < children.length; i++) {
-            const fruit = children[i];
+        for (let i = 0; i < fruits.length; i++) {
+            const fruit = fruits[i];
             let y = parseFloat(fruit.dataset.y);
             let vy = parseFloat(fruit.dataset.vy);
+
+            // Calcular posición de parada según su fila (para que queden ordenadas)
+            // Esto recrea la "jugabilidad" de cuadrícula original
+            const col = Math.floor(parseInt(fruit.style.left) / 160);
+            const stopPoint = floorBase - (Math.floor(i / 5) * 100);
 
             vy += gravity;
             y += vy;
 
-            if (y > floor) {
-                y = floor;
+            // Colisión con el suelo o con la fruta de abajo
+            if (y >= stopPoint) {
+                y = stopPoint;
                 vy *= bounce;
                 if (Math.abs(vy) < 1) vy = 0;
             }
 
+            // Actualizar datos y posición visual
             fruit.dataset.y = y;
             fruit.dataset.vy = vy;
             fruit.style.transform = `translateY(${y}px)`;
         }
     }
 
-    function tumbleLoop() {
+    // 4. Loop de Animación (Igual al motor WinMX)
+    function mainLoop() {
         applyTumblePhysics();
-        requestAnimationFrame(tumbleLoop);
+        requestAnimationFrame(mainLoop);
     }
 
-    // Ejecución segura
-    window.onload = initGame;
+    // Arrancar el sistema
+    window.onload = () => {
+        mainLoop();
+        playGame(); // Tirada inicial al cargar
+    };
 
 </script>
 </body>
