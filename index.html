@@ -393,12 +393,12 @@
 
         return items.map(i => {
             let text = i.label;
-            let color = i.amount >= 0 ? 'green' : 'red';
+            let color = i.amount >= 0 ? 'text-emerald-500' : 'text-red-500', pulse = "";
 
             if(type === 'deposits') {
-                if(i.status === 'pending') text = "Pendiente ⏳";
-                if(i.status === 'completed') text = "Confirmado ✅";
-                if(i.status === 'rejected') text = "Rechazado ❌";
+                if(i.status==='pending') { text="Pendiente ⏳"; color="text-yellow-500"; pulse="pulse-pending"; }
+                else if(i.status==='completed') { text="Confirmado ✅"; color="text-emerald-500"; }
+                else if(i.status==='rejected') { text="Rechazado ❌"; color="text-red-500"; }
             }
 
             return `
