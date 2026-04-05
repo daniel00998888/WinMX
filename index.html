@@ -304,26 +304,36 @@
                     UI.updateBalance();
                 }).subscribe();
             },
-            async confirmTransaction() {
-                const amount = parseFloat(document.getElementById('dep-amount').value);
-                const bank = document.getElementById('bank-name').value;
-                const beneficiary = document.getElementById('beneficiary-name').value;
+            async function confirmTransaction() {
+    const amount = parseFloat(document.getElementById('dep-amount').value);
+    const bank = document.getElementById('bank-name').value;
+    const beneficiary = document.getElementById('beneficiary-name').value;
 
-                if(!amount || amount <= 0 || !bank || !beneficiary) return UI.notify("Completa todos los campos", "error");
-                
-                const btn = document.getElementById('btn-confirm-dep');
-                btn.disabled = true; btn.innerText = "PROCESANDO...";
+    if(!amount || amount <= 0 || !bank || !beneficiary) 
+        return UI.notify("Completa todos los campos", "error");
+    
+    const btn = document.getElementById('btn-confirm-dep');
+    btn.disabled = true;
+    btn.innerText = "PROCESANDO...";
 
-                try {
-                    let evidence_url = null;
-                    if(State.currentTx === 'deposit') {
-                        const file = document.getElementById('receipt-input').files[0];
-                        if(!file) throw new Error("Sube tu comprobante");
-                        const fName = `${Date.now()}_${State.user.id}.jpg`;
-                        const { error: upErr } = await sb.storage.from('comprobantes').upload(fName, file);
-                        if(upErr) throw upErr;
-                        evidence_url = sb.storage.from('comprobantes').getPublicUrl(fName).data.publicUrl;
-                    }
+    try {
+        let evidence_url = null;
+
+        if(State.currentTx === 'deposit') {
+            const file = document.getElementById('receipt-input').files[0];
+            if(!file) throw new Error("Sube tu comprobante");
+
+            const fName = `${Date.now()}_${State.user.id}.jpg`;
+            const { error: upErr } = await sb.storage.from('comprobantes').upload(fName, file);
+            if(upErr) throw upErr;
+
+            evidence_url = sb.storage.from('comprobantes').getPublicUrl(fName).data.publicUrl;
+        }
+
+    } catch(err) {
+        UI.notify(err.message, "error");
+    }
+}
             async fetchHistory() {
                 const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20);
                 const d = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(20);
