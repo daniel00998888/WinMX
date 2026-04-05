@@ -355,18 +355,7 @@
         btn.innerText = "CONFIRMAR";
     }
 }
-            if(State.currentTx === 'deposit') {
-                const file = document.getElementById('receipt-input').files[0];
-                if(!file) throw new Error("Sube tu comprobante");
-
-                const fName = `${Date.now()}_${State.user.id}.jpg`;
-                const { error: upErr } = await sb.storage.from('comprobantes').upload(fName, file);
-                if(upErr) throw upErr;
-
-                evidence_url = sb.storage.from('comprobantes').getPublicUrl(fName).data.publicUrl;
-            }
-
-            const { error } = await sb.from('history').insert([{
+              const { error } = await sb.from('history').insert([{
                 user_id: State.user.id,
                 type: State.currentTx,
                 amount: amount,
@@ -408,28 +397,6 @@
             <div>...</div>
         `;
     },
-
-                    const { error } = await sb.from('history').insert([{
-                        user_id: State.user.id,
-                        type: State.currentTx,
-                        amount: amount,
-                        label: State.currentTx === 'deposit' ? 'Depósito Pendiente' : 'Retiro Pendiente',
-                        status: 'pending',
-                        evidence_url: evidence_urll,
-                        bank_details: { banco: bank, beneficiario: beneficiary }
-                    }]);
-
-                    if(error) throw error;
-                    UI.notify("Solicitud enviada correctamente", "success");
-                    UI.closeModal('modal-deposit');
-                } catch(e) {
-                    UI.notify(e.message, "error");
-                } finally {
-                    btn.disabled = false; btn.innerText = "CONFIRMAR";
-                }
-            }
-        };
-        
         const UI = {
             updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toFixed(2)}`; },
             updateProfile() { document.getElementById('user-email-display').innerText = State.user.email; },
