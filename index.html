@@ -324,27 +324,6 @@
                         if(upErr) throw upErr;
                         evidence_url = sb.storage.from('comprobantes').getPublicUrl(fName).data.publicUrl;
                     }
-
-                    const { error } = await sb.from('history').insert([{
-                        user_id: State.user.id,
-                        type: State.currentTx,
-                        amount: amount,
-                        label: State.currentTx === 'deposit' ? 'Depósito Pendiente' : 'Retiro Pendiente',
-                        status: 'pending',
-                        evidence_url: evidence_urll,
-                        bank_details: { banco: bank, beneficiario: beneficiary }
-                    }]);
-
-                    if(error) throw error;
-                    UI.notify("Solicitud enviada correctamente", "success");
-                    UI.closeModal('modal-deposit');
-                } catch(e) {
-                    UI.notify(e.message, "error");
-                } finally {
-                    btn.disabled = false; btn.innerText = "CONFIRMAR";
-                }
-            }
-        };
             async fetchHistory() {
                 const b = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20);
                 const d = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(20);
