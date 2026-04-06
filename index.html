@@ -421,7 +421,11 @@
             setTimeout(()=>n.remove(), 500);
         }, 3000);
     }, // 👈 ESTA COMA ES CLAVE
-
+      setTxType(type) {
+       State.currentTx = type;
+       document.getElementById('dep-step-1').classList.remove('hidden-view');
+       document.getElementById('dep-step-2').classList.add('hidden-view');
+   },
     switchTabDeposit(tab) {
         const isDep = tab === 'deposit';
 
