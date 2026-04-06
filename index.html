@@ -411,19 +411,6 @@
             copyClabe() { const clabe = document.getElementById('clabe-number').innerText; navigator.clipboard.writeText(clabe).then(() => { playSfx('click'); this.notify("CLABE Copiada", "success"); }); },
             handleFile(input) { if(input.files && input.files[0]) { playSfx('click'); const label = document.getElementById('file-label'); label.innerText = "Recibo: " + input.files[0].name.substring(0, 15) + "..."; label.classList.replace('text-zinc-500', 'text-emerald-500'); } },
             notify(m, t) { const n = document.createElement('div'); n.className = `p-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-2xl animate__animated animate__fadeInDown ${t==='success'?'bg-emerald-500 text-black':'bg-red-500 text-white'}`; n.innerText = m; document.getElementById('notif-container').appendChild(n); setTimeout(() => { n.classList.replace('animate__fadeInDown', 'animate__fadeOutUp'); setTimeout(()=>n.remove(), 500); }, 3000); }
-            switchTabDeposit(tab) {
-                const isDep = tab === 'deposit';
-                document.getElementById('content-deposit').classList.toggle('hidden-view', !isDep);
-                document.getElementById('content-withdraw').classList.toggle('hidden-view', isDep);
-                
-                document.getElementById('tab-btn-deposit').classList.toggle('border-emerald-500', isDep);
-                document.getElementById('tab-btn-deposit').classList.toggle('text-emerald-500', isDep);
-                document.getElementById('tab-btn-deposit').classList.toggle('text-zinc-500', !isDep);
-                
-                document.getElementById('tab-btn-withdraw').classList.toggle('border-emerald-500', !isDep);
-                document.getElementById('tab-btn-withdraw').classList.toggle('text-emerald-500', !isDep);
-                document.getElementById('tab-btn-withdraw').classList.toggle('text-zinc-500', isDep);
-            }
         };
 
         const AuthManager = {
