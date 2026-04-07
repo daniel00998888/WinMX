@@ -271,172 +271,156 @@
                 tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div class="risk-badge" style="color: #fbbf24; background: rgba(251,191,36,0.1); border-color: rgba(251,191,36,0.2)"><i class="fas fa-bolt"></i> 1 Peligro por Piso</div><div id="tower-container" class="space-y-1.5 mb-4 flex flex-col-reverse overflow-y-auto max-h-[250px]"></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino text-xs">JUGAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino text-xs">COBRAR $0.00</button><div class="instruction-card"><h4><i class="fas fa-chess-rook"></i> Reglas Torre</h4><p>Cada piso es más difícil, pero paga mucho más.</p></div></div>`
             }
         };
-    const Core = {
-            async init() { let p = 0; const i = setInterval(() => { p += 25; document.getElementById('boot-bar').style.width = `${p}%`; if(p >= 100) { clearInterval(i); this.check(); } }, 100); },
-            async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); this.subscribeBalance(); } else { document.getElementById('auth-view').classList.remove('hidden-view'); } },
-            async loadBalance() { const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle(); State.balance = data ? data.saldo : 0; UI.updateBalance(); },
-            subscribeBalance() {
-                sb.channel('balance_realtime')
-                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'usuarios', filter: `id=eq.${State.user.id}` }, (payload) => {
-                    if (payload.new && typeof payload.new.saldo !== 'undefined') {
-                        State.balance = payload.new.saldo;
-                        UI.updateBalance();
-                    }
-                })
-                .subscribe();
-            },
-            async loadUser(user) {
-                State.user = user;
-                const { data } = await sb.from('usuarios').select('*').eq('id', user.id).single();
-                if(!data) {
-                    await sb.from('usuarios').insert([{ id: user.id, email: user.email, saldo: 0 }]);
-                    State.balance = 0;
-                } else {
-                    State.balance = data.saldo;
-                }
-                UI.updateBalance();
-                document.getElementById('user-email-display').innerText = user.email;
-                Router.showView('lobby');
-                this.listenBalance();
-            },
-            listenBalance() {
-                sb.channel('db-changes').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'usuarios', filter: `id=eq.${State.user.id}` }, payload => {
-                    State.balance = payload.new.saldo;
-                    UI.updateBalance();
-                }).subscribe();
-            },
+      const Core = {
+
     async confirmTransaction() {
-    const amount = parseFloat(document.getElementById('dep-amount').value);
-    const bank = document.getElementById('bank-name').value;
-    const beneficiary = document.getElementById('beneficiary-name').value;
 
-    if(!amount || amount <= 0 || !bank || !beneficiary) {
-        return UI.notify("Completa todos los campos", "error");
-    }
+        console.log("TIPO ACTUAL:", State.currentTx); // 🔥 DEBUG
 
-    if(State.currentTx === 'withdrawal' && State.balance < amount) {
-        return UI.notify("Saldo insuficiente", "error");
-    }
+        const amount = parseFloat(document.getElementById('dep-amount').value);
+        const bank = document.getElementById('bank-name').value;
+        const beneficiary = document.getElementById('beneficiary-name').value;
 
-    const btn = document.getElementById('btn-confirm-dep');
-    btn.disabled = true;
-    btn.innerText = "PROCESANDO...";
-
-    try {
-        let evidence_url = null;
-
-        if(State.currentTx === 'deposit') {
-            const file = document.getElementById('receipt-input').files[0];
-            if(!file) throw new Error("Sube tu comprobante");
-
-            const fName = `${Date.now()}_${State.user.id}.jpg`;
-
-            const uploadRes = await sb.storage
-                .from('comprobantes')
-                .upload(fName, file);
-
-            if(uploadRes.error) throw uploadRes.error;
-
-            const pub = sb.storage.from('comprobantes').getPublicUrl(fName);
-            evidence_url = pub.data.publicUrl;
+        if (!amount || amount <= 0 || !bank || !beneficiary) {
+            return UI.notify("Completa todos los campos", "error");
         }
 
-    const res = await sb.from('history').insert([{
-    user_id: State.user.id,
-    type: State.currentTx === 'deposit' ? 'deposit' : 'withdrawal',
-    amount: amount,
-    label: State.currentTx === 'deposit'
-        ? 'Depósito Pendiente'
-        : 'Retiro Pendiente',
-    status: 'pending',
-    evidence_url: State.currentTx === 'deposit' ? evidence_url : null
-}]);
-
-        if(res.error) {
-    console.error(res.error);
-    throw res.error;
-}
-
-        UI.notify("Solicitud enviada correctamente", "success");
-        UI.closeModal('modal-deposit');
-
-    } catch(e) {
-        UI.notify(e.message, "error");
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "CONFIRMAR";
-    }
-}, // 🔥 ESTA COMA ES CLAVE
-
-async fetchHistory() {
-    const b = await sb.from('history')
-        .select('*')
-        .eq('user_id', State.user.id)
-        .eq('type', 'bets')
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-    const d = await sb.from('history')
-        .select('*')
-        .eq('user_id', State.user.id)
-        .eq('type', 'deposit')
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-    const w = await sb.from('history')
-        .select('*')
-        .eq('user_id', State.user.id)
-        .eq('type', 'withdrawal')
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-    const container = document.getElementById('history-lists');
-
-    container.innerHTML = `
-        <div class="glass mb-4">
-            <div onclick="UI.toggleAccordion('acc-bets','arrow-bets')">Jugadas</div>
-            <div id="acc-bets" class="hidden-view">
-                ${this.renderList(b.data || [], 'bets')}
-            </div>
-        </div>
-
-        <div class="glass mb-4">
-            <div onclick="UI.toggleAccordion('acc-deps','arrow-deps')">Depósitos</div>
-            <div id="acc-deps" class="hidden-view">
-                ${this.renderList(d.data || [], 'deposits')}
-            </div>
-        </div>
-
-        <div class="glass">
-            <div onclick="UI.toggleAccordion('acc-wd','arrow-wd')">Retiros</div>
-            <div id="acc-wd" class="hidden-view">
-                ${this.renderList(w.data || [], 'withdrawals')}
-            </div>
-        </div>
-    `;
-}, // 🔥 ESTA COMA ES LA QUE TE FALTABA
-
-renderList(items, type) {
-    if(!items.length) return `<p>Sin registros</p>`;
-
-    return items.map(i => {
-        let text = i.label;
-        let color = i.amount >= 0 ? 'text-emerald-500' : 'text-red-500';
-
-        if(type === 'deposits' || type === 'withdrawals') {
-            if(i.status === 'pending') text = "Pendiente ⏳";
-            if(i.status === 'completed') text = "Confirmado ✅";
-            if(i.status === 'rejected') text = "Rechazado ❌";
+        if (State.currentTx === 'withdrawal' && State.balance < amount) {
+            return UI.notify("Saldo insuficiente", "error");
         }
 
-        return `
-        <div class="flex justify-between p-2">
-            <span>${text}</span>
-            <span class="${color}">$${Math.abs(i.amount).toFixed(2)}</span>
-        </div>
+        const btn = document.getElementById('btn-confirm-dep');
+        btn.disabled = true;
+        btn.innerText = "PROCESANDO...";
+
+        try {
+            let evidence_url = null;
+
+            // 🔥 SOLO DEPÓSITO SUBE ARCHIVO
+            if (State.currentTx === 'deposit') {
+                const file = document.getElementById('receipt-input').files[0];
+
+                if (!file) throw new Error("Sube tu comprobante");
+
+                const fName = `${Date.now()}_${State.user.id}.jpg`;
+
+                const uploadRes = await sb.storage
+                    .from('comprobantes')
+                    .upload(fName, file);
+
+                if (uploadRes.error) throw uploadRes.error;
+
+                const pub = sb.storage.from('comprobantes').getPublicUrl(fName);
+                evidence_url = pub.data.publicUrl;
+            }
+
+            // 🔥 NUNCA NULL
+            const txType = State.currentTx === 'withdrawal'
+                ? 'withdrawal'
+                : 'deposit';
+
+            const res = await sb.from('history').insert([{
+                user_id: State.user.id,
+                type: txType,
+                amount: amount,
+                label: txType === 'deposit'
+                    ? 'Depósito Pendiente'
+                    : 'Retiro Pendiente',
+                status: 'pending',
+                evidence_url: evidence_url,
+                bank_details: JSON.stringify({
+                    banco: bank,
+                    beneficiario: beneficiary
+                })
+            }]).select();
+
+            if (res.error) {
+                console.error(res.error);
+                throw res.error;
+            }
+
+            UI.notify("Solicitud enviada correctamente", "success");
+            UI.closeModal('modal-deposit');
+
+        } catch (e) {
+            console.error(e);
+            UI.notify(e.message, "error");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "CONFIRMAR";
+        }
+    },
+
+    async fetchHistory() {
+
+        const b = await sb.from('history')
+            .select('*')
+            .eq('user_id', State.user.id)
+            .eq('type', 'bets')
+            .order('created_at', { ascending: false });
+
+        const d = await sb.from('history')
+            .select('*')
+            .eq('user_id', State.user.id)
+            .eq('type', 'deposit')
+            .order('created_at', { ascending: false });
+
+        const w = await sb.from('history')
+            .select('*')
+            .eq('user_id', State.user.id)
+            .eq('type', 'withdrawal')
+            .order('created_at', { ascending: false });
+
+        const container = document.getElementById('history-lists');
+
+        container.innerHTML = `
+            <div class="glass mb-4">
+                <div onclick="UI.toggleAccordion('acc-bets','arrow-bets')">Jugadas</div>
+                <div id="acc-bets" class="hidden-view">
+                    ${this.renderList(b.data || [], 'bets')}
+                </div>
+            </div>
+
+            <div class="glass mb-4">
+                <div onclick="UI.toggleAccordion('acc-deps','arrow-deps')">Depósitos</div>
+                <div id="acc-deps" class="hidden-view">
+                    ${this.renderList(d.data || [], 'deposit')}
+                </div>
+            </div>
+
+            <div class="glass">
+                <div onclick="UI.toggleAccordion('acc-wd','arrow-wd')">Retiros</div>
+                <div id="acc-wd" class="hidden-view">
+                    ${this.renderList(w.data || [], 'withdrawal')}
+                </div>
+            </div>
         `;
-    }).join('');
-}
+    },
+
+    renderList(items, type) {
+
+        if (!items.length) return `<p>Sin registros</p>`;
+
+        return items.map(i => {
+
+            let text = i.label;
+            let color = i.amount >= 0 ? 'text-emerald-500' : 'text-red-500';
+
+            if (type === 'deposit' || type === 'withdrawal') {
+                if (i.status === 'pending') text = "Pendiente ⏳";
+                if (i.status === 'completed') text = "Confirmado ✅";
+                if (i.status === 'rejected') text = "Rechazado ❌";
+            }
+
+            return `
+                <div class="flex justify-between p-2">
+                    <span>${text}</span>
+                    <span class="${color}">$${Math.abs(i.amount).toFixed(2)}</span>
+                </div>
+            `;
+        }).join('');
+    }
+
 };
 
     const UI = {
