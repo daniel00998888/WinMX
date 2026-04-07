@@ -343,17 +343,13 @@
 
     const res = await sb.from('history').insert([{
     user_id: State.user.id,
-    type: State.currentTx === 'deposit' ? 'deposits' : 'withdrawals',
+    type: State.currentTx === 'deposit' ? 'deposit' : 'withdraw',
     amount: amount,
     label: State.currentTx === 'deposit'
         ? 'Depósito Pendiente'
         : 'Retiro Pendiente',
     status: 'pending',
-    evidence_url: State.currentTx === 'deposit' ? evidence_url : null,
-    bank_details: JSON.stringify({
-        banco: bank,
-        beneficiario: beneficiary
-    })
+    evidence_url: State.currentTx === 'deposit' ? evidence_url : null
 }]);
 
         if(res.error) throw res.error;
