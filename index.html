@@ -394,42 +394,50 @@ async fetchHistory() {
     const container = document.getElementById('history-lists');
 
     container.innerHTML = `
-        <div class="glass overflow-hidden mb-4">
-            <div onclick="UI.toggleAccordion('acc-bets','arrow-bets')" class="p-5 flex justify-between cursor-pointer">
-                <span class="font-casino text-[10px]">Jugadas</span>
+        <div class="glass mb-4">
+            <div onclick="UI.toggleAccordion('acc-bets','arrow-bets')">Jugadas</div>
+            <div id="acc-bets" class="hidden-view">
+                ${this.renderList(b.data || [], 'bets')}
             </div>
-            <div id="acc-bets" class="hidden-view p-3">${this.renderList(b.data || [], 'bets')}</div>
         </div>
 
-        <div class="glass overflow-hidden mb-4">
-            <div onclick="UI.toggleAccordion('acc-deps','arrow-deps')" class="p-5 flex justify-between cursor-pointer">
-                <span class="font-casino text-[10px]">Depósitos</span>
+        <div class="glass mb-4">
+            <div onclick="UI.toggleAccordion('acc-deps','arrow-deps')">Depósitos</div>
+            <div id="acc-deps" class="hidden-view">
+                ${this.renderList(d.data || [], 'deposits')}
             </div>
-            <div id="acc-deps" class="hidden-view p-3">${this.renderList(d.data || [], 'deposits')}</div>
         </div>
 
-        <div class="glass overflow-hidden">
-            <div onclick="UI.toggleAccordion('acc-wd','arrow-wd')" class="p-5 flex justify-between cursor-pointer">
-                <span class="font-casino text-[10px]">Retiros</span>
+        <div class="glass">
+            <div onclick="UI.toggleAccordion('acc-wd','arrow-wd')">Retiros</div>
+            <div id="acc-wd" class="hidden-view">
+                ${this.renderList(w.data || [], 'withdrawals')}
             </div>
-            <div id="acc-wd" class="hidden-view p-3">${this.renderList(w.data || [], 'withdrawals')}</div>
         </div>
     `;
-}
-                renderList(items, type) {
-                if(!items.length) return `<p class="text-[8px] text-center py-2 text-zinc-600">Sin registros</p>`;
-                return items.map(i => {
-                    let text = i.label, color = i.amount >= 0 ? 'text-emerald-500' : 'text-red-500', pulse = "";
-                    if(type==='deposits') {
-                        if(i.status==='pending') { text="Pendiente ⏳"; color="text-yellow-500"; pulse="pulse-pending"; }
-                        else if(i.status==='completed') { text="Confirmado ✅"; color="text-emerald-500"; }
-                        else if(i.status==='rejected') { text="Rechazado ❌"; color="text-red-500"; }
-                    }
-                    return `<div class="flex justify-between items-center p-3 rounded-xl bg-white/[0.02] border border-white/5 ${pulse}"><div class="flex flex-col"><span class="text-[9px] font-bold uppercase">${text}</span><span class="text-[7px] text-zinc-600">${new Date(i.created_at).toLocaleDateString()}</span></div><div class="text-[10px] font-casino ${color}">$${Math.abs(i.amount).toFixed(2)}</div></div>`;
-        }).join('');
-    }
+}, // 🔥 ESTA COMA ES LA QUE TE FALTABA
 
-};
+renderList(items, type) {
+    if(!items.length) return `<p>Sin registros</p>`;
+
+    return items.map(i => {
+        let text = i.label;
+        let color = i.amount >= 0 ? 'text-emerald-500' : 'text-red-500';
+
+        if(type === 'deposits' || type === 'withdrawals') {
+            if(i.status === 'pending') text = "Pendiente ⏳";
+            if(i.status === 'completed') text = "Confirmado ✅";
+            if(i.status === 'rejected') text = "Rechazado ❌";
+        }
+
+        return `
+        <div class="flex justify-between p-2">
+            <span>${text}</span>
+            <span class="${color}">$${Math.abs(i.amount).toFixed(2)}</span>
+        </div>
+        `;
+    }).join('');
+}
 
     const UI = {
     updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toFixed(2)}`; },
