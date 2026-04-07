@@ -314,7 +314,6 @@
         return UI.notify("Completa todos los campos", "error");
     }
 
-    // 🔴 VALIDAR RETIRO
     if(State.currentTx === 'withdrawal' && State.balance < amount) {
         return UI.notify("Saldo insuficiente", "error");
     }
@@ -344,7 +343,7 @@
 
         const res = await sb.from('history').insert([{
             user_id: State.user.id,
-            type: State.currentTx === 'deposit' ? 'deposits' : 'withdrawals', // 🔥 FIX
+            type: State.currentTx === 'deposit' ? 'deposits' : 'withdrawals',
             amount: amount,
             label: State.currentTx === 'deposit'
                 ? 'Depósito Pendiente'
@@ -368,9 +367,9 @@
         btn.disabled = false;
         btn.innerText = "CONFIRMAR";
     }
-}
+}, // 🔥 ESTA COMA ES CLAVE
 
-    async fetchHistory() {
+async fetchHistory() {
     const b = await sb.from('history')
         .select('*')
         .eq('user_id', State.user.id)
@@ -417,7 +416,6 @@
         </div>
     `;
 }
-
                 renderList(items, type) {
                 if(!items.length) return `<p class="text-[8px] text-center py-2 text-zinc-600">Sin registros</p>`;
                 return items.map(i => {
