@@ -272,48 +272,63 @@
             }
         };
       const Core = {
-     init: async function() {
-    console.log("Iniciando app...");
+     init() {
+    let p = 0;
+    const i = setInterval(() => {
+        p += 25;
 
-    // Animación fake del loader
-    let progress = 0;
-    const bar = document.getElementById("boot-bar");
+        const bar = document.getElementById('boot-bar');
+        if (bar) bar.style.width = `${p}%`;
 
-    const interval = setInterval(() => {
-        progress += 10;
-        bar.style.width = progress + "%";
-
-        if (progress >= 100) {
-            clearInterval(interval);
-            this.startApp();
+        if (p >= 100) {
+            clearInterval(i);
+            this.check();
         }
     }, 100);
 },
 
-startApp: async function() {
-    const { data } = await sb.auth.getSession();
+async check() {
+    const { data: { session } } = await sb.auth.getSession();
 
-    if (!data.session) {
-        document.getElementById("boot-loader").classList.add("hidden-view");
-        document.getElementById("auth-view").classList.remove("hidden-view");
-        return;
+    document.getElementById('boot-loader').style.display = 'none';
+
+    if (session) {
+        State.user = session.user;
+
+        document.getElementById('main-app').classList.remove('hidden-view');
+
+        await this.loadBalance();
+        this.subscribeBalance();
+    } else {
+        document.getElementById('auth-view').classList.remove('hidden-view');
     }
+},
 
-    State.user = data.session.user;
-
-    // Obtener saldo
-    const { data: userData } = await sb
+async loadBalance() {
+    const { data } = await sb
         .from('usuarios')
-        .select('*')
+        .select('saldo')
         .eq('id', State.user.id)
-        .single();
+        .maybeSingle();
 
-    State.balance = userData?.saldo || 0;
-
+    State.balance = data ? data.saldo : 0;
     UI.updateBalance();
+},
 
-    document.getElementById("boot-loader").classList.add("hidden-view");
-    document.getElementById("main-app").classList.remove("hidden-view");
+subscribeBalance() {
+    sb.channel('balance_realtime')
+    .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'usuarios',
+        filter: `id=eq.${State.user.id}`
+    }, (payload) => {
+        if (payload.new && typeof payload.new.saldo !== 'undefined') {
+            State.balance = payload.new.saldo;
+            UI.updateBalance();
+        }
+    })
+    .subscribe();
 },
     async confirmTransaction() {
 
