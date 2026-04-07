@@ -233,14 +233,16 @@
         const playSfx = (key) => { if(sfx[key]) { sfx[key].currentTime = 0; sfx[key].play().catch(()=>{}); } };
 
         let State = { 
+            let State = { 
             user: null, 
             balance: 0, 
             isSpinning: false, 
             totalSpins: 0, 
             luckFactor: 1.0, 
             winHistory: [],
-            sessionLoss: 0, 
-            currentTx: 'deposit'
+            sessionLoss: 0,
+            currentTx: 'deposit' // 👈 NUEVO
+};
         };
         const Router = {
             showView(viewId) {
@@ -412,6 +414,31 @@
             copyClabe() { const clabe = document.getElementById('clabe-number').innerText; navigator.clipboard.writeText(clabe).then(() => { playSfx('click'); this.notify("CLABE Copiada", "success"); }); },
             handleFile(input) { if(input.files && input.files[0]) { playSfx('click'); const label = document.getElementById('file-label'); label.innerText = "Recibo: " + input.files[0].name.substring(0, 15) + "..."; label.classList.replace('text-zinc-500', 'text-emerald-500'); } },
             notify(m, t) { const n = document.createElement('div'); n.className = `p-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-2xl animate__animated animate__fadeInDown ${t==='success'?'bg-emerald-500 text-black':'bg-red-500 text-white'}`; n.innerText = m; document.getElementById('notif-container').appendChild(n); setTimeout(() => { n.classList.replace('animate__fadeInDown', 'animate__fadeOutUp'); setTimeout(()=>n.remove(), 500); }, 3000); }
+            setTxType(type) {
+    playSfx('click');
+
+    State.currentTx = type;
+
+    const isDeposit = type === 'deposit';
+
+    // Tabs visuales
+    document.getElementById('tab-deposit').classList.toggle('active', isDeposit);
+    document.getElementById('tab-withdrawal').classList.toggle('active', !isDeposit);
+
+    // Cambiar título
+    document.getElementById('tx-title').innerText = isDeposit 
+        ? 'Monto a cargar' 
+        : 'Monto a retirar';
+
+    // Cambiar botón
+    document.getElementById('btn-confirm-dep').innerText = isDeposit 
+        ? 'Confirmar Depósito' 
+        : 'Solicitar Retiro';
+
+    // Mostrar info correcta
+    document.getElementById('deposit-info').classList.toggle('hidden-view', !isDeposit);
+    document.getElementById('withdrawal-info').classList.toggle('hidden-view', isDeposit);
+}
         };
 
         const AuthManager = {
