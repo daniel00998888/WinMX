@@ -343,7 +343,7 @@
 
     const res = await sb.from('history').insert([{
     user_id: State.user.id,
-    type: State.currentTx === 'deposit' ? 'deposit' : 'withdraw',
+    type: State.currentTx === 'deposit' ? 'deposit' : 'withdrawal',
     amount: amount,
     label: State.currentTx === 'deposit'
         ? 'Depósito Pendiente'
@@ -379,14 +379,14 @@ async fetchHistory() {
     const d = await sb.from('history')
         .select('*')
         .eq('user_id', State.user.id)
-        .eq('type', 'deposits')
+        .eq('type', 'deposit')
         .order('created_at', { ascending: false })
         .limit(20);
 
     const w = await sb.from('history')
         .select('*')
         .eq('user_id', State.user.id)
-        .eq('type', 'withdrawals')
+        .eq('type', 'withdrawal')
         .order('created_at', { ascending: false })
         .limit(20);
 
