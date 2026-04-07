@@ -272,7 +272,49 @@
             }
         };
       const Core = {
+     init: async function() {
+    console.log("Iniciando app...");
 
+    // Animación fake del loader
+    let progress = 0;
+    const bar = document.getElementById("boot-bar");
+
+    const interval = setInterval(() => {
+        progress += 10;
+        bar.style.width = progress + "%";
+
+        if (progress >= 100) {
+            clearInterval(interval);
+            this.startApp();
+        }
+    }, 100);
+},
+
+startApp: async function() {
+    const { data } = await sb.auth.getSession();
+
+    if (!data.session) {
+        document.getElementById("boot-loader").classList.add("hidden-view");
+        document.getElementById("auth-view").classList.remove("hidden-view");
+        return;
+    }
+
+    State.user = data.session.user;
+
+    // Obtener saldo
+    const { data: userData } = await sb
+        .from('usuarios')
+        .select('*')
+        .eq('id', State.user.id)
+        .single();
+
+    State.balance = userData?.saldo || 0;
+
+    UI.updateBalance();
+
+    document.getElementById("boot-loader").classList.add("hidden-view");
+    document.getElementById("main-app").classList.remove("hidden-view");
+}
     async confirmTransaction() {
 
         console.log("TIPO ACTUAL:", State.currentTx); // 🔥 DEBUG
