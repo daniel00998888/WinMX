@@ -352,7 +352,10 @@
     evidence_url: State.currentTx === 'deposit' ? evidence_url : null
 }]);
 
-        if(res.error) throw res.error;
+        if(res.error) {
+    console.error(res.error);
+    throw res.error;
+}
 
         UI.notify("Solicitud enviada correctamente", "success");
         UI.closeModal('modal-deposit');
