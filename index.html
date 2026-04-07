@@ -371,26 +371,52 @@
 }
 
     async fetchHistory() {
-        const b = await sb.from('history')
-            .select('*')
-            .eq('user_id', State.user.id)
-            .eq('type', 'bets')
-            .order('created_at', { ascending: false })
-            .limit(20);
+    const b = await sb.from('history')
+        .select('*')
+        .eq('user_id', State.user.id)
+        .eq('type', 'bets')
+        .order('created_at', { ascending: false })
+        .limit(20);
 
-        const d = await sb.from('history')
-            .select('*')
-            .eq('user_id', State.user.id)
-            .eq('type', 'deposits')
-            .order('created_at', { ascending: false })
-            .limit(20);
+    const d = await sb.from('history')
+        .select('*')
+        .eq('user_id', State.user.id)
+        .eq('type', 'deposits')
+        .order('created_at', { ascending: false })
+        .limit(20);
 
-        const container = document.getElementById('history-lists');
+    const w = await sb.from('history')
+        .select('*')
+        .eq('user_id', State.user.id)
+        .eq('type', 'withdrawals')
+        .order('created_at', { ascending: false })
+        .limit(20);
 
-        container.innerHTML = `
-           <div class="glass overflow-hidden mb-4"><div onclick="UI.toggleAccordion('acc-bets','arrow-bets')" class="p-5 flex justify-between cursor-pointer"><div class="flex items-center gap-3"><i class="fas fa-history text-emerald-500"></i><span class="font-casino text-[10px]">Jugadas</span></div><i id="arrow-bets" class="fas fa-chevron-down text-zinc-700"></i></div><div id="acc-bets" class="hidden-view p-3 space-y-2 bg-black/40 history-scroll">${this.renderList(b.data || [], 'bets')}</div></div>
-           <div class="glass overflow-hidden"><div onclick="UI.toggleAccordion('acc-deps','arrow-deps')" class="p-5 flex justify-between cursor-pointer"><div class="flex items-center gap-3"><i class="fas fa-wallet text-blue-400"></i><span class="font-casino text-[10px]">Depósitos</span></div><i id="arrow-deps" class="fas fa-chevron-down text-zinc-700"></i></div><div id="acc-deps" class="hidden-view p-3 space-y-2 bg-black/40 history-scroll">${this.renderList(d.data || [], 'deposits')}</div></div>`; 
-    },
+    const container = document.getElementById('history-lists');
+
+    container.innerHTML = `
+        <div class="glass overflow-hidden mb-4">
+            <div onclick="UI.toggleAccordion('acc-bets','arrow-bets')" class="p-5 flex justify-between cursor-pointer">
+                <span class="font-casino text-[10px]">Jugadas</span>
+            </div>
+            <div id="acc-bets" class="hidden-view p-3">${this.renderList(b.data || [], 'bets')}</div>
+        </div>
+
+        <div class="glass overflow-hidden mb-4">
+            <div onclick="UI.toggleAccordion('acc-deps','arrow-deps')" class="p-5 flex justify-between cursor-pointer">
+                <span class="font-casino text-[10px]">Depósitos</span>
+            </div>
+            <div id="acc-deps" class="hidden-view p-3">${this.renderList(d.data || [], 'deposits')}</div>
+        </div>
+
+        <div class="glass overflow-hidden">
+            <div onclick="UI.toggleAccordion('acc-wd','arrow-wd')" class="p-5 flex justify-between cursor-pointer">
+                <span class="font-casino text-[10px]">Retiros</span>
+            </div>
+            <div id="acc-wd" class="hidden-view p-3">${this.renderList(w.data || [], 'withdrawals')}</div>
+        </div>
+    `;
+}
 
                 renderList(items, type) {
                 if(!items.length) return `<p class="text-[8px] text-center py-2 text-zinc-600">Sin registros</p>`;
