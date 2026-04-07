@@ -430,7 +430,7 @@
     closeModal(id) { playSfx('click'); document.getElementById(id).classList.add('hidden-view'); },
     toggleAccordion(accId, arrowId) { playSfx('click'); const acc = document.getElementById(accId); acc.classList.toggle('hidden-view'); document.getElementById(arrowId).style.transform = acc.classList.contains('hidden-view') ? 'rotate(0deg)' : 'rotate(180deg)'; },
     depNextStep() { const amt = parseFloat(document.getElementById('dep-amount').value); if(isNaN(amt) || amt <= 0) return this.notify("Monto inválido", "error"); playSfx('click'); document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`; document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
-    copyClabe() { const clabe = document.getElementById('clabe-number').innerText; navigator.clipboard.writeText(clabe).then(() => { playSfx('click'); this.notify("CLABE Copiada", "success"); }); },
+    copyClabe() {const el = document.getElementById('clabe-number');if(!el) return UI.notify("CLABE no disponible", "error");const clabe = el.innerText;navigator.clipboard.writeText(clabe).then(() => {playSfx('click');this.notify("CLABE Copiada", "success");});},
     handleFile(input) { if(input.files && input.files[0]) { playSfx('click'); const label = document.getElementById('file-label'); label.innerText = "Recibo: " + input.files[0].name.substring(0, 15) + "..."; label.classList.replace('text-zinc-500', 'text-emerald-500'); } },
     
     notify(m, t) { 
