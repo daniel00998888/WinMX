@@ -349,7 +349,7 @@
         ? 'Depósito Pendiente'
         : 'Retiro Pendiente',
     status: 'pending',
-    evidence_url: evidence_url || '',
+    evidence_url: State.currentTx === 'deposit' ? evidence_url : null,
     bank_details: JSON.stringify({
         banco: bank,
         beneficiario: beneficiary
