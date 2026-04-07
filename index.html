@@ -341,20 +341,20 @@
             evidence_url = pub.data.publicUrl;
         }
 
-        const res = await sb.from('history').insert([{
-            user_id: State.user.id,
-            type: State.currentTx === 'deposit' ? 'deposits' : 'withdrawals',
-            amount: amount,
-            label: State.currentTx === 'deposit'
-                ? 'Depósito Pendiente'
-                : 'Retiro Pendiente',
-            status: 'pending',
-            evidence_url: evidence_url || '',
-            bank_details: {
-                banco: bank,
-                beneficiario: beneficiary
-            }
-        }]);
+    const res = await sb.from('history').insert([{
+    user_id: State.user.id,
+    type: State.currentTx === 'deposit' ? 'deposits' : 'withdrawals',
+    amount: amount,
+    label: State.currentTx === 'deposit'
+        ? 'Depósito Pendiente'
+        : 'Retiro Pendiente',
+    status: 'pending',
+    evidence_url: evidence_url || '',
+    bank_details: JSON.stringify({
+        banco: bank,
+        beneficiario: beneficiary
+    })
+}]);
 
         if(res.error) throw res.error;
 
