@@ -272,63 +272,48 @@
             }
         };
       const Core = {
-     init() {
-    let p = 0;
-    const i = setInterval(() => {
-        p += 25;
+     init: async function() {
+    console.log("Iniciando app...");
 
-        const bar = document.getElementById('boot-bar');
-        if (bar) bar.style.width = `${p}%`;
+    // Animación fake del loader
+    let progress = 0;
+    const bar = document.getElementById("boot-bar");
 
-        if (p >= 100) {
-            clearInterval(i);
-            this.check();
+    const interval = setInterval(() => {
+        progress += 10;
+        bar.style.width = progress + "%";
+
+        if (progress >= 100) {
+            clearInterval(interval);
+            this.startApp();
         }
     }, 100);
 },
 
-async check() {
-    const { data: { session } } = await sb.auth.getSession();
+startApp: async function() {
+    const { data } = await sb.auth.getSession();
 
-    document.getElementById('boot-loader').style.display = 'none';
-
-    if (session) {
-        State.user = session.user;
-
-        document.getElementById('main-app').classList.remove('hidden-view');
-
-        await this.loadBalance();
-        this.subscribeBalance();
-    } else {
-        document.getElementById('auth-view').classList.remove('hidden-view');
+    if (!data.session) {
+        document.getElementById("boot-loader").classList.add("hidden-view");
+        document.getElementById("auth-view").classList.remove("hidden-view");
+        return;
     }
-},
 
-async loadBalance() {
-    const { data } = await sb
+    State.user = data.session.user;
+
+    // Obtener saldo
+    const { data: userData } = await sb
         .from('usuarios')
-        .select('saldo')
+        .select('*')
         .eq('id', State.user.id)
-        .maybeSingle();
+        .single();
 
-    State.balance = data ? data.saldo : 0;
+    State.balance = userData?.saldo || 0;
+
     UI.updateBalance();
-},
 
-subscribeBalance() {
-    sb.channel('balance_realtime')
-    .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'usuarios',
-        filter: `id=eq.${State.user.id}`
-    }, (payload) => {
-        if (payload.new && typeof payload.new.saldo !== 'undefined') {
-            State.balance = payload.new.saldo;
-            UI.updateBalance();
-        }
-    })
-    .subscribe();
+    document.getElementById("boot-loader").classList.add("hidden-view");
+    document.getElementById("main-app").classList.remove("hidden-view");
 },
     async confirmTransaction() {
 
