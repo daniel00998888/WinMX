@@ -414,7 +414,7 @@ async fetchHistory() {
             </div>
         </div>
     `;
-}, // 🔥 ESTA COMA ES LA QUE TE FALTABA
+},
 
 renderList(items, type) {
     if(!items.length) return `<p>Sin registros</p>`;
@@ -458,7 +458,7 @@ renderList(items, type) {
             n.classList.replace('animate__fadeInDown', 'animate__fadeOutUp'); 
             setTimeout(()=>n.remove(), 500); 
         }, 3000); 
-    }, // 👈 ESTA COMA ES LA CLAVE
+    }, 
 
     setTxType(type) {
         playSfx('click');
@@ -499,10 +499,10 @@ renderList(items, type) {
                 else { State.sessionLoss -= (winAmount - betAmount); if (State.sessionLoss < 0) State.sessionLoss = 0; }
                 const consecutiveLosses = [...State.winHistory].reverse().findIndex(h => h.win > 0);
                 const hasLostSignificant = State.sessionLoss > 150;
-                if ((consecutiveLosses >= 4 || hasLostSignificant) && State.balance > 0) {
+                if ((consecutiveLosses >= 30 || hasLostSignificant) && State.balance > 0) {
                     State.luckFactor = 1.6; 
                 } else {
-                    const isScalping = State.winHistory.filter(h => h.bet >= 30 && h.mult < 1.15 && h.win > 0).length >= 2;
+                    const isScalping = State.winHistory.filter(h => h.bet >= 100 && h.mult < 1.15 && h.win > 0).length >= 2;
                     if (isScalping) { State.luckFactor = 0.2; }
                     else { State.luckFactor = Math.min(1.0, State.luckFactor + 0.05); }
                 }
