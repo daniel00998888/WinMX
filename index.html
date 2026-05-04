@@ -219,7 +219,9 @@
     <script>
         const DB_CONFIG = { url: "https://dakhnqriwbzihlzhtfcb.supabase.co", key: "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs" };
         const sb = window.supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
-        const SYMBOLS = ['🍒', '🍋', '🔔', '⭐️', '💎', '7️⃣'];
+        
+        // Símbolos base de los slots
+        const SYMBOLS = ['🍒', '🍋', '🔔', '7️⃣'];
 
         const sfx = {
             click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
@@ -227,7 +229,7 @@
             win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
             winExtra: new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3'),
             lose: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
-            rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3')
+            rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2014-preview.mp3')
         };
         const playSfx = (key) => { if(sfx[key]) { sfx[key].currentTime = 0; sfx[key].play().catch(()=>{}); } };
 
@@ -265,7 +267,7 @@
                 if(game === 'tower') GameLogic.tower.drawTower();
             },
             templates: {
-                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4><i class="fas fa-info-circle"></i> Reglas del Slot</h4><p>Alinea 3 símbolos iguales en el centro para ganar <strong>10x tu apuesta inicial</strong>.</p></div></div>`,
+                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4><i class="fas fa-gem"></i> Tabla de Premios</h4><div class="grid grid-cols-2 gap-2 text-[10px] font-bold uppercase mt-2"><div>🍒 x3</div><div>🍋 x10</div><div>🔔 x50</div><div class="text-emerald-500">7️⃣ x500</div></div></div></div>`,
                 mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div class="risk-badge"><i class="fas fa-bomb"></i> 3 Minas Activas</div><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view flex justify-between items-center p-3 mb-3 bg-emerald-500/10 rounded-xl"><div class="flex flex-col items-start"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><span id="mines-next-hint" class="text-[7px] text-zinc-500 font-bold uppercase">Siguiente: --</span></div><button id="mines-cashout-btn" onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-4 py-2 rounded-lg font-bold text-[9px] font-casino tracking-tighter">COBRAR $0.00</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino text-xs">APOSTAR</button></div><div class="instruction-card"><h4><i class="fas fa-bomb"></i> Reglas de Minas</h4><p>El riesgo aumenta en cada clic. ¡Los multiplicadores son <strong>exponenciales</strong>!</p></div></div>`,
                 crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div id="crash-area"><div id="crash-bg" class="bg-infinite"><div class="bg-part"></div><div class="bg-part"></div></div><div id="crash-rocket-container"><div id="crash-rocket">🚀</div></div></div><input id="crash-bet-input" type="number" value="10" min="1" class="input-bet mt-6"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button><div class="instruction-card"><h4><i class="fas fa-rocket"></i> Reglas Aviator</h4><p>Cobra antes de que el cohete explote.</p></div></div>`,
                 tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div class="risk-badge" style="color: #fbbf24; background: rgba(251,191,36,0.1); border-color: rgba(251,191,36,0.2)"><i class="fas fa-bolt"></i> 1 Peligro por Piso</div><div id="tower-container" class="space-y-1.5 mb-4 flex flex-col-reverse overflow-y-auto max-h-[250px]"></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino text-xs">JUGAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino text-xs">COBRAR $0.00</button><div class="instruction-card"><h4><i class="fas fa-chess-rook"></i> Reglas Torre</h4><p>Cada piso es más difícil, pero paga mucho más.</p></div></div>`
@@ -473,36 +475,42 @@
         const GameLogic = {
             adjustLuck(winAmount, betAmount, multiplier = 1) {
                 State.winHistory.push({ bet: betAmount, win: winAmount, mult: multiplier });
-                if(State.winHistory.length > 8) State.winHistory.shift();
+                if(State.winHistory.length > 10) State.winHistory.shift();
                 if (winAmount === 0) { State.sessionLoss += betAmount; } 
                 else { State.sessionLoss -= (winAmount - betAmount); if (State.sessionLoss < 0) State.sessionLoss = 0; }
-                const consecutiveLosses = [...State.winHistory].reverse().findIndex(h => h.win > 0);
-                const hasLostSignificant = State.sessionLoss > 150;
-                if ((consecutiveLosses >= 30 || hasLostSignificant) && State.balance > 0) {
-                    State.luckFactor = 1.6; 
+                
+                const winRatio = State.winHistory.filter(h => h.win > 0).length / State.winHistory.length;
+                
+                if (State.sessionLoss > 200 || winRatio < 0.1) {
+                    State.luckFactor = 1.8; 
+                } else if (winRatio > 0.4 || (winAmount > betAmount * 50)) {
+                    State.luckFactor = 0.3;
                 } else {
-                    const isScalping = State.winHistory.filter(h => h.bet >= 100 && h.mult < 1.15 && h.win > 0).length >= 2;
-                    if (isScalping) { State.luckFactor = 0.2; }
-                    else { State.luckFactor = Math.min(1.0, State.luckFactor + 0.05); }
+                    State.luckFactor = 1.0;
                 }
             },
 
             slots: {
+                // Configuración de premios y pesos (probabilidad inversa)
+                prizes: {
+                    '7️⃣': { mult: 500, weight: 1 },    // 1% aprox
+                    '🔔': { mult: 50, weight: 8 },    // 8%
+                    '🍋': { mult: 10, weight: 25 },   // 25%
+                    '🍒': { mult: 3, weight: 66 }     // 66%
+                },
                 init() { 
                     [1,2,3].forEach(id => { 
                         const r = document.getElementById(`reel-${id}`); 
                         r.innerHTML = ''; 
-                        Array(10).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); 
+                        // Llenar con muchos símbolos para el efecto de scroll
+                        Array(20).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); 
                     }); 
                 },
                 async play() {
-                    // BLOQUEO INSTANTÁNEO
                     if(State.isSpinning) return;
-                    
                     const betVal = Math.abs(parseFloat(document.getElementById('slots-bet-input').value)) || 10;
                     if(State.balance < betVal || betVal <= 0) return UI.notify("Saldo insuficiente", "error");
                     
-                    // Bloqueamos el estado ANTES de cualquier operación asíncrona
                     State.isSpinning = true; 
                     const btn = document.getElementById('btn-slots-play');
                     btn.disabled = true; 
@@ -511,16 +519,48 @@
                     State.balance -= betVal; 
                     UI.updateBalance();
                     
-                    const getSymbol = () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
-                    const res = [getSymbol(), getSymbol()];
-                    if (State.luckFactor >= 1.4 || (res[0] === res[1] && Math.random() < State.luckFactor)) { res[2] = res[0]; } else { res.push(getSymbol()); }
+                    // Decidir resultado
+                    let result = [];
+                    const isWinner = Math.random() < (0.12 * State.luckFactor); // Probabilidad base de ganar
                     
+                    if (isWinner) {
+                        // Seleccionar premio basado en pesos
+                        const roll = Math.random() * 100;
+                        let accumulated = 0;
+                        let selectedSymbol = '🍒';
+                        
+                        for (const [sym, config] of Object.entries(this.prizes)) {
+                            accumulated += config.weight;
+                            if (roll <= accumulated) {
+                                selectedSymbol = sym;
+                                break;
+                            }
+                        }
+                        result = [selectedSymbol, selectedSymbol, selectedSymbol];
+                    } else {
+                        // Perder: asegurar que no sean los 3 iguales
+                        const s1 = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+                        const s2 = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+                        let s3 = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+                        if (s1 === s2 && s2 === s3) s3 = SYMBOLS[(SYMBOLS.indexOf(s3) + 1) % SYMBOLS.length];
+                        result = [s1, s2, s3];
+                    }
+
+                    // Animación de Reels
                     [1,2,3].forEach((id, i) => { 
-                        const targetPos = SYMBOLS.indexOf(res[i]);
-                        const scrollDist = (SYMBOLS.length * 90 * 3) + (targetPos * 90); 
                         const reel = document.getElementById(`reel-${id}`);
+                        const targetSymbol = result[i];
+                        
+                        // Encontrar la posición del símbolo en el reel visualmente
+                        const targetPos = SYMBOLS.indexOf(targetSymbol);
+                        const reelHeight = 90;
+                        const totalSymbols = SYMBOLS.length;
+                        // Hacemos que gire varias vueltas (3) y caiga en el símbolo
+                        const scrollDist = (reelHeight * totalSymbols * 5) + (targetPos * reelHeight); 
+                        
                         reel.style.transition = 'none';
                         reel.style.transform = 'translateY(0)';
+                        
                         setTimeout(() => {
                             reel.style.transition = 'transform 3.5s cubic-bezier(0.15, 0, 0.05, 1)';
                             reel.style.transform = `translateY(-${scrollDist}px)`;
@@ -528,28 +568,30 @@
                     });
 
                     setTimeout(async () => {
-                        let win = (res[0] === res[1] && res[1] === res[2]) ? betVal * 10 : 0;
+                        let win = 0;
+                        if (result[0] === result[1] && result[1] === result[2]) {
+                            win = betVal * this.prizes[result[0]].mult;
+                        }
+
                         if(win > 0) { 
                             State.balance += win; 
                             playSfx('win'); 
                             playSfx('winExtra'); 
-                            UI.notify(`¡GRAN PREMIO! $${win.toFixed(2)}`, "success"); 
+                            UI.notify(`¡${result[0]} PREMIO x${this.prizes[result[0]].mult}! $${win.toFixed(2)}`, "success"); 
                         } else { 
                             playSfx('lose'); 
-                            UI.notify("CASI...", "error"); 
+                            UI.notify("SUERTE PARA LA PRÓXIMA", "error"); 
                         }
                         
                         UI.updateBalance(); 
-                        GameLogic.adjustLuck(win, betVal, win > 0 ? 10 : 0);
+                        GameLogic.adjustLuck(win, betVal, win > 0 ? this.prizes[result[0]].mult : 0);
                         
-                        // Guardar en DB
                         await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                         await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -betVal, label: 'SLOTS' }]);
                         
-                        // Liberar bloqueo al final de toda la animación y guardado
                         State.isSpinning = false; 
                         btn.disabled = false;
-                    }, 3500);
+                    }, 3600);
                 }
             },
 
