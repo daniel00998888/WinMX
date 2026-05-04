@@ -279,7 +279,7 @@
             subscribeBalance() {
                 sb.channel('balance_realtime')
                 .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'usuarios', filter: `id=eq.${State.user.id}` }, (payload) => {
-                    if (payload.new && typeof payload.new.saldo !== 'undefined') {
+                    if (payload.new && typeof payload.new.saldo !== 'undefined' && !State.isSpinning) {
                         State.balance = payload.new.saldo;
                         UI.updateBalance();
                     }
@@ -496,11 +496,20 @@
                     }); 
                 },
                 async play() {
+                    // BLOQUEO INSTANTÁNEO
                     if(State.isSpinning) return;
+                    
                     const betVal = Math.abs(parseFloat(document.getElementById('slots-bet-input').value)) || 10;
                     if(State.balance < betVal || betVal <= 0) return UI.notify("Saldo insuficiente", "error");
+                    
+                    // Bloqueamos el estado ANTES de cualquier operación asíncrona
+                    State.isSpinning = true; 
                     const btn = document.getElementById('btn-slots-play');
-                    btn.disabled = true; playSfx('spin'); State.isSpinning = true; State.balance -= betVal; UI.updateBalance();
+                    btn.disabled = true; 
+                    
+                    playSfx('spin'); 
+                    State.balance -= betVal; 
+                    UI.updateBalance();
                     
                     const getSymbol = () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
                     const res = [getSymbol(), getSymbol()];
@@ -519,12 +528,27 @@
                     });
 
                     setTimeout(async () => {
-                        State.isSpinning = false; btn.disabled = false;
                         let win = (res[0] === res[1] && res[1] === res[2]) ? betVal * 10 : 0;
-                        if(win > 0) { State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`¡GRAN PREMIO! $${win.toFixed(2)}`, "success"); } else { playSfx('lose'); UI.notify("CASI...", "error"); }
-                        UI.updateBalance(); GameLogic.adjustLuck(win, betVal, win > 0 ? 10 : 0);
+                        if(win > 0) { 
+                            State.balance += win; 
+                            playSfx('win'); 
+                            playSfx('winExtra'); 
+                            UI.notify(`¡GRAN PREMIO! $${win.toFixed(2)}`, "success"); 
+                        } else { 
+                            playSfx('lose'); 
+                            UI.notify("CASI...", "error"); 
+                        }
+                        
+                        UI.updateBalance(); 
+                        GameLogic.adjustLuck(win, betVal, win > 0 ? 10 : 0);
+                        
+                        // Guardar en DB
                         await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                         await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -betVal, label: 'SLOTS' }]);
+                        
+                        // Liberar bloqueo al final de toda la animación y guardado
+                        State.isSpinning = false; 
+                        btn.disabled = false;
                     }, 3500);
                 }
             },
