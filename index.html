@@ -278,17 +278,17 @@
             async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); this.subscribeBalance(); } else { document.getElementById('auth-view').classList.remove('hidden-view'); } },
             async loadBalance() { const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle(); State.balance = data ? data.saldo : 0; UI.updateBalance(); },
             
-            // SOLUCIÓN: Sincronización de saldo en tiempo real para múltiples dispositivos
+            // FUNCIÓN NUEVA: Escucha cambios en la base de datos en tiempo real
             subscribeBalance() {
-                sb.channel('balance_sync')
+                sb.channel('db-changes')
                 .on('postgres_changes', { 
                     event: 'UPDATE', 
                     schema: 'public', 
                     table: 'usuarios', 
                     filter: `id=eq.${State.user.id}` 
                 }, (payload) => {
-                    // Solo actualizamos si hay un nuevo saldo y NO estamos en medio de un giro de slot (para evitar glitches)
-                    if (payload.new && typeof payload.new.saldo !== 'undefined' && !State.isSpinning) {
+                    // Si el saldo cambia en la DB, actualizamos el estado local inmediatamente
+                    if (payload.new && payload.new.saldo !== undefined) {
                         State.balance = payload.new.saldo;
                         UI.updateBalance();
                     }
