@@ -278,7 +278,7 @@
             async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); this.subscribeBalance(); } else { document.getElementById('auth-view').classList.remove('hidden-view'); } },
             async loadBalance() { const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle(); State.balance = data ? data.saldo : 0; UI.updateBalance(); },
             
-            // FUNCIÓN NUEVA: Escucha cambios en la base de datos en tiempo real
+            // FUNCIÓN PARA SINCRONIZAR SALDO ENTRE SESIONES
             subscribeBalance() {
                 sb.channel('db-changes')
                 .on('postgres_changes', { 
@@ -287,7 +287,7 @@
                     table: 'usuarios', 
                     filter: `id=eq.${State.user.id}` 
                 }, (payload) => {
-                    // Si el saldo cambia en la DB, actualizamos el estado local inmediatamente
+                    // Si el saldo cambia en la DB (desde otra ventana), actualizamos aquí
                     if (payload.new && payload.new.saldo !== undefined) {
                         State.balance = payload.new.saldo;
                         UI.updateBalance();
@@ -525,7 +525,7 @@
                     State.balance -= betVal; 
                     UI.updateBalance();
                     
-                    // Actualizar en DB inmediatamente al apostar
+                    // DESCONTAR EN DB AL INSTANTE
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
 
                     let result = [];
@@ -581,7 +581,7 @@
                         UI.updateBalance(); 
                         GameLogic.adjustLuck(win, betVal, win > 0 ? this.prizes[result[0]].mult : 0);
                         
-                        // Finalizar resultado en DB
+                        // ACTUALIZAR SALDO FINAL EN DB
                         await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                         await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -betVal, label: 'SLOTS' }]);
                         
@@ -604,6 +604,7 @@
                     if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
                     playSfx('click'); State.balance -= b; UI.updateBalance();
                     
+                    // DESCONTAR EN DB AL INSTANTE
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
 
                     this.active = true; this.bet = b; this.mult = 1; this.revealed = [];
@@ -642,6 +643,8 @@
                     this.active = false; UI.updateBalance();
                     document.getElementById('mines-controls').classList.remove('hidden-view');
                     document.getElementById('mines-status').classList.add('hidden-view');
+                    
+                    // ACTUALIZAR SALDO FINAL EN DB
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'MINAS' }]);
                 }
@@ -663,6 +666,7 @@
                     if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
                     playSfx('click'); State.balance -= b; UI.updateBalance();
                     
+                    // DESCONTAR EN DB AL INSTANTE
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
 
                     this.active = true; this.bet = b; this.level = 0; this.mult = 1;
@@ -690,6 +694,8 @@
                     this.active = false; UI.updateBalance();
                     document.getElementById('tower-controls').classList.remove('hidden-view');
                     document.getElementById('tower-cashout-btn').classList.add('hidden-view');
+                    
+                    // ACTUALIZAR SALDO FINAL EN DB
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'TORRE' }]);
                 }
@@ -703,6 +709,7 @@
                     if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
                     playSfx('rocket'); State.balance -= b; UI.updateBalance();
                     
+                    // DESCONTAR EN DB AL INSTANTE
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
 
                     this.active = true; this.bet = b; this.mult = 1.0; this.bgPos = 0;
@@ -763,6 +770,8 @@
                         document.getElementById('crash-mult').innerText = '1.00x';
                         document.getElementById('crash-rocket').innerHTML = '🚀';
                     }, 2500);
+                    
+                    // ACTUALIZAR SALDO FINAL EN DB
                     await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR' }]);
                 }
