@@ -220,7 +220,6 @@
         const DB_CONFIG = { url: "https://dakhnqriwbzihlzhtfcb.supabase.co", key: "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs" };
         const sb = window.supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
         
-        // Símbolos base de los slots
         const SYMBOLS = ['🍒', '🍋', '🔔', '7️⃣'];
 
         const sfx = {
@@ -278,9 +277,17 @@
             async init() { let p = 0; const i = setInterval(() => { p += 25; document.getElementById('boot-bar').style.width = `${p}%`; if(p >= 100) { clearInterval(i); this.check(); } }, 100); },
             async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); this.subscribeBalance(); } else { document.getElementById('auth-view').classList.remove('hidden-view'); } },
             async loadBalance() { const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle(); State.balance = data ? data.saldo : 0; UI.updateBalance(); },
+            
+            // SOLUCIÓN: Sincronización de saldo en tiempo real para múltiples dispositivos
             subscribeBalance() {
-                sb.channel('balance_realtime')
-                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'usuarios', filter: `id=eq.${State.user.id}` }, (payload) => {
+                sb.channel('balance_sync')
+                .on('postgres_changes', { 
+                    event: 'UPDATE', 
+                    schema: 'public', 
+                    table: 'usuarios', 
+                    filter: `id=eq.${State.user.id}` 
+                }, (payload) => {
+                    // Solo actualizamos si hay un nuevo saldo y NO estamos en medio de un giro de slot (para evitar glitches)
                     if (payload.new && typeof payload.new.saldo !== 'undefined' && !State.isSpinning) {
                         State.balance = payload.new.saldo;
                         UI.updateBalance();
@@ -288,6 +295,7 @@
                 })
                 .subscribe();
             },
+
             async confirmTransaction() {
                 const amountInput = document.getElementById('dep-amount').value;
                 const amount = Math.abs(parseFloat(amountInput));
@@ -491,18 +499,16 @@
             },
 
             slots: {
-                // Configuración de premios y pesos (probabilidad inversa)
                 prizes: {
-                    '7️⃣': { mult: 500, weight: 1 },    // 1% aprox
-                    '🔔': { mult: 50, weight: 8 },    // 8%
-                    '🍋': { mult: 10, weight: 25 },   // 25%
-                    '🍒': { mult: 3, weight: 66 }     // 66%
+                    '7️⃣': { mult: 500, weight: 1 },
+                    '🔔': { mult: 50, weight: 8 },
+                    '🍋': { mult: 10, weight: 25 },
+                    '🍒': { mult: 3, weight: 66 }
                 },
                 init() { 
                     [1,2,3].forEach(id => { 
                         const r = document.getElementById(`reel-${id}`); 
                         r.innerHTML = ''; 
-                        // Llenar con muchos símbolos para el efecto de scroll
                         Array(20).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); 
                     }); 
                 },
@@ -519,26 +525,22 @@
                     State.balance -= betVal; 
                     UI.updateBalance();
                     
-                    // Decidir resultado
+                    // Actualizar en DB inmediatamente al apostar
+                    await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+
                     let result = [];
-                    const isWinner = Math.random() < (0.12 * State.luckFactor); // Probabilidad base de ganar
+                    const isWinner = Math.random() < (0.12 * State.luckFactor);
                     
                     if (isWinner) {
-                        // Seleccionar premio basado en pesos
                         const roll = Math.random() * 100;
                         let accumulated = 0;
                         let selectedSymbol = '🍒';
-                        
                         for (const [sym, config] of Object.entries(this.prizes)) {
                             accumulated += config.weight;
-                            if (roll <= accumulated) {
-                                selectedSymbol = sym;
-                                break;
-                            }
+                            if (roll <= accumulated) { selectedSymbol = sym; break; }
                         }
                         result = [selectedSymbol, selectedSymbol, selectedSymbol];
                     } else {
-                        // Perder: asegurar que no sean los 3 iguales
                         const s1 = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
                         const s2 = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
                         let s3 = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
@@ -546,21 +548,15 @@
                         result = [s1, s2, s3];
                     }
 
-                    // Animación de Reels
                     [1,2,3].forEach((id, i) => { 
                         const reel = document.getElementById(`reel-${id}`);
                         const targetSymbol = result[i];
-                        
-                        // Encontrar la posición del símbolo en el reel visualmente
                         const targetPos = SYMBOLS.indexOf(targetSymbol);
                         const reelHeight = 90;
                         const totalSymbols = SYMBOLS.length;
-                        // Hacemos que gire varias vueltas (3) y caiga en el símbolo
                         const scrollDist = (reelHeight * totalSymbols * 5) + (targetPos * reelHeight); 
-                        
                         reel.style.transition = 'none';
                         reel.style.transform = 'translateY(0)';
-                        
                         setTimeout(() => {
                             reel.style.transition = 'transform 3.5s cubic-bezier(0.15, 0, 0.05, 1)';
                             reel.style.transform = `translateY(-${scrollDist}px)`;
@@ -575,8 +571,7 @@
 
                         if(win > 0) { 
                             State.balance += win; 
-                            playSfx('win'); 
-                            playSfx('winExtra'); 
+                            playSfx('win'); playSfx('winExtra'); 
                             UI.notify(`¡${result[0]} PREMIO x${this.prizes[result[0]].mult}! $${win.toFixed(2)}`, "success"); 
                         } else { 
                             playSfx('lose'); 
@@ -586,6 +581,7 @@
                         UI.updateBalance(); 
                         GameLogic.adjustLuck(win, betVal, win > 0 ? this.prizes[result[0]].mult : 0);
                         
+                        // Finalizar resultado en DB
                         await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                         await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -betVal, label: 'SLOTS' }]);
                         
@@ -602,11 +598,14 @@
                     const g = document.getElementById('mines-grid'); g.innerHTML = '';
                     for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/5 border border-white/5 rounded-lg flex items-center justify-center text-xl cursor-pointer active:scale-90 transition-all"></div>`;
                 },
-                start() {
+                async start() {
                     if(this.active) return;
                     const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 10;
                     if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
                     playSfx('click'); State.balance -= b; UI.updateBalance();
+                    
+                    await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+
                     this.active = true; this.bet = b; this.mult = 1; this.revealed = [];
                     this.mines = []; while(this.mines.length < 3) { let r = Math.floor(Math.random()*25); if(!this.mines.includes(r)) this.mines.push(r); }
                     document.getElementById('mines-controls').classList.add('hidden-view');
@@ -659,10 +658,13 @@
                         c.appendChild(row);
                     }
                 },
-                start() {
+                async start() {
                     const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10;
                     if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
                     playSfx('click'); State.balance -= b; UI.updateBalance();
+                    
+                    await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+
                     this.active = true; this.bet = b; this.level = 0; this.mult = 1;
                     this.drawTower(); document.getElementById('tower-row-0').classList.remove('opacity-30');
                     document.getElementById('tower-controls').classList.add('hidden-view');
@@ -695,11 +697,14 @@
 
             crash: {
                 active: false, mult: 1, bet: 0, interval: null, bgPos: 0,
-                start() {
+                async start() {
                     if(this.active) return;
                     const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10;
                     if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
                     playSfx('rocket'); State.balance -= b; UI.updateBalance();
+                    
+                    await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
+
                     this.active = true; this.bet = b; this.mult = 1.0; this.bgPos = 0;
                     const btn = document.getElementById('btn-crash'); btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
                     btn.onclick = () => this.cashout();
@@ -722,15 +727,12 @@
                         
                         this.mult += step;
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
-                        
                         let speed = 2 + (this.mult * 2);
                         this.bgPos -= speed;
                         if (this.bgPos <= -100) this.bgPos = 0;
                         document.getElementById('crash-bg').style.transform = `translateX(${this.bgPos}%)`;
-                        
                         let floatY = Math.sin(Date.now() / 200) * 8;
                         document.getElementById('crash-rocket').style.transform = `translateY(${floatY}px)`;
-                        
                         btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
                         if(this.mult >= baseLimit) { clearInterval(this.interval); this.explode(); }
                     }, 50);
