@@ -726,75 +726,124 @@
             },
 
             crash: {
-                active: false, mult: 1, bet: 0, interval: null, bgPos: 0,
-                async start() {
-                    if(this.active) return;
-                    const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10;
-                    const btn = document.getElementById('btn-crash');
-                    btn.disabled = true;
+    active: false,
+    mult: 1,
+    bet: 0,
+    interval: null,
+    bgPos: 0,
+    async start() {
+        if (this.active) return;
+        
+        const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10;
+        const btn = document.getElementById('btn-crash');
+        btn.disabled = true;
 
-                    const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    if(user.saldo < b || b <= 0) {
-                        btn.disabled = false;
-                        return UI.notify("Saldo insuficiente", "error");
-                    }
-                    
-                    playSfx('rocket'); 
-                    await Core.updateBalanceDB(-b);
-                    State.balance -= b; 
-                    UI.updateBalance();
+        const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
+        if (!user || user.saldo < b || b <= 0) {
+            btn.disabled = false;
+            return UI.notify("Saldo insuficiente", "error");
+        }
 
-                    this.active = true; this.bet = b; this.mult = 1.0; this.bgPos = 0;
-                    btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
-                    btn.disabled = false;
-                    btn.onclick = () => this.cashout();
-                    
-                    if (Math.random() < 0.15 / State.luckFactor) { this.explode(); return; }
-                    let baseLimit = 1.01 + Math.random() * 0.99; 
-                    
-                    this.interval = setInterval(() => {
-                        this.mult += 0.01;
-                        document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
-                        let speed = 2 + (this.mult * 2);
-                        this.bgPos -= speed;
-                        if (this.bgPos <= -100) this.bgPos = 0;
-                        document.getElementById('crash-bg').style.transform = `translateX(${this.bgPos}%)`;
-                        btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
-                        if(this.mult >= baseLimit) { clearInterval(this.interval); this.explode(); }
-                    }, 50);
-                },
-                async cashout() {
-                    if(!this.active) return;
-                    clearInterval(this.interval);
-                    const win = this.bet * this.mult; 
-                    await Core.updateBalanceDB(win);
-                    State.balance += win; 
-                    playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
-                    this.end(true);
-                },
-                explode() {
-                    clearInterval(this.interval);
-                    playSfx('lose'); UI.notify("¡EXPLOTÓ!", "error");
-                    document.getElementById('crash-mult').classList.add('text-red-500');
-                    document.getElementById('crash-rocket').innerHTML = '💥';
-                    this.end(false);
-                },
-                async end(win) {
-                    const winAmt = win ? (this.bet * this.mult) : 0;
-                    GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
-                    this.active = false; UI.updateBalance();
-                    const btn = document.getElementById('btn-crash');
-                    btn.innerText = "EXPLOTÓ"; btn.disabled = true;
-                    setTimeout(() => {
-                        btn.disabled = false; btn.innerText = "DESPEGAR"; btn.onclick = () => GameLogic.crash.start();
-                        document.getElementById('crash-mult').classList.remove('text-red-500');
-                        document.getElementById('crash-mult').innerText = '1.00x';
-                        document.getElementById('crash-rocket').innerHTML = '🚀';
-                    }, 2500);
-                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR' }]);
-                }
+        // REINICIO DE UI Y SONIDO
+        const rocketImg = document.getElementById('crash-rocket');
+        rocketImg.innerHTML = '🚀'; // Limpia la explosión anterior
+        document.getElementById('crash-mult').classList.remove('text-red-500');
+        document.getElementById('crash-mult').innerText = '1.00x';
+        
+        playSfx('rocket'); 
+        
+        await Core.updateBalanceDB(-b);
+        State.balance -= b;
+        UI.updateBalance();
+
+        this.active = true;
+        this.bet = b;
+        this.mult = 1.0;
+        this.bgPos = 0;
+        
+        btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
+        btn.disabled = false;
+        btn.onclick = () => this.cashout();
+
+        // Lógica de explosión inicial (evita estafas de scripts)
+        if (Math.random() < 0.10 / State.luckFactor) { 
+            this.explode(); 
+            return; 
+        }
+
+        // PROBABILIDAD MEJORADA: Más fácil llegar a x2.00
+        // Ahora el límite base es más generoso según el luckFactor
+        let baseLimit = 1.10 + (Math.random() * 4.0 * State.luckFactor);
+
+        this.interval = setInterval(() => {
+            this.mult += 0.01;
+            document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
+            
+            // ANIMACIÓN DE MOVIMIENTO (El cohete sube)
+            const speed = 2 + (this.mult * 2);
+            this.bgPos -= speed;
+            if (this.bgPos <= -100) this.bgPos = 0;
+            document.getElementById('crash-bg').style.transform = `translateX(${this.bgPos}%)`;
+            
+            // Efecto visual: el cohete sube y flota un poco
+            const peak = Math.min((this.mult - 1) * 40, 100); // Límite de altura
+            rocketImg.style.transform = `translateY(-${peak}px) rotate(${(this.mult - 1) * 10}deg)`;
+
+            btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
+
+            if (this.mult >= baseLimit) {
+                clearInterval(this.interval);
+                this.explode();
             }
-        };
+        }, 50);
+    },
+    async cashout() {
+        if (!this.active) return;
+        clearInterval(this.interval);
+        const win = this.bet * this.mult;
+        await Core.updateBalanceDB(win);
+        State.balance += win;
+        playSfx('win');
+        playSfx('winExtra');
+        UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
+        this.end(true);
+    },
+    explode() {
+        clearInterval(this.interval);
+        playSfx('lose');
+        UI.notify("¡EXPLOTÓ!", "error");
+        document.getElementById('crash-mult').classList.add('text-red-500');
+        document.getElementById('crash-rocket').innerHTML = '💥';
+        // Reset de posición al explotar
+        document.getElementById('crash-rocket').style.transform = 'translateY(0) rotate(0deg)';
+        this.end(false);
+    },
+    async end(win) {
+        const winAmt = win ? (this.bet * this.mult) : 0;
+        GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
+        this.active = false;
+        UI.updateBalance();
+        const btn = document.getElementById('btn-crash');
+        btn.innerText = "EXPLOTÓ";
+        btn.disabled = true;
+        
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerText = "DESPEGAR";
+            btn.onclick = () => GameLogic.crash.start();
+            document.getElementById('crash-mult').classList.remove('text-red-500');
+            document.getElementById('crash-mult').innerText = '1.00x';
+            document.getElementById('crash-rocket').innerHTML = '🚀';
+        }, 2500);
+        
+        await sb.from('history').insert([{
+            user_id: State.user.id,
+            type: 'bets',
+            amount: win ? (winAmt - this.bet) : -this.bet,
+            label: 'AVIATOR'
+        }]);
+    }
+}
 
         Core.init();
     </script>
