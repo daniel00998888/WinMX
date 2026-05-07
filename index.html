@@ -609,7 +609,7 @@
                 },
                 async start() {
                     if(this.active) return;
-                    this.active = true; 
+                    this.active = true; // Bloqueo inmediato
                     
                     const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 10;
                     const btn = document.getElementById('btn-mines-start');
@@ -681,7 +681,7 @@
                 },
                 async start() {
                     if(this.active) return;
-                    this.active = true; 
+                    this.active = true; // Bloqueo inmediato
                     
                     const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10;
                     const btn = document.getElementById('btn-tower-start');
@@ -733,7 +733,7 @@
                 active: false, mult: 1, bet: 0, interval: null, bgPos: 0,
                 async start() {
                     if(this.active) return;
-                    this.active = true; 
+                    this.active = true; // Bloqueo inmediato
                     
                     const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10;
                     const btn = document.getElementById('btn-crash');
@@ -746,9 +746,8 @@
                         return UI.notify("Saldo insuficiente", "error");
                     }
                     
-                    // REINICIO DE UI AVIATOR
-                    const rocketContainer = document.getElementById('crash-rocket-container');
-                    rocketContainer.innerHTML = '<div id="crash-rocket">🚀</div>';
+                    const rocketCont = document.getElementById('crash-rocket-container');
+                    rocketCont.innerHTML = '<div id="crash-rocket">🚀</div>';
                     document.getElementById('crash-mult').classList.remove('text-red-500');
                     document.getElementById('crash-mult').innerText = '1.00x';
                     
@@ -790,7 +789,6 @@
                     playSfx('lose'); UI.notify("¡EXPLOTÓ!", "error");
                     document.getElementById('crash-mult').classList.add('text-red-500');
                     document.getElementById('crash-rocket').innerHTML = '💥';
-                    document.getElementById('crash-rocket').style.transform = 'translateY(0)';
                     this.end(false);
                 },
                 async end(win) {
@@ -803,7 +801,6 @@
                         btn.disabled = false; btn.innerText = "DESPEGAR"; btn.onclick = () => GameLogic.crash.start();
                         document.getElementById('crash-mult').classList.remove('text-red-500');
                         document.getElementById('crash-mult').innerText = '1.00x';
-                        document.getElementById('crash-rocket').innerHTML = '🚀';
                     }, 2500);
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR' }]);
                 }
