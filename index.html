@@ -727,48 +727,50 @@
 
             crash: {
                 active: false, mult: 1, bet: 0, interval: null, bgPos: 0,
-                async start() {
+                start() {
                     if(this.active) return;
                     const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10;
-                    const btn = document.getElementById('btn-crash');
-                    btn.disabled = true;
-
-                    const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    if(user.saldo < b || b <= 0) {
-                        btn.disabled = false;
-                        return UI.notify("Saldo insuficiente", "error");
-                    }
-                    
-                    playSfx('rocket'); 
-                    await Core.updateBalanceDB(-b);
-                    State.balance -= b; 
-                    UI.updateBalance();
-
+                    if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
+                    playSfx('rocket'); State.balance -= b; UI.updateBalance();
                     this.active = true; this.bet = b; this.mult = 1.0; this.bgPos = 0;
-                    btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
-                    btn.disabled = false;
+                    const btn = document.getElementById('btn-crash'); btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
                     btn.onclick = () => this.cashout();
                     
                     if (Math.random() < 0.15 / State.luckFactor) { this.explode(); return; }
-                    let baseLimit = 1.01 + Math.random() * 0.99; 
+                    let baseLimit;
+                    const rng = Math.random();
+                    if (rng < 0.01) baseLimit = 100 + Math.random() * 400; 
+                    else if (rng < 0.05) baseLimit = 20 + Math.random() * 80; 
+                    else if (rng < 0.20) baseLimit = 2 + Math.random() * 18; 
+                    else baseLimit = 1.01 + Math.random() * 0.99; 
+                    if (State.luckFactor < 0.5) baseLimit = 1.01 + Math.random() * 0.05; 
                     
                     this.interval = setInterval(() => {
-                        this.mult += 0.01;
+                        let step = 0.01;
+                        if (this.mult >= 2) step = 0.02;
+                        if (this.mult >= 5) step = 0.05;
+                        if (this.mult >= 10) step = 0.08;
+                        if (this.mult >= 20) step = 0.15;
+                        
+                        this.mult += step;
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
+                        
                         let speed = 2 + (this.mult * 2);
                         this.bgPos -= speed;
                         if (this.bgPos <= -100) this.bgPos = 0;
                         document.getElementById('crash-bg').style.transform = `translateX(${this.bgPos}%)`;
+                        
+                        let floatY = Math.sin(Date.now() / 200) * 8;
+                        document.getElementById('crash-rocket').style.transform = `translateY(${floatY}px)`;
+                        
                         btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
                         if(this.mult >= baseLimit) { clearInterval(this.interval); this.explode(); }
                     }, 50);
                 },
-                async cashout() {
+                cashout() {
                     if(!this.active) return;
                     clearInterval(this.interval);
-                    const win = this.bet * this.mult; 
-                    await Core.updateBalanceDB(win);
-                    State.balance += win; 
+                    const win = this.bet * this.mult; State.balance += win; 
                     playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
                     this.end(true);
                 },
@@ -777,6 +779,7 @@
                     playSfx('lose'); UI.notify("¡EXPLOTÓ!", "error");
                     document.getElementById('crash-mult').classList.add('text-red-500');
                     document.getElementById('crash-rocket').innerHTML = '💥';
+                    document.getElementById('crash-rocket').style.transform = 'translateY(0)';
                     this.end(false);
                 },
                 async end(win) {
@@ -790,12 +793,13 @@
                         document.getElementById('crash-mult').classList.remove('text-red-500');
                         document.getElementById('crash-mult').innerText = '1.00x';
                         document.getElementById('crash-rocket').innerHTML = '🚀';
+                        document.getElementById('crash-rocket').style.transform = 'translateY(0)';
                     }, 2500);
+                    await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR' }]);
                 }
             }
         };
-
         Core.init();
     </script>
 </body>
