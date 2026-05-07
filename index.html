@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -279,15 +280,16 @@
                     return UI.notify("Completa todos los campos", "error");
                 }
 
-                if(State.currentTx === 'withdrawal' && State.balance < amount) {
-                    return UI.notify("Saldo insuficiente", "error");
-                }
-
                 const btn = document.getElementById('btn-confirm-dep');
                 btn.disabled = true;
                 btn.innerText = "PROCESANDO...";
 
                 try {
+                    const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
+                    if(State.currentTx === 'withdrawal' && user.saldo < amount) {
+                        throw new Error("Saldo insuficiente");
+                    }
+
                     let evidence_url = null;
 
                     if(State.currentTx === 'deposit') {
@@ -516,22 +518,25 @@
                     }); 
                 },
                 async play() {
-                    // BLOQUEO ANTICLICK
+                    // BLOQUEO SÍNCRONO INMEDIATO
                     if(State.isSpinning) return;
+                    State.isSpinning = true; 
                     
                     const betVal = Math.abs(parseFloat(document.getElementById('slots-bet-input').value)) || 10;
-                    
-                    // VALIDACIÓN DE SALDO REAL
-                    const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    if(user.saldo < betVal || betVal <= 0) return UI.notify("Saldo insuficiente", "error");
-                    
-                    State.isSpinning = true; 
                     const btn = document.getElementById('btn-slots-play');
-                    btn.disabled = true; 
+                    btn.disabled = true;
+
+                    // Validación de saldo real desde el servidor
+                    const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
+                    if(!user || user.saldo < betVal || betVal <= 0) {
+                        State.isSpinning = false;
+                        btn.disabled = false;
+                        return UI.notify("Saldo insuficiente", "error");
+                    }
                     
                     playSfx('spin'); 
                     
-                    // RESTAR ATÓMICAMENTE
+                    // COBRAR ANTES DE LA ANIMACIÓN
                     await Core.updateBalanceDB(-betVal);
                     State.balance -= betVal;
                     UI.updateBalance();
@@ -582,7 +587,7 @@
                             UI.notify(`¡${result[0]} PREMIO x${this.prizes[result[0]].mult}! $${win.toFixed(2)}`, "success"); 
                         } else { 
                             playSfx('lose'); 
-                            UI.notify("SUERTE PARA LA PRÓXIMA", "error"); 
+                            UI.notify("CASI...", "error"); 
                         }
                         
                         UI.updateBalance(); 
@@ -604,13 +609,15 @@
                 },
                 async start() {
                     if(this.active) return;
-                    const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 10;
+                    this.active = true; 
                     
+                    const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 10;
                     const btn = document.getElementById('btn-mines-start');
                     btn.disabled = true;
 
                     const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    if(user.saldo < b || b <= 0) {
+                    if(!user || user.saldo < b || b <= 0) {
+                        this.active = false;
                         btn.disabled = false;
                         return UI.notify("Saldo insuficiente", "error");
                     }
@@ -620,7 +627,7 @@
                     State.balance -= b; 
                     UI.updateBalance();
                     
-                    this.active = true; this.bet = b; this.mult = 1; this.revealed = [];
+                    this.revealed = [];
                     this.mines = []; while(this.mines.length < 3) { let r = Math.floor(Math.random()*25); if(!this.mines.includes(r)) this.mines.push(r); }
                     document.getElementById('mines-controls').classList.add('hidden-view');
                     document.getElementById('mines-status').classList.remove('hidden-view');
@@ -674,12 +681,15 @@
                 },
                 async start() {
                     if(this.active) return;
+                    this.active = true; 
+                    
                     const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10;
                     const btn = document.getElementById('btn-tower-start');
                     btn.disabled = true;
 
                     const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    if(user.saldo < b || b <= 0) {
+                    if(!user || user.saldo < b || b <= 0) {
+                        this.active = false;
                         btn.disabled = false;
                         return UI.notify("Saldo insuficiente", "error");
                     }
@@ -689,7 +699,7 @@
                     State.balance -= b; 
                     UI.updateBalance();
 
-                    this.active = true; this.bet = b; this.level = 0; this.mult = 1;
+                    this.level = 0; this.mult = 1;
                     this.drawTower(); document.getElementById('tower-row-0').classList.remove('opacity-30');
                     document.getElementById('tower-controls').classList.add('hidden-view');
                     const cbtn = document.getElementById('tower-cashout-btn'); cbtn.classList.remove('hidden-view'); cbtn.innerText = `COBRAR $0.00`;
@@ -723,22 +733,31 @@
                 active: false, mult: 1, bet: 0, interval: null, bgPos: 0,
                 async start() {
                     if(this.active) return;
+                    this.active = true; 
+                    
                     const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10;
                     const btn = document.getElementById('btn-crash');
                     btn.disabled = true;
 
                     const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    if(user.saldo < b || b <= 0) {
+                    if(!user || user.saldo < b || b <= 0) {
+                        this.active = false;
                         btn.disabled = false;
                         return UI.notify("Saldo insuficiente", "error");
                     }
+                    
+                    // REINICIO DE UI AVIATOR
+                    const rocketContainer = document.getElementById('crash-rocket-container');
+                    rocketContainer.innerHTML = '<div id="crash-rocket">🚀</div>';
+                    document.getElementById('crash-mult').classList.remove('text-red-500');
+                    document.getElementById('crash-mult').innerText = '1.00x';
                     
                     playSfx('rocket'); 
                     await Core.updateBalanceDB(-b);
                     State.balance -= b; 
                     UI.updateBalance();
 
-                    this.active = true; this.bet = b; this.mult = 1.0; this.bgPos = 0;
+                    this.mult = 1.0; this.bgPos = 0;
                     btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
                     btn.disabled = false;
                     btn.onclick = () => this.cashout();
@@ -771,6 +790,7 @@
                     playSfx('lose'); UI.notify("¡EXPLOTÓ!", "error");
                     document.getElementById('crash-mult').classList.add('text-red-500');
                     document.getElementById('crash-rocket').innerHTML = '💥';
+                    document.getElementById('crash-rocket').style.transform = 'translateY(0)';
                     this.end(false);
                 },
                 async end(win) {
