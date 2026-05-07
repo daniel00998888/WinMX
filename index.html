@@ -516,18 +516,24 @@
                     }); 
                 },
                 async play() {
-                    // BLOQUEO ANTICLICK
-                    if(State.isSpinning) return;
+                    // --- BLOQUEO SÍNCRONO INMEDIATO (SOLUCIÓN) ---
+                    if (State.isSpinning) return;
+                    State.isSpinning = true; 
                     
+                    const btn = document.getElementById('btn-slots-play');
+                    if (btn) btn.disabled = true; 
+                    // ---------------------------------------------
+
                     const betVal = Math.abs(parseFloat(document.getElementById('slots-bet-input').value)) || 10;
                     
-                    // VALIDACIÓN DE SALDO REAL
-                    const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    if(user.saldo < betVal || betVal <= 0) return UI.notify("Saldo insuficiente", "error");
+                    // VALIDACIÓN DE SALDO REAL DESDE EL SERVIDOR
+                    const { data: user, error: userError } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
                     
-                    State.isSpinning = true; 
-                    const btn = document.getElementById('btn-slots-play');
-                    btn.disabled = true; 
+                    if(userError || !user || user.saldo < betVal || betVal <= 0) {
+                        State.isSpinning = false;
+                        if (btn) btn.disabled = false;
+                        return UI.notify("Saldo insuficiente o error de conexión", "error");
+                    }
                     
                     playSfx('spin'); 
                     
@@ -590,7 +596,7 @@
                         await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -betVal, label: 'SLOTS' }]);
                         
                         State.isSpinning = false; 
-                        btn.disabled = false;
+                        if (btn) btn.disabled = false;
                     }, 3600);
                 }
             },
