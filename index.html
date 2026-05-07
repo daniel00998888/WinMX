@@ -279,15 +279,16 @@
                     return UI.notify("Completa todos los campos", "error");
                 }
 
-                if(State.currentTx === 'withdrawal' && State.balance < amount) {
-                    return UI.notify("Saldo insuficiente", "error");
-                }
-
                 const btn = document.getElementById('btn-confirm-dep');
                 btn.disabled = true;
                 btn.innerText = "PROCESANDO...";
 
                 try {
+                    const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
+                    if(State.currentTx === 'withdrawal' && user.saldo < amount) {
+                        throw new Error("Saldo insuficiente");
+                    }
+
                     let evidence_url = null;
 
                     if(State.currentTx === 'deposit') {
@@ -516,28 +517,21 @@
                     }); 
                 },
                 async play() {
-                    // --- BLOQUEO SÍNCRONO INMEDIATO (SOLUCIÓN) ---
-                    if (State.isSpinning) return;
+                    if(State.isSpinning) return;
                     State.isSpinning = true; 
                     
-                    const btn = document.getElementById('btn-slots-play');
-                    if (btn) btn.disabled = true; 
-                    // ---------------------------------------------
-
                     const betVal = Math.abs(parseFloat(document.getElementById('slots-bet-input').value)) || 10;
-                    
-                    // VALIDACIÓN DE SALDO REAL DESDE EL SERVIDOR
-                    const { data: user, error: userError } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    
-                    if(userError || !user || user.saldo < betVal || betVal <= 0) {
+                    const btn = document.getElementById('btn-slots-play');
+                    btn.disabled = true;
+
+                    const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
+                    if(!user || user.saldo < betVal || betVal <= 0) {
                         State.isSpinning = false;
-                        if (btn) btn.disabled = false;
-                        return UI.notify("Saldo insuficiente o error de conexión", "error");
+                        btn.disabled = false;
+                        return UI.notify("Saldo insuficiente", "error");
                     }
                     
                     playSfx('spin'); 
-                    
-                    // RESTAR ATÓMICAMENTE
                     await Core.updateBalanceDB(-betVal);
                     State.balance -= betVal;
                     UI.updateBalance();
@@ -596,7 +590,7 @@
                         await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -betVal, label: 'SLOTS' }]);
                         
                         State.isSpinning = false; 
-                        if (btn) btn.disabled = false;
+                        btn.disabled = false;
                     }, 3600);
                 }
             },
@@ -610,13 +604,15 @@
                 },
                 async start() {
                     if(this.active) return;
-                    const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 10;
+                    this.active = true; 
                     
+                    const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 10;
                     const btn = document.getElementById('btn-mines-start');
                     btn.disabled = true;
 
                     const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    if(user.saldo < b || b <= 0) {
+                    if(!user || user.saldo < b || b <= 0) {
+                        this.active = false;
                         btn.disabled = false;
                         return UI.notify("Saldo insuficiente", "error");
                     }
@@ -626,7 +622,7 @@
                     State.balance -= b; 
                     UI.updateBalance();
                     
-                    this.active = true; this.bet = b; this.mult = 1; this.revealed = [];
+                    this.revealed = [];
                     this.mines = []; while(this.mines.length < 3) { let r = Math.floor(Math.random()*25); if(!this.mines.includes(r)) this.mines.push(r); }
                     document.getElementById('mines-controls').classList.add('hidden-view');
                     document.getElementById('mines-status').classList.remove('hidden-view');
@@ -680,12 +676,15 @@
                 },
                 async start() {
                     if(this.active) return;
+                    this.active = true; 
+                    
                     const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10;
                     const btn = document.getElementById('btn-tower-start');
                     btn.disabled = true;
 
                     const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    if(user.saldo < b || b <= 0) {
+                    if(!user || user.saldo < b || b <= 0) {
+                        this.active = false;
                         btn.disabled = false;
                         return UI.notify("Saldo insuficiente", "error");
                     }
@@ -695,7 +694,7 @@
                     State.balance -= b; 
                     UI.updateBalance();
 
-                    this.active = true; this.bet = b; this.level = 0; this.mult = 1;
+                    this.level = 0; this.mult = 1;
                     this.drawTower(); document.getElementById('tower-row-0').classList.remove('opacity-30');
                     document.getElementById('tower-controls').classList.add('hidden-view');
                     const cbtn = document.getElementById('tower-cashout-btn'); cbtn.classList.remove('hidden-view'); cbtn.innerText = `COBRAR $0.00`;
@@ -729,36 +728,56 @@
                 active: false, mult: 1, bet: 0, interval: null, bgPos: 0,
                 async start() {
                     if(this.active) return;
+                    this.active = true; 
+                    
                     const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10;
                     const btn = document.getElementById('btn-crash');
                     btn.disabled = true;
 
                     const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    if(user.saldo < b || b <= 0) {
+                    if(!user || user.saldo < b || b <= 0) {
+                        this.active = false;
                         btn.disabled = false;
                         return UI.notify("Saldo insuficiente", "error");
                     }
+                    
+                    // REINICIO DE UI AVIATOR
+                    const rocketImg = document.getElementById('crash-rocket');
+                    rocketImg.innerHTML = '🚀';
+                    rocketImg.style.transform = 'translateY(0) rotate(0deg)';
+                    document.getElementById('crash-mult').classList.remove('text-red-500');
+                    document.getElementById('crash-mult').innerText = '1.00x';
                     
                     playSfx('rocket'); 
                     await Core.updateBalanceDB(-b);
                     State.balance -= b; 
                     UI.updateBalance();
 
-                    this.active = true; this.bet = b; this.mult = 1.0; this.bgPos = 0;
+                    this.mult = 1.0; this.bgPos = 0;
                     btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
                     btn.disabled = false;
                     btn.onclick = () => this.cashout();
                     
-                    if (Math.random() < 0.15 / State.luckFactor) { this.explode(); return; }
-                    let baseLimit = 1.01 + Math.random() * 0.99; 
+                    if (Math.random() < 0.10 / State.luckFactor) { this.explode(); return; }
+                    
+                    // PROBABILIDAD MEJORADA: base más alta para favorecer el x2
+                    let baseLimit = 1.15 + (Math.random() * 4.5 * State.luckFactor); 
                     
                     this.interval = setInterval(() => {
                         this.mult += 0.01;
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
+                        
+                        // ANIMACIÓN DE MOVIMIENTO: El cohete sube visualmente
                         let speed = 2 + (this.mult * 2);
                         this.bgPos -= speed;
                         if (this.bgPos <= -100) this.bgPos = 0;
                         document.getElementById('crash-bg').style.transform = `translateX(${this.bgPos}%)`;
+                        
+                        // Efecto de ascenso y flotación
+                        const peak = Math.min((this.mult - 1) * 45, 110);
+                        const float = Math.sin(Date.now() / 200) * 5;
+                        rocketImg.style.transform = `translateY(-${peak + float}px) rotate(${(this.mult - 1) * 8}deg)`;
+
                         btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
                         if(this.mult >= baseLimit) { clearInterval(this.interval); this.explode(); }
                     }, 50);
@@ -777,6 +796,8 @@
                     playSfx('lose'); UI.notify("¡EXPLOTÓ!", "error");
                     document.getElementById('crash-mult').classList.add('text-red-500');
                     document.getElementById('crash-rocket').innerHTML = '💥';
+                    // Reset instantáneo de posición tras explosión
+                    document.getElementById('crash-rocket').style.transform = 'translateY(0) rotate(0deg)';
                     this.end(false);
                 },
                 async end(win) {
