@@ -517,7 +517,6 @@
                     }); 
                 },
                 async play() {
-                    // BLOQUEO INSTANTÁNEO Y SÍNCRONO
                     if(State.isSpinning) return;
                     State.isSpinning = true; 
                     
@@ -525,7 +524,6 @@
                     const btn = document.getElementById('btn-slots-play');
                     btn.disabled = true;
 
-                    // Validación de saldo real desde el servidor antes de continuar
                     const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
                     if(!user || user.saldo < betVal || betVal <= 0) {
                         State.isSpinning = false;
@@ -534,8 +532,6 @@
                     }
                     
                     playSfx('spin'); 
-                    
-                    // RESTA ATÓMICA
                     await Core.updateBalanceDB(-betVal);
                     State.balance -= betVal;
                     UI.updateBalance();
@@ -608,7 +604,7 @@
                 },
                 async start() {
                     if(this.active) return;
-                    this.active = true; // Bloqueo inmediato
+                    this.active = true; 
                     
                     const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 10;
                     const btn = document.getElementById('btn-mines-start');
@@ -680,7 +676,7 @@
                 },
                 async start() {
                     if(this.active) return;
-                    this.active = true; // Bloqueo inmediato
+                    this.active = true; 
                     
                     const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10;
                     const btn = document.getElementById('btn-tower-start');
@@ -732,7 +728,7 @@
                 active: false, mult: 1, bet: 0, interval: null, bgPos: 0,
                 async start() {
                     if(this.active) return;
-                    this.active = true; // Bloqueo inmediato
+                    this.active = true; 
                     
                     const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10;
                     const btn = document.getElementById('btn-crash');
@@ -744,6 +740,12 @@
                         btn.disabled = false;
                         return UI.notify("Saldo insuficiente", "error");
                     }
+                    
+                    // REINICIO DE ANIMACIÓN (Corrección del fuego)
+                    const rocketCont = document.getElementById('crash-rocket-container');
+                    rocketCont.innerHTML = '<div id="crash-rocket">🚀</div>';
+                    document.getElementById('crash-mult').classList.remove('text-red-500');
+                    document.getElementById('crash-mult').innerText = '1.00x';
                     
                     playSfx('rocket'); 
                     await Core.updateBalanceDB(-b);
