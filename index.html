@@ -784,8 +784,7 @@
                         if (this.bgPos <= -100) this.bgPos = 0;
                         document.getElementById('crash-bg').style.transform = `translateX(${this.bgPos}%)`;
 
-                        // ANIMACIÓN DE MOVIMIENTO DEL COHETE (Sube y flota)
-                        const peak = Math.min((this.mult - 1) * 45, 110); // Sube visualmente
+                        // ANIMACIÓN DE MOVIMIENTO DEL COHETE (flota)
                         const float = Math.sin(Date.now() / 200) * 5; // Efecto de balanceo
                         rocket.style.transform = `translateY(-${peak + float}px) rotate(${(this.mult - 1) * 8}deg)`;
 
