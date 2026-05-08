@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -226,7 +227,7 @@
             win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
             winExtra: new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3'),
             lose: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
-            rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3')
+            rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2014-preview.mp3')
         };
         const playSfx = (key) => { if(sfx[key]) { sfx[key].currentTime = 0; sfx[key].play().catch(()=>{}); } };
 
@@ -279,15 +280,16 @@
                     return UI.notify("Completa todos los campos", "error");
                 }
 
-                if(State.currentTx === 'withdrawal' && State.balance < amount) {
-                    return UI.notify("Saldo insuficiente", "error");
-                }
-
                 const btn = document.getElementById('btn-confirm-dep');
                 btn.disabled = true;
                 btn.innerText = "PROCESANDO...";
 
                 try {
+                    const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
+                    if(State.currentTx === 'withdrawal' && user.saldo < amount) {
+                        throw new Error("Saldo insuficiente");
+                    }
+
                     let evidence_url = null;
 
                     if(State.currentTx === 'deposit') {
@@ -516,28 +518,21 @@
                     }); 
                 },
                 async play() {
-                    // --- BLOQUEO SÍNCRONO INMEDIATO (SOLUCIÓN) ---
-                    if (State.isSpinning) return;
+                    if(State.isSpinning) return;
                     State.isSpinning = true; 
                     
-                    const btn = document.getElementById('btn-slots-play');
-                    if (btn) btn.disabled = true; 
-                    // ---------------------------------------------
-
                     const betVal = Math.abs(parseFloat(document.getElementById('slots-bet-input').value)) || 10;
-                    
-                    // VALIDACIÓN DE SALDO REAL DESDE EL SERVIDOR
-                    const { data: user, error: userError } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    
-                    if(userError || !user || user.saldo < betVal || betVal <= 0) {
+                    const btn = document.getElementById('btn-slots-play');
+                    btn.disabled = true;
+
+                    const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
+                    if(!user || user.saldo < betVal || betVal <= 0) {
                         State.isSpinning = false;
-                        if (btn) btn.disabled = false;
-                        return UI.notify("Saldo insuficiente o error de conexión", "error");
+                        btn.disabled = false;
+                        return UI.notify("Saldo insuficiente", "error");
                     }
                     
                     playSfx('spin'); 
-                    
-                    // RESTAR ATÓMICAMENTE
                     await Core.updateBalanceDB(-betVal);
                     State.balance -= betVal;
                     UI.updateBalance();
@@ -596,7 +591,7 @@
                         await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -betVal, label: 'SLOTS' }]);
                         
                         State.isSpinning = false; 
-                        if (btn) btn.disabled = false;
+                        btn.disabled = false;
                     }, 3600);
                 }
             },
@@ -610,13 +605,15 @@
                 },
                 async start() {
                     if(this.active) return;
-                    const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 10;
+                    this.active = true; 
                     
+                    const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 10;
                     const btn = document.getElementById('btn-mines-start');
                     btn.disabled = true;
 
                     const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    if(user.saldo < b || b <= 0) {
+                    if(!user || user.saldo < b || b <= 0) {
+                        this.active = false;
                         btn.disabled = false;
                         return UI.notify("Saldo insuficiente", "error");
                     }
@@ -626,7 +623,7 @@
                     State.balance -= b; 
                     UI.updateBalance();
                     
-                    this.active = true; this.bet = b; this.mult = 1; this.revealed = [];
+                    this.revealed = [];
                     this.mines = []; while(this.mines.length < 3) { let r = Math.floor(Math.random()*25); if(!this.mines.includes(r)) this.mines.push(r); }
                     document.getElementById('mines-controls').classList.add('hidden-view');
                     document.getElementById('mines-status').classList.remove('hidden-view');
@@ -643,8 +640,10 @@
                     if (State.luckFactor > 1.4 && winCount < 3) dynamicFail = 0.01;
                     if (winCount > 1 && Math.random() < dynamicFail) { if (!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); } }
                     this.revealed.push(i); const el = document.getElementById(`m-${i}`);
+                    
                     if(this.mines.includes(i)) {
                         playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500');
+                        this.revealRemainingMines(); // NUEVO: Revelar el resto al perder
                         UI.notify("¡BOMBA!", "error");
                         this.end(false);
                     } else {
@@ -655,6 +654,15 @@
                         document.getElementById('mines-next-hint').innerText = `Siguiente: x${nextVal.toFixed(2)}`;
                         document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                     }
+                },
+                revealRemainingMines() {
+                    this.mines.forEach(m => {
+                        const el = document.getElementById(`m-${m}`);
+                        if (el && !this.revealed.includes(m)) {
+                            el.innerHTML = '💣';
+                            el.classList.add('opacity-50'); // Un poco más transparente para notar que no fue la que tocaste
+                        }
+                    });
                 },
                 async cashout() { if(!this.active) return; const win = this.bet * this.mult; await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
                 async end(win) {
@@ -680,12 +688,15 @@
                 },
                 async start() {
                     if(this.active) return;
+                    this.active = true; 
+                    
                     const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10;
                     const btn = document.getElementById('btn-tower-start');
                     btn.disabled = true;
 
                     const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    if(user.saldo < b || b <= 0) {
+                    if(!user || user.saldo < b || b <= 0) {
+                        this.active = false;
                         btn.disabled = false;
                         return UI.notify("Saldo insuficiente", "error");
                     }
@@ -695,7 +706,7 @@
                     State.balance -= b; 
                     UI.updateBalance();
 
-                    this.active = true; this.bet = b; this.level = 0; this.mult = 1;
+                    this.level = 0; this.mult = 1;
                     this.drawTower(); document.getElementById('tower-row-0').classList.remove('opacity-30');
                     document.getElementById('tower-controls').classList.add('hidden-view');
                     const cbtn = document.getElementById('tower-cashout-btn'); cbtn.classList.remove('hidden-view'); cbtn.innerText = `COBRAR $0.00`;
@@ -800,6 +811,7 @@
                 }
             }
         };
+
         Core.init();
     </script>
 </body>
