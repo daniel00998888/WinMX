@@ -81,7 +81,7 @@
     </div>
 
     <div id="auth-view" class="hidden-view min-h-screen flex items-center justify-center p-6 bg-black">
-        <div id="login-container" class="glass p-8 w-full max-sm text-center animate__animated animate__fadeIn">
+        <div id="login-container" class="glass p-8 w-full max-w-sm text-center animate__animated animate__fadeIn">
             <h2 class="text-3xl font-casino mb-10 italic tracking-tighter">Win<span class="text-emerald-500">MX</span></h2>
             <div class="space-y-4">
                 <input id="login-email" type="email" placeholder="Correo electrónico" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
@@ -90,7 +90,7 @@
                 <button onclick="AuthManager.switchTab('register')" class="w-full py-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-4 underline decoration-emerald-500/50">¿No tienes cuenta? Regístrate</button>
             </div>
         </div>
-        <div id="register-container" class="hidden-view glass p-8 w-full max-sm text-center animate__animated animate__fadeIn">
+        <div id="register-container" class="hidden-view glass p-8 w-full max-w-sm text-center animate__animated animate__fadeIn">
             <h2 class="text-2xl font-casino mb-6 italic tracking-tighter text-emerald-500">Nueva Cuenta</h2>
             <div class="space-y-4 text-left">
                 <input id="reg-email" type="email" placeholder="Correo electrónico" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
@@ -226,7 +226,7 @@
             win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
             winExtra: new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3'),
             lose: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
-            rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3')
+            rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2014-preview.mp3')
         };
         const playSfx = (key) => { if(sfx[key]) { sfx[key].currentTime = 0; sfx[key].play().catch(()=>{}); } };
 
@@ -279,15 +279,16 @@
                     return UI.notify("Completa todos los campos", "error");
                 }
 
-                if(State.currentTx === 'withdrawal' && State.balance < amount) {
-                    return UI.notify("Saldo insuficiente", "error");
-                }
-
                 const btn = document.getElementById('btn-confirm-dep');
                 btn.disabled = true;
                 btn.innerText = "PROCESANDO...";
 
                 try {
+                    const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
+                    if(State.currentTx === 'withdrawal' && user.saldo < amount) {
+                        throw new Error("Saldo insuficiente");
+                    }
+
                     let evidence_url = null;
 
                     if(State.currentTx === 'deposit') {
@@ -603,12 +604,15 @@
                 },
                 async start() {
                     if(this.active) return;
+                    this.active = true; 
+                    
                     const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 10;
                     const btn = document.getElementById('btn-mines-start');
                     btn.disabled = true;
 
                     const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    if(user.saldo < b || b <= 0) {
+                    if(!user || user.saldo < b || b <= 0) {
+                        this.active = false;
                         btn.disabled = false;
                         return UI.notify("Saldo insuficiente", "error");
                     }
@@ -618,7 +622,7 @@
                     State.balance -= b; 
                     UI.updateBalance();
                     
-                    this.active = true; this.bet = b; this.mult = 1; this.revealed = [];
+                    this.revealed = [];
                     this.mines = []; while(this.mines.length < 3) { let r = Math.floor(Math.random()*25); if(!this.mines.includes(r)) this.mines.push(r); }
                     document.getElementById('mines-controls').classList.add('hidden-view');
                     document.getElementById('mines-status').classList.remove('hidden-view');
@@ -637,11 +641,6 @@
                     this.revealed.push(i); const el = document.getElementById(`m-${i}`);
                     if(this.mines.includes(i)) {
                         playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500');
-                        // Revelar las minas restantes
-                        this.mines.forEach(m => {
-                            const mineEl = document.getElementById(`m-${m}`);
-                            if(mineEl && !this.revealed.includes(m)) mineEl.innerHTML = '💣';
-                        });
                         UI.notify("¡BOMBA!", "error");
                         this.end(false);
                     } else {
@@ -677,12 +676,15 @@
                 },
                 async start() {
                     if(this.active) return;
+                    this.active = true; 
+                    
                     const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10;
                     const btn = document.getElementById('btn-tower-start');
                     btn.disabled = true;
 
                     const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    if(user.saldo < b || b <= 0) {
+                    if(!user || user.saldo < b || b <= 0) {
+                        this.active = false;
                         btn.disabled = false;
                         return UI.notify("Saldo insuficiente", "error");
                     }
@@ -692,7 +694,7 @@
                     State.balance -= b; 
                     UI.updateBalance();
 
-                    this.active = true; this.bet = b; this.level = 0; this.mult = 1;
+                    this.level = 0; this.mult = 1;
                     this.drawTower(); document.getElementById('tower-row-0').classList.remove('opacity-30');
                     document.getElementById('tower-controls').classList.add('hidden-view');
                     const cbtn = document.getElementById('tower-cashout-btn'); cbtn.classList.remove('hidden-view'); cbtn.innerText = `COBRAR $0.00`;
@@ -724,50 +726,68 @@
 
             crash: {
                 active: false, mult: 1, bet: 0, interval: null, bgPos: 0,
-                start() {
+                async start() {
                     if(this.active) return;
+                    this.active = true; 
+                    
                     const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10;
-                    if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
-                    playSfx('rocket'); State.balance -= b; UI.updateBalance();
-                    this.active = true; this.bet = b; this.mult = 1.0; this.bgPos = 0;
-                    const btn = document.getElementById('btn-crash'); btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
+                    const btn = document.getElementById('btn-crash');
+                    btn.disabled = true;
+
+                    const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
+                    if(!user || user.saldo < b || b <= 0) {
+                        this.active = false;
+                        btn.disabled = false;
+                        return UI.notify("Saldo insuficiente", "error");
+                    }
+                    
+                    // REINICIO DE UI AVIATOR
+                    const rocketImg = document.getElementById('crash-rocket');
+                    rocketImg.innerHTML = '🚀';
+                    rocketImg.style.transform = 'translateY(0) rotate(0deg)';
+                    document.getElementById('crash-mult').classList.remove('text-red-500');
+                    document.getElementById('crash-mult').innerText = '1.00x';
+                    
+                    playSfx('rocket'); 
+                    await Core.updateBalanceDB(-b);
+                    State.balance -= b; 
+                    UI.updateBalance();
+
+                    this.mult = 1.0; this.bgPos = 0;
+                    btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
+                    btn.disabled = false;
                     btn.onclick = () => this.cashout();
                     
-                    if (Math.random() < 0.15 / State.luckFactor) { this.explode(); return; }
-                    let baseLimit;
-                    const rng = Math.random();
-                    if (rng < 0.01) baseLimit = 100 + Math.random() * 400; 
-                    else if (rng < 0.05) baseLimit = 20 + Math.random() * 80; 
-                    else if (rng < 0.20) baseLimit = 2 + Math.random() * 18; 
-                    else baseLimit = 1.01 + Math.random() * 0.99; 
-                    if (State.luckFactor < 0.5) baseLimit = 1.01 + Math.random() * 0.05; 
+                    if (Math.random() < 0.10 / State.luckFactor) { this.explode(); return; }
+                    
+                    // PROBABILIDAD MEJORADA: base más alta para favorecer el x2
+                    let baseLimit = 1.15 + (Math.random() * 4.5 * State.luckFactor); 
                     
                     this.interval = setInterval(() => {
-                        let step = 0.01;
-                        if (this.mult >= 2) step = 0.02;
-                        if (this.mult >= 5) step = 0.05;
-                        if (this.mult >= 10) step = 0.08;
-                        if (this.mult >= 20) step = 0.15;
-                        
-                        this.mult += step;
+                        this.mult += 0.01;
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
                         
+                        // ANIMACIÓN DE MOVIMIENTO: El cohete sube visualmente
                         let speed = 2 + (this.mult * 2);
                         this.bgPos -= speed;
                         if (this.bgPos <= -100) this.bgPos = 0;
                         document.getElementById('crash-bg').style.transform = `translateX(${this.bgPos}%)`;
                         
-                        let floatY = Math.sin(Date.now() / 200) * 8;
-                        document.getElementById('crash-rocket').style.transform = `translateY(${floatY}px)`;
-                        
+                        // Efecto de ascenso y flotación
+                        const peak = Math.min((this.mult - 1) * 45, 110);
+                        const float = Math.sin(Date.now() / 200) * 5;
+                        rocketImg.style.transform = `translateY(-${peak + float}px) rotate(${(this.mult - 1) * 8}deg)`;
+
                         btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
                         if(this.mult >= baseLimit) { clearInterval(this.interval); this.explode(); }
                     }, 50);
                 },
-                cashout() {
+                async cashout() {
                     if(!this.active) return;
                     clearInterval(this.interval);
-                    const win = this.bet * this.mult; State.balance += win; 
+                    const win = this.bet * this.mult; 
+                    await Core.updateBalanceDB(win);
+                    State.balance += win; 
                     playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
                     this.end(true);
                 },
@@ -776,7 +796,8 @@
                     playSfx('lose'); UI.notify("¡EXPLOTÓ!", "error");
                     document.getElementById('crash-mult').classList.add('text-red-500');
                     document.getElementById('crash-rocket').innerHTML = '💥';
-                    document.getElementById('crash-rocket').style.transform = 'translateY(0)';
+                    // Reset instantáneo de posición tras explosión
+                    document.getElementById('crash-rocket').style.transform = 'translateY(0) rotate(0deg)';
                     this.end(false);
                 },
                 async end(win) {
@@ -790,9 +811,7 @@
                         document.getElementById('crash-mult').classList.remove('text-red-500');
                         document.getElementById('crash-mult').innerText = '1.00x';
                         document.getElementById('crash-rocket').innerHTML = '🚀';
-                        document.getElementById('crash-rocket').style.transform = 'translateY(0)';
                     }, 2500);
-                    await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR' }]);
                 }
             }
