@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -239,7 +240,7 @@
             winHistory: [],
             sessionLoss: 0,
             currentTx: 'deposit',
-            isProcessing: false // Bloqueo de seguridad atómico para cobros y apuestas
+            isProcessing: false 
         };
 
         const Core = {
@@ -404,62 +405,6 @@
             }
         };
 
-        const UI = {
-            updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toFixed(2)}`; },
-            updateProfile() { document.getElementById('user-email-display').innerText = State.user.email; },
-            openModal(id) { playSfx('click'); document.getElementById(id).classList.remove('hidden-view'); },
-            closeModal(id) { playSfx('click'); document.getElementById(id).classList.add('hidden-view'); },
-            toggleAccordion(id) {
-                const el = document.getElementById(id);
-                const arrow = document.getElementById('arrow-' + id);
-                el.classList.toggle('hidden-view');
-                arrow.style.transform = el.classList.contains('hidden-view') ? 'rotate(0deg)' : 'rotate(180deg)';
-            },
-            depNextStep() { 
-                const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value)); 
-                if(isNaN(amt) || amt <= 0) return this.notify("Monto inválido", "error"); 
-                playSfx('click'); 
-                document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`; 
-                document.getElementById('dep-step-1').classList.add('hidden-view'); 
-                document.getElementById('dep-step-2').classList.remove('hidden-view'); 
-            },
-            copyClabe() { 
-                const clabe = document.getElementById('clabe-number').innerText; 
-                navigator.clipboard.writeText(clabe).then(() => { 
-                    playSfx('click'); 
-                    this.notify("CLABE Copiada", "success"); 
-                }); 
-            },
-            handleFile(input) { 
-                if(input.files && input.files[0]) { 
-                    playSfx('click'); 
-                    const label = document.getElementById('file-label'); 
-                    label.innerText = "Archivo: " + input.files[0].name.substring(0, 10) + "..."; 
-                    label.classList.replace('text-zinc-500', 'text-emerald-500');
-                } 
-            },
-            notify(m, t) { 
-                const n = document.createElement('div'); 
-                n.className = `p-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-2xl animate__animated animate__fadeInDown ${t==='success'?'bg-emerald-500 text-black':'bg-red-500 text-white'}`; 
-                n.innerText = m; 
-                document.getElementById('notif-container').appendChild(n); 
-                setTimeout(() => { 
-                    n.classList.replace('animate__fadeInDown', 'animate__fadeOutUp'); 
-                    setTimeout(()=>n.remove(), 500); 
-                }, 3000); 
-            },
-            setTxType(type) {
-                playSfx('click');
-                State.currentTx = type;
-                const isDep = type === 'deposit';
-                document.getElementById('tab-deposit').classList.toggle('active', isDep);
-                document.getElementById('tab-withdrawal').classList.toggle('active', !isDep);
-                document.getElementById('tx-title').innerText = isDep ? 'Monto a cargar' : 'Monto a retirar';
-                document.getElementById('deposit-info').classList.toggle('hidden-view', !isDep);
-                document.getElementById('withdrawal-info').classList.toggle('hidden-view', isDep);
-            }
-        };
-
         const AuthManager = {
             async login() { 
                 const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value; 
@@ -518,7 +463,6 @@
                     }); 
                 },
                 async play() {
-                    // Bloqueo síncrono inmediato
                     if(State.isSpinning || State.isProcessing) return;
                     State.isSpinning = true; 
                     
@@ -606,7 +550,7 @@
                 },
                 async start() {
                     if(this.active || State.isProcessing) return;
-                    this.active = true; 
+                    this.active = true;
                     
                     const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 10;
                     const btn = document.getElementById('btn-mines-start');
@@ -655,6 +599,7 @@
                         document.getElementById('mines-mult').innerText = this.mult.toFixed(2) + 'x';
                         const nextVal = this.multSteps[winCount + 1] || 500.00;
                         document.getElementById('mines-next-hint').innerText = `Siguiente: x${nextVal.toFixed(2)}`;
+                        // CORRECCIÓN: Actualizar monto visual en el botón
                         document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                     }
                 },
@@ -668,10 +613,9 @@
                     });
                 },
                 async cashout() { 
-                    // BLOQUEO ATÓMICO: Evita Race Conditions (duplicación)
-                    if(!this.active || this.mult <= 1 || State.isProcessing) return; 
+                    if(!this.active || this.revealed.length === 0 || State.isProcessing) return; 
                     
-                    State.isProcessing = true; // Bloqueo instantáneo
+                    State.isProcessing = true; 
                     const btn = document.getElementById('mines-cashout-btn');
                     btn.disabled = true;
 
@@ -686,6 +630,7 @@
                         UI.notify("Error de conexión", "error");
                     } finally {
                         State.isProcessing = false;
+                        if(btn) btn.disabled = false;
                     }
                 },
                 async end(win) {
@@ -711,7 +656,7 @@
                 },
                 async start() {
                     if(this.active || State.isProcessing) return;
-                    this.active = true; 
+                    this.active = true;
                     
                     const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10;
                     const btn = document.getElementById('btn-tower-start');
@@ -746,6 +691,7 @@
                     else {
                         playSfx('click'); items[c].innerHTML = '💎'; items[c].classList.add('bg-emerald-500/20', 'border-emerald-500');
                         this.mult = this.towerSteps[this.level]; this.level++;
+                        // CORRECCIÓN: Actualizar monto visual en el botón
                         document.getElementById('tower-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                         if(this.level < 8) document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30'); else this.cashout();
                     }
@@ -782,7 +728,7 @@
                 active: false, mult: 1, bet: 0, interval: null, bgPos: 0,
                 async start() {
                     if(this.active || State.isProcessing) return;
-                    this.active = true; 
+                    this.active = true;
                     
                     const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10;
                     const btn = document.getElementById('btn-crash');
@@ -800,18 +746,28 @@
                     await Core.updateBalanceDB(-b);
                     State.balance -= b; 
                     UI.updateBalance();
-
-                    this.mult = 1.0; this.bgPos = 0;
+                    
+                    this.bet = b; this.mult = 1.0; this.bgPos = 0;
                     btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
                     btn.disabled = false;
                     btn.onclick = () => this.cashout();
                     
                     if (Math.random() < 0.15 / State.luckFactor) { this.explode(); State.isProcessing = false; return; }
-                    let baseLimit = 1.01 + Math.random() * 0.99; 
+                    let baseLimit;
+                    const rng = Math.random();
+                    if (rng < 0.01) baseLimit = 100 + Math.random() * 400; 
+                    else if (rng < 0.05) baseLimit = 20 + Math.random() * 80; 
+                    else if (rng < 0.20) baseLimit = 2 + Math.random() * 18; 
+                    else baseLimit = 1.01 + Math.random() * 0.99; 
+                    if (State.luckFactor < 0.5) baseLimit = 1.01 + Math.random() * 0.05; 
                     
                     State.isProcessing = false;
                     this.interval = setInterval(() => {
-                        this.mult += 0.01;
+                        let step = 0.01;
+                        if (this.mult >= 2) step = 0.02;
+                        if (this.mult >= 5) step = 0.05;
+                        if (this.mult >= 10) step = 0.08;
+                        this.mult += step;
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
                         let speed = 2 + (this.mult * 2);
                         this.bgPos -= speed;
@@ -819,7 +775,10 @@
                         document.getElementById('crash-bg').style.transform = `translateX(${this.bgPos}%)`;
                         let floatY = Math.sin(Date.now() / 200) * 8;
                         document.getElementById('crash-rocket').style.transform = `translateY(${floatY}px)`;
+                        
+                        // CORRECCIÓN: Actualizar monto visual en el botón de Aviator
                         btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
+                        
                         if(this.mult >= baseLimit) { clearInterval(this.interval); this.explode(); }
                     }, 50);
                 },
@@ -827,6 +786,9 @@
                     if(!this.active || this.mult <= 1.0 || State.isProcessing) return;
                     
                     State.isProcessing = true;
+                    const btn = document.getElementById('btn-crash');
+                    btn.disabled = true;
+                    
                     clearInterval(this.interval);
                     const win = this.bet * this.mult; 
                     try {
@@ -843,6 +805,7 @@
                     playSfx('lose'); UI.notify("¡EXPLOTÓ!", "error");
                     document.getElementById('crash-mult').classList.add('text-red-500');
                     document.getElementById('crash-rocket').innerHTML = '💥';
+                    document.getElementById('crash-rocket').style.transform = 'translateY(0)';
                     this.end(false);
                 },
                 async end(win) {
@@ -856,6 +819,7 @@
                         document.getElementById('crash-mult').classList.remove('text-red-500');
                         document.getElementById('crash-mult').innerText = '1.00x';
                         document.getElementById('crash-rocket').innerHTML = '🚀';
+                        document.getElementById('crash-rocket').style.transform = 'translateY(0)';
                     }, 2500);
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR' }]);
                 }
