@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -279,15 +280,16 @@
                     return UI.notify("Completa todos los campos", "error");
                 }
 
-                if(State.currentTx === 'withdrawal' && State.balance < amount) {
-                    return UI.notify("Saldo insuficiente", "error");
-                }
-
                 const btn = document.getElementById('btn-confirm-dep');
                 btn.disabled = true;
                 btn.innerText = "PROCESANDO...";
 
                 try {
+                    const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
+                    if(State.currentTx === 'withdrawal' && user.saldo < amount) {
+                        throw new Error("Saldo insuficiente");
+                    }
+
                     let evidence_url = null;
 
                     if(State.currentTx === 'deposit') {
@@ -516,28 +518,21 @@
                     }); 
                 },
                 async play() {
-                    // --- BLOQUEO SÍNCRONO INMEDIATO (SOLUCIÓN) ---
-                    if (State.isSpinning) return;
+                    if(State.isSpinning) return;
                     State.isSpinning = true; 
                     
-                    const btn = document.getElementById('btn-slots-play');
-                    if (btn) btn.disabled = true; 
-                    // ---------------------------------------------
-
                     const betVal = Math.abs(parseFloat(document.getElementById('slots-bet-input').value)) || 10;
-                    
-                    // VALIDACIÓN DE SALDO REAL DESDE EL SERVIDOR
-                    const { data: user, error: userError } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    
-                    if(userError || !user || user.saldo < betVal || betVal <= 0) {
+                    const btn = document.getElementById('btn-slots-play');
+                    btn.disabled = true;
+
+                    const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
+                    if(!user || user.saldo < betVal || betVal <= 0) {
                         State.isSpinning = false;
-                        if (btn) btn.disabled = false;
-                        return UI.notify("Saldo insuficiente o error de conexión", "error");
+                        btn.disabled = false;
+                        return UI.notify("Saldo insuficiente", "error");
                     }
                     
                     playSfx('spin'); 
-                    
-                    // RESTAR ATÓMICAMENTE
                     await Core.updateBalanceDB(-betVal);
                     State.balance -= betVal;
                     UI.updateBalance();
@@ -596,7 +591,7 @@
                         await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -betVal, label: 'SLOTS' }]);
                         
                         State.isSpinning = false; 
-                        if (btn) btn.disabled = false;
+                        btn.disabled = false;
                     }, 3600);
                 }
             },
@@ -610,13 +605,15 @@
                 },
                 async start() {
                     if(this.active) return;
-                    const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 10;
+                    this.active = true; 
                     
+                    const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 10;
                     const btn = document.getElementById('btn-mines-start');
                     btn.disabled = true;
 
                     const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    if(user.saldo < b || b <= 0) {
+                    if(!user || user.saldo < b || b <= 0) {
+                        this.active = false;
                         btn.disabled = false;
                         return UI.notify("Saldo insuficiente", "error");
                     }
@@ -626,7 +623,7 @@
                     State.balance -= b; 
                     UI.updateBalance();
                     
-                    this.active = true; this.bet = b; this.mult = 1; this.revealed = [];
+                    this.revealed = [];
                     this.mines = []; while(this.mines.length < 3) { let r = Math.floor(Math.random()*25); if(!this.mines.includes(r)) this.mines.push(r); }
                     document.getElementById('mines-controls').classList.add('hidden-view');
                     document.getElementById('mines-status').classList.remove('hidden-view');
@@ -680,12 +677,15 @@
                 },
                 async start() {
                     if(this.active) return;
+                    this.active = true; 
+                    
                     const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10;
                     const btn = document.getElementById('btn-tower-start');
                     btn.disabled = true;
 
                     const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    if(user.saldo < b || b <= 0) {
+                    if(!user || user.saldo < b || b <= 0) {
+                        this.active = false;
                         btn.disabled = false;
                         return UI.notify("Saldo insuficiente", "error");
                     }
@@ -695,7 +695,7 @@
                     State.balance -= b; 
                     UI.updateBalance();
 
-                    this.active = true; this.bet = b; this.level = 0; this.mult = 1;
+                    this.level = 0; this.mult = 1;
                     this.drawTower(); document.getElementById('tower-row-0').classList.remove('opacity-30');
                     document.getElementById('tower-controls').classList.add('hidden-view');
                     const cbtn = document.getElementById('tower-cashout-btn'); cbtn.classList.remove('hidden-view'); cbtn.innerText = `COBRAR $0.00`;
@@ -726,80 +726,126 @@
             },
 
             crash: {
-                active: false, mult: 1, bet: 0, interval: null, bgPos: 0,
-                start() {
-                    if(this.active) return;
+                active: false,
+                mult: 1,
+                bet: 0,
+                interval: null,
+                bgPos: 0,
+                async start() {
+                    if (this.active) return;
+                    this.active = true;
+
                     const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10;
-                    if(State.balance < b || b <= 0) return UI.notify("Saldo insuficiente", "error");
-                    playSfx('rocket'); State.balance -= b; UI.updateBalance();
-                    this.active = true; this.bet = b; this.mult = 1.0; this.bgPos = 0;
-                    const btn = document.getElementById('btn-crash'); btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
+                    const btn = document.getElementById('btn-crash');
+                    btn.disabled = true;
+
+                    const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
+                    if (!user || user.saldo < b || b <= 0) {
+                        this.active = false;
+                        btn.disabled = false;
+                        return UI.notify("Saldo insuficiente", "error");
+                    }
+
+                    // Reset de UI (Limpiar explosión previa y cohete)
+                    const rocket = document.getElementById('crash-rocket');
+                    rocket.innerHTML = '🚀';
+                    rocket.style.transform = 'translateY(0) rotate(0deg)';
+                    document.getElementById('crash-mult').classList.remove('text-red-500');
+                    document.getElementById('crash-mult').innerText = '1.00x';
+
+                    // SONIDO DE DESPEGUE RESTAURADO
+                    playSfx('rocket');
+
+                    // Sincronización atómica (Resta saldo inmediatamente)
+                    await Core.updateBalanceDB(-b);
+                    State.balance -= b;
+                    UI.updateBalance();
+
+                    this.bet = b;
+                    this.mult = 1.0;
+                    this.bgPos = 0;
+
+                    btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
+                    btn.disabled = false;
                     btn.onclick = () => this.cashout();
-                    
-                    if (Math.random() < 0.15 / State.luckFactor) { this.explode(); return; }
-                    let baseLimit;
-                    const rng = Math.random();
-                    if (rng < 0.01) baseLimit = 100 + Math.random() * 400; 
-                    else if (rng < 0.05) baseLimit = 20 + Math.random() * 80; 
-                    else if (rng < 0.20) baseLimit = 2 + Math.random() * 18; 
-                    else baseLimit = 1.01 + Math.random() * 0.99; 
-                    if (State.luckFactor < 0.5) baseLimit = 1.01 + Math.random() * 0.05; 
-                    
+
+                    // PROBABILIDAD MEJORADA PARA x2.00
+                    // Base 1.15 + rango dinámico según luckFactor
+                    let baseLimit = 1.15 + (Math.random() * 4.5 * State.luckFactor);
+                    if (Math.random() < 0.10 / State.luckFactor) baseLimit = 1.0; // Riesgo pequeño de explosión instantánea
+
                     this.interval = setInterval(() => {
-                        let step = 0.01;
-                        if (this.mult >= 2) step = 0.02;
-                        if (this.mult >= 5) step = 0.05;
-                        if (this.mult >= 10) step = 0.08;
-                        if (this.mult >= 20) step = 0.15;
-                        
-                        this.mult += step;
+                        this.mult += 0.01;
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
-                        
+
+                        // ANIMACIÓN DE FONDO INFINITO
                         let speed = 2 + (this.mult * 2);
                         this.bgPos -= speed;
                         if (this.bgPos <= -100) this.bgPos = 0;
                         document.getElementById('crash-bg').style.transform = `translateX(${this.bgPos}%)`;
-                        
-                        let floatY = Math.sin(Date.now() / 200) * 8;
-                        document.getElementById('crash-rocket').style.transform = `translateY(${floatY}px)`;
-                        
+
+                        // ANIMACIÓN DE MOVIMIENTO DEL COHETE (Sube y flota)
+                        const peak = Math.min((this.mult - 1) * 45, 110); // Sube visualmente
+                        const float = Math.sin(Date.now() / 200) * 5; // Efecto de balanceo
+                        rocket.style.transform = `translateY(-${peak + float}px) rotate(${(this.mult - 1) * 8}deg)`;
+
                         btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
-                        if(this.mult >= baseLimit) { clearInterval(this.interval); this.explode(); }
+
+                        if (this.mult >= baseLimit) {
+                            clearInterval(this.interval);
+                            this.explode();
+                        }
                     }, 50);
                 },
-                cashout() {
-                    if(!this.active) return;
+                async cashout() {
+                    if (!this.active) return;
                     clearInterval(this.interval);
-                    const win = this.bet * this.mult; State.balance += win; 
-                    playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
+                    const win = this.bet * this.mult;
+                    await Core.updateBalanceDB(win);
+                    State.balance += win;
+                    playSfx('win');
+                    playSfx('winExtra');
+                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
                     this.end(true);
                 },
                 explode() {
                     clearInterval(this.interval);
-                    playSfx('lose'); UI.notify("¡EXPLOTÓ!", "error");
+                    playSfx('lose');
+                    UI.notify("¡EXPLOTÓ!", "error");
                     document.getElementById('crash-mult').classList.add('text-red-500');
-                    document.getElementById('crash-rocket').innerHTML = '💥';
-                    document.getElementById('crash-rocket').style.transform = 'translateY(0)';
+                    const rocket = document.getElementById('crash-rocket');
+                    rocket.innerHTML = '💥';
+                    rocket.style.transform = 'translateY(0) rotate(0deg)';
                     this.end(false);
                 },
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
                     GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
-                    this.active = false; UI.updateBalance();
+                    this.active = false;
+                    UI.updateBalance();
                     const btn = document.getElementById('btn-crash');
-                    btn.innerText = "EXPLOTÓ"; btn.disabled = true;
+                    btn.innerText = "EXPLOTÓ";
+                    btn.disabled = true;
+
                     setTimeout(() => {
-                        btn.disabled = false; btn.innerText = "DESPEGAR"; btn.onclick = () => GameLogic.crash.start();
+                        btn.disabled = false;
+                        btn.innerText = "DESPEGAR";
+                        btn.onclick = () => GameLogic.crash.start();
                         document.getElementById('crash-mult').classList.remove('text-red-500');
                         document.getElementById('crash-mult').innerText = '1.00x';
                         document.getElementById('crash-rocket').innerHTML = '🚀';
-                        document.getElementById('crash-rocket').style.transform = 'translateY(0)';
                     }, 2500);
-                    await sb.from('usuarios').update({ saldo: State.balance }).eq('id', State.user.id);
-                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR' }]);
+
+                    await sb.from('history').insert([{
+                        user_id: State.user.id,
+                        type: 'bets',
+                        amount: win ? winAmt : -this.bet,
+                        label: 'AVIATOR'
+                    }]);
                 }
             }
         };
+
         Core.init();
     </script>
 </body>
