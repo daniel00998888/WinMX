@@ -736,24 +736,21 @@
                     const btn = document.getElementById('btn-crash'); btn.innerText = `RETIRAR $${this.bet.toFixed(2)}`;
                     btn.onclick = () => this.cashout();
                     
-                    // --- AJUSTE DE PROBABILIDAD (Más posible llegar al x2) ---
-                    if (Math.random() < 0.08 / State.luckFactor) { this.explode(); return; } // Menos probabilidad de explotar en x1.00
-                    
+                    if (Math.random() < 0.15 / State.luckFactor) { this.explode(); return; }
                     let baseLimit;
                     const rng = Math.random();
-                    // Lógica balanceada: 60% de los vuelos ahora buscan superar el x2.00
-                    if (rng < 0.03) baseLimit = 40 + Math.random() * 100;
-                    else if (rng < 0.15) baseLimit = 10 + Math.random() * 20;
-                    else if (rng < 0.75) baseLimit = 1.8 + Math.random() * 4.2; // Alta probabilidad de rango x1.8 - x6.0
-                    else baseLimit = 1.1 + Math.random() * 0.7;
-                    
-                    if (State.luckFactor < 0.5) baseLimit = 1.01 + Math.random() * 0.05;
+                    if (rng < 0.01) baseLimit = 100 + Math.random() * 400; 
+                    else if (rng < 0.05) baseLimit = 20 + Math.random() * 80; 
+                    else if (rng < 0.20) baseLimit = 2 + Math.random() * 18; 
+                    else baseLimit = 1.01 + Math.random() * 0.99; 
+                    if (State.luckFactor < 0.5) baseLimit = 1.01 + Math.random() * 0.05; 
                     
                     this.interval = setInterval(() => {
-                        // --- AJUSTE DE VELOCIDAD (Subida más constante y fluida) ---
                         let step = 0.01;
-                        if (this.mult >= 2.5) step = 0.03; // Acelera un poco tras pasar el x2.5
-                        if (this.mult >= 8) step = 0.08;
+                        if (this.mult >= 2) step = 0.02;
+                        if (this.mult >= 5) step = 0.05;
+                        if (this.mult >= 10) step = 0.08;
+                        if (this.mult >= 20) step = 0.15;
                         
                         this.mult += step;
                         document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
@@ -768,7 +765,7 @@
                         
                         btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
                         if(this.mult >= baseLimit) { clearInterval(this.interval); this.explode(); }
-                    }, 65); // 65ms para una sensación de velocidad más realista y menos "saltada"
+                    }, 50);
                 },
                 cashout() {
                     if(!this.active) return;
@@ -802,6 +799,7 @@
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR' }]);
                 }
             }
+        };
         Core.init();
     </script>
 </body>
