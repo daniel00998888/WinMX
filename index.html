@@ -409,62 +409,6 @@
             }
         };
 
-        const UI = {
-            updateBalance() { document.getElementById('balance-display').innerText = `$${State.balance.toFixed(2)}`; },
-            updateProfile() { document.getElementById('user-email-display').innerText = State.user.email; },
-            openModal(id) { if(State.isProcessing) return; playSfx('click'); document.getElementById(id).classList.remove('hidden-view'); },
-            closeModal(id) { playSfx('click'); document.getElementById(id).classList.add('hidden-view'); },
-            toggleAccordion(id) {
-                const el = document.getElementById(id);
-                const arrow = document.getElementById('arrow-' + id);
-                el.classList.toggle('hidden-view');
-                arrow.style.transform = el.classList.contains('hidden-view') ? 'rotate(180deg)' : 'rotate(0deg)';
-            },
-            depNextStep() { 
-                const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value)); 
-                if(isNaN(amt) || amt <= 0) return this.notify("Monto inválido", "error"); 
-                playSfx('click'); 
-                document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`; 
-                document.getElementById('dep-step-1').classList.add('hidden-view'); 
-                document.getElementById('dep-step-2').classList.remove('hidden-view'); 
-            },
-            copyClabe() { 
-                const clabe = document.getElementById('clabe-number').innerText; 
-                navigator.clipboard.writeText(clabe).then(() => { 
-                    playSfx('click'); 
-                    this.notify("CLABE Copiada", "success"); 
-                }); 
-            },
-            handleFile(input) { 
-                if(input.files && input.files[0]) { 
-                    playSfx('click'); 
-                    const label = document.getElementById('file-label'); 
-                    label.innerText = "Archivo: " + input.files[0].name.substring(0, 10) + "..."; 
-                    label.classList.replace('text-zinc-500', 'text-emerald-500');
-                } 
-            },
-            notify(m, t) { 
-                const n = document.createElement('div'); 
-                n.className = `p-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-2xl animate__animated animate__fadeInDown ${t==='success'?'bg-emerald-500 text-black':'bg-red-500 text-white'}`; 
-                n.innerText = m; 
-                document.getElementById('notif-container').appendChild(n); 
-                setTimeout(() => { 
-                    n.classList.replace('animate__fadeInDown', 'animate__fadeOutUp'); 
-                    setTimeout(()=>n.remove(), 500); 
-                }, 3000); 
-            },
-            setTxType(type) {
-                playSfx('click');
-                State.currentTx = type;
-                const isDep = type === 'deposit';
-                document.getElementById('tab-deposit').classList.toggle('active', isDep);
-                document.getElementById('tab-withdrawal').classList.toggle('active', !isDep);
-                document.getElementById('tx-title').innerText = isDep ? 'Monto a cargar' : 'Monto a retirar';
-                document.getElementById('deposit-info').classList.toggle('hidden-view', !isDep);
-                document.getElementById('withdrawal-info').classList.toggle('hidden-view', isDep);
-            }
-        };
-
         const AuthManager = {
             async login() { 
                 if(State.isProcessing) return;
@@ -646,8 +590,12 @@
                     document.getElementById('mines-status').classList.remove('hidden-view');
                     document.getElementById('mines-mult').innerText = '1.00x';
                     document.getElementById('mines-next-hint').innerText = `Siguiente: x${this.multSteps[0].toFixed(2)}`;
-                    document.getElementById('mines-cashout-btn').innerText = `COBRAR $0.00`;
-                    document.getElementById('mines-cashout-btn').disabled = false;
+                    
+                    // ACTUALIZACIÓN: Cobrar dice el monto apostado inicialmente
+                    const cashbtn = document.getElementById('mines-cashout-btn');
+                    cashbtn.innerText = `COBRAR $${this.bet.toFixed(2)}`;
+                    cashbtn.disabled = false;
+                    
                     this.drawGrid();
                     State.isProcessing = false;
                     btn.disabled = false;
@@ -684,7 +632,7 @@
                     });
                 },
                 async cashout() { 
-                    if(!this.active || this.revealed.length === 0 || State.isProcessing) return; 
+                    if(!this.active || State.isProcessing) return; 
                     
                     State.isProcessing = true; 
                     const btn = document.getElementById('mines-cashout-btn');
@@ -701,6 +649,7 @@
                         UI.notify("Error de conexión", "error");
                     } finally {
                         State.isProcessing = false;
+                        if(btn) btn.disabled = false;
                     }
                 },
                 async end(win) {
@@ -757,7 +706,10 @@
                     const cbtn = document.getElementById('tower-cashout-btn'); 
                     cbtn.classList.remove('hidden-view'); 
                     cbtn.disabled = false;
-                    cbtn.innerText = `COBRAR $0.00`;
+                    
+                    // ACTUALIZACIÓN: Cobrar dice el monto apostado inicialmente
+                    cbtn.innerText = `COBRAR $${this.bet.toFixed(2)}`;
+                    
                     State.isProcessing = false;
                     btn.disabled = false;
                 },
@@ -779,7 +731,7 @@
                     }
                 },
                 async cashout() { 
-                    if(!this.active || this.level === 0 || State.isProcessing) return; 
+                    if(!this.active || State.isProcessing) return; 
                     
                     State.isProcessing = true;
                     const btn = document.getElementById('tower-cashout-btn');
