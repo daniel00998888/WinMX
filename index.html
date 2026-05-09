@@ -240,7 +240,7 @@
             winHistory: [],
             sessionLoss: 0,
             currentTx: 'deposit',
-            isProcessing: false // Bloqueo global síncrono
+            isProcessing: false 
         };
 
         const Core = {
@@ -527,7 +527,6 @@
                     }); 
                 },
                 async play() {
-                    // BLOQUEO SÍNCRONO INMEDIATO
                     if(State.isSpinning || State.isProcessing) return;
                     State.isSpinning = true;
                     State.isProcessing = true;
@@ -536,7 +535,6 @@
                     const btn = document.getElementById('btn-slots-play');
                     btn.disabled = true;
 
-                    // Validación real en el servidor
                     const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
                     if(!user || user.saldo < betVal || betVal <= 0) {
                         State.isSpinning = false;
@@ -618,7 +616,6 @@
                     for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/5 border border-white/5 rounded-lg flex items-center justify-center text-xl cursor-pointer active:scale-90 transition-all"></div>`;
                 },
                 async start() {
-                    // BLOQUEO SÍNCRONO INMEDIATO
                     if(this.active || State.isProcessing) return;
                     this.active = true;
                     State.isProcessing = true;
@@ -661,25 +658,33 @@
                     
                     if(this.mines.includes(i)) {
                         playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500');
-                        this.mines.forEach(m => {
-                            const mineEl = document.getElementById(`m-${m}`);
-                            if(mineEl && !this.revealed.includes(m)) mineEl.innerHTML = '💣';
-                        });
+                        this.revealRemainingMines();
                         UI.notify("¡BOMBA!", "error");
                         this.end(false);
                     } else {
                         playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500');
                         this.mult = this.multSteps[winCount] || 500.00;
                         document.getElementById('mines-mult').innerText = this.mult.toFixed(2) + 'x';
-                        const nextVal = this.multSteps[winCount + 1] || 500.00;
+                        const nextVal = this.multSteps[this.revealed.length] || 500.00;
                         document.getElementById('mines-next-hint').innerText = `Siguiente: x${nextVal.toFixed(2)}`;
                         document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                     }
                 },
+                revealRemainingMines() {
+                    this.mines.forEach(m => {
+                        const el = document.getElementById(`m-${m}`);
+                        if (el && !this.revealed.includes(m)) {
+                            el.innerHTML = '💣';
+                            el.classList.add('opacity-50');
+                        }
+                    });
+                },
                 async cashout() { 
                     if(!this.active || this.revealed.length === 0 || State.isProcessing) return; 
-                    State.isProcessing = true;
-                    document.getElementById('mines-cashout-btn').disabled = true;
+                    
+                    State.isProcessing = true; 
+                    const btn = document.getElementById('mines-cashout-btn');
+                    btn.disabled = true;
 
                     const win = this.bet * this.mult; 
                     try {
@@ -688,6 +693,8 @@
                         playSfx('win'); playSfx('winExtra'); 
                         UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
                         await this.end(true); 
+                    } catch(e) {
+                        UI.notify("Error de conexión", "error");
                     } finally {
                         State.isProcessing = false;
                     }
@@ -752,15 +759,18 @@
                     if(isBomb) { playSfx('lose'); items[c].innerHTML = '💣'; UI.notify("PERDISTE", "error"); this.end(false); } 
                     else {
                         playSfx('click'); items[c].innerHTML = '💎'; items[c].classList.add('bg-emerald-500/20', 'border-emerald-500');
-                        this.mult = this.towerSteps[this.level]; this.level++;
+                        this.mult = this.towerSteps[this.level]; 
+                        this.level++;
                         document.getElementById('tower-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                         if(this.level < 8) document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30'); else this.cashout();
                     }
                 },
                 async cashout() { 
                     if(!this.active || this.level === 0 || State.isProcessing) return; 
+                    
                     State.isProcessing = true;
-                    document.getElementById('tower-cashout-btn').disabled = true;
+                    const btn = document.getElementById('tower-cashout-btn');
+                    btn.disabled = true;
 
                     const win = this.bet * this.mult; 
                     try {
@@ -807,13 +817,14 @@
                     State.balance -= b; 
                     UI.updateBalance();
                     
-                    this.mult = 1.0; this.bgPos = 0;
+                    this.bet = b; this.mult = 1.0; this.bgPos = 0;
                     btn.innerText = `RETIRAR $${(b).toFixed(2)}`;
                     btn.disabled = false;
                     btn.onclick = () => this.cashout();
                     
                     if (Math.random() < 0.15 / State.luckFactor) { this.explode(); State.isProcessing = false; return; }
                     let baseLimit = 1.01 + Math.random() * 0.99; 
+                    if (Math.random() < 0.05) baseLimit = 2 + Math.random() * 10;
                     
                     State.isProcessing = false;
                     this.interval = setInterval(() => {
