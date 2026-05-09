@@ -217,6 +217,7 @@
     <div id="notif-container" class="fixed top-6 left-6 right-6 z-[200] flex flex-col gap-2"></div>
 
     <script>
+        // CONFIGURACIÓN Y ESTADO INICIAL
         const DB_CONFIG = { url: "https://dakhnqriwbzihlzhtfcb.supabase.co", key: "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs" };
         const sb = window.supabase.createClient(DB_CONFIG.url, DB_CONFIG.key);
         const SYMBOLS = ['🍒', '🍋', '🔔', '7️⃣'];
@@ -243,10 +244,75 @@
             isProcessing: false 
         };
 
+        // --- DEFINICIÓN DE OBJETOS ---
+
+        const UI = {
+            updateBalance() { 
+                const el = document.getElementById('balance-display');
+                if(el) el.innerText = `$${State.balance.toFixed(2)}`; 
+            },
+            updateProfile() { document.getElementById('user-email-display').innerText = State.user.email; },
+            openModal(id) { if(State.isProcessing) return; playSfx('click'); document.getElementById(id).classList.remove('hidden-view'); },
+            closeModal(id) { playSfx('click'); document.getElementById(id).classList.add('hidden-view'); },
+            toggleAccordion(id) {
+                const el = document.getElementById(id);
+                const arrow = document.getElementById('arrow-' + id);
+                el.classList.toggle('hidden-view');
+                if(arrow) arrow.style.transform = el.classList.contains('hidden-view') ? 'rotate(0deg)' : 'rotate(180deg)';
+            },
+            depNextStep() { 
+                const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value)); 
+                if(isNaN(amt) || amt <= 0) return this.notify("Monto inválido", "error"); 
+                playSfx('click'); 
+                document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`; 
+                document.getElementById('dep-step-1').classList.add('hidden-view'); 
+                document.getElementById('dep-step-2').classList.remove('hidden-view'); 
+            },
+            copyClabe() { 
+                const clabe = document.getElementById('clabe-number').innerText; 
+                navigator.clipboard.writeText(clabe).then(() => { 
+                    playSfx('click'); 
+                    this.notify("CLABE Copiada", "success"); 
+                }); 
+            },
+            handleFile(input) { 
+                if(input.files && input.files[0]) { 
+                    playSfx('click'); 
+                    const label = document.getElementById('file-label'); 
+                    label.innerText = "Archivo: " + input.files[0].name.substring(0, 10) + "..."; 
+                    label.classList.replace('text-zinc-500', 'text-emerald-500');
+                } 
+            },
+            notify(m, t) { 
+                const n = document.createElement('div'); 
+                n.className = `p-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-2xl animate__animated animate__fadeInDown ${t==='success'?'bg-emerald-500 text-black':'bg-red-500 text-white'}`; 
+                n.innerText = m; 
+                document.getElementById('notif-container').appendChild(n); 
+                setTimeout(() => { 
+                    n.classList.replace('animate__fadeInDown', 'animate__fadeOutUp'); 
+                    setTimeout(()=>n.remove(), 500); 
+                }, 3000); 
+            },
+            setTxType(type) {
+                playSfx('click');
+                State.currentTx = type;
+                const isDep = type === 'deposit';
+                document.getElementById('tab-deposit').classList.toggle('active', isDep);
+                document.getElementById('tab-withdrawal').classList.toggle('active', !isDep);
+                document.getElementById('tx-title').innerText = isDep ? 'Monto a cargar' : 'Monto a retirar';
+                document.getElementById('deposit-info').classList.toggle('hidden-view', !isDep);
+                document.getElementById('withdrawal-info').classList.toggle('hidden-view', isDep);
+            }
+        };
+
         const Core = {
             async init() { let p = 0; const i = setInterval(() => { p += 25; document.getElementById('boot-bar').style.width = `${p}%`; if(p >= 100) { clearInterval(i); this.check(); } }, 100); },
             async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); this.subscribeBalance(); } else { document.getElementById('auth-view').classList.remove('hidden-view'); } },
-            async loadBalance() { const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle(); State.balance = data ? data.saldo : 0; UI.updateBalance(); },
+            async loadBalance() { 
+                const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle(); 
+                State.balance = data ? data.saldo : 0; 
+                UI.updateBalance(); 
+            },
             
             subscribeBalance() {
                 sb.channel('balance_sync')
@@ -591,7 +657,6 @@
                     document.getElementById('mines-mult').innerText = '1.00x';
                     document.getElementById('mines-next-hint').innerText = `Siguiente: x${this.multSteps[0].toFixed(2)}`;
                     
-                    // Actualización inmediata para permitir retiro inicial
                     const cashbtn = document.getElementById('mines-cashout-btn');
                     cashbtn.innerText = `COBRAR $${this.bet.toFixed(2)}`;
                     cashbtn.disabled = false;
@@ -636,7 +701,7 @@
                     
                     State.isProcessing = true; 
                     const btn = document.getElementById('mines-cashout-btn');
-                    btn.disabled = true;
+                    if(btn) btn.disabled = true;
 
                     const win = this.bet * this.mult; 
                     try {
@@ -647,8 +712,9 @@
                         await this.end(true); 
                     } catch(e) {
                         UI.notify("Error de conexión", "error");
+                    } finally {
                         State.isProcessing = false;
-                        btn.disabled = false;
+                        if(btn) btn.disabled = false;
                     }
                 },
                 async end(win) {
@@ -705,8 +771,6 @@
                     const cbtn = document.getElementById('tower-cashout-btn'); 
                     cbtn.classList.remove('hidden-view'); 
                     cbtn.disabled = false;
-                    
-                    // Permite retiro inicial
                     cbtn.innerText = `COBRAR $${this.bet.toFixed(2)}`;
                     
                     State.isProcessing = false;
@@ -734,7 +798,7 @@
                     
                     State.isProcessing = true;
                     const btn = document.getElementById('tower-cashout-btn');
-                    btn.disabled = true;
+                    if(btn) btn.disabled = true;
 
                     const win = this.bet * this.mult; 
                     try {
@@ -743,10 +807,9 @@
                         playSfx('win'); playSfx('winExtra'); 
                         UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
                         await this.end(true); 
-                    } catch(e) {
-                        UI.notify("Error de conexión", "error");
+                    } finally {
                         State.isProcessing = false;
-                        btn.disabled = false;
+                        if(btn) btn.disabled = false;
                     }
                 },
                 async end(win) {
@@ -800,13 +863,18 @@
                     State.isProcessing = false;
                     this.interval = setInterval(() => {
                         this.mult += 0.01;
-                        document.getElementById('crash-mult').innerText = this.mult.toFixed(2) + 'x';
+                        const multEl = document.getElementById('crash-mult');
+                        if(multEl) multEl.innerText = this.mult.toFixed(2) + 'x';
+                        
                         let speed = 2 + (this.mult * 2);
                         this.bgPos -= speed;
                         if (this.bgPos <= -100) this.bgPos = 0;
-                        document.getElementById('crash-bg').style.transform = `translateX(${this.bgPos}%)`;
+                        const bgEl = document.getElementById('crash-bg');
+                        if(bgEl) bgEl.style.transform = `translateX(${this.bgPos}%)`;
+                        
                         let floatY = Math.sin(Date.now() / 200) * 8;
-                        document.getElementById('crash-rocket').style.transform = `translateY(${floatY}px)`;
+                        const rocketEl = document.getElementById('crash-rocket');
+                        if(rocketEl) rocketEl.style.transform = `translateY(${floatY}px)`;
                         
                         btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`;
                         
@@ -825,17 +893,20 @@
                         State.balance += win; 
                         playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
                         await this.end(true);
-                    } catch(e) {
-                        UI.notify("Error de conexión", "error");
+                    } finally {
                         State.isProcessing = false;
                     }
                 },
                 explode() {
                     clearInterval(this.interval);
                     playSfx('lose'); UI.notify("¡EXPLOTÓ!", "error");
-                    document.getElementById('crash-mult').classList.add('text-red-500');
-                    document.getElementById('crash-rocket').innerHTML = '💥';
-                    document.getElementById('crash-rocket').style.transform = 'translateY(0)';
+                    const multEl = document.getElementById('crash-mult');
+                    if(multEl) multEl.classList.add('text-red-500');
+                    const rocketEl = document.getElementById('crash-rocket');
+                    if(rocketEl) {
+                        rocketEl.innerHTML = '💥';
+                        rocketEl.style.transform = 'translateY(0)';
+                    }
                     this.end(false);
                 },
                 async end(win) {
@@ -845,18 +916,28 @@
                     State.isProcessing = false;
                     UI.updateBalance();
                     const btn = document.getElementById('btn-crash');
-                    btn.innerText = "EXPLOTÓ"; btn.disabled = true;
-                    setTimeout(() => {
-                        btn.disabled = false; btn.innerText = "DESPEGAR"; btn.onclick = () => GameLogic.crash.start();
-                        document.getElementById('crash-mult').classList.remove('text-red-500');
-                        document.getElementById('crash-mult').innerText = '1.00x';
-                        document.getElementById('crash-rocket').innerHTML = '🚀';
-                    }, 2500);
+                    if(btn) {
+                        btn.innerText = "EXPLOTÓ"; btn.disabled = true;
+                        setTimeout(() => {
+                            btn.disabled = false; btn.innerText = "DESPEGAR"; btn.onclick = () => GameLogic.crash.start();
+                            const multEl = document.getElementById('crash-mult');
+                            if(multEl) {
+                                multEl.classList.remove('text-red-500');
+                                multEl.innerText = '1.00x';
+                            }
+                            const rocketEl = document.getElementById('crash-rocket');
+                            if(rocketEl) {
+                                rocketEl.innerHTML = '🚀';
+                                rocketEl.style.transform = 'translateY(0)';
+                            }
+                        }, 2500);
+                    }
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR' }]);
                 }
             }
         };
 
+        // --- INICIALIZACIÓN ---
         Core.init();
     </script>
 </body>
