@@ -591,7 +591,7 @@
                     document.getElementById('mines-mult').innerText = '1.00x';
                     document.getElementById('mines-next-hint').innerText = `Siguiente: x${this.multSteps[0].toFixed(2)}`;
                     
-                    // ACTUALIZACIÓN: Cobrar dice el monto apostado inicialmente
+                    // Actualización inmediata para permitir retiro inicial
                     const cashbtn = document.getElementById('mines-cashout-btn');
                     cashbtn.innerText = `COBRAR $${this.bet.toFixed(2)}`;
                     cashbtn.disabled = false;
@@ -647,9 +647,8 @@
                         await this.end(true); 
                     } catch(e) {
                         UI.notify("Error de conexión", "error");
-                    } finally {
                         State.isProcessing = false;
-                        if(btn) btn.disabled = false;
+                        btn.disabled = false;
                     }
                 },
                 async end(win) {
@@ -707,7 +706,7 @@
                     cbtn.classList.remove('hidden-view'); 
                     cbtn.disabled = false;
                     
-                    // ACTUALIZACIÓN: Cobrar dice el monto apostado inicialmente
+                    // Permite retiro inicial
                     cbtn.innerText = `COBRAR $${this.bet.toFixed(2)}`;
                     
                     State.isProcessing = false;
@@ -744,8 +743,10 @@
                         playSfx('win'); playSfx('winExtra'); 
                         UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
                         await this.end(true); 
-                    } finally {
+                    } catch(e) {
+                        UI.notify("Error de conexión", "error");
                         State.isProcessing = false;
+                        btn.disabled = false;
                     }
                 },
                 async end(win) {
@@ -792,7 +793,7 @@
                     btn.disabled = false;
                     btn.onclick = () => this.cashout();
                     
-                    if (Math.random() < 0.15 / State.luckFactor) { this.explode(); State.isProcessing = false; return; }
+                    if (Math.random() < 0.15 / State.luckFactor) { this.explode(); return; }
                     let baseLimit = 1.01 + Math.random() * 0.99; 
                     if (Math.random() < 0.05) baseLimit = 2 + Math.random() * 10;
                     
@@ -813,7 +814,7 @@
                     }, 50);
                 },
                 async cashout() {
-                    if(!this.active || this.mult <= 1.0 || State.isProcessing) return;
+                    if(!this.active || State.isProcessing) return;
                     State.isProcessing = true;
                     document.getElementById('btn-crash').disabled = true;
 
@@ -824,7 +825,8 @@
                         State.balance += win; 
                         playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
                         await this.end(true);
-                    } finally {
+                    } catch(e) {
+                        UI.notify("Error de conexión", "error");
                         State.isProcessing = false;
                     }
                 },
