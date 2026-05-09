@@ -620,7 +620,8 @@
                     this.active = true;
                     State.isProcessing = true;
 
-                    const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 10;
+                    const bInput = document.getElementById('mines-bet-input');
+                    const b = Math.abs(parseFloat(bInput.value)) || 10;
                     const btn = document.getElementById('btn-mines-start');
                     btn.disabled = true;
 
@@ -637,6 +638,8 @@
                     State.balance -= b; 
                     UI.updateBalance();
                     
+                    this.bet = b; // Fijar la apuesta
+                    this.mult = 1;
                     this.revealed = [];
                     this.mines = []; while(this.mines.length < 3) { let r = Math.floor(Math.random()*25); if(!this.mines.includes(r)) this.mines.push(r); }
                     document.getElementById('mines-controls').classList.add('hidden-view');
@@ -697,12 +700,15 @@
                         UI.notify("Error de conexión", "error");
                     } finally {
                         State.isProcessing = false;
+                        if(btn) btn.disabled = false;
                     }
                 },
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
                     GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
-                    this.active = false; UI.updateBalance();
+                    this.active = false;
+                    State.isProcessing = false; // IMPORTANTE: Liberar bloqueo al final
+                    UI.updateBalance();
                     document.getElementById('mines-controls').classList.remove('hidden-view');
                     document.getElementById('mines-status').classList.add('hidden-view');
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'MINAS' }]);
@@ -725,7 +731,8 @@
                     this.active = true;
                     State.isProcessing = true;
 
-                    const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10;
+                    const bInput = document.getElementById('tower-bet-input');
+                    const b = Math.abs(parseFloat(bInput.value)) || 10;
                     const btn = document.getElementById('btn-tower-start');
                     btn.disabled = true;
 
@@ -742,7 +749,9 @@
                     State.balance -= b; 
                     UI.updateBalance();
 
-                    this.level = 0; this.mult = 1;
+                    this.bet = b; // Fijar apuesta
+                    this.level = 0; 
+                    this.mult = 1;
                     this.drawTower(); document.getElementById('tower-row-0').classList.remove('opacity-30');
                     document.getElementById('tower-controls').classList.add('hidden-view');
                     const cbtn = document.getElementById('tower-cashout-btn'); 
@@ -761,6 +770,7 @@
                         playSfx('click'); items[c].innerHTML = '💎'; items[c].classList.add('bg-emerald-500/20', 'border-emerald-500');
                         this.mult = this.towerSteps[this.level]; 
                         this.level++;
+                        // ACTUALIZACIÓN DE BOTÓN TOWER
                         document.getElementById('tower-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`;
                         if(this.level < 8) document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30'); else this.cashout();
                     }
@@ -786,7 +796,9 @@
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
                     GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
-                    this.active = false; UI.updateBalance();
+                    this.active = false; 
+                    State.isProcessing = false;
+                    UI.updateBalance();
                     document.getElementById('tower-controls').classList.remove('hidden-view');
                     document.getElementById('tower-cashout-btn').classList.add('hidden-view');
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'TORRE' }]);
@@ -800,7 +812,8 @@
                     this.active = true;
                     State.isProcessing = true;
 
-                    const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10;
+                    const bInput = document.getElementById('crash-bet-input');
+                    const b = Math.abs(parseFloat(bInput.value)) || 10;
                     const btn = document.getElementById('btn-crash');
                     btn.disabled = true;
 
@@ -817,8 +830,10 @@
                     State.balance -= b; 
                     UI.updateBalance();
                     
-                    this.bet = b; this.mult = 1.0; this.bgPos = 0;
-                    btn.innerText = `RETIRAR $${(b).toFixed(2)}`;
+                    this.bet = b; 
+                    this.mult = 1.0; 
+                    this.bgPos = 0;
+                    btn.innerText = `RETIRAR $${(this.bet).toFixed(2)}`;
                     btn.disabled = false;
                     btn.onclick = () => this.cashout();
                     
@@ -869,7 +884,9 @@
                 async end(win) {
                     const winAmt = win ? (this.bet * this.mult) : 0;
                     GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
-                    this.active = false; UI.updateBalance();
+                    this.active = false; 
+                    State.isProcessing = false;
+                    UI.updateBalance();
                     const btn = document.getElementById('btn-crash');
                     btn.innerText = "EXPLOTÓ"; btn.disabled = true;
                     setTimeout(() => {
