@@ -734,7 +734,7 @@
                 drawTower() {
                     const c = document.getElementById('tower-container'); c.innerHTML = '';
                     for(let i=0; i<8; i++) {
-                        let row = document.createElement('div'); row.className = "grid grid-cols-3 gap-1.5 opacity-30"; row.id = `tower-row-${i}`;
+                        let row = document.createElement('div'); row.className = "grid grid-cols-3 gap-3 opacity-30"; row.id = `tower-row-${i}`;
                         for(let j=0; j<3; j++) row.innerHTML += `<div onclick="GameLogic.tower.select(${i}, ${j})" class="h-8 bg-white/5 border border-white/5 rounded-lg flex items-center justify-center cursor-pointer transition-all"></div>`;
                         c.appendChild(row);
                     }
@@ -781,7 +781,11 @@
                     const isBomb = Math.random() < failProb;
                     const items = document.getElementById(`tower-row-${r}`).children;
                     if(isBomb) { 
-                        playSfx('lose'); items[c].innerHTML = '💣'; UI.notify("PERDISTE", "error"); 
+                        playSfx('lose'); 
+                        // Ajuste estético: Pinta el cuadro de rojo
+                        items[c].innerHTML = '💣'; 
+                        items[c].classList.add('bg-red-500/20', 'border-red-500');
+                        UI.notify("PERDISTE", "error"); 
                         this.end(false); 
                     } 
                     else {
