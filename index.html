@@ -71,11 +71,9 @@
         .tx-tab { flex: 1; text-align: center; padding: 10px; border-radius: 0.8rem; font-size: 10px; font-weight: 900; transition: 0.3s; cursor: pointer; color: #666; }
         .tx-tab.active { background: var(--mx-green); color: black; }
 
-        /* Estilos Blackjack */
         .card-bj { width: 45px; height: 65px; background: white; color: black; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); animation: backInDown 0.5s; position: relative; border: 1px solid #ddd; }
         .card-red { color: #ef4444; }
 
-        /* Estilos Chicken Road PRO */
         #chicken-world { width: 100%; height: 200px; background: #222; border-radius: 1rem; position: relative; overflow: hidden; border: 2px solid #333; margin-bottom: 1rem; }
         .road-lane { height: 100%; border-right: 1px dashed rgba(255,255,255,0.2); flex: 1; position: relative; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
         .road-lane.passed { background: rgba(16, 185, 129, 0.1); }
@@ -258,10 +256,10 @@
             showView(viewId) { if(State.isSpinning || State.isProcessing) return; playSfx('click'); document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden-view')); document.getElementById(`view-${viewId}`).classList.remove('hidden-view'); document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); const navId = {'lobby':'nav-home','history':'nav-history','profile':'nav-profile'}[viewId]; if(navId) document.getElementById(navId).classList.add('active'); if(viewId === 'history') Core.fetchHistory(); if(viewId === 'profile') UI.updateProfile(); },
             openGame(game) { if(State.isProcessing) return; playSfx('click'); this.showView('game'); document.getElementById('game-mount').innerHTML = this.templates[game]; document.getElementById('view-game').scrollTop = 0; if(game === 'slots') GameLogic.slots.init(); if(game === 'mines') GameLogic.mines.drawGrid(); if(game === 'tower') GameLogic.tower.drawTower(); if(game === 'blackjack') GameLogic.blackjack.renderInitial(); if(game === 'chicken') GameLogic.chicken.init(); },
             templates: {
-                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button></div>`,
-                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div class="risk-badge"><i class="fas fa-bomb"></i> 3 Minas</div><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view flex justify-between p-3 bg-emerald-500/10 rounded-xl mb-3"><div><span id="mines-mult" class="font-casino text-xs">1.00x</span></div><button id="mines-cashout-btn" onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-4 py-1 rounded font-bold text-[9px]">COBRAR $0.00</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" class="input-bet"><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div></div>`,
-                crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div id="crash-area"><div id="crash-bg" class="bg-infinite"><div class="bg-part"></div><div class="bg-part"></div></div><div id="crash-rocket-container"><div id="crash-rocket">🚀</div></div></div><input id="crash-bet-input" type="number" value="10" class="input-bet mt-6"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button></div>`,
-                tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div class="risk-badge" style="color: #fbbf24; background: rgba(251,191,36,0.1)"><i class="fas fa-bolt"></i> 1 Peligro</div><div id="tower-container" class="gap-3 mb-4 flex flex-col-reverse"></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" class="input-bet"><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4">JUGAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino">COBRAR $0.00</button></div>`,
+                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4><i class="fas fa-gem"></i> Tabla de Premios</h4><div class="grid grid-cols-2 gap-2 text-[10px] font-bold uppercase mt-2"><div>🍒 x3</div><div>🍋 x10</div><div>🔔 x50</div><div class="text-emerald-500">7️⃣ x500</div></div></div></div>`,
+                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div class="risk-badge"><i class="fas fa-bomb"></i> 3 Minas Activas</div><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view flex justify-between p-3 bg-emerald-500/10 rounded-xl mb-3"><div><span id="mines-mult" class="font-casino text-xs">1.00x</span></div><button id="mines-cashout-btn" onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-4 py-1 rounded font-bold text-[9px]">COBRAR $0.00</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" class="input-bet"><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><div class="instruction-card"><h4><i class="fas fa-bomb"></i> Reglas Minas</h4><p>El riesgo aumenta en cada clic. ¡Los multiplicadores son <strong>exponenciales</strong>!</p></div></div>`,
+                crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div id="crash-area"><div id="crash-bg" class="bg-infinite"><div class="bg-part"></div><div class="bg-part"></div></div><div id="crash-rocket-container"><div id="crash-rocket">🚀</div></div></div><input id="crash-bet-input" type="number" value="10" class="input-bet mt-6"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button><div class="instruction-card"><h4><i class="fas fa-rocket"></i> Reglas Aviator</h4><p>Cobra antes de que el cohete explote.</p></div></div>`,
+                tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div class="risk-badge" style="color: #fbbf24; background: rgba(251,191,36,0.1)"><i class="fas fa-bolt"></i> 1 Peligro por Piso</div><div id="tower-container" class="gap-3 mb-4 flex flex-col-reverse"></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" class="input-bet"><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino">COBRAR $0.00</button><div class="instruction-card"><h4><i class="fas fa-chess-rook"></i> Reglas Torre</h4><p>Cada piso es más difícil, pero paga mucho más.</p></div></div>`,
                 blackjack: `<div class="glass p-4 text-center max-w-[320px] mx-auto animate__animated animate__fadeIn">
                     <div class="mb-4">
                         <p class="text-[8px] text-zinc-500 uppercase font-black mb-2">Crupier (Puntos: <span id="dealer-score">?</span>)</p>
@@ -276,9 +274,10 @@
                         <button onclick="GameLogic.blackjack.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button>
                     </div>
                     <div id="bj-actions" class="hidden-view grid grid-cols-2 gap-3">
-                        <button onclick="GameLogic.blackjack.hit()" class="btn-action py-4 bg-zinc-800 text-white">PEDIR</button>
-                        <button onclick="GameLogic.blackjack.stand()" class="btn-action py-4">PLANTARSE</button>
+                        <button onclick="GameLogic.blackjack.hit()" class="btn-action py-4 bg-zinc-800 text-white font-casino">PEDIR</button>
+                        <button onclick="GameLogic.blackjack.stand()" class="btn-action py-4 font-casino">PLANTARSE</button>
                     </div>
+                    <div class="instruction-card"><h4><i class="fas fa-clone"></i> Reglas Blackjack</h4><p>Suma 21 o más que el crupier sin pasarte. El As vale 1 u 11.</p></div>
                 </div>`,
                 chicken: `<div class="glass p-4 text-center">
                     <div id="chicken-status" class="mb-4 text-emerald-500 font-casino text-2xl animate__animated animate__pulse animate__infinite">1.00x</div>
@@ -288,9 +287,10 @@
                         <button onclick="GameLogic.chicken.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button>
                     </div>
                     <div id="chicken-actions" class="hidden-view grid grid-cols-2 gap-3 mt-4">
-                        <button onclick="GameLogic.chicken.move()" class="btn-action py-5 bg-emerald-500 text-black font-black text-lg">AVANZAR CARRIL</button>
-                        <button id="chicken-cashout-btn" onclick="GameLogic.chicken.cashout()" class="btn-action py-5 bg-zinc-800 text-white">COBRAR $0.00</button>
+                        <button onclick="GameLogic.chicken.move()" class="btn-action py-5 bg-emerald-500 text-black font-black text-lg">AVANZAR</button>
+                        <button id="chicken-cashout-btn" onclick="GameLogic.chicken.cashout()" class="btn-action py-5 bg-zinc-800 text-white font-black">COBRAR $0.00</button>
                     </div>
+                    <div class="instruction-card"><h4><i class="fas fa-paw"></i> Reglas Chicken Road</h4><p>Cruza los carriles con la gallina. ¡Cobra antes de que pase un auto!</p></div>
                 </div>`
             }
         };
@@ -337,102 +337,12 @@
 
             chicken: {
                 pos: -1, active: false, bet: 0, mults: [1.2, 1.5, 2.2, 4.0, 8.5, 18.0, 45.0, 100.0],
-                init() {
-                    const road = document.getElementById('chicken-world');
-                    road.innerHTML = `<div id="chicken-hero" class="chicken-sprite">🐥</div>`;
-                    this.mults.forEach((m, i) => {
-                        const lane = document.createElement('div');
-                        lane.className = "road-lane";
-                        lane.innerHTML = `<span class="text-[8px] font-black text-white/10 uppercase">${m}x</span>`;
-                        lane.id = `lane-${i}`;
-                        road.appendChild(lane);
-                    });
-                    this.updateHero();
-                },
-                async start() {
-                    if(this.active || State.isProcessing) return;
-                    const b = Math.abs(parseFloat(document.getElementById('chicken-bet-input').value)) || 10;
-                    if(State.balance < b) return UI.notify("Saldo insuficiente", "error");
-                    State.isProcessing = true;
-                    await Core.updateBalanceDB(-b); State.balance -= b; this.bet = b; UI.updateBalance();
-                    this.pos = -1; this.active = true;
-                    document.getElementById('chicken-controls').classList.add('hidden-view');
-                    document.getElementById('chicken-actions').classList.remove('hidden-view');
-                    document.getElementById('chicken-cashout-btn').innerText = `COBRAR $${b.toFixed(2)}`;
-                    this.init();
-                    State.isProcessing = false;
-                },
-                updateHero() {
-                    const hero = document.getElementById('chicken-hero');
-                    if(!hero) return;
-                    const lanes = document.querySelectorAll('.road-lane');
-                    lanes.forEach(l => l.classList.remove('current', 'passed'));
-                    if(this.pos === -1) {
-                        hero.style.left = "-40px";
-                    } else {
-                        const targetLane = document.getElementById(`lane-${this.pos}`);
-                        const laneRect = targetLane.getBoundingClientRect();
-                        const worldRect = document.getElementById('chicken-world').getBoundingClientRect();
-                        hero.style.left = (laneRect.left - worldRect.left + (laneRect.width / 2) - 15) + "px";
-                        for(let i=0; i<=this.pos; i++) {
-                            const l = document.getElementById(`lane-${i}`);
-                            if(i === this.pos) l.classList.add('current');
-                            else l.classList.add('passed');
-                        }
-                    }
-                },
-                move() {
-                    if(!this.active || State.isProcessing) return;
-                    this.pos++;
-                    const risk = (0.15 + (this.pos * 0.08)) / State.luckFactor;
-                    
-                    if(Math.random() < risk) {
-                        const world = document.getElementById('chicken-world');
-                        const car = document.createElement('div');
-                        car.className = "car-sprite";
-                        car.innerHTML = '🚘';
-                        const targetLane = document.getElementById(`lane-${this.pos}`);
-                        car.style.left = (targetLane.offsetLeft + 10) + "px";
-                        world.appendChild(car);
-                        
-                        setTimeout(() => {
-                            document.getElementById('chicken-hero').innerHTML = '💥';
-                            playSfx('lose');
-                            UI.notify("¡ATROPELLADO!", "error");
-                            this.end(false);
-                        }, 300);
-                    } else {
-                        playSfx('click');
-                        this.updateHero();
-                        const m = this.mults[this.pos];
-                        document.getElementById('chicken-status').innerText = m.toFixed(2) + 'x';
-                        document.getElementById('chicken-cashout-btn').innerText = `COBRAR $${(this.bet * m).toFixed(2)}`;
-                        if(this.pos === 7) this.cashout();
-                    }
-                },
-                async cashout() {
-                    if(!this.active || State.isProcessing) return;
-                    State.isProcessing = true;
-                    const m = this.pos === -1 ? 1 : this.mults[this.pos];
-                    const win = this.bet * m;
-                    await Core.updateBalanceDB(win); State.balance += win;
-                    playSfx('win'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
-                    this.end(true);
-                },
-                async end(win) {
-                    this.active = false;
-                    const m = this.pos === -1 ? 1 : this.mults[this.pos];
-                    const winAmt = win ? (this.bet * m) : 0;
-                    GameLogic.adjustLuck(winAmt, this.bet, m);
-                    UI.updateBalance();
-                    setTimeout(() => {
-                        document.getElementById('chicken-controls').classList.remove('hidden-view');
-                        document.getElementById('chicken-actions').classList.add('hidden-view');
-                        document.getElementById('chicken-status').innerText = '1.00x';
-                    }, 1000);
-                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'CHICKEN' }]);
-                    State.isProcessing = false;
-                }
+                init() { const road = document.getElementById('chicken-world'); road.innerHTML = `<div id="chicken-hero" class="chicken-sprite">🐥</div>`; this.mults.forEach((m, i) => { const lane = document.createElement('div'); lane.className = "road-lane"; lane.innerHTML = `<span class="text-[8px] font-black text-white/10 uppercase">${m}x</span>`; lane.id = `lane-${i}`; road.appendChild(lane); }); this.updateHero(); },
+                async start() { if(this.active || State.isProcessing) return; const bInput = document.getElementById('chicken-bet-input'); const b = Math.abs(parseFloat(bInput.value)) || 10; if(State.balance < b) return UI.notify("Saldo insuficiente", "error"); State.isProcessing = true; await Core.updateBalanceDB(-b); State.balance -= b; this.bet = b; UI.updateBalance(); this.pos = -1; this.active = true; document.getElementById('chicken-controls').classList.add('hidden-view'); document.getElementById('chicken-actions').classList.remove('hidden-view'); document.getElementById('chicken-cashout-btn').innerText = `COBRAR $${b.toFixed(2)}`; this.init(); State.isProcessing = false; },
+                updateHero() { const hero = document.getElementById('chicken-hero'); if(!hero) return; const lanes = document.querySelectorAll('.road-lane'); lanes.forEach(l => l.classList.remove('current', 'passed')); if(this.pos === -1) hero.style.left = "-40px"; else { const targetLane = document.getElementById(`lane-${this.pos}`); const laneRect = targetLane.getBoundingClientRect(); const worldRect = document.getElementById('chicken-world').getBoundingClientRect(); hero.style.left = (laneRect.left - worldRect.left + (laneRect.width / 2) - 15) + "px"; for(let i=0; i<=this.pos; i++) { const l = document.getElementById(`lane-${i}`); if(i === this.pos) l.classList.add('current'); else l.classList.add('passed'); } } },
+                move() { if(!this.active || State.isProcessing) return; this.pos++; const risk = (0.15 + (this.pos * 0.08)) / State.luckFactor; if(Math.random() < risk) { const world = document.getElementById('chicken-world'); const car = document.createElement('div'); car.className = "car-sprite"; car.innerHTML = '🚘'; const targetLane = document.getElementById(`lane-${this.pos}`); car.style.left = (targetLane.offsetLeft + 10) + "px"; world.appendChild(car); setTimeout(() => { if(document.getElementById('chicken-hero')) document.getElementById('chicken-hero').innerHTML = '💥'; playSfx('lose'); UI.notify("¡ATROPELLADO!", "error"); this.end(false); }, 300); } else { playSfx('click'); this.updateHero(); const m = this.mults[this.pos]; document.getElementById('chicken-status').innerText = m.toFixed(2) + 'x'; document.getElementById('chicken-cashout-btn').innerText = `COBRAR $${(this.bet * m).toFixed(2)}`; if(this.pos === 7) this.cashout(); } },
+                async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; const m = this.pos === -1 ? 1 : this.mults[this.pos]; const win = this.bet * m; await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
+                async end(win) { this.active = false; const m = this.pos === -1 ? 1 : this.mults[this.pos]; const winAmt = win ? (this.bet * m) : 0; GameLogic.adjustLuck(winAmt, this.bet, m); UI.updateBalance(); setTimeout(() => { document.getElementById('chicken-controls').classList.remove('hidden-view'); document.getElementById('chicken-actions').classList.add('hidden-view'); document.getElementById('chicken-status').innerText = '1.00x'; }, 1000); await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'CHICKEN' }]); State.isProcessing = false; }
             },
 
             crash: {
