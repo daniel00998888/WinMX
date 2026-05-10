@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>WinMX | Premium Casino</title>
     
     <link rel="icon" href="data:,">
@@ -15,16 +15,56 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@300;400;600;900&display=swap');
         :root { --mx-green: #10b981; --mx-dark: #070707; }
-        body { background: var(--mx-dark); color: white; font-family: 'Inter', sans-serif; height: 100dvh; overflow: hidden; margin: 0; -webkit-tap-highlight-color: transparent; }
-        .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
-        .app-container { height: 100dvh; display: flex; flex-direction: column; }
         
-        .view-content { flex: 1; overflow-y: auto; padding-bottom: 120px; scroll-behavior: smooth; }
-        .view-content::-webkit-scrollbar { width: 4px; }
-        .view-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            background: var(--mx-dark); 
+            color: white; 
+            font-family: 'Inter', sans-serif; 
+            height: 100dvh; 
+            width: 100vw;
+            overflow: hidden; 
+            position: fixed;
+        }
+
+        .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
+        .app-container { height: 100dvh; display: flex; flex-direction: column; position: relative; }
+        
+        /* SCROLLING INVISIBLE UNIVERSAL */
+        .view-content { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 1.25rem;
+            /* Espacio extra abajo para que el último juego no choque con la navegación */
+            padding-bottom: calc(130px + env(safe-area-inset-bottom)); 
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            
+            /* Ocultar barra en Firefox */
+            scrollbar-width: none; 
+            /* Ocultar barra en IE/Edge */
+            -ms-overflow-style: none; 
+        }
+
+        /* Ocultar barra en Chrome, Safari, Brave y Opera */
+        .view-content::-webkit-scrollbar {
+            display: none;
+            width: 0 !important;
+            height: 0 !important;
+        }
 
         .hidden-view { display: none !important; }
-        .bottom-nav { background: rgba(10, 10, 10, 0.98); backdrop-filter: blur(15px); border-top: 1px solid rgba(255,255,255,0.05); z-index: 50; }
+
+        .bottom-nav { 
+            background: rgba(10, 10, 10, 0.98); 
+            backdrop-filter: blur(15px); 
+            border-top: 1px solid rgba(255,255,255,0.05); 
+            z-index: 50; 
+            height: calc(75px + env(safe-area-inset-bottom));
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: #444; transition: 0.3s; cursor: pointer; }
         .nav-item.active { color: var(--mx-green); }
         .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 1.5rem; }
@@ -39,11 +79,6 @@
         .slot-box { height: 90px; overflow: hidden; background: #000; border-radius: 1rem; border: 1px solid #1a1a1a; }
         .slot-item { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
         .slot-reel { transition: transform 3.5s cubic-bezier(0.15, 0, 0.05, 1); }
-        
-        .pulse-pending { animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
-        .input-bet { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 12px; width: 100%; text-align: center; color: white; font-family: 'Archivo Black', sans-serif; outline: none; margin-bottom: 12px; }
         
         #crash-area { position: relative; width: 100%; height: 160px; overflow: hidden; background: #050505; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.05); }
         .bg-infinite { position: absolute; top: 0; left: 0; height: 100%; width: 200%; display: flex; }
@@ -234,7 +269,7 @@
             updateProfile() { if(State.user) document.getElementById('user-email-display').innerText = State.user.email; },
             openModal(id) { if(State.isProcessing) return; playSfx('click'); document.getElementById(id).classList.remove('hidden-view'); },
             closeModal(id) { playSfx('click'); document.getElementById(id).classList.add('hidden-view'); },
-            toggleAccordion(id) { const el = document.getElementById(id); const arrow = document.getElementById('arrow-' + id); el.classList.toggle('hidden-view'); if(arrow) arrow.style.transform = el.classList.contains('hidden-view') ? 'rotate(0deg)' : 'rotate(180deg)'; },
+            toggleAccordion(id) { const el = document.getElementById(id); const arrow = document.getElementById('arrow-' + id); el.classList.toggle('hidden-view'); if(arrow) arrow.style.transform = el.classList.contains('hidden-view') ? 'rotate(180deg)' : 'rotate(0deg)'; },
             depNextStep() { const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value)); if(isNaN(amt) || amt <= 0) return this.notify("Monto inválido", "error"); playSfx('click'); document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`; document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
             copyClabe() { const clabe = document.getElementById('clabe-number').innerText; navigator.clipboard.writeText(clabe).then(() => { playSfx('click'); this.notify("CLABE Copiada", "success"); }); },
             handleFile(input) { if(input.files && input.files[0]) { playSfx('click'); const label = document.getElementById('file-label'); label.innerText = "Archivo: " + input.files[0].name.substring(0, 10) + "..."; label.classList.replace('text-zinc-500', 'text-emerald-500'); } },
@@ -243,8 +278,8 @@
         };
 
         const AuthManager = {
-            async login() { if(State.isProcessing) return; const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value; if(!e || !p) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-login'); btn.disabled = true; const { data, error } = await sb.auth.signInWithPassword({ email: e, password: p }); if(error) { UI.notify(error.message, "error"); btn.disabled = false; } else location.reload(); },
-            async register() { if(State.isProcessing) return; if(!document.getElementById('terms-check').checked) return UI.notify("Acepta términos", "error"); const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value; if(!e || !p) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-register'); btn.disabled = true; const { data, error } = await sb.auth.signUp({ email: e, password: p }); if(error) { UI.notify(error.message, "error"); btn.disabled = false; } else { await sb.from('usuarios').insert([{ id: data.user.id, email: e, saldo: 0 }]); UI.notify("Cuenta creada", "success"); location.reload(); } },
+            async login() { const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value; if(!e || !p) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-login'); btn.disabled = true; const { data, error } = await sb.auth.signInWithPassword({ email: e, password: p }); if(error) { UI.notify(error.message, "error"); btn.disabled = false; } else location.reload(); },
+            async register() { if(!document.getElementById('terms-check').checked) return UI.notify("Acepta términos", "error"); const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value; if(!e || !p) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-register'); btn.disabled = true; const { data, error } = await sb.auth.signUp({ email: e, password: p }); if(error) { UI.notify(error.message, "error"); btn.disabled = false; } else { await sb.from('usuarios').insert([{ id: data.user.id, email: e, saldo: 0 }]); UI.notify("Cuenta creada", "success"); location.reload(); } },
             async logout() { await sb.auth.signOut(); location.reload(); },
             switchTab(tab) { playSfx('click'); document.getElementById('login-container').classList.toggle('hidden-view', tab==='register'); document.getElementById('register-container').classList.toggle('hidden-view', tab==='login'); }
         };
@@ -256,7 +291,7 @@
             subscribeBalance() { sb.channel('balance_sync').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'usuarios', filter: `id=eq.${State.user.id}` }, (payload) => { if (payload.new && typeof payload.new.saldo !== 'undefined' && !State.isSpinning) { State.balance = payload.new.saldo; UI.updateBalance(); } }).subscribe(); },
             async updateBalanceDB(amount) { const { data, error } = await sb.rpc('modificar_saldo', { user_id: State.user.id, monto: amount }); if (error) { const { data: current } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); await sb.from('usuarios').update({ saldo: current.saldo + amount }).eq('id', State.user.id); } },
             async confirmTransaction() { if(State.isProcessing) return; const amountInput = document.getElementById('dep-amount').value; const amount = Math.abs(parseFloat(amountInput)); const bank = document.getElementById('bank-name').value; const beneficiary = document.getElementById('beneficiary-name').value; if(!amount || amount <= 0 || !bank || !beneficiary) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-confirm-dep'); btn.disabled = true; btn.innerText = "PROCESANDO..."; State.isProcessing = true; try { const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < amount) throw new Error("Saldo insuficiente"); let evidence_url = null; if(State.currentTx === 'deposit') { const fileInput = document.getElementById('receipt-input'); const file = fileInput.files[0]; if(!file) throw new Error("Sube comprobante"); const fName = `${Date.now()}_${State.user.id}.jpg`; const uploadRes = await sb.storage.from('comprobantes').upload(fName, file); if(uploadRes.error) throw uploadRes.error; const pub = sb.storage.from('comprobantes').getPublicUrl(fName); evidence_url = pub.data.publicUrl; } const { error } = await sb.from('history').insert([{ user_id: State.user.id, type: State.currentTx === 'deposit' ? 'deposit' : 'withdraw', amount: amount, label: State.currentTx === 'deposit' ? 'Depósito' : 'Retiro', status: 'pending', evidence_url: evidence_url }]); if(error) throw error; UI.notify("Enviado correctamente", "success"); UI.closeModal('modal-deposit'); } catch(e) { UI.notify(e.message, "error"); } finally { btn.disabled = false; btn.innerText = "CONFIRMAR"; State.isProcessing = false; } },
-            async fetchHistory() { const { data: b } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20); const { data: d } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposit').order('created_at', { ascending: false }).limit(20); const { data: w } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'withdraw').order('created_at', { ascending: false }).limit(20); const container = document.getElementById('history-lists'); container.innerHTML = `<div class="glass mb-4 p-4"><div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-bets')"><span class="font-casino text-[10px]">Jugadas</span><i class="fas fa-chevron-down" id="arrow-acc-bets"></i></div><div id="acc-bets" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(b || [], 'bets')}</div></div><div class="glass mb-4 p-4"><div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-deps')"><span class="font-casino text-[10px]">Depósitos</span><i class="fas fa-chevron-down" id="arrow-acc-deps"></i></div><div id="acc-deps" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(d || [], 'tx')}</div></div><div class="glass mb-4 p-4"><div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-wd')"><span class="font-casino text-[10px]">Retiros</span><i class="fas fa-chevron-down" id="arrow-acc-wd"></i></div><div id="acc-wd" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(w || [], 'tx')}</div></div>`; },
+            async fetchHistory() { const { data: b } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20); const { data: d } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposit').order('created_at', { ascending: false }).limit(20); const { data: w = [] } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'withdraw').order('created_at', { ascending: false }).limit(20); const container = document.getElementById('history-lists'); container.innerHTML = `<div class="glass mb-4 p-4"><div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-bets')"><span class="font-casino text-[10px]">Jugadas</span><i class="fas fa-chevron-down" id="arrow-acc-bets"></i></div><div id="acc-bets" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(b || [], 'bets')}</div></div><div class="glass mb-4 p-4"><div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-deps')"><span class="font-casino text-[10px]">Depósitos</span><i class="fas fa-chevron-down" id="arrow-acc-deps"></i></div><div id="acc-deps" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(d || [], 'tx')}</div></div><div class="glass mb-4 p-4"><div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-wd')"><span class="font-casino text-[10px]">Retiros</span><i class="fas fa-chevron-down" id="arrow-acc-wd"></i></div><div id="acc-wd" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(w || [], 'tx')}</div></div>`; },
             renderList(items, type) { if(!items || items.length === 0) return '<p class="text-zinc-600">Sin registros</p>'; return items.map(i => { let statusColor = i.amount >= 0 ? 'text-emerald-500' : 'text-red-500'; let label = i.label; if(type === 'tx') { if(i.status === 'pending') label += " (⏳)"; else if(i.status === 'completed') label += " (✅)"; else if(i.status === 'rejected') label += " (❌)"; statusColor = 'text-white'; } return `<div class="flex justify-between border-b border-white/5 pb-1"><span>${label}</span><span class="${statusColor}">$${Math.abs(i.amount).toFixed(2)}</span></div>`; }).join(''); }
         };
 
@@ -273,14 +308,14 @@
                     <div class="mb-6"><p class="text-[8px] text-emerald-500 uppercase font-black mb-2">Tus Cartas (Puntos: <span id="player-score">0</span>)</p><div id="player-cards" class="flex justify-center gap-2 h-[70px]"></div></div>
                     <div id="bj-controls"><input id="bj-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.blackjack.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div>
                     <div id="bj-actions" class="hidden-view grid grid-cols-2 gap-3"><button onclick="GameLogic.blackjack.hit()" class="btn-action py-4 bg-zinc-800 text-white font-casino">PEDIR</button><button onclick="GameLogic.blackjack.stand()" class="btn-action py-4 font-casino">PLANTARSE</button></div>
-                    <div class="instruction-card"><h4>🃏 Blackjack</h4><p>Suma 21 o más que el crupier sin pasarte. ¡El As vale 11 o 1!</p></div>
+                    <div class="instruction-card"><h4>🃏 Blackjack</h4><p>Suma 21.</p></div>
                 </div>`,
                 chicken: `<div class="glass p-4 text-center">
                     <div id="chicken-status" class="mb-4 text-emerald-500 font-casino text-2xl animate__animated animate__pulse animate__infinite">1.00x</div>
                     <div id="chicken-world" class="flex"></div>
                     <div id="chicken-controls"><input id="chicken-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.chicken.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div>
                     <div id="chicken-actions" class="hidden-view grid grid-cols-2 gap-3 mt-4"><button onclick="GameLogic.chicken.move()" class="btn-action py-5 bg-emerald-500 text-black font-black text-lg">AVANZAR</button><button id="chicken-cashout-btn" onclick="GameLogic.chicken.cashout()" class="btn-action py-5 bg-zinc-800 text-white font-black">COBRAR $0.00</button></div>
-                    <div class="instruction-card"><h4>🐥 Chicken Road</h4><p>Cruza los carriles sin que te atropelle un auto.</p></div>
+                    <div class="instruction-card"><h4>🐥 Chicken</h4><p>Cruza los carriles.</p></div>
                 </div>`
             }
         };
@@ -327,11 +362,11 @@
                     this.active = true;
                     this.deck = this.createDeck();
                     this.playerHand = [this.drawCard(), this.drawCard()];
-                    this.dealerHand = [this.drawCard(), this.drawCard()]; // Segunda carta oculta
+                    this.dealerHand = [this.drawCard(), this.drawCard()]; 
                     
                     document.getElementById('bj-controls').classList.add('hidden-view');
                     document.getElementById('bj-actions').classList.remove('hidden-view');
-                    this.render(true); // Ocultar segunda carta
+                    this.render(true); 
                     State.isProcessing = false;
                     
                     if(this.getRawScore(this.playerHand) === 21) this.stand();
@@ -357,18 +392,14 @@
                 async stand() { 
                     if(!this.active || State.isProcessing) return; 
                     State.isProcessing = true; 
-                    
-                    // REVELACIÓN: Mostrar cartas completas del dealer
                     this.render(false);
                     await new Promise(r => setTimeout(r, 600));
-
                     while(this.getRawScore(this.dealerHand) < 17) { 
                         playSfx('card');
                         this.dealerHand.push(this.drawCard()); 
                         this.render(false);
                         await new Promise(r => setTimeout(r, 600)); 
                     } 
-                    
                     const ps = this.getRawScore(this.playerHand), ds = this.getRawScore(this.dealerHand); 
                     if(ds > 21 || ps > ds) this.end('win'); 
                     else if(ps === ds) this.end('push'); 
@@ -378,10 +409,8 @@
                     const pC = document.getElementById('player-cards'), dC = document.getElementById('dealer-cards'); 
                     if(!pC || !dC) return;
                     pC.innerHTML = this.playerHand.map(c => `<div class="card-bj ${['♥','♦'].includes(c.s)?'card-red':''}"><span>${c.v}</span><span class="text-[10px]">${c.s}</span></div>`).join(''); 
-                    
                     if(hideDealer) {
-                        dC.innerHTML = `<div class="card-bj ${['♥','♦'].includes(this.dealerHand[0].s)?'card-red':''}"><span>${this.dealerHand[0].v}</span><span class="text-[10px]">${this.dealerHand[0].s}</span></div>`;
-                        dC.innerHTML += `<div class="card-bj card-hidden"></div>`;
+                        dC.innerHTML = `<div class="card-bj ${['♥','♦'].includes(this.dealerHand[0].s)?'card-red':''}"><span>${this.dealerHand[0].v}</span><span class="text-[10px]">${this.dealerHand[0].s}</span></div><div class="card-bj card-hidden"></div>`;
                         document.getElementById('dealer-score').innerText = '?';
                     } else {
                         dC.innerHTML = this.dealerHand.map(c => `<div class="card-bj ${['♥','♦'].includes(c.s)?'card-red':''}"><span>${c.v}</span><span class="text-[10px]">${c.s}</span></div>`).join(''); 
