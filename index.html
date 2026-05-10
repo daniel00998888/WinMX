@@ -19,9 +19,18 @@
         .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
         .app-container { height: 100dvh; display: flex; flex-direction: column; }
         
-        .view-content { flex: 1; overflow-y: auto; padding-bottom: 120px; scroll-behavior: smooth; }
-        .view-content::-webkit-scrollbar { width: 4px; }
-        .view-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        /* SCROLL INVISIBLE PARA TODAS LAS VISTAS */
+        .view-content { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding-bottom: 100px; 
+            scroll-behavior: smooth;
+            -ms-overflow-style: none;  /* IE y Edge */
+            scrollbar-width: none;     /* Firefox */
+        }
+        .view-content::-webkit-scrollbar {
+            display: none; /* Chrome, Safari y Opera */
+        }
 
         .hidden-view { display: none !important; }
         .bottom-nav { background: rgba(10, 10, 10, 0.98); backdrop-filter: blur(15px); border-top: 1px solid rgba(255,255,255,0.05); z-index: 50; }
@@ -102,7 +111,7 @@
                 <button onclick="AuthManager.switchTab('register')" class="w-full py-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-4 underline decoration-emerald-500/50">¿No tienes cuenta? Regístrate</button>
             </div>
         </div>
-        <div id="register-container" class="hidden-view glass p-8 w-full max-w-sm text-center animate__animated animate__fadeIn">
+        <div id="register-container" class="hidden-view glass p-8 w-full max-sm text-center animate__animated animate__fadeIn">
             <h2 class="text-2xl font-casino mb-6 italic tracking-tighter text-emerald-500">Nueva Cuenta</h2>
             <div class="space-y-4 text-left">
                 <input id="reg-email" type="email" placeholder="Correo electrónico" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
@@ -233,7 +242,7 @@
             updateProfile() { if(State.user) document.getElementById('user-email-display').innerText = State.user.email; },
             openModal(id) { if(State.isProcessing) return; playSfx('click'); document.getElementById(id).classList.remove('hidden-view'); },
             closeModal(id) { playSfx('click'); document.getElementById(id).classList.add('hidden-view'); },
-            toggleAccordion(id) { const el = document.getElementById(id); const arrow = document.getElementById('arrow-' + id); el.classList.toggle('hidden-view'); if(arrow) arrow.style.transform = el.classList.contains('hidden-view') ? 'rotate(0deg)' : 'rotate(180deg)'; },
+            toggleAccordion(id) { const el = document.getElementById(id); const arrow = document.getElementById('arrow-' + id); el.classList.toggle('hidden-view'); if(arrow) arrow.style.transform = el.classList.contains('hidden-view') ? 'rotate(180deg)' : 'rotate(0deg)'; },
             depNextStep() { const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value)); if(isNaN(amt) || amt <= 0) return this.notify("Monto inválido", "error"); playSfx('click'); document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`; document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
             copyClabe() { const clabe = document.getElementById('clabe-number').innerText; navigator.clipboard.writeText(clabe).then(() => { playSfx('click'); this.notify("CLABE Copiada", "success"); }); },
             handleFile(input) { if(input.files && input.files[0]) { playSfx('click'); const label = document.getElementById('file-label'); label.innerText = "Archivo: " + input.files[0].name.substring(0, 10) + "..."; label.classList.replace('text-zinc-500', 'text-emerald-500'); } },
@@ -341,7 +350,7 @@
             tower: {
                 level: 0, active: false, bet: 0, mult: 1, towerSteps: [1.65, 2.80, 4.50, 7.80, 13.50, 24.00, 42.00, 95.00],
                 drawTower() { const c = document.getElementById('tower-container'); c.innerHTML = ''; for(let i=0; i<8; i++) { let row = document.createElement('div'); row.className = "grid grid-cols-3 gap-3 opacity-30"; row.id = `tower-row-${i}`; for(let j=0; j<3; j++) row.innerHTML += `<div onclick="GameLogic.tower.select(${i}, ${j})" class="h-8 bg-white/5 border border-white/5 rounded-lg flex items-center justify-center cursor-pointer transition-all"></div>`; c.appendChild(row); } },
-                async start() { if(this.active || State.isProcessing) return; this.active = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10; const btn = document.getElementById('btn-tower-start'); btn.disabled = true; const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b || b <= 0) { this.active = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('click'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); this.bet = b; this.level = 0; this.mult = 1; this.drawTower(); document.getElementById('tower-row-0').classList.remove('opacity-30'); document.getElementById('tower-controls').classList.add('hidden-view'); const cbtn = document.getElementById('tower-cashout-btn'); cbtn.classList.remove('hidden-view'); cbtn.innerText = `COBRAR $${this.bet.toFixed(2)}`; State.isProcessing = false; btn.disabled = false; },
+                async start() { if(this.active || State.isProcessing) return; this.active = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10; const btn = document.getElementById('btn-tower-start'); btn.disabled = true; const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b || b <= 0) { this.active = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('click'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); this.bet = b; this.level = 0; this.mult = 1; this.drawTower(); document.getElementById('tower-row-0').classList.remove('opacity-30'); document.getElementById('tower-controls').classList.add('hidden-view'); const cbtn = document.getElementById('tower-cashout-btn'); cbtn.classList.remove('hidden-view'); cbtn.disabled = false; cbtn.innerText = `COBRAR $${this.bet.toFixed(2)}`; State.isProcessing = false; btn.disabled = false; },
                 select(r, c) { if(!this.active || r !== this.level || State.isProcessing) return; let failProb = (this.level > 2 ? 0.55 : 0.40) / State.luckFactor; const isBomb = Math.random() < failProb; const items = document.getElementById(`tower-row-${r}`).children; if(isBomb) { playSfx('lose'); items[c].innerHTML = '💣'; items[c].classList.add('bg-red-500/20', 'border-red-500'); UI.notify("PERDISTE", "error"); this.end(false); } else { playSfx('click'); items[c].innerHTML = '💎'; items[c].classList.add('bg-emerald-500/20', 'border-emerald-500'); this.mult = this.towerSteps[this.level]; this.level++; document.getElementById('tower-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`; if(this.level < 8) document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30'); else this.cashout(); } },
                 async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; const win = this.bet * this.mult; try { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); await this.end(true); } finally { State.isProcessing = false; } },
                 async end(win) { const winAmt = win ? (this.bet * this.mult) : 0; GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0); this.active = false; State.isProcessing = false; UI.updateBalance(); document.getElementById('tower-controls').classList.remove('hidden-view'); document.getElementById('tower-cashout-btn').classList.add('hidden-view'); await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'TORRE' }]); }
