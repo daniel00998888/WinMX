@@ -25,34 +25,23 @@
             height: 100dvh; 
             width: 100vw;
             overflow: hidden; 
-            position: fixed;
         }
 
         .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
         .app-container { height: 100dvh; display: flex; flex-direction: column; position: relative; }
         
-        /* SCROLLING INVISIBLE UNIVERSAL */
+        /* SCROLLING CORREGIDO */
         .view-content { 
             flex: 1; 
             overflow-y: auto; 
             padding: 1.25rem;
-            /* Espacio extra abajo para que el último juego no choque con la navegación */
-            padding-bottom: calc(130px + env(safe-area-inset-bottom)); 
+            padding-bottom: 120px; 
             scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
-            
-            /* Ocultar barra en Firefox */
-            scrollbar-width: none; 
-            /* Ocultar barra en IE/Edge */
-            -ms-overflow-style: none; 
         }
-
-        /* Ocultar barra en Chrome, Safari, Brave y Opera */
-        .view-content::-webkit-scrollbar {
-            display: none;
-            width: 0 !important;
-            height: 0 !important;
-        }
+        /* Ocultar barra de scroll pero permitir deslizar */
+        .view-content::-webkit-scrollbar { display: none; }
+        .view-content { scrollbar-width: none; -ms-overflow-style: none; }
 
         .hidden-view { display: none !important; }
 
@@ -63,6 +52,7 @@
             z-index: 50; 
             height: calc(75px + env(safe-area-inset-bottom));
             padding-bottom: env(safe-area-inset-bottom);
+            transition: transform 0.3s ease;
         }
 
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: #444; transition: 0.3s; cursor: pointer; }
@@ -73,38 +63,7 @@
         .balance-pill { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 99px; padding: 4px 4px 4px 12px; display: flex; align-items: center; gap: 8px; }
         .btn-plus { width: 32px; height: 32px; background: var(--mx-green); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
         
-        .history-scroll { max-height: 280px; overflow-y: auto; scrollbar-width: none; }
-        .history-scroll::-webkit-scrollbar { display: none; }
-
-        .slot-box { height: 90px; overflow: hidden; background: #000; border-radius: 1rem; border: 1px solid #1a1a1a; }
-        .slot-item { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
-        .slot-reel { transition: transform 3.5s cubic-bezier(0.15, 0, 0.05, 1); }
-        
-        #crash-area { position: relative; width: 100%; height: 160px; overflow: hidden; background: #050505; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.05); }
-        .bg-infinite { position: absolute; top: 0; left: 0; height: 100%; width: 200%; display: flex; }
-        .bg-part { width: 50%; height: 100%; background-size: 50px 50px; background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px); }
-        
-        #crash-rocket-container { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 10; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; }
-        #crash-rocket { font-size: 3rem; display: inline-block; transition: transform 0.1s linear; }
-
-        .instruction-card { 
-            background: rgba(16, 185, 129, 0.08); 
-            border: 1px solid rgba(16, 185, 129, 0.3); 
-            border-radius: 1.2rem; 
-            padding: 20px; 
-            margin-top: 24px; 
-            text-align: left;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        .instruction-card h4 { font-family: 'Archivo Black', sans-serif; font-size: 12px; color: var(--mx-green); text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-        .instruction-card p { font-size: 11px; color: #ccc; line-height: 1.6; font-weight: 500; }
-        .instruction-card strong { color: white; font-weight: 800; }
-        
-        .risk-badge { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; margin-bottom: 10px; }
-
-        .tx-selector { display: flex; background: rgba(255,255,255,0.05); border-radius: 1rem; padding: 4px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); }
-        .tx-tab { flex: 1; text-align: center; padding: 10px; border-radius: 0.8rem; font-size: 10px; font-weight: 900; transition: 0.3s; cursor: pointer; color: #666; }
-        .tx-tab.active { background: var(--mx-green); color: black; }
+        .grid-games { display: grid; grid-template-cols: repeat(2, 1fr); gap: 1rem; }
 
         .card-bj { width: 45px; height: 65px; background: white; color: black; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); animation: backInDown 0.5s; position: relative; border: 1px solid #ddd; }
         .card-red { color: #ef4444; }
@@ -135,25 +94,22 @@
                 <input id="login-email" type="email" placeholder="Correo electrónico" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
                 <input id="login-password" type="password" placeholder="Contraseña" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
                 <button id="btn-login" onclick="AuthManager.login()" class="btn-action w-full py-4 font-casino mt-2">Entrar</button>
-                <button onclick="AuthManager.switchTab('register')" class="w-full py-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-4 underline decoration-emerald-500/50">¿No tienes cuenta? Regístrate</button>
+                <button onclick="AuthManager.switchTab('register')" class="w-full py-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-4 underline decoration-emerald-500/50">Regístrate</button>
             </div>
         </div>
         <div id="register-container" class="hidden-view glass p-8 w-full max-w-sm text-center animate__animated animate__fadeIn">
             <h2 class="text-2xl font-casino mb-6 italic tracking-tighter text-emerald-500">Nueva Cuenta</h2>
             <div class="space-y-4 text-left">
                 <input id="reg-email" type="email" placeholder="Correo electrónico" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
-                <input id="reg-password" type="password" placeholder="Crea una contraseña" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
+                <input id="reg-password" type="password" placeholder="Contraseña" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
                 <div class="bg-white/5 border border-white/5 p-4 rounded-xl space-y-3">
-                    <p class="text-[9px] text-zinc-400 leading-relaxed uppercase font-bold">
-                        ⚠️ AVISO: Riesgo real de capital. Juega con responsabilidad.
-                    </p>
                     <label class="flex items-center gap-3 cursor-pointer">
                         <input type="checkbox" id="terms-check" class="w-4 h-4 accent-emerald-500">
-                        <span class="text-[10px] text-white font-bold uppercase">Acepto términos y soy mayor de edad</span>
+                        <span class="text-[10px] text-white uppercase">Acepto términos y soy mayor de edad</span>
                     </label>
                 </div>
                 <button id="btn-register" onclick="AuthManager.register()" class="btn-action w-full py-4 font-casino mt-2">Crear Cuenta</button> 
-                <button onclick="AuthManager.switchTab('login')" class="w-full py-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-2 text-center underline decoration-zinc-700">Ya tengo cuenta</button>
+                <button onclick="AuthManager.switchTab('login')" class="w-full py-2 text-zinc-500 text-[10px] uppercase mt-2">Ya tengo cuenta</button>
             </div>
         </div>
     </div>
@@ -171,7 +127,7 @@
             <div class="bg-gradient-to-br from-emerald-500 to-emerald-800 p-6 rounded-[2.2rem] shadow-xl">
                 <h2 class="text-2xl font-casino italic text-white">Suerte hoy</h2>
             </div>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid-games">
                 <div onclick="Router.openGame('slots')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🎰</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Slots</span></div>
                 <div onclick="Router.openGame('mines')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">💣</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Minas</span></div>
                 <div onclick="Router.openGame('crash')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🚀</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Aviator</span></div>
@@ -200,7 +156,7 @@
             <button onclick="AuthManager.logout()" class="w-full p-5 rounded-2xl border border-red-500/20 text-red-500 font-casino text-[10px] bg-red-500/5 mt-6 active:scale-95 transition-transform">Cerrar Sesión</button>
         </div>
 
-        <nav class="bottom-nav fixed bottom-0 left-0 right-0 h-20 flex items-center px-4">
+        <nav id="app-nav" class="bottom-nav fixed bottom-0 left-0 right-0 h-20 flex items-center px-4">
             <div onclick="Router.showView('lobby')" id="nav-home" class="nav-item active"><i class="fas fa-gamepad text-xl mb-1"></i><span>Jugar</span></div>
             <div onclick="Router.showView('history')" id="nav-history" class="nav-item"><i class="fas fa-receipt text-xl mb-1"></i><span>Historial</span></div>
             <div onclick="Router.showView('profile')" id="nav-profile" class="nav-item"><i class="fas fa-user-circle text-xl mb-1"></i><span>Perfil</span></div>
@@ -214,29 +170,22 @@
                     <div id="tab-deposit" onclick="UI.setTxType('deposit')" class="tx-tab active">DEPOSITAR</div>
                     <div id="tab-withdrawal" onclick="UI.setTxType('withdrawal')" class="tx-tab">RETIRAR</div>
                 </div>
-                <h2 id="tx-title" class="font-casino text-emerald-500 text-center mb-6">Monto a cargar</h2>
+                <h2 id="tx-title" class="font-casino text-emerald-500 text-center mb-6">Monto</h2>
                 <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-6 text-white">
                 <div class="space-y-3 mb-6">
-                    <input id="bank-name" type="text" placeholder="Nombre del banco" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none text-white text-[10px] font-bold uppercase">
-                    <input id="beneficiary-name" type="text" placeholder="Nombre beneficiario" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none text-white text-[10px] font-bold uppercase">
+                    <input id="bank-name" type="text" placeholder="Banco" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none text-white text-[10px] font-bold uppercase">
+                    <input id="beneficiary-name" type="text" placeholder="Beneficiario" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none text-white text-[10px] font-bold uppercase">
                 </div>
                 <button onclick="UI.depNextStep()" class="btn-action w-full py-4 font-casino">Continuar</button>
             </div>
             <div id="dep-step-2" class="hidden-view space-y-4 text-center">
                 <div id="deposit-info">
-                    <div class="instruction-card !mt-0 !mb-4 bg-emerald-500/5 border-emerald-500/20">
-                        <h4><i class="fas fa-university"></i> Datos</h4>
-                        <div class="flex justify-between border-b border-white/5 pb-1"><span class="text-zinc-500 uppercase">Monto:</span><span class="text-emerald-500 font-bold" id="display-dep-amount">$0.00</span></div>
-                    </div>
                     <div class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 mb-4">
                         <p class="text-[8px] font-bold text-emerald-500 mb-1 uppercase">CLABE (STP)</p>
                         <div class="flex items-center justify-center gap-3"><span class="text-xs font-mono font-bold" id="clabe-number">722969020533491161</span><button onclick="UI.copyClabe()" class="text-emerald-500"><i class="fas fa-copy"></i></button></div>
                     </div>
                     <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
                     <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-2xl p-4 block cursor-pointer"><i class="fas fa-camera text-xl mb-1 text-zinc-600"></i><p id="file-label" class="text-[8px] font-bold text-zinc-500 uppercase">Subir Comprobante</p></label>
-                </div>
-                <div id="withdrawal-info" class="hidden-view">
-                    <div class="instruction-card !mt-0 !mb-4 bg-emerald-500/5 border-emerald-500/20"><h4><i class="fas fa-clock"></i> Pendiente</h4><p class="text-[10px] text-zinc-400">Revisión en 1-24 horas.</p></div>
                 </div>
                 <button id="btn-confirm-dep" onclick="Core.confirmTransaction()" class="btn-action w-full py-4 font-casino">Confirmar</button>
             </div>
@@ -274,7 +223,7 @@
             copyClabe() { const clabe = document.getElementById('clabe-number').innerText; navigator.clipboard.writeText(clabe).then(() => { playSfx('click'); this.notify("CLABE Copiada", "success"); }); },
             handleFile(input) { if(input.files && input.files[0]) { playSfx('click'); const label = document.getElementById('file-label'); label.innerText = "Archivo: " + input.files[0].name.substring(0, 10) + "..."; label.classList.replace('text-zinc-500', 'text-emerald-500'); } },
             notify(m, t) { const n = document.createElement('div'); n.className = `p-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-2xl animate__animated animate__fadeInDown ${t==='success'?'bg-emerald-500 text-black':'bg-red-500 text-white'}`; n.innerText = m; document.getElementById('notif-container').appendChild(n); setTimeout(() => { n.classList.replace('animate__fadeInDown', 'animate__fadeOutUp'); setTimeout(()=>n.remove(), 500); }, 3000); },
-            setTxType(type) { playSfx('click'); State.currentTx = type; const isDep = type === 'deposit'; document.getElementById('tab-deposit').classList.toggle('active', isDep); document.getElementById('tab-withdrawal').classList.toggle('active', !isDep); document.getElementById('tx-title').innerText = isDep ? 'Monto a cargar' : 'Monto a retirar'; document.getElementById('deposit-info').classList.toggle('hidden-view', !isDep); document.getElementById('withdrawal-info').classList.toggle('hidden-view', isDep); }
+            setTxType(type) { playSfx('click'); State.currentTx = type; const isDep = type === 'deposit'; document.getElementById('tab-deposit').classList.toggle('active', isDep); document.getElementById('tab-withdrawal').classList.toggle('active', !isDep); document.getElementById('tx-title').innerText = isDep ? 'Monto a cargar' : 'Monto a retirar'; document.getElementById('deposit-info').classList.toggle('hidden-view', !isDep); }
         };
 
         const AuthManager = {
@@ -296,26 +245,55 @@
         };
 
         const Router = {
-            showView(viewId) { if(State.isSpinning || State.isProcessing) return; playSfx('click'); document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden-view')); document.getElementById(`view-${viewId}`).classList.remove('hidden-view'); document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); const navId = {'lobby':'nav-home','history':'nav-history','profile':'nav-profile'}[viewId]; if(navId) document.getElementById(navId).classList.add('active'); if(viewId === 'history') Core.fetchHistory(); if(viewId === 'profile') UI.updateProfile(); },
-            openGame(game) { if(State.isProcessing) return; playSfx('click'); this.showView('game'); document.getElementById('game-mount').innerHTML = this.templates[game]; document.getElementById('view-game').scrollTop = 0; if(game === 'slots') GameLogic.slots.init(); if(game === 'mines') GameLogic.mines.drawGrid(); if(game === 'tower') GameLogic.tower.drawTower(); if(game === 'blackjack') GameLogic.blackjack.renderInitial(); if(game === 'chicken') GameLogic.chicken.init(); },
+            showView(viewId) { 
+                if(State.isSpinning || State.isProcessing) return; 
+                playSfx('click'); 
+                document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden-view')); 
+                document.getElementById(`view-${viewId}`).classList.remove('hidden-view'); 
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); 
+                const navId = {'lobby':'nav-home','history':'nav-history','profile':'nav-profile'}[viewId]; 
+                if(navId) document.getElementById(navId).classList.add('active'); 
+                
+                // MOSTRAR NAV BAR AL VOLVER AL LOBBY O PERFIL
+                document.getElementById('app-nav').style.transform = 'translateY(0)';
+                
+                if(viewId === 'history') Core.fetchHistory(); 
+                if(viewId === 'profile') UI.updateProfile(); 
+            },
+            openGame(game) { 
+                if(State.isProcessing) return; 
+                playSfx('click'); 
+                this.showView('game'); 
+                document.getElementById('game-mount').innerHTML = this.templates[game]; 
+                document.getElementById('view-game').scrollTop = 0; 
+                
+                // OCULTAR NAV BAR AL ENTRAR A UN JUEGO
+                document.getElementById('app-nav').style.transform = 'translateY(100%)';
+
+                if(game === 'slots') GameLogic.slots.init(); 
+                if(game === 'mines') GameLogic.mines.drawGrid(); 
+                if(game === 'tower') GameLogic.tower.drawTower(); 
+                if(game === 'blackjack') GameLogic.blackjack.renderInitial(); 
+                if(game === 'chicken') GameLogic.chicken.init(); 
+            },
             templates: {
-                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4>🎰 Slots</h4><p>Combina 3 símbolos.</p></div></div>`,
-                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div class="risk-badge"><i class="fas fa-bomb"></i> 3 Minas</div><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view flex justify-between p-3 bg-emerald-500/10 rounded-xl mb-3"><div><span id="mines-mult" class="font-casino text-xs">1.00x</span></div><button id="mines-cashout-btn" onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-4 py-1 rounded font-bold text-[9px]">COBRAR $0.00</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" class="input-bet"><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><div class="instruction-card"><h4>💣 Minas</h4><p>Encuentra diamantes.</p></div></div>`,
-                crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div id="crash-area"><div id="crash-bg" class="bg-infinite"><div class="bg-part"></div><div class="bg-part"></div></div><div id="crash-rocket-container"><div id="crash-rocket">🚀</div></div></div><input id="crash-bet-input" type="number" value="10" class="input-bet mt-6"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button><div class="instruction-card"><h4>🚀 Aviator</h4><p>Cobra antes del crash.</p></div></div>`,
-                tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div class="risk-badge" style="color: #fbbf24; background: rgba(251,191,36,0.1)"><i class="fas fa-bolt"></i> 1 Peligro</div><div id="tower-container" class="gap-3 mb-4 flex flex-col-reverse"></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" class="input-bet"><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino">COBRAR $0.00</button><div class="instruction-card"><h4>🗼 Torre</h4><p>Sube pisos.</p></div></div>`,
+                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4>🎰 Reglas Slots</h4><p>Combina 3 símbolos.</p></div></div>`,
+                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div class="risk-badge"><i class="fas fa-bomb"></i> 3 Minas</div><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view flex justify-between p-3 bg-emerald-500/10 rounded-xl mb-3"><div><span id="mines-mult" class="font-casino text-xs">1.00x</span></div><button id="mines-cashout-btn" onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-4 py-1 rounded font-bold text-[9px]">COBRAR $0.00</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" class="input-bet"><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><div class="instruction-card"><h4>💣 Reglas Minas</h4><p>Encuentra diamantes.</p></div></div>`,
+                crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div id="crash-area"><div id="crash-bg" class="bg-infinite"><div class="bg-part"></div><div class="bg-part"></div></div><div id="crash-rocket-container"><div id="crash-rocket">🚀</div></div></div><input id="crash-bet-input" type="number" value="10" class="input-bet mt-6"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button><div class="instruction-card"><h4>🚀 Reglas Aviator</h4><p>Cobra antes del crash.</p></div></div>`,
+                tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div class="risk-badge" style="color: #fbbf24; background: rgba(251,191,36,0.1)"><i class="fas fa-bolt"></i> 1 Peligro</div><div id="tower-container" class="gap-3 mb-4 flex flex-col-reverse"></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" class="input-bet"><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino">COBRAR $0.00</button><div class="instruction-card"><h4>🗼 Reglas Torre</h4><p>Sube pisos.</p></div></div>`,
                 blackjack: `<div class="glass p-4 text-center max-w-[320px] mx-auto animate__animated animate__fadeIn">
                     <div class="mb-4"><p class="text-[8px] text-zinc-500 uppercase font-black mb-2">Crupier (Puntos: <span id="dealer-score">?</span>)</p><div id="dealer-cards" class="flex justify-center gap-2 h-[70px]"></div></div>
                     <div class="mb-6"><p class="text-[8px] text-emerald-500 uppercase font-black mb-2">Tus Cartas (Puntos: <span id="player-score">0</span>)</p><div id="player-cards" class="flex justify-center gap-2 h-[70px]"></div></div>
                     <div id="bj-controls"><input id="bj-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.blackjack.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div>
                     <div id="bj-actions" class="hidden-view grid grid-cols-2 gap-3"><button onclick="GameLogic.blackjack.hit()" class="btn-action py-4 bg-zinc-800 text-white font-casino">PEDIR</button><button onclick="GameLogic.blackjack.stand()" class="btn-action py-4 font-casino">PLANTARSE</button></div>
-                    <div class="instruction-card"><h4>🃏 Blackjack</h4><p>Suma 21.</p></div>
+                    <div class="instruction-card"><h4>🃏 Reglas Blackjack</h4><p>Suma 21.</p></div>
                 </div>`,
                 chicken: `<div class="glass p-4 text-center">
                     <div id="chicken-status" class="mb-4 text-emerald-500 font-casino text-2xl animate__animated animate__pulse animate__infinite">1.00x</div>
                     <div id="chicken-world" class="flex"></div>
                     <div id="chicken-controls"><input id="chicken-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.chicken.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div>
                     <div id="chicken-actions" class="hidden-view grid grid-cols-2 gap-3 mt-4"><button onclick="GameLogic.chicken.move()" class="btn-action py-5 bg-emerald-500 text-black font-black text-lg">AVANZAR</button><button id="chicken-cashout-btn" onclick="GameLogic.chicken.cashout()" class="btn-action py-5 bg-zinc-800 text-white font-black">COBRAR $0.00</button></div>
-                    <div class="instruction-card"><h4>🐥 Chicken</h4><p>Cruza los carriles.</p></div>
+                    <div class="instruction-card"><h4>🐥 Reglas Chicken</h4><p>Cruza los carriles.</p></div>
                 </div>`
             }
         };
@@ -350,7 +328,7 @@
 
             blackjack: {
                 deck: [], playerHand: [], dealerHand: [], active: false, bet: 0,
-                renderInitial() { const pC = document.getElementById('player-cards'), dC = document.getElementById('dealer-cards'); if(pC) pC.innerHTML = ''; if(dC) dC.innerHTML = ''; document.getElementById('player-score').innerText = '0'; document.getElementById('dealer-score').innerText = '?'; },
+                renderInitial() { const pC = document.getElementById('player-cards'), dC = document.getElementById('dealer-cards'); if(pC) pC.innerHTML = ''; if(dC) dC.innerHTML = ''; if(document.getElementById('player-score')) document.getElementById('player-score').innerText = '0'; if(document.getElementById('dealer-score')) document.getElementById('dealer-score').innerText = '?'; },
                 async start() {
                     if(this.active || State.isProcessing) return;
                     const b = Math.abs(parseFloat(document.getElementById('bj-bet-input').value)) || 10;
@@ -368,27 +346,12 @@
                     document.getElementById('bj-actions').classList.remove('hidden-view');
                     this.render(true); 
                     State.isProcessing = false;
-                    
                     if(this.getRawScore(this.playerHand) === 21) this.stand();
                 },
                 createDeck() { const suits = ['♠', '♣', '♥', '♦'], vls = ['2','3','4','5','6','7','8','9','10','J','Q','K','A']; let deck = []; for(let s of suits) for(let v of vls) deck.push({s, v}); return deck.sort(() => Math.random() - 0.5); },
                 drawCard() { return this.deck.pop(); },
-                getRawScore(hand) {
-                    let score = 0;
-                    for(let c of hand) {
-                        if(c.v === 'A') score += 11;
-                        else if(['J','Q','K'].includes(c.v)) score += 10;
-                        else score += parseInt(c.v);
-                    }
-                    return score;
-                },
-                hit() { 
-                    if(!this.active || State.isProcessing) return; 
-                    playSfx('card'); 
-                    this.playerHand.push(this.drawCard()); 
-                    this.render(true); 
-                    if(this.getRawScore(this.playerHand) > 21) this.end('lose'); 
-                },
+                getRawScore(hand) { let score = 0; for(let c of hand) { if(c.v === 'A') score += 11; else if(['J','Q','K'].includes(c.v)) score += 10; else score += parseInt(c.v); } return score; },
+                hit() { if(!this.active || State.isProcessing) return; playSfx('card'); this.playerHand.push(this.drawCard()); this.render(true); if(this.getRawScore(this.playerHand) > 21) this.end('lose'); },
                 async stand() { 
                     if(!this.active || State.isProcessing) return; 
                     State.isProcessing = true; 
@@ -401,9 +364,7 @@
                         await new Promise(r => setTimeout(r, 600)); 
                     } 
                     const ps = this.getRawScore(this.playerHand), ds = this.getRawScore(this.dealerHand); 
-                    if(ds > 21 || ps > ds) this.end('win'); 
-                    else if(ps === ds) this.end('push'); 
-                    else this.end('lose'); 
+                    if(ds > 21 || ps > ds) this.end('win'); else if(ps === ds) this.end('push'); else this.end('lose'); 
                 },
                 render(hideDealer) { 
                     const pC = document.getElementById('player-cards'), dC = document.getElementById('dealer-cards'); 
@@ -419,8 +380,7 @@
                     document.getElementById('player-score').innerText = this.getRawScore(this.playerHand); 
                 },
                 async end(res) { 
-                    this.active = false; 
-                    let win = 0; 
+                    this.active = false; let win = 0; 
                     if(res === 'win') { win = this.bet * 2; UI.notify("GANASTE", "success"); playSfx('win'); } 
                     else if(res === 'push') { win = this.bet; UI.notify("EMPATE", "success"); } 
                     else { UI.notify("PERDISTE", "error"); playSfx('lose'); } 
@@ -436,9 +396,9 @@
             chicken: {
                 pos: -1, active: false, bet: 0, mults: [1.2, 1.5, 2.2, 4.0, 8.5, 18.0, 45.0, 100.0],
                 init() { const road = document.getElementById('chicken-world'); if(!road) return; road.innerHTML = `<div id="chicken-hero" class="chicken-sprite">🐥</div>`; this.mults.forEach((m, i) => { const lane = document.createElement('div'); lane.className = "road-lane"; lane.innerHTML = `<span class="text-[8px] font-black text-white/10 uppercase">${m}x</span>`; lane.id = `lane-${i}`; road.appendChild(lane); }); this.updateHero(); },
-                async start() { if(this.active || State.isProcessing) return; const bInput = document.getElementById('chicken-bet-input'); const b = Math.abs(parseFloat(bInput.value)) || 10; if(State.balance < b) return UI.notify("Saldo insuficiente", "error"); State.isProcessing = true; await Core.updateBalanceDB(-b); State.balance -= b; this.bet = b; UI.updateBalance(); this.pos = -1; this.active = true; document.getElementById('chicken-controls').classList.add('hidden-view'); document.getElementById('chicken-actions').classList.remove('hidden-view'); document.getElementById('chicken-cashout-btn').innerText = `COBRAR $${b.toFixed(2)}`; this.init(); State.isProcessing = false; },
+                async start() { if(this.active || State.isProcessing) return; const b = Math.abs(parseFloat(document.getElementById('chicken-bet-input').value)) || 10; if(State.balance < b) return UI.notify("Saldo insuficiente", "error"); State.isProcessing = true; await Core.updateBalanceDB(-b); State.balance -= b; this.bet = b; UI.updateBalance(); this.pos = -1; this.active = true; document.getElementById('chicken-controls').classList.add('hidden-view'); document.getElementById('chicken-actions').classList.remove('hidden-view'); document.getElementById('chicken-cashout-btn').innerText = `COBRAR $${b.toFixed(2)}`; this.init(); State.isProcessing = false; },
                 updateHero() { const hero = document.getElementById('chicken-hero'); if(!hero) return; const lanes = document.querySelectorAll('.road-lane'); lanes.forEach(l => l.classList.remove('current', 'passed')); if(this.pos === -1) hero.style.left = "-40px"; else { const targetLane = document.getElementById(`lane-${this.pos}`); const laneRect = targetLane.getBoundingClientRect(); const worldRect = document.getElementById('chicken-world').getBoundingClientRect(); hero.style.left = (laneRect.left - worldRect.left + (laneRect.width / 2) - 15) + "px"; for(let i=0; i<=this.pos; i++) { const l = document.getElementById(`lane-${i}`); if(i === this.pos) l.classList.add('current'); else l.classList.add('passed'); } } },
-                move() { if(!this.active || State.isProcessing) return; this.pos++; const risk = (0.15 + (this.pos * 0.08)) / State.luckFactor; if(Math.random() < risk) { const world = document.getElementById('chicken-world'); const car = document.createElement('div'); car.className = "car-sprite"; car.innerHTML = '🚘'; const targetLane = document.getElementById(`lane-${this.pos}`); car.style.left = (targetLane.offsetLeft + 10) + "px"; world.appendChild(car); setTimeout(() => { if(document.getElementById('chicken-hero')) document.getElementById('chicken-hero').innerHTML = '💥'; playSfx('lose'); UI.notify("¡ATROPELLADO!", "error"); this.end(false); }, 300); } else { playSfx('click'); this.updateHero(); const m = this.mults[this.pos]; document.getElementById('chicken-status').innerText = m.toFixed(2) + 'x'; document.getElementById('chicken-cashout-btn').innerText = `COBRAR $${(this.bet * m).toFixed(2)}`; if(this.pos === 7) this.cashout(); } },
+                move() { if(!this.active || State.isProcessing) return; this.pos++; const risk = (0.15 + (this.pos * 0.08)) / State.luckFactor; if(Math.random() < risk) { const car = document.createElement('div'); car.className = "car-sprite"; car.innerHTML = '🚘'; const targetLane = document.getElementById(`lane-${this.pos}`); car.style.left = (targetLane.offsetLeft + 10) + "px"; document.getElementById('chicken-world').appendChild(car); setTimeout(() => { if(document.getElementById('chicken-hero')) document.getElementById('chicken-hero').innerHTML = '💥'; playSfx('lose'); UI.notify("¡ATROPELLADO!", "error"); this.end(false); }, 300); } else { playSfx('click'); this.updateHero(); const m = this.mults[this.pos]; document.getElementById('chicken-status').innerText = m.toFixed(2) + 'x'; document.getElementById('chicken-cashout-btn').innerText = `COBRAR $${(this.bet * m).toFixed(2)}`; if(this.pos === 7) this.cashout(); } },
                 async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; const m = this.pos === -1 ? 1 : this.mults[this.pos]; const win = this.bet * m; await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
                 async end(win) { this.active = false; const m = this.pos === -1 ? 1 : this.mults[this.pos]; const winAmt = win ? (this.bet * m) : 0; GameLogic.adjustLuck(winAmt, this.bet, m); UI.updateBalance(); setTimeout(() => { document.getElementById('chicken-controls').classList.remove('hidden-view'); document.getElementById('chicken-actions').classList.add('hidden-view'); document.getElementById('chicken-status').innerText = '1.00x'; }, 1000); await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'CHICKEN' }]); State.isProcessing = false; }
             },
@@ -446,7 +406,7 @@
             crash: {
                 active: false, mult: 1, bet: 0, interval: null, bgPos: 0,
                 async start() { if(this.active || State.isProcessing) return; this.active = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10; const btn = document.getElementById('btn-crash'); btn.disabled = true; const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b || b <= 0) { this.active = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('rocket'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); this.bet = b; this.mult = 1.0; this.bgPos = 0; btn.innerText = `RETIRAR $${(this.bet).toFixed(2)}`; btn.disabled = false; btn.onclick = () => this.cashout(); if (Math.random() < 0.15 / State.luckFactor) { this.explode(); return; } let baseLimit = 1.01 + Math.random() * 0.99; if (Math.random() < 0.05) baseLimit = 2 + Math.random() * 10; State.isProcessing = false; this.interval = setInterval(() => { this.mult += 0.01; const multEl = document.getElementById('crash-mult'); if(multEl) multEl.innerText = this.mult.toFixed(2) + 'x'; let speed = 2 + (this.mult * 2); this.bgPos -= speed; if (this.bgPos <= -100) this.bgPos = 0; const bgEl = document.getElementById('crash-bg'); if(bgEl) bgEl.style.transform = `translateX(${this.bgPos}%)`; let floatY = Math.sin(Date.now() / 200) * 8; const rocketEl = document.getElementById('crash-rocket'); if(rocketEl) rocketEl.style.transform = `translateY(${floatY}px)`; btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`; if(this.mult >= baseLimit) { clearInterval(this.interval); this.explode(); } }, 50); },
-                async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; document.getElementById('btn-crash').disabled = true; clearInterval(this.interval); const win = this.bet * this.mult; try { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); await this.end(true); } catch(e) { State.isProcessing = false; } },
+                async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; document.getElementById('btn-crash').disabled = true; clearInterval(this.interval); const win = this.bet * this.mult; try { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); await this.end(true); } catch(e) { State.isProcessing = false; } },
                 explode() { clearInterval(this.interval); playSfx('lose'); UI.notify("¡EXPLOTÓ!", "error"); const multEl = document.getElementById('crash-mult'); if(multEl) multEl.classList.add('text-red-500'); const rocketEl = document.getElementById('crash-rocket'); if(rocketEl) { rocketEl.innerHTML = '💥'; rocketEl.style.transform = 'translateY(0)'; } this.end(false); },
                 async end(win) { const winAmt = win ? (this.bet * this.mult) : 0; GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0); this.active = false; State.isProcessing = false; UI.updateBalance(); const btn = document.getElementById('btn-crash'); if(btn) { btn.innerText = "EXPLOTÓ"; btn.disabled = true; setTimeout(() => { btn.disabled = false; btn.innerText = "DESPEGAR"; btn.onclick = () => GameLogic.crash.start(); const multEl = document.getElementById('crash-mult'); if(multEl) { multEl.classList.remove('text-red-500'); multEl.innerText = '1.00x'; } const rocketEl = document.getElementById('crash-rocket'); if(rocketEl) { rocketEl.innerHTML = '🚀'; rocketEl.style.transform = 'translateY(0)'; } }, 2500); } await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR' }]); }
             }
