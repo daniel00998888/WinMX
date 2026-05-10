@@ -63,10 +63,12 @@
         
         .grid-games { display: grid; grid-template-cols: repeat(2, 1fr); gap: 1rem; }
 
+        /* Blackjack Cards */
         .card-bj { width: 45px; height: 65px; background: white; color: black; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); animation: backInDown 0.5s; position: relative; border: 1px solid #ddd; }
         .card-red { color: #ef4444; }
         .card-hidden { background: linear-gradient(45deg, #1e293b 25%, #0f172a 25%, #0f172a 50%, #1e293b 50%, #1e293b 75%, #0f172a 75%, #0f172a 100%); background-size: 10px 10px; border: 2px solid #334155; }
 
+        /* Chicken World */
         #chicken-world { width: 100%; height: 200px; background: #222; border-radius: 1rem; position: relative; overflow: hidden; border: 2px solid #333; margin-bottom: 1rem; }
         .road-lane { height: 100%; border-right: 1px dashed rgba(255,255,255,0.2); flex: 1; position: relative; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
         .road-lane.passed { background: rgba(16, 185, 129, 0.1); }
@@ -104,7 +106,7 @@
                     <p class="text-[9px] text-zinc-400 leading-relaxed uppercase font-bold">⚠️ Juega con responsabilidad.</p>
                     <label class="flex items-center gap-3 cursor-pointer">
                         <input type="checkbox" id="terms-check" class="w-4 h-4 accent-emerald-500">
-                        <span class="text-[10px] text-white uppercase">Soy mayor de edad</span>
+                        <span class="text-[10px] text-white uppercase">Acepto términos y soy mayor de edad</span>
                     </label>
                 </div>
                 <button id="btn-register" onclick="AuthManager.register()" class="btn-action w-full py-4 font-casino mt-2">Crear Cuenta</button> 
@@ -172,13 +174,17 @@
                 <h2 id="tx-title" class="font-casino text-emerald-500 text-center mb-6">Monto</h2>
                 <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-6 text-white">
                 <div class="space-y-3 mb-6">
-                    <input id="bank-name" type="text" placeholder="Banco" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none text-white text-[10px] font-bold uppercase">
-                    <input id="beneficiary-name" type="text" placeholder="Beneficiario" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none text-white text-[10px] font-bold uppercase">
+                    <input id="bank-name" type="text" placeholder="Nombre del banco" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none text-white text-[10px] font-bold uppercase">
+                    <input id="beneficiary-name" type="text" placeholder="Nombre beneficiario" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none text-white text-[10px] font-bold uppercase">
                 </div>
                 <button onclick="UI.depNextStep()" class="btn-action w-full py-4 font-casino">Continuar</button>
             </div>
             <div id="dep-step-2" class="hidden-view space-y-4 text-center">
                 <div id="deposit-info">
+                    <div class="instruction-card !mt-0 !mb-4 bg-emerald-500/5">
+                        <h4><i class="fas fa-university"></i> Datos</h4>
+                        <div class="flex justify-between border-b border-white/5 pb-1"><span class="text-zinc-500 uppercase">Monto:</span><span class="text-emerald-500 font-bold" id="display-dep-amount">$0.00</span></div>
+                    </div>
                     <div class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 mb-4">
                         <p class="text-[8px] font-bold text-emerald-500 mb-1 uppercase">CLABE (STP)</p>
                         <div class="flex items-center justify-center gap-3"><span class="text-xs font-mono font-bold" id="clabe-number">722969020533491161</span><button onclick="UI.copyClabe()" class="text-emerald-500"><i class="fas fa-copy"></i></button></div>
@@ -226,8 +232,8 @@
         };
 
         const AuthManager = {
-            async login() { const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value; if(!e || !p) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-login'); btn.disabled = true; const { data, error } = await sb.auth.signInWithPassword({ email: e, password: p }); if(error) { UI.notify(error.message, "error"); btn.disabled = false; } else location.reload(); },
-            async register() { if(!document.getElementById('terms-check').checked) return UI.notify("Acepta términos", "error"); const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value; if(!e || !p) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-register'); btn.disabled = true; const { data, error } = await sb.auth.signUp({ email: e, password: p }); if(error) { UI.notify(error.message, "error"); btn.disabled = false; } else { await sb.from('usuarios').insert([{ id: data.user.id, email: e, saldo: 0 }]); UI.notify("Cuenta creada", "success"); location.reload(); } },
+            async login() { if(State.isProcessing) return; const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value; if(!e || !p) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-login'); btn.disabled = true; const { data, error } = await sb.auth.signInWithPassword({ email: e, password: p }); if(error) { UI.notify(error.message, "error"); btn.disabled = false; } else location.reload(); },
+            async register() { if(State.isProcessing) return; if(!document.getElementById('terms-check').checked) return UI.notify("Acepta términos", "error"); const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value; if(!e || !p) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-register'); btn.disabled = true; const { data, error } = await sb.auth.signUp({ email: e, password: p }); if(error) { UI.notify(error.message, "error"); btn.disabled = false; } else { await sb.from('usuarios').insert([{ id: data.user.id, email: e, saldo: 0 }]); UI.notify("Cuenta creada", "success"); location.reload(); } },
             async logout() { await sb.auth.signOut(); location.reload(); },
             switchTab(tab) { playSfx('click'); document.getElementById('login-container').classList.toggle('hidden-view', tab==='register'); document.getElementById('register-container').classList.toggle('hidden-view', tab==='login'); }
         };
@@ -252,7 +258,10 @@
                 document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); 
                 const navId = {'lobby':'nav-home','history':'nav-history','profile':'nav-profile'}[viewId]; 
                 if(navId) document.getElementById(navId).classList.add('active'); 
+                
+                // MOSTRAR NAV BAR AL VOLVER AL LOBBY O PERFIL
                 document.getElementById('bottom-nav-bar').style.transform = 'translateY(0)';
+                
                 if(viewId === 'history') Core.fetchHistory(); 
                 if(viewId === 'profile') UI.updateProfile(); 
             },
@@ -262,7 +271,10 @@
                 this.showView('game'); 
                 document.getElementById('game-mount').innerHTML = this.templates[game]; 
                 document.getElementById('view-game').scrollTop = 0; 
+                
+                // OCULTAR NAV BAR AL ENTRAR A UN JUEGO
                 document.getElementById('bottom-nav-bar').style.transform = 'translateY(100%)';
+
                 if(game === 'slots') GameLogic.slots.init(); 
                 if(game === 'mines') GameLogic.mines.drawGrid(); 
                 if(game === 'tower') GameLogic.tower.drawTower(); 
@@ -270,12 +282,24 @@
                 if(game === 'chicken') GameLogic.chicken.init(); 
             },
             templates: {
-                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4>🎰 Reglas Slots</h4><p>Combina 3 símbolos.</p></div></div>`,
-                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div class="risk-badge"><i class="fas fa-bomb"></i> 3 Minas</div><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view flex justify-between p-3 bg-emerald-500/10 rounded-xl mb-3"><div><span id="mines-mult" class="font-casino text-xs">1.00x</span></div><button id="mines-cashout-btn" onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-4 py-1 rounded font-bold text-[9px]">COBRAR $0.00</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" class="input-bet"><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><div class="instruction-card"><h4>💣 Reglas Minas</h4><p>Encuentra diamantes.</p></div></div>`,
-                crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div id="crash-area"><div id="crash-bg" class="bg-infinite"><div class="bg-part"></div><div class="bg-part"></div></div><div id="crash-rocket-container"><div id="crash-rocket">🚀</div></div></div><input id="crash-bet-input" type="number" value="10" class="input-bet mt-6"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button><div class="instruction-card"><h4>🚀 Reglas Aviator</h4><p>Cobra antes del crash.</p></div></div>`,
-                tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div class="risk-badge" style="color: #fbbf24; background: rgba(251,191,36,0.1)"><i class="fas fa-bolt"></i> 1 Peligro</div><div id="tower-container" class="gap-3 mb-4 flex flex-col-reverse"></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" class="input-bet"><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino">COBRAR $0.00</button><div class="instruction-card"><h4>🗼 Reglas Torre</h4><p>Sube pisos.</p></div></div>`,
-                blackjack: `<div class="glass p-4 text-center max-w-[320px] mx-auto animate__animated animate__fadeIn"><div class="mb-4"><p class="text-[8px] text-zinc-500 uppercase font-black mb-2">Crupier (Puntos: <span id="dealer-score">?</span>)</p><div id="dealer-cards" class="flex justify-center gap-2 h-[70px]"></div></div><div class="mb-6"><p class="text-[8px] text-emerald-500 uppercase font-black mb-2">Tus Cartas (Puntos: <span id="player-score">0</span>)</p><div id="player-cards" class="flex justify-center gap-2 h-[70px]"></div></div><div id="bj-controls"><input id="bj-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.blackjack.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><div id="bj-actions" class="hidden-view grid grid-cols-2 gap-3"><button onclick="GameLogic.blackjack.hit()" class="btn-action py-4 bg-zinc-800 text-white font-casino">PEDIR</button><button onclick="GameLogic.blackjack.stand()" class="btn-action py-4 font-casino">PLANTARSE</button></div><div class="instruction-card"><h4>🃏 Reglas Blackjack</h4><p>Suma 21.</p></div></div>`,
-                chicken: `<div class="glass p-4 text-center"><div id="chicken-status" class="mb-4 text-emerald-500 font-casino text-2xl animate__animated animate__pulse animate__infinite">1.00x</div><div id="chicken-world" class="flex"></div><div id="chicken-controls"><input id="chicken-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.chicken.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><div id="chicken-actions" class="hidden-view grid grid-cols-2 gap-3 mt-4"><button onclick="GameLogic.chicken.move()" class="btn-action py-5 bg-emerald-500 text-black font-black text-lg">AVANZAR</button><button id="chicken-cashout-btn" onclick="GameLogic.chicken.cashout()" class="btn-action py-5 bg-zinc-800 text-white font-black">COBRAR $0.00</button></div><div class="instruction-card"><h4>🐥 Reglas Chicken</h4><p>Cruza los carriles.</p></div></div>`
+                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4>🎰 Slots</h4><p>Combina 3 símbolos.</p></div></div>`,
+                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div class="risk-badge"><i class="fas fa-bomb"></i> 3 Minas</div><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view flex justify-between p-3 bg-emerald-500/10 rounded-xl mb-3"><div><span id="mines-mult" class="font-casino text-xs">1.00x</span></div><button id="mines-cashout-btn" onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-4 py-1 rounded font-bold text-[9px]">COBRAR $0.00</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" class="input-bet"><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><div class="instruction-card"><h4>💣 Minas</h4><p>Encuentra diamantes.</p></div></div>`,
+                crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div id="crash-area"><div id="crash-bg" class="bg-infinite"><div class="bg-part"></div><div class="bg-part"></div></div><div id="crash-rocket-container"><div id="crash-rocket">🚀</div></div></div><input id="crash-bet-input" type="number" value="10" class="input-bet mt-6"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button><div class="instruction-card"><h4>🚀 Aviator</h4><p>Cobra antes del crash.</p></div></div>`,
+                tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div class="risk-badge" style="color: #fbbf24; background: rgba(251,191,36,0.1)"><i class="fas fa-bolt"></i> 1 Peligro</div><div id="tower-container" class="gap-3 mb-4 flex flex-col-reverse"></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" class="input-bet"><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino">COBRAR $0.00</button><div class="instruction-card"><h4>🗼 Torre</h4><p>Sube pisos.</p></div></div>`,
+                blackjack: `<div class="glass p-4 text-center max-w-[320px] mx-auto animate__animated animate__fadeIn">
+                    <div class="mb-4"><p class="text-[8px] text-zinc-500 uppercase font-black mb-2">Crupier (Puntos: <span id="dealer-score">?</span>)</p><div id="dealer-cards" class="flex justify-center gap-2 h-[70px]"></div></div>
+                    <div class="mb-6"><p class="text-[8px] text-emerald-500 uppercase font-black mb-2">Tus Cartas (Puntos: <span id="player-score">0</span>)</p><div id="player-cards" class="flex justify-center gap-2 h-[70px]"></div></div>
+                    <div id="bj-controls"><input id="bj-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.blackjack.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div>
+                    <div id="bj-actions" class="hidden-view grid grid-cols-2 gap-3"><button onclick="GameLogic.blackjack.hit()" class="btn-action py-4 bg-zinc-800 text-white font-casino">PEDIR</button><button onclick="GameLogic.blackjack.stand()" class="btn-action py-4 font-casino">PLANTARSE</button></div>
+                    <div class="instruction-card"><h4>🃏 Blackjack</h4><p>Suma 21 o más que el crupier sin pasarte. ¡El As vale 11 o 1!</p></div>
+                </div>`,
+                chicken: `<div class="glass p-4 text-center">
+                    <div id="chicken-status" class="mb-4 text-emerald-500 font-casino text-2xl animate__animated animate__pulse animate__infinite">1.00x</div>
+                    <div id="chicken-world" class="flex"></div>
+                    <div id="chicken-controls"><input id="chicken-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.chicken.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div>
+                    <div id="chicken-actions" class="hidden-view grid grid-cols-2 gap-3 mt-4"><button onclick="GameLogic.chicken.move()" class="btn-action py-5 bg-emerald-500 text-black font-black text-lg">AVANZAR</button><button id="chicken-cashout-btn" onclick="GameLogic.chicken.cashout()" class="btn-action py-5 bg-zinc-800 text-white font-black">COBRAR $0.00</button></div>
+                    <div class="instruction-card"><h4>🐥 Chicken Road</h4><p>Cruza los carriles sin que te atropelle un auto.</p></div>
+                </div>`
             }
         };
 
@@ -396,7 +420,7 @@
                 move() { 
                     if(!this.active || State.isProcessing) return; 
                     this.pos++; 
-                    // Dificultad escalada: cada carril es progresivamente más peligroso
+                    // DIFICULTAD PROGRESIVA: El riesgo aumenta un 12% extra en cada carril
                     const risk = (0.15 + (this.pos * 0.12)) / State.luckFactor; 
                     
                     if(Math.random() < risk) { 
