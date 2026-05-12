@@ -199,6 +199,10 @@
             </div>
             <div id="dep-step-2" class="hidden-view space-y-4 text-center">
                 <div id="deposit-info">
+                    <div class="instruction-card !mt-0 !mb-4 bg-emerald-500/5 border-emerald-500/20 text-center">
+                        <p class="text-zinc-500 text-[10px] uppercase mb-1">Confirmar envío de:</p>
+                        <span class="text-emerald-500 font-black text-2xl" id="display-dep-amount">$0.00</span>
+                    </div>
                     <div class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 mb-4">
                         <p class="text-[8px] font-bold text-emerald-500 mb-1 uppercase">CLABE (STP)</p>
                         <div class="flex items-center justify-center gap-3"><span class="text-xs font-mono font-bold" id="clabe-number">722969020533491161</span><button onclick="UI.copyClabe()" class="text-emerald-500"><i class="fas fa-copy"></i></button></div>
@@ -238,12 +242,12 @@
             updateProfile() { if(State.user) document.getElementById('user-email-display').innerText = State.user.email; },
             openModal(id) { if(State.isProcessing) return; playSfx('click'); document.getElementById(id).classList.remove('hidden-view'); },
             closeModal(id) { playSfx('click'); document.getElementById(id).classList.add('hidden-view'); },
-            toggleAccordion(id) { const el = document.getElementById(id); const arrow = document.getElementById('arrow-' + id); el.classList.toggle('hidden-view'); if(arrow) arrow.style.transform = el.classList.contains('hidden-view') ? 'rotate(0deg)' : 'rotate(180deg)'; },
-            depNextStep() { const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value)); if(isNaN(amt) || amt <= 0) return this.notify("Monto inválido", "error"); playSfx('click'); document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`; document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
+            toggleAccordion(id) { const el = document.getElementById(id); const arrow = document.getElementById('arrow-' + id); el.classList.toggle('hidden-view'); if(arrow) arrow.style.transform = el.classList.contains('hidden-view') ? 'rotate(180deg)' : 'rotate(0deg)'; },
+            depNextStep() { const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value)); if(isNaN(amt) || amt <= 0) return this.notify("Monto inválido", "error"); playSfx('click'); const display = document.getElementById('display-dep-amount'); if(display) display.innerText = `$${amt.toFixed(2)}`; document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
             copyClabe() { const clabe = document.getElementById('clabe-number').innerText; navigator.clipboard.writeText(clabe).then(() => { playSfx('click'); this.notify("CLABE Copiada", "success"); }); },
             handleFile(input) { if(input.files && input.files[0]) { playSfx('click'); const label = document.getElementById('file-label'); label.innerText = "Archivo: " + input.files[0].name.substring(0, 10) + "..."; label.classList.replace('text-zinc-500', 'text-emerald-500'); } },
             notify(m, t) { const n = document.createElement('div'); n.className = `p-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-2xl animate__animated animate__fadeInDown ${t==='success'?'bg-emerald-500 text-black':'bg-red-500 text-white'}`; n.innerText = m; document.getElementById('notif-container').appendChild(n); setTimeout(() => { n.classList.replace('animate__fadeInDown', 'animate__fadeOutUp'); setTimeout(()=>n.remove(), 500); }, 3000); },
-            setTxType(type) { playSfx('click'); State.currentTx = type; const isDep = type === 'deposit'; document.getElementById('tab-deposit').classList.toggle('active', isDep); document.getElementById('tab-withdrawal').classList.toggle('active', !isDep); document.getElementById('tx-title').innerText = isDep ? 'Monto a cargar' : 'Monto a retirar'; document.getElementById('deposit-info').classList.toggle('hidden-view', !isDep); }
+            setTxType(type) { playSfx('click'); State.currentTx = type; const isDep = type === 'deposit'; document.getElementById('tab-deposit').classList.toggle('active', isDep); document.getElementById('tab-withdrawal').classList.toggle('active', !isDep); document.getElementById('tx-title').innerText = isDep ? 'Monto' : 'Monto'; document.getElementById('deposit-info').classList.toggle('hidden-view', !isDep); }
         };
 
         const AuthManager = {
@@ -283,16 +287,12 @@
                 const bank = document.getElementById('bank-name').value; 
                 const beneficiary = document.getElementById('beneficiary-name').value; 
                 if(!amount || amount <= 0 || !bank || !beneficiary) return UI.notify("Completa campos", "error"); 
-                
                 const btn = document.getElementById('btn-confirm-dep'); 
-                btn.disabled = true; 
-                btn.innerText = "PROCESANDO..."; 
+                btn.disabled = true; btn.innerText = "PROCESANDO..."; 
                 State.isProcessing = true; 
-
                 try { 
                     const isDeposit = State.currentTx === 'deposit';
                     let evidence_url = null; 
-
                     if(isDeposit) { 
                         const fileInput = document.getElementById('receipt-input'); 
                         const file = fileInput.files[0]; 
@@ -303,14 +303,11 @@
                         const pub = sb.storage.from('comprobantes').getPublicUrl(fName); 
                         evidence_url = pub.data.publicUrl; 
                     } else {
-                        // SI ES RETIRO: Descontar saldo inmediatamente mientras el admin aprueba
                         if(State.balance < amount) throw new Error("Saldo insuficiente");
                         await this.updateBalanceDB(-amount);
                         State.balance -= amount;
                         UI.updateBalance();
                     }
-
-                    // Enviar a la tabla history (ajustado para que el panel lo detecte)
                     const { error } = await sb.from('history').insert([{ 
                         user_id: State.user.id, 
                         type: isDeposit ? 'deposits' : 'withdrawals', 
@@ -321,9 +318,8 @@
                         bank_name: bank,
                         account_holder: beneficiary
                     }]); 
-
                     if(error) throw error; 
-                    UI.notify("Solicitud enviada correctamente", "success"); 
+                    UI.notify("Solicitud enviada", "success"); 
                     UI.closeModal('modal-deposit'); 
                 } catch(e) { UI.notify(e.message, "error"); } finally { btn.disabled = false; btn.innerText = "CONFIRMAR"; State.isProcessing = false; } 
             },
@@ -358,10 +354,8 @@
 
         const GameLogic = {
             adjustLuck(winAmt, betAmt, mult = 1) { 
-                State.winHistory.push({ bet: betAmt, win: winAmt, mult }); 
-                if(State.winHistory.length > 10) State.winHistory.shift(); 
-                if (winAmt === 0) State.sessionLoss += betAmt; 
-                else { State.sessionLoss -= (winAmt - betAmt); if (State.sessionLoss < 0) State.sessionLoss = 0; } 
+                State.winHistory.push({ bet: betAmt, win: winAmt, mult }); if(State.winHistory.length > 10) State.winHistory.shift(); 
+                if (winAmt === 0) State.sessionLoss += betAmt; else { State.sessionLoss -= (winAmt - betAmt); if (State.sessionLoss < 0) State.sessionLoss = 0; } 
                 const winRatio = State.winHistory.filter(h => h.win > 0).length / State.winHistory.length; 
                 if (State.luckFactor > 1.0) { if (State.balance > 80) State.luckFactor = 1.0; } 
                 else { if (State.sessionLoss > 200 || winRatio < 0.1) State.luckFactor = 1.8; else if (winRatio > 0.4 || winAmt > betAmt * 50) State.luckFactor = 0.4; else State.luckFactor = 1.0; }
@@ -460,7 +454,7 @@
             chicken: {
                 pos: -1, active: false, bet: 0, mults: [1.2, 1.5, 2.2, 4.0, 8.5, 18.0, 45.0, 100.0], moving: false,
                 init() { const road = document.getElementById('chicken-world'); if(!road) return; road.innerHTML = `<div id="chicken-hero" class="chicken-sprite">🐥</div>`; this.mults.forEach((m, i) => { const lane = document.createElement('div'); lane.className = "road-lane"; lane.innerHTML = `<span class="text-[8px] font-black text-white/10 uppercase">${m}x</span>`; lane.id = `lane-${i}`; road.appendChild(lane); }); this.updateHero(); },
-                async start() { if(this.active || State.isProcessing) return; const b = Math.abs(parseFloat(document.getElementById('chicken-bet-input').value)) || 10; if(State.balance < b) return UI.notify("Saldo insuficiente", "error"); State.isProcessing = true; await Core.updateBalanceDB(-b); State.balance -= b; this.bet = b; UI.updateBalance(); this.pos = -1; this.active = true; this.moving = false; document.getElementById('chicken-controls').classList.add('hidden-view'); document.getElementById('chicken-actions').classList.remove('hidden-view'); document.getElementById('chicken-cashout-btn').innerText = `COBRAR $${b.toFixed(2)}`; this.init(); State.isProcessing = false; },
+                async start() { if(this.active || State.isProcessing) return; const bInput = document.getElementById('chicken-bet-input'); const b = Math.abs(parseFloat(bInput.value)) || 10; if(State.balance < b) return UI.notify("Saldo insuficiente", "error"); State.isProcessing = true; await Core.updateBalanceDB(-b); State.balance -= b; this.bet = b; UI.updateBalance(); this.pos = -1; this.active = true; this.moving = false; document.getElementById('chicken-controls').classList.add('hidden-view'); document.getElementById('chicken-actions').classList.remove('hidden-view'); document.getElementById('chicken-cashout-btn').innerText = `COBRAR $${b.toFixed(2)}`; this.init(); State.isProcessing = false; },
                 updateHero() { const hero = document.getElementById('chicken-hero'); if(!hero) return; const lanes = document.querySelectorAll('.road-lane'); lanes.forEach(l => l.classList.remove('current', 'passed')); if(this.pos === -1) hero.style.left = "-40px"; else { const targetLane = document.getElementById(`lane-${this.pos}`); if(targetLane){ const laneRect = targetLane.getBoundingClientRect(); const worldRect = document.getElementById('chicken-world').getBoundingClientRect(); hero.style.left = (laneRect.left - worldRect.left + (laneRect.width / 2) - 15) + "px"; for(let i=0; i<=this.pos; i++) { const l = document.getElementById(`lane-${i}`); if(i === this.pos) l.classList.add('current'); else l.classList.add('passed'); } } } },
                 move() { if(!this.active || State.isProcessing || this.moving) return; this.moving = true; const cBtn = document.getElementById('chicken-cashout-btn'); if(cBtn) cBtn.disabled = true; this.pos++; const risk = (0.25 + (this.pos * 0.15)) / State.luckFactor; if(Math.random() < risk) { const car = document.createElement('div'); car.className = "car-sprite"; car.innerHTML = '🚘'; const targetLane = document.getElementById(`lane-${this.pos}`); if(targetLane) car.style.left = (targetLane.offsetLeft + 10) + "px"; document.getElementById('chicken-world').appendChild(car); this.active = false; setTimeout(() => { if(document.getElementById('chicken-hero')) document.getElementById('chicken-hero').innerHTML = '💥'; playSfx('lose'); UI.notify("¡ATROPELLADO!", "error"); this.end(false); }, 300); } else { playSfx('click'); this.updateHero(); const m = this.mults[this.pos]; document.getElementById('chicken-status').innerText = m.toFixed(2) + 'x'; if(cBtn) { cBtn.innerText = `COBRAR $${(this.bet * m).toFixed(2)}`; cBtn.disabled = false; } this.moving = false; if(this.pos === 7) this.cashout(); } },
                 async cashout() { if(!this.active || State.isProcessing || this.moving) return; State.isProcessing = true; const m = this.pos === -1 ? 1 : this.mults[this.pos]; const win = this.bet * m; await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
