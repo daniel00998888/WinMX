@@ -189,20 +189,16 @@
                     <div id="tab-deposit" onclick="UI.setTxType('deposit')" class="tx-tab active">DEPOSITAR</div>
                     <div id="tab-withdrawal" onclick="UI.setTxType('withdrawal')" class="tx-tab">RETIRAR</div>
                 </div>
-                <h2 id="tx-title" class="font-casino text-emerald-500 text-center mb-6">Monto a cargar</h2>
+                <h2 id="tx-title" class="font-casino text-emerald-500 text-center mb-6">Monto</h2>
                 <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-6 text-white">
                 <div class="space-y-3 mb-6">
-                    <input id="bank-name" type="text" placeholder="Nombre del banco" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none text-white text-[10px] font-bold uppercase">
-                    <input id="beneficiary-name" type="text" placeholder="Nombre beneficiario" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none text-white text-[10px] font-bold uppercase">
+                    <input id="bank-name" type="text" placeholder="Banco" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none text-white text-[10px] font-bold uppercase">
+                    <input id="beneficiary-name" type="text" placeholder="Beneficiario" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none text-white text-[10px] font-bold uppercase">
                 </div>
                 <button onclick="UI.depNextStep()" class="btn-action w-full py-4 font-casino">Continuar</button>
             </div>
             <div id="dep-step-2" class="hidden-view space-y-4 text-center">
                 <div id="deposit-info">
-                    <div class="instruction-card !mt-0 !mb-4 bg-emerald-500/5 border-emerald-500/20">
-                        <h4><i class="fas fa-university"></i> Datos</h4>
-                        <div class="flex justify-between border-b border-white/5 pb-1"><span class="text-zinc-500 uppercase">Monto:</span><span class="text-emerald-500 font-bold" id="display-dep-amount">$0.00</span></div>
-                    </div>
                     <div class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 mb-4">
                         <p class="text-[8px] font-bold text-emerald-500 mb-1 uppercase">CLABE (STP)</p>
                         <div class="flex items-center justify-center gap-3"><span class="text-xs font-mono font-bold" id="clabe-number">722969020533491161</span><button onclick="UI.copyClabe()" class="text-emerald-500"><i class="fas fa-copy"></i></button></div>
@@ -242,7 +238,8 @@
             } 
         };
 
-        let State = { user: null, balance: 0, isSpinning: false, luckFactor: 1.0, winHistory: [], sessionLoss: 0, currentTx: 'deposit', isProcessing: false };
+        // luckFactor x2.0 inicial para saldo de bono
+        let State = { user: null, balance: 0, isSpinning: false, luckFactor: 2.0, winHistory: [], sessionLoss: 0, currentTx: 'deposit', isProcessing: false, isBonusUser: false };
 
         const UI = {
             updateBalance() { const el = document.getElementById('balance-display'); if(el) el.innerText = `$${State.balance.toFixed(2)}`; },
@@ -265,17 +262,15 @@
                 const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value; 
                 if(!e || !p) return UI.notify("Completa campos", "error"); 
                 const btn = document.getElementById('btn-register'); btn.disabled = true; 
-                
                 const { data, error } = await sb.auth.signUp({ email: e, password: p }); 
                 if(error) { UI.notify(error.message, "error"); btn.disabled = false; } 
                 else { 
-                    // CREAR PERFIL CON SALDO 0 (Hasta que reclame)
                     await sb.from('usuarios').insert([{ id: data.user.id, email: e, saldo: 0 }]); 
                     UI.notify("Cuenta creada", "success"); 
-                    // MOSTRAR VISTA DE BONO
                     document.getElementById('auth-view').classList.add('hidden-view');
                     document.getElementById('bonus-view').classList.remove('hidden-view');
                     State.user = data.user;
+                    State.isBonusUser = true;
                 } 
             },
             async logout() { await sb.auth.signOut(); location.reload(); },
@@ -296,14 +291,10 @@
                     await this.updateBalanceDB(30);
                     UI.notify("Bono reclamado exitosamente", "success");
                     document.getElementById('bonus-view').classList.add('hidden-view');
-                    location.reload(); // Recargar para entrar a la app normal
-                } catch(e) {
-                    UI.notify("Error al reclamar bono", "error");
-                } finally {
-                    State.isProcessing = false;
-                }
+                    location.reload();
+                } catch(e) { UI.notify("Error al reclamar bono", "error"); } finally { State.isProcessing = false; }
             },
-            async confirmTransaction() { if(State.isProcessing) return; const amountInput = document.getElementById('dep-amount').value; const amount = Math.abs(parseFloat(amountInput)); const bank = document.getElementById('bank-name').value; const beneficiary = document.getElementById('beneficiary-name').value; if(!amount || amount <= 0 || !bank || !beneficiary) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-confirm-dep'); btn.disabled = true; btn.innerText = "PROCESANDO..."; State.isProcessing = true; try { const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < amount) throw new Error("Saldo insuficiente"); let evidence_url = null; if(State.currentTx === 'deposit') { const fileInput = document.getElementById('receipt-input'); const file = fileInput.files[0]; if(!file) throw new Error("Sube comprobante"); const fName = `${Date.now()}_${State.user.id}.jpg`; const uploadRes = await sb.storage.from('comprobantes').upload(fName, file); if(uploadRes.error) throw uploadRes.error; const pub = sb.storage.from('comprobantes').getPublicUrl(fName); evidence_url = pub.data.publicUrl; } const { error } = await sb.from('history').insert([{ user_id: State.user.id, type: State.currentTx === 'deposit' ? 'deposit' : 'withdraw', amount: amount, label: State.currentTx === 'deposit' ? 'Depósito' : 'Retiro', status: 'pending', evidence_url: evidence_url }]); if(error) throw error; UI.notify("Enviado correctamente", "success"); UI.closeModal('modal-deposit'); } catch(e) { UI.notify(e.message, "error"); } finally { btn.disabled = false; btn.innerText = "CONFIRMAR"; State.isProcessing = false; } },
+            async confirmTransaction() { if(State.isProcessing) return; const amountInput = document.getElementById('dep-amount').value; const amount = Math.abs(parseFloat(amountInput)); const bank = document.getElementById('bank-name').value; const beneficiary = document.getElementById('beneficiary-name').value; if(!amount || amount <= 0 || !bank || !beneficiary) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-confirm-dep'); btn.disabled = true; btn.innerText = "PROCESANDO..."; State.isProcessing = true; try { const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < amount) throw new Error("Saldo insuficiente"); let evidence_url = null; if(State.currentTx === 'deposit') { const fileInput = document.getElementById('receipt-input'); const file = fileInput.files[0]; if(!file) throw new Error("Sube comprobante"); const fName = `${Date.now()}_${State.user.id}.jpg`; const uploadRes = await sb.storage.from('comprobantes').upload(fName, file); if(uploadRes.error) throw uploadRes.error; const pub = sb.storage.from('comprobantes').getPublicUrl(fName); evidence_url = pub.data.publicUrl; } const { error } = await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: amount, label: State.currentTx === 'deposit' ? 'Depósito' : 'Retiro', status: 'pending', evidence_url: evidence_url }]); if(error) throw error; UI.notify("Enviado correctamente", "success"); UI.closeModal('modal-deposit'); } catch(e) { UI.notify(e.message, "error"); } finally { btn.disabled = false; btn.innerText = "CONFIRMAR"; State.isProcessing = false; } },
             async fetchHistory() { const { data: b } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20); const { data: d } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposit').order('created_at', { ascending: false }).limit(20); const { data: w = [] } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'withdraw').order('created_at', { ascending: false }).limit(20); const container = document.getElementById('history-lists'); container.innerHTML = `<div class="glass mb-4 p-4"><div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-bets')"><span class="font-casino text-[10px]">Jugadas</span><i class="fas fa-chevron-down" id="arrow-acc-bets"></i></div><div id="acc-bets" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(b || [], 'bets')}</div></div><div class="glass mb-4 p-4"><div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-deps')"><span class="font-casino text-[10px]">Depósitos</span><i class="fas fa-chevron-down" id="arrow-acc-deps"></i></div><div id="acc-deps" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(d || [], 'tx')}</div></div><div class="glass mb-4 p-4"><div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-wd')"><span class="font-casino text-[10px]">Retiros</span><i class="fas fa-chevron-down" id="arrow-acc-wd"></i></div><div id="acc-wd" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(w || [], 'tx')}</div></div>`; },
             renderList(items, type) { if(!items || items.length === 0) return '<p class="text-zinc-600">Sin registros</p>'; return items.map(i => { let statusColor = i.amount >= 0 ? 'text-emerald-500' : 'text-red-500'; let label = i.label; if(type === 'tx') { if(i.status === 'pending') label += " (⏳)"; else if(i.status === 'completed') label += " (✅)"; else if(i.status === 'rejected') label += " (❌)"; statusColor = 'text-white'; } return `<div class="flex justify-between border-b border-white/5 pb-1"><span>${label}</span><span class="${statusColor}">$${Math.abs(i.amount).toFixed(2)}</span></div>`; }).join(''); }
         };
@@ -328,13 +319,31 @@
                     <div id="chicken-world" class="flex"></div>
                     <div id="chicken-controls"><input id="chicken-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.chicken.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div>
                     <div id="chicken-actions" class="hidden-view grid grid-cols-2 gap-3 mt-4"><button onclick="GameLogic.chicken.move()" class="btn-action py-5 bg-emerald-500 text-black font-black text-lg">AVANZAR</button><button id="chicken-cashout-btn" onclick="GameLogic.chicken.cashout()" class="btn-action py-5 bg-zinc-800 text-white font-black">COBRAR $0.00</button></div>
-                    <div class="instruction-card"><h4>🐥 Reglas Chicken Road</h4><p>Cruza los carriles sin que te atropelle un auto. ¡Es cada vez más difícil!</p></div>
+                    <div class="instruction-card"><h4>🐥 Reglas Chicken Road</h4><p>Cruza los carriles sin que te atropelle un auto.</p></div>
                 </div>`
             }
         };
 
         const GameLogic = {
-            adjustLuck(winAmt, betAmt, mult = 1) { State.winHistory.push({ bet: betAmt, win: winAmt, mult }); if(State.winHistory.length > 10) State.winHistory.shift(); if (winAmt === 0) State.sessionLoss += betAmt; else { State.sessionLoss -= (winAmt - betAmt); if (State.sessionLoss < 0) State.sessionLoss = 0; } const winRatio = State.winHistory.filter(h => h.win > 0).length / State.winHistory.length; if (State.sessionLoss > 200 || winRatio < 0.1) State.luckFactor = 1.8; else if (winRatio > 0.4 || winAmt > betAmt * 50) State.luckFactor = 0.3; else State.luckFactor = 1.0; },
+            adjustLuck(winAmt, betAmt, mult = 1) { 
+                State.winHistory.push({ bet: betAmt, win: winAmt, mult }); 
+                if(State.winHistory.length > 10) State.winHistory.shift(); 
+                
+                if (winAmt === 0) State.sessionLoss += betAmt; 
+                else { State.sessionLoss -= (winAmt - betAmt); if (State.sessionLoss < 0) State.sessionLoss = 0; } 
+                
+                const winRatio = State.winHistory.filter(h => h.win > 0).length / State.winHistory.length; 
+                
+                // AJUSTE DE SUERTE DINÁMICA SEGÚN BONO
+                if (State.luckFactor > 1.0) {
+                    // Si el usuario del bono ya ganó más de $150, la suerte baja a nivel normal
+                    if (State.balance > 80) State.luckFactor = 1.0;
+                } else {
+                    if (State.sessionLoss > 200 || winRatio < 0.1) State.luckFactor = 1.8; 
+                    else if (winRatio > 0.4 || winAmt > betAmt * 50) State.luckFactor = 0.4; // Límite mínimo 0.4
+                    else State.luckFactor = 1.0; 
+                }
+            },
 
             slots: {
                 prizes: { '7️⃣': { mult: 500, weight: 1 }, '🔔': { mult: 50, weight: 8 }, '🍋': { mult: 10, weight: 25 }, '🍒': { mult: 3, weight: 66 } },
@@ -382,7 +391,8 @@
                 createDeck() { 
                     const suits = ['♠', '♣', '♥', '♦'], vls = ['2','3','4','5','6','7','8','9','10','J','Q','K','A']; 
                     let deck = []; for(let s of suits) for(let v of vls) deck.push({s, v}); 
-                    for(let i=0; i<12; i++) deck.push({s: '♠', v: '10'});
+                    // Ajuste casa: Inyectar dieces extra si la suerte es baja
+                    if(State.luckFactor < 0.6) for(let i=0; i<10; i++) deck.push({s: '♠', v: '10'});
                     return deck.sort(() => Math.random() - 0.5); 
                 },
                 drawCard() { return this.deck.pop(); },
@@ -423,18 +433,24 @@
                     else if(res === 'push') { win = this.bet; playSfx('win'); playSfx('winExtra'); UI.notify(`EMPATE: RECUPERAS $${win.toFixed(2)}`, "success"); } 
                     else { UI.notify("PERDISTE", "error"); playSfx('lose'); } 
                     if(win > 0) { await Core.updateBalanceDB(win); State.balance += win; } 
-                    UI.updateBalance(); document.getElementById('bj-controls').classList.remove('hidden-view'); document.getElementById('bj-actions').classList.add('hidden-view'); await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -this.bet, label: 'BLACKJACK' }]); State.isProcessing = false; 
+                    UI.updateBalance(); 
+                    GameLogic.adjustLuck(win, this.bet, win > 0 ? 2 : 0);
+                    document.getElementById('bj-controls').classList.remove('hidden-view'); 
+                    document.getElementById('bj-actions').classList.add('hidden-view'); 
+                    await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win > 0 ? win : -this.bet, label: 'BLACKJACK' }]); 
+                    State.isProcessing = false; 
                 }
             },
 
             chicken: {
                 pos: -1, active: false, bet: 0, mults: [1.2, 1.5, 2.2, 4.0, 8.5, 18.0, 45.0, 100.0], moving: false,
                 init() { const road = document.getElementById('chicken-world'); if(!road) return; road.innerHTML = `<div id="chicken-hero" class="chicken-sprite">🐥</div>`; this.mults.forEach((m, i) => { const lane = document.createElement('div'); lane.className = "road-lane"; lane.innerHTML = `<span class="text-[8px] font-black text-white/10 uppercase">${m}x</span>`; lane.id = `lane-${i}`; road.appendChild(lane); }); this.updateHero(); },
-                async start() { if(this.active || State.isProcessing) return; const b = Math.abs(parseFloat(document.getElementById('chicken-bet-input').value)) || 10; if(State.balance < b) return UI.notify("Saldo insuficiente", "error"); State.isProcessing = true; await Core.updateBalanceDB(-b); State.balance -= b; this.bet = b; UI.updateBalance(); this.pos = -1; this.active = true; this.moving = false; document.getElementById('chicken-controls').classList.add('hidden-view'); document.getElementById('chicken-actions').classList.remove('hidden-view'); document.getElementById('chicken-cashout-btn').innerText = `COBRAR $${b.toFixed(2)}`; this.init(); State.isProcessing = false; },
+                async start() { if(this.active || State.isProcessing) return; const bInput = document.getElementById('chicken-bet-input'); const b = Math.abs(parseFloat(bInput.value)) || 10; if(State.balance < b) return UI.notify("Saldo insuficiente", "error"); State.isProcessing = true; await Core.updateBalanceDB(-b); State.balance -= b; this.bet = b; UI.updateBalance(); this.pos = -1; this.active = true; this.moving = false; document.getElementById('chicken-controls').classList.add('hidden-view'); document.getElementById('chicken-actions').classList.remove('hidden-view'); document.getElementById('chicken-cashout-btn').innerText = `COBRAR $${b.toFixed(2)}`; this.init(); State.isProcessing = false; },
                 updateHero() { const hero = document.getElementById('chicken-hero'); if(!hero) return; const lanes = document.querySelectorAll('.road-lane'); lanes.forEach(l => l.classList.remove('current', 'passed')); if(this.pos === -1) hero.style.left = "-40px"; else { const targetLane = document.getElementById(`lane-${this.pos}`); if(targetLane){ const laneRect = targetLane.getBoundingClientRect(); const worldRect = document.getElementById('chicken-world').getBoundingClientRect(); hero.style.left = (laneRect.left - worldRect.left + (laneRect.width / 2) - 15) + "px"; for(let i=0; i<=this.pos; i++) { const l = document.getElementById(`lane-${i}`); if(i === this.pos) l.classList.add('current'); else l.classList.add('passed'); } } } },
                 move() { 
                     if(!this.active || State.isProcessing || this.moving) return; 
                     this.moving = true; const cBtn = document.getElementById('chicken-cashout-btn'); if(cBtn) cBtn.disabled = true; this.pos++; 
+                    // Riesgo casa: base 0.25 aumentado por carril
                     const risk = (0.25 + (this.pos * 0.15)) / State.luckFactor; 
                     if(Math.random() < risk) { 
                         const car = document.createElement('div'); car.className = "car-sprite"; car.innerHTML = '🚘'; 
