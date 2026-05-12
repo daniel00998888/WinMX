@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>WinMX | Premium Casino</title>
     
     <link rel="icon" href="data:,">
@@ -15,16 +15,44 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@300;400;600;900&display=swap');
         :root { --mx-green: #10b981; --mx-dark: #070707; }
-        body { background: var(--mx-dark); color: white; font-family: 'Inter', sans-serif; height: 100dvh; overflow: hidden; margin: 0; -webkit-tap-highlight-color: transparent; }
-        .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
-        .app-container { height: 100dvh; display: flex; flex-direction: column; }
         
-        .view-content { flex: 1; overflow-y: auto; padding-bottom: 120px; scroll-behavior: smooth; }
-        .view-content::-webkit-scrollbar { width: 4px; }
-        .view-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            background: var(--mx-dark); 
+            color: white; 
+            font-family: 'Inter', sans-serif; 
+            height: 100dvh; 
+            width: 100vw;
+            overflow: hidden; 
+        }
+
+        .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
+        .app-container { height: 100dvh; display: flex; flex-direction: column; position: relative; }
+        
+        .view-content { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 1.25rem;
+            padding-bottom: 120px; 
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+        .view-content::-webkit-scrollbar { display: none; }
+        .view-content { scrollbar-width: none; -ms-overflow-style: none; }
 
         .hidden-view { display: none !important; }
-        .bottom-nav { background: rgba(10, 10, 10, 0.98); backdrop-filter: blur(15px); border-top: 1px solid rgba(255,255,255,0.05); z-index: 50; transition: transform 0.3s ease; }
+
+        .bottom-nav { 
+            background: rgba(10, 10, 10, 0.98); 
+            backdrop-filter: blur(15px); 
+            border-top: 1px solid rgba(255,255,255,0.05); 
+            z-index: 50; 
+            height: calc(75px + env(safe-area-inset-bottom));
+            padding-bottom: env(safe-area-inset-bottom);
+            transition: transform 0.3s ease;
+        }
+
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: #444; transition: 0.3s; cursor: pointer; }
         .nav-item.active { color: var(--mx-green); }
         .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 1.5rem; }
@@ -33,43 +61,7 @@
         .balance-pill { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 99px; padding: 4px 4px 4px 12px; display: flex; align-items: center; gap: 8px; }
         .btn-plus { width: 32px; height: 32px; background: var(--mx-green); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
         
-        .history-scroll { max-height: 280px; overflow-y: auto; scrollbar-width: none; }
-        .history-scroll::-webkit-scrollbar { display: none; }
-
-        .slot-box { height: 90px; overflow: hidden; background: #000; border-radius: 1rem; border: 1px solid #1a1a1a; }
-        .slot-item { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
-        .slot-reel { transition: transform 3.5s cubic-bezier(0.15, 0, 0.05, 1); }
-        
-        .pulse-pending { animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
-        .input-bet { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 12px; width: 100%; text-align: center; color: white; font-family: 'Archivo Black', sans-serif; outline: none; margin-bottom: 12px; }
-        
-        #crash-area { position: relative; width: 100%; height: 160px; overflow: hidden; background: #050505; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.05); }
-        .bg-infinite { position: absolute; top: 0; left: 0; height: 100%; width: 200%; display: flex; }
-        .bg-part { width: 50%; height: 100%; background-size: 50px 50px; background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px); }
-        
-        #crash-rocket-container { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 10; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; }
-        #crash-rocket { font-size: 3rem; display: inline-block; transition: transform 0.1s linear; }
-
-        .instruction-card { 
-            background: rgba(16, 185, 129, 0.08); 
-            border: 1px solid rgba(16, 185, 129, 0.3); 
-            border-radius: 1.2rem; 
-            padding: 20px; 
-            margin-top: 24px; 
-            text-align: left;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        .instruction-card h4 { font-family: 'Archivo Black', sans-serif; font-size: 12px; color: var(--mx-green); text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-        .instruction-card p { font-size: 11px; color: #ccc; line-height: 1.6; font-weight: 500; }
-        .instruction-card strong { color: white; font-weight: 800; }
-        
-        .risk-badge { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; margin-bottom: 10px; }
-
-        .tx-selector { display: flex; background: rgba(255,255,255,0.05); border-radius: 1rem; padding: 4px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); }
-        .tx-tab { flex: 1; text-align: center; padding: 10px; border-radius: 0.8rem; font-size: 10px; font-weight: 900; transition: 0.3s; cursor: pointer; color: #666; }
-        .tx-tab.active { background: var(--mx-green); color: black; }
+        .grid-games { display: grid; grid-template-cols: repeat(2, 1fr); gap: 1rem; }
 
         .card-bj { width: 45px; height: 65px; background: white; color: black; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); animation: backInDown 0.5s; position: relative; border: 1px solid #ddd; }
         .card-red { color: #ef4444; }
@@ -136,7 +128,7 @@
             <div class="bg-gradient-to-br from-emerald-500 to-emerald-800 p-6 rounded-[2.2rem] shadow-xl">
                 <h2 class="text-2xl font-casino italic text-white">Suerte hoy</h2>
             </div>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid-games">
                 <div onclick="Router.openGame('slots')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🎰</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Slots</span></div>
                 <div onclick="Router.openGame('mines')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">💣</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Minas</span></div>
                 <div onclick="Router.openGame('crash')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🚀</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Aviator</span></div>
@@ -189,6 +181,10 @@
             </div>
             <div id="dep-step-2" class="hidden-view space-y-4 text-center">
                 <div id="deposit-info">
+                    <div class="instruction-card !mt-0 !mb-4 bg-emerald-500/5 border-emerald-500/20">
+                        <h4><i class="fas fa-university"></i> Datos</h4>
+                        <div class="flex justify-between border-b border-white/5 pb-1"><span class="text-zinc-500 uppercase">Monto:</span><span class="text-emerald-500 font-bold" id="display-dep-amount">$0.00</span></div>
+                    </div>
                     <div class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 mb-4">
                         <p class="text-[8px] font-bold text-emerald-500 mb-1 uppercase">CLABE (STP)</p>
                         <div class="flex items-center justify-center gap-3"><span class="text-xs font-mono font-bold" id="clabe-number">722969020533491161</span><button onclick="UI.copyClabe()" class="text-emerald-500"><i class="fas fa-copy"></i></button></div>
@@ -215,7 +211,7 @@
             win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
             winExtra: new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3'),
             lose: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
-            rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3'),
+            rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2014-preview.mp3'),
             card: new Audio('https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3')
         };
 
@@ -281,7 +277,7 @@
                     <div id="chicken-world" class="flex"></div>
                     <div id="chicken-controls"><input id="chicken-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.chicken.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div>
                     <div id="chicken-actions" class="hidden-view grid grid-cols-2 gap-3 mt-4"><button onclick="GameLogic.chicken.move()" class="btn-action py-5 bg-emerald-500 text-black font-black text-lg">AVANZAR</button><button id="chicken-cashout-btn" onclick="GameLogic.chicken.cashout()" class="btn-action py-5 bg-zinc-800 text-white font-black">COBRAR $0.00</button></div>
-                    <div class="instruction-card"><h4>🐥 Reglas Chicken Road</h4><p>Cruza los carriles sin que te atropelle un auto.</p></div>
+                    <div class="instruction-card"><h4>🐥 Reglas Chicken Road</h4><p>Cruza los carriles sin que te atropelle un auto. ¡Es cada vez más difícil!</p></div>
                 </div>`
             }
         };
@@ -299,9 +295,9 @@
                 active: false, mines: [], revealed: [], mult: 1, bet: 10, multSteps: [1.25, 1.30, 1.75, 2.00, 5.50, 10.20, 16.50, 28.00, 45.00, 68.00, 95.00, 130.00, 175.00, 225.00, 280.00, 330.00, 375.00, 415.00, 445.00, 470.00, 490.00, 500.00],
                 drawGrid() { const g = document.getElementById('mines-grid'); if(!g) return; g.innerHTML = ''; for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/5 border border-white/5 rounded-lg flex items-center justify-center text-xl cursor-pointer active:scale-90 transition-all"></div>`; },
                 async start() { if(this.active || State.isProcessing) return; this.active = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 10; const btn = document.getElementById('btn-mines-start'); btn.disabled = true; const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b || b <= 0) { this.active = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('click'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); this.bet = b; this.mult = 1; this.revealed = []; this.mines = []; while(this.mines.length < 3) { let r = Math.floor(Math.random()*25); if(!this.mines.includes(r)) this.mines.push(r); } document.getElementById('mines-controls').classList.add('hidden-view'); document.getElementById('mines-status').classList.remove('hidden-view'); document.getElementById('mines-mult').innerText = '1.00x'; document.getElementById('mines-cashout-btn').innerText = `COBRAR $${this.bet.toFixed(2)}`; this.drawGrid(); State.isProcessing = false; btn.disabled = false; },
-                cell(i) { if(!this.active || this.revealed.includes(i) || State.isProcessing) return; const winCount = this.revealed.length; let dynamicFail = (0.12 + (winCount * 0.09)) / State.luckFactor; if (State.luckFactor > 1.4 && winCount < 3) dynamicFail = 0.01; if (winCount > 1 && Math.random() < dynamicFail) { if (!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); } } this.revealed.push(i); const el = document.getElementById(`m-${i}`); if(this.mines.includes(i)) { playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500'); this.revealRemainingMines(); UI.notify("¡BOMBA!", "error"); this.end(false); } else { playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500'); this.mult = this.multSteps[winCount] || 500.00; document.getElementById('mines-mult').innerText = this.mult.toFixed(2) + 'x'; document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`; } },
+                cell(i) { if(!this.active || this.revealed.includes(i) || State.isProcessing) return; const winCount = this.revealed.length; let dynamicFail = (0.12 + (winCount * 0.10)) / State.luckFactor; if (State.luckFactor > 1.4 && winCount < 3) dynamicFail = 0.01; if (winCount > 1 && Math.random() < dynamicFail) { if (!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); } } this.revealed.push(i); const el = document.getElementById(`m-${i}`); if(this.mines.includes(i)) { playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500'); this.revealRemainingMines(); UI.notify("¡BOMBA!", "error"); this.end(false); } else { playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500'); this.mult = this.multSteps[winCount] || 500.00; document.getElementById('mines-mult').innerText = this.mult.toFixed(2) + 'x'; document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`; } },
                 revealRemainingMines() { this.mines.forEach(m => { const el = document.getElementById(`m-${m}`); if (el && !this.revealed.includes(m)) { el.innerHTML = '💣'; el.classList.add('opacity-50'); } }); },
-                async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; const win = this.bet * this.mult; try { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); await this.end(true); } catch(e) { State.isProcessing = false; } },
+                async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; const win = this.bet * this.mult; try { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); await this.end(true); } catch(e) { State.isProcessing = false; } },
                 async end(win) { const winAmt = win ? (this.bet * this.mult) : 0; GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0); this.active = false; State.isProcessing = false; UI.updateBalance(); document.getElementById('mines-controls').classList.remove('hidden-view'); document.getElementById('mines-status').classList.add('hidden-view'); await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'MINAS' }]); }
             },
 
@@ -309,8 +305,8 @@
                 level: 0, active: false, bet: 0, mult: 1, towerSteps: [1.65, 2.80, 4.50, 7.80, 13.50, 24.00, 42.00, 95.00],
                 drawTower() { const c = document.getElementById('tower-container'); if(!c) return; c.innerHTML = ''; for(let i=0; i<8; i++) { let row = document.createElement('div'); row.className = "grid grid-cols-3 gap-3 opacity-30"; row.id = `tower-row-${i}`; for(let j=0; j<3; j++) row.innerHTML += `<div onclick="GameLogic.tower.select(${i}, ${j})" class="h-8 bg-white/5 border border-white/5 rounded-lg flex items-center justify-center cursor-pointer transition-all"></div>`; c.appendChild(row); } },
                 async start() { if(this.active || State.isProcessing) return; this.active = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10; const btn = document.getElementById('btn-tower-start'); btn.disabled = true; const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b || b <= 0) { this.active = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('click'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); this.bet = b; this.level = 0; this.mult = 1; this.drawTower(); document.getElementById('tower-row-0').classList.remove('opacity-30'); document.getElementById('tower-controls').classList.add('hidden-view'); const cbtn = document.getElementById('tower-cashout-btn'); cbtn.classList.remove('hidden-view'); cbtn.innerText = `COBRAR $${this.bet.toFixed(2)}`; cbtn.disabled = false; State.isProcessing = false; btn.disabled = false; },
-                select(r, c) { if(!this.active || r !== this.level || State.isProcessing) return; let failProb = (this.level > 2 ? 0.55 : 0.40) / State.luckFactor; const isBomb = Math.random() < failProb; const items = document.getElementById(`tower-row-${r}`).children; if(isBomb) { playSfx('lose'); items[c].innerHTML = '💣'; items[c].classList.add('bg-red-500/20', 'border-red-500'); UI.notify("PERDISTE", "error"); this.end(false); } else { playSfx('click'); items[c].innerHTML = '💎'; items[c].classList.add('bg-emerald-500/20', 'border-emerald-500'); this.mult = this.towerSteps[this.level]; this.level++; document.getElementById('tower-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`; if(this.level < 8) document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30'); else this.cashout(); } },
-                async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; const win = this.bet * this.mult; try { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); await this.end(true); } finally { State.isProcessing = false; } },
+                select(r, c) { if(!this.active || r !== this.level || State.isProcessing) return; let failProb = (this.level > 2 ? 0.60 : 0.45) / State.luckFactor; const isBomb = Math.random() < failProb; const items = document.getElementById(`tower-row-${r}`).children; if(isBomb) { playSfx('lose'); items[c].innerHTML = '💣'; items[c].classList.add('bg-red-500/20', 'border-red-500'); UI.notify("PERDISTE", "error"); this.end(false); } else { playSfx('click'); items[c].innerHTML = '💎'; items[c].classList.add('bg-emerald-500/20', 'border-emerald-500'); this.mult = this.towerSteps[this.level]; this.level++; document.getElementById('tower-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`; if(this.level < 8) document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30'); else this.cashout(); } },
+                async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; const win = this.bet * this.mult; try { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); await this.end(true); } finally { State.isProcessing = false; } },
                 async end(win) { const winAmt = win ? (this.bet * this.mult) : 0; GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0); this.active = false; State.isProcessing = false; UI.updateBalance(); document.getElementById('tower-controls').classList.remove('hidden-view'); document.getElementById('tower-cashout-btn').classList.add('hidden-view'); await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'TORRE' }]); }
             },
 
@@ -334,7 +330,14 @@
                     State.isProcessing = false;
                     if(this.getFinalScore(this.playerHand) === 21) this.stand();
                 },
-                createDeck() { const suits = ['♠', '♣', '♥', '♦'], vls = ['2','3','4','5','6','7','8','9','10','J','Q','K','A']; let deck = []; for(let s of suits) for(let v of vls) deck.push({s, v}); return deck.sort(() => Math.random() - 0.5); },
+                createDeck() { 
+                    const suits = ['♠', '♣', '♥', '♦'], vls = ['2','3','4','5','6','7','8','9','10','J','Q','K','A']; 
+                    let deck = []; 
+                    for(let s of suits) for(let v of vls) deck.push({s, v}); 
+                    // Ventaja de la casa: si la suerte es baja, se inyectan más dieces al mazo
+                    if(State.luckFactor < 0.7) for(let i=0; i<8; i++) deck.push({s: '♠', v: '10'});
+                    return deck.sort(() => Math.random() - 0.5); 
+                },
                 drawCard() { return this.deck.pop(); },
                 getFinalScore(hand) {
                     let score = 0, aces = 0;
@@ -346,18 +349,13 @@
                     while(score > 21 && aces > 0) { score -= 10; aces--; }
                     return score;
                 },
-                hit() { 
-                    if(!this.active || State.isProcessing) return; 
-                    playSfx('card'); 
-                    this.playerHand.push(this.drawCard()); 
-                    this.render(true); 
-                    if(this.getFinalScore(this.playerHand) > 21) this.end('lose'); 
-                },
+                hit() { if(!this.active || State.isProcessing) return; playSfx('card'); this.playerHand.push(this.drawCard()); this.render(true); if(this.getFinalScore(this.playerHand) > 21) this.end('lose'); },
                 async stand() { 
                     if(!this.active || State.isProcessing) return; 
                     State.isProcessing = true; 
                     this.render(false);
                     await new Promise(r => setTimeout(r, 600));
+                    // IA Crupier mejorada
                     while(this.getFinalScore(this.dealerHand) < 17) { 
                         playSfx('card');
                         this.dealerHand.push(this.drawCard()); 
@@ -382,7 +380,7 @@
                 },
                 async end(res) { 
                     this.active = false; let win = 0; 
-                    if(res === 'win') { win = this.bet * 2; playSfx('win'); UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); } 
+                    if(res === 'win') { win = this.bet * 2; playSfx('win'); playSfx('winExtra'); UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); } 
                     else if(res === 'push') { win = this.bet; UI.notify(`EMPATE: RECUPERAS $${win.toFixed(2)}`, "success"); } 
                     else { UI.notify("PERDISTE", "error"); playSfx('lose'); } 
                     if(win > 0) { await Core.updateBalanceDB(win); State.balance += win; } 
@@ -405,7 +403,8 @@
                     const cBtn = document.getElementById('chicken-cashout-btn');
                     if(cBtn) cBtn.disabled = true;
                     this.pos++; 
-                    const risk = (0.15 + (this.pos * 0.12)) / State.luckFactor; 
+                    // Ventaja de la casa: El riesgo base ahora es del 22% y sube 15% por carril
+                    const risk = (0.22 + (this.pos * 0.15)) / State.luckFactor; 
                     if(Math.random() < risk) { 
                         const car = document.createElement('div'); car.className = "car-sprite"; car.innerHTML = '🚘'; 
                         const targetLane = document.getElementById(`lane-${this.pos}`); 
@@ -416,10 +415,7 @@
                     } else { 
                         playSfx('click'); this.updateHero(); const m = this.mults[this.pos]; 
                         document.getElementById('chicken-status').innerText = m.toFixed(2) + 'x'; 
-                        if(cBtn) {
-                            cBtn.innerText = `COBRAR $${(this.bet * m).toFixed(2)}`; 
-                            cBtn.disabled = false;
-                        }
+                        if(cBtn) { cBtn.innerText = `COBRAR $${(this.bet * m).toFixed(2)}`; cBtn.disabled = false; }
                         this.moving = false;
                         if(this.pos === 7) this.cashout(); 
                     } 
@@ -430,7 +426,7 @@
                     const m = this.pos === -1 ? 1 : this.mults[this.pos]; 
                     const win = this.bet * m; 
                     await Core.updateBalanceDB(win); State.balance += win; 
-                    playSfx('win'); 
+                    playSfx('win'); playSfx('winExtra'); 
                     UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
                     this.end(true); 
                 },
@@ -439,7 +435,12 @@
                     const m = this.pos === -1 ? 1 : this.mults[this.pos]; 
                     const winAmt = win ? (this.bet * m) : 0; 
                     GameLogic.adjustLuck(winAmt, this.bet, m); UI.updateBalance(); 
-                    setTimeout(() => { document.getElementById('chicken-controls').classList.remove('hidden-view'); document.getElementById('chicken-actions').classList.add('hidden-view'); document.getElementById('chicken-status').innerText = '1.00x'; }, 1000); 
+                    setTimeout(() => { 
+                        document.getElementById('chicken-controls').classList.remove('hidden-view'); 
+                        document.getElementById('bottom-nav-bar').style.transform = 'translateY(0)';
+                        document.getElementById('chicken-actions').classList.add('hidden-view'); 
+                        document.getElementById('chicken-status').innerText = '1.00x'; 
+                    }, 1000); 
                     await sb.from('history').insert([{ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'CHICKEN' }]); 
                     State.isProcessing = false; 
                 }
