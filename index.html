@@ -291,9 +291,9 @@
             async updateBalanceDB(amount) { const { data, error } = await sb.rpc('modificar_saldo', { user_id: State.user.id, monto: amount }); if (error) { const { data: current } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); await sb.from('usuarios').update({ saldo: current.saldo + amount }).eq('id', State.user.id); } },
             async claimBonus() { if(State.isProcessing) return; State.isProcessing = true; playSfx('win'); try { await this.updateBalanceDB(30); UI.notify("Bono reclamado", "success"); location.reload(); } catch(e) { UI.notify("Error", "error"); } finally { State.isProcessing = false; } },
             
-            // FUNCIÓN DE GUARDADO DEFINITIVA: Sincronizada con Plurales del Panel y Singular de la Captura
             async recordHistory(payload) {
-                // Sincronizamos para que coincida con el HISTORY_TYPE_CHECK (Plurales como deposits/withdrawals suelen ser los correctos para paneles administrativos)
+                // Sincronización estricta con CHECK CONSTRAINT y Admin Panel
+                const isTransaction = payload.type === 'deposits' || payload.type === 'withdrawals';
                 const cleanPayload = {
                     user_id: payload.user_id,
                     type: payload.type, 
@@ -301,10 +301,11 @@
                     label: payload.label,
                     status: payload.status
                 };
-                if (payload.bank_name) cleanPayload.bank_name = payload.bank_name;
-                if (payload.account_holder) cleanPayload.account_holder = payload.account_holder;
-                if (payload.evidence_url) cleanPayload.evidence_url = payload.evidence_url;
-                
+                if (isTransaction) {
+                    cleanPayload.bank_name = payload.bank_name;
+                    cleanPayload.account_holder = payload.account_holder;
+                    if (payload.evidence_url) cleanPayload.evidence_url = payload.evidence_url;
+                }
                 return await sb.from('history').insert([cleanPayload]);
             },
 
@@ -324,7 +325,6 @@
                     const isDeposit = State.currentTx === 'deposit';
                     let historyItem = { 
                         user_id: State.user.id, 
-                        // Usamos los términos PLURALES que tu panel necesita para mostrar datos
                         type: isDeposit ? 'deposits' : 'withdrawals', 
                         amount: amount, 
                         label: isDeposit ? 'DEPÓSITO PENDIENTE' : 'RETIRO PENDIENTE', 
@@ -343,8 +343,6 @@
                         const pub = sb.storage.from('comprobantes').getPublicUrl(fName); 
                         historyItem.evidence_url = pub.data.publicUrl; 
                     } else {
-                        // SI ES RETIRO: Limpiar evidencia para no violar constraints
-                        delete historyItem.evidence_url; 
                         if(State.balance < amount) throw new Error("Saldo insuficiente");
                         await this.updateBalanceDB(-amount);
                         State.balance -= amount;
@@ -414,7 +412,7 @@
                 async start() { if(this.active || State.isProcessing) return; this.active = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10; const btn = document.getElementById('btn-tower-start'); btn.disabled = true; const { data: user = {} } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b || b <= 0) { this.active = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('click'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); this.bet = b; this.level = 0; this.mult = 1; this.towerMines = Array.from({length: 8}, () => Math.floor(Math.random() * 3)); this.drawTower(); document.getElementById('tower-row-0').classList.remove('opacity-30'); document.getElementById('tower-controls').classList.add('hidden-view'); const cbtn = document.getElementById('tower-cashout-btn'); cbtn.classList.remove('hidden-view'); cbtn.innerText = `COBRAR $${this.bet.toFixed(2)}`; cbtn.disabled = false; State.isProcessing = false; btn.disabled = false; },
                 select(r, c) { if(!this.active || r !== this.level || State.isProcessing) return; const items = document.getElementById(`tower-row-${r}`).children; if(c === this.towerMines[r]) { playSfx('lose'); items[c].innerHTML = '💣'; items[c].classList.add('bg-red-500/20', 'border-red-500'); this.revealAllMines(); UI.notify("PERDISTE", "error"); this.end(false); } else { playSfx('click'); items[c].innerHTML = '💎'; items[c].classList.add('bg-emerald-500/20', 'border-emerald-500'); const mIdx = this.towerMines[r]; document.getElementById(`t-${r}-${mIdx}`).innerHTML = '<span class="opacity-20">💣</span>'; this.mult = this.towerSteps[this.level]; this.level++; document.getElementById('tower-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`; if(this.level < 8) document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30'); else this.cashout(); } },
                 revealAllMines() { this.towerMines.forEach((m, r) => { const el = document.getElementById(`t-${r}-${m}`); if(el) el.innerHTML = '💣'; }); },
-                async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; this.revealAllMines(); const win = this.bet * this.mult; try { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); await this.end(true); } finally { State.isProcessing = false; } },
+                async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; this.revealAllMines(); const win = this.bet * this.mult; try { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}!`, "success"); await this.end(true); } finally { State.isProcessing = false; } },
                 async end(win) { const winAmt = win ? (this.bet * this.mult) : 0; GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0); this.active = false; State.isProcessing = false; UI.updateBalance(); document.getElementById('tower-controls').classList.remove('hidden-view'); document.getElementById('tower-cashout-btn').classList.add('hidden-view'); await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'TORRE', status: 'completed' }); }
             },
             blackjack: {
@@ -432,16 +430,11 @@
                     document.getElementById('bj-controls').classList.add('hidden-view');
                     document.getElementById('bj-actions').classList.remove('hidden-view');
                     this.render(true); State.isProcessing = false;
-                    if(this.getFinalScore(this.playerHand) === 21) this.stand();
+                    if(this.getScore(this.playerHand) === 21) this.stand();
                 },
-                createDeck() { 
-                    const suits = ['♠', '♣', '♥', '♦'], vls = ['2','3','4','5','6','7','8','9','10','J','Q','K','A']; 
-                    let deck = []; for(let s of suits) for(let v of vls) deck.push({s, v}); 
-                    for(let i=0; i<12; i++) deck.push({s: '♠', v: '10'});
-                    return deck.sort(() => Math.random() - 0.5); 
-                },
+                createDeck() { const suits = ['♠', '♣', '♥', '♦'], vls = ['2','3','4','5','6','7','8','9','10','J','Q','K','A']; let deck = []; for(let s of suits) for(let v of vls) deck.push({s, v}); for(let i=0; i<12; i++) deck.push({s: '♠', v: '10'}); return deck.sort(() => Math.random() - 0.5); },
                 drawCard() { return this.deck.pop(); },
-                getFinalScore(hand) {
+                getScore(hand) {
                     let score = 0, aces = 0;
                     for(let c of hand) {
                         if(c.v === 'A') { aces++; score += 11; }
@@ -451,12 +444,12 @@
                     while(score > 21 && aces > 0) { score -= 10; aces--; }
                     return score;
                 },
-                hit() { if(!this.active || State.isProcessing) return; playSfx('card'); this.playerHand.push(this.drawCard()); this.render(true); if(this.getFinalScore(this.playerHand) > 21) this.end('lose'); },
+                hit() { if(!this.active || State.isProcessing) return; playSfx('card'); this.playerHand.push(this.drawCard()); this.render(true); if(this.getScore(this.playerHand) > 21) this.end('lose'); },
                 async stand() { 
                     if(!this.active || State.isProcessing) return; 
                     State.isProcessing = true; this.render(false); await new Promise(r => setTimeout(r, 600));
-                    while(this.getFinalScore(this.dealerHand) < 17) { playSfx('card'); this.dealerHand.push(this.drawCard()); this.render(false); await new Promise(r => setTimeout(r, 600)); } 
-                    const ps = this.getFinalScore(this.playerHand), ds = this.getFinalScore(this.dealerHand); 
+                    while(this.getScore(this.dealerHand) < 17) { playSfx('card'); this.dealerHand.push(this.drawCard()); this.render(false); await new Promise(r => setTimeout(r, 600)); } 
+                    const ps = this.getScore(this.playerHand), ds = this.getScore(this.dealerHand); 
                     if(ds > 21 || ps > ds) this.end('win'); else if(ps === ds) this.end('push'); else this.end('lose'); 
                 },
                 render(hideDealer) { 
@@ -468,13 +461,13 @@
                         document.getElementById('dealer-score').innerText = '?';
                     } else {
                         dC.innerHTML = this.dealerHand.map(c => `<div class="card-bj ${['♥','♦'].includes(c.s)?'card-red':''}"><span>${c.v}</span><span class="text-[10px]">${c.s}</span></div>`).join(''); 
-                        document.getElementById('dealer-score').innerText = this.getFinalScore(this.dealerHand);
+                        document.getElementById('dealer-score').innerText = this.getScore(this.dealerHand);
                     }
-                    document.getElementById('player-score').innerText = this.getFinalScore(this.playerHand); 
+                    document.getElementById('player-score').innerText = this.getScore(this.playerHand); 
                 },
                 async end(res) { 
                     this.active = false; let win = 0; 
-                    if(res === 'win') { win = this.bet * 2; playSfx('win'); playSfx('winExtra'); UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); } 
+                    if(res === 'win') { win = this.bet * 2; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); } 
                     else if(res === 'push') { win = this.bet; playSfx('win'); playSfx('winExtra'); UI.notify(`EMPATE: RECUPERAS $${win.toFixed(2)}`, "success"); } 
                     else { UI.notify("PERDISTE", "error"); playSfx('lose'); } 
                     if(win > 0) { await Core.updateBalanceDB(win); State.balance += win; } 
@@ -500,6 +493,7 @@
                         document.getElementById('chicken-controls').classList.remove('hidden-view'); 
                         document.getElementById('chicken-actions').classList.add('hidden-view'); 
                         document.getElementById('chicken-status').innerText = '1.00x'; 
+                        document.getElementById('bottom-nav-bar').style.transform = 'translateY(100%)'; 
                     }, 1000); 
                     await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'CHICKEN', status: 'completed' }); 
                     State.isProcessing = false; 
