@@ -187,7 +187,7 @@
             <div id="dep-step-1">
                 <div class="tx-selector">
                     <div id="tab-deposit" onclick="UI.setTxType('deposit')" class="tx-tab active">DEPOSITAR</div>
-                    <div id="tab-withdrawal" onclick="UI.setTxType('withdraw')" class="tx-tab">RETIRAR</div>
+                    <div id="tab-withdrawal" onclick="UI.setTxType('withdrawal')" class="tx-tab">RETIRAR</div>
                 </div>
                 <h2 id="tx-title" class="font-casino text-emerald-500 text-center mb-6">Monto</h2>
                 <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-6 text-white">
@@ -203,12 +203,14 @@
                         <p class="text-zinc-500 text-[10px] uppercase mb-1">Confirmar envío de:</p>
                         <span class="text-emerald-500 font-black text-2xl" id="display-dep-amount">$0.00</span>
                     </div>
-                    <div class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 mb-4">
+                    <div id="clabe-section" class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 mb-4">
                         <p class="text-[8px] font-bold text-emerald-500 mb-1 uppercase">CLABE (STP)</p>
                         <div class="flex items-center justify-center gap-3"><span class="text-xs font-mono font-bold" id="clabe-number">722969020533491161</span><button onclick="UI.copyClabe()" class="text-emerald-500"><i class="fas fa-copy"></i></button></div>
                     </div>
-                    <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
-                    <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-2xl p-4 block cursor-pointer"><i class="fas fa-camera text-xl mb-1 text-zinc-600"></i><p id="file-label" class="text-[8px] font-bold text-zinc-500 uppercase">Subir Comprobante</p></label>
+                    <div id="photo-section">
+                        <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
+                        <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-2xl p-4 block cursor-pointer"><i class="fas fa-camera text-xl mb-1 text-zinc-600"></i><p id="file-label" class="text-[8px] font-bold text-zinc-500 uppercase">Subir Comprobante</p></label>
+                    </div>
                 </div>
                 <button id="btn-confirm-dep" onclick="Core.confirmTransaction()" class="btn-action w-full py-4 font-casino">Confirmar</button>
             </div>
@@ -240,9 +242,7 @@
         setInterval(() => {
             const viewGame = document.getElementById('view-game');
             const nav = document.getElementById('bottom-nav-bar');
-            if (viewGame && !viewGame.classList.contains('hidden-view')) {
-                nav.style.transform = 'translateY(100%)';
-            }
+            if (viewGame && !viewGame.classList.contains('hidden-view')) { nav.style.transform = 'translateY(100%)'; }
         }, 500);
 
         const UI = {
@@ -253,9 +253,19 @@
             toggleAccordion(id) { const el = document.getElementById(id); const arrow = document.getElementById('arrow-' + id); el.classList.toggle('hidden-view'); if(arrow) arrow.style.transform = el.classList.contains('hidden-view') ? 'rotate(180deg)' : 'rotate(0deg)'; },
             depNextStep() { const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value)); if(isNaN(amt) || amt <= 0) return this.notify("Monto inválido", "error"); playSfx('click'); const display = document.getElementById('display-dep-amount'); if(display) display.innerText = `$${amt.toFixed(2)}`; document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
             copyClabe() { const clabe = document.getElementById('clabe-number').innerText; navigator.clipboard.writeText(clabe).then(() => { playSfx('click'); this.notify("CLABE Copiada", "success"); }); },
-            handleFile(input) { if(input.files && input.files[0]) { playSfx('click'); const label = document.getElementById('file-label'); label.innerText = "Archivo: " + input.files[0].name.substring(0, 10) + "..."; label.classList.replace('text-zinc-500', 'text-emerald-500'); } },
+            handleFile(input) { if(input.files && input.files[0]) { playSfx('click'); const label = document.getElementById('file-label'); label.innerText = "Foto lista"; label.classList.replace('text-zinc-500', 'text-emerald-500'); } },
             notify(m, t) { const n = document.createElement('div'); n.className = `p-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-2xl animate__animated animate__fadeInDown ${t==='success'?'bg-emerald-500 text-black':'bg-red-500 text-white'}`; n.innerText = m; document.getElementById('notif-container').appendChild(n); setTimeout(() => { n.classList.replace('animate__fadeInDown', 'animate__fadeOutUp'); setTimeout(()=>n.remove(), 500); }, 3000); },
-            setTxType(type) { playSfx('click'); State.currentTx = type; const isDep = type === 'deposit'; document.getElementById('tab-deposit').classList.toggle('active', isDep); document.getElementById('tab-withdrawal').classList.toggle('active', !isDep); document.getElementById('tx-title').innerText = isDep ? 'Monto' : 'Monto'; document.getElementById('deposit-info').classList.toggle('hidden-view', !isDep); }
+            setTxType(type) { 
+                playSfx('click'); 
+                State.currentTx = type; 
+                const isDep = type === 'deposit'; 
+                document.getElementById('tab-deposit').classList.toggle('active', isDep); 
+                document.getElementById('tab-withdrawal').classList.toggle('active', !isDep); 
+                document.getElementById('tx-title').innerText = isDep ? 'Monto' : 'Monto'; 
+                // Retiro no pide foto ni muestra CLABE
+                document.getElementById('photo-section').classList.toggle('hidden-view', !isDep);
+                document.getElementById('clabe-section').classList.toggle('hidden-view', !isDep);
+            }
         };
 
         const AuthManager = {
@@ -268,13 +278,7 @@
                 const btn = document.getElementById('btn-register'); btn.disabled = true; 
                 const { data, error } = await sb.auth.signUp({ email: e, password: p }); 
                 if(error) { UI.notify(error.message, "error"); btn.disabled = false; } 
-                else { 
-                    await sb.from('usuarios').insert([{ id: data.user.id, email: e, saldo: 0 }]); 
-                    UI.notify("Cuenta creada", "success"); 
-                    document.getElementById('auth-view').classList.add('hidden-view');
-                    document.getElementById('bonus-view').classList.remove('hidden-view');
-                    State.user = data.user;
-                } 
+                else { await sb.from('usuarios').insert([{ id: data.user.id, email: e, saldo: 0 }]); UI.notify("Cuenta creada", "success"); document.getElementById('auth-view').classList.add('hidden-view'); document.getElementById('bonus-view').classList.remove('hidden-view'); State.user = data.user; } 
             },
             async logout() { await sb.auth.signOut(); location.reload(); },
             switchTab(tab) { playSfx('click'); document.getElementById('login-container').classList.toggle('hidden-view', tab==='register'); document.getElementById('register-container').classList.toggle('hidden-view', tab==='login'); }
@@ -288,22 +292,20 @@
             async updateBalanceDB(amount) { const { data, error } = await sb.rpc('modificar_saldo', { user_id: State.user.id, monto: amount }); if (error) { const { data: current } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); await sb.from('usuarios').update({ saldo: current.saldo + amount }).eq('id', State.user.id); } },
             async claimBonus() { if(State.isProcessing) return; State.isProcessing = true; playSfx('win'); try { await this.updateBalanceDB(30); UI.notify("Bono reclamado", "success"); location.reload(); } catch(e) { UI.notify("Error", "error"); } finally { State.isProcessing = false; } },
             
-            // Reparación definitiva de HISTORY_TYPE_CHECK
+            // FUNCIÓN DE GUARDADO PARA EVITAR HISTORY_TYPE_CHECK
             async recordHistory(payload) {
-                const cleanPayload = { 
+                // Sincronizar tipos con singular para la DB y plural para el Admin Panel
+                const typeMap = { 'deposit': 'deposit', 'withdraw': 'withdraw', 'withdrawal': 'withdraw' };
+                const cleanPayload = {
                     user_id: payload.user_id,
-                    type: payload.type, // Debe coincidir con CHECK CONSTRAINT (singular o plural según tu DB)
+                    type: typeMap[payload.type] || payload.type, // Asegura que sea "withdraw" o "deposit"
                     amount: payload.amount,
                     label: payload.label,
                     status: payload.status
                 };
-                
-                // Solo enviar columnas bancarias si NO es una apuesta
-                if (payload.type !== 'bets') {
-                    cleanPayload.bank_name = payload.bank_name;
-                    cleanPayload.account_holder = payload.account_holder;
-                    if (payload.evidence_url) cleanPayload.evidence_url = payload.evidence_url;
-                }
+                if (payload.bank_name) cleanPayload.bank_name = payload.bank_name;
+                if (payload.account_holder) cleanPayload.account_holder = payload.account_holder;
+                if (payload.evidence_url) cleanPayload.evidence_url = payload.evidence_url;
                 
                 return await sb.from('history').insert([cleanPayload]);
             },
@@ -315,7 +317,6 @@
                 const bank = document.getElementById('bank-name').value; 
                 const beneficiary = document.getElementById('beneficiary-name').value; 
                 if(!amount || amount <= 0 || !bank || !beneficiary) return UI.notify("Completa campos", "error"); 
-                
                 const btn = document.getElementById('btn-confirm-dep'); 
                 btn.disabled = true; btn.innerText = "PROCESANDO..."; 
                 State.isProcessing = true; 
@@ -324,7 +325,7 @@
                     const isDeposit = State.currentTx === 'deposit';
                     let historyItem = { 
                         user_id: State.user.id, 
-                        type: isDeposit ? 'deposits' : 'withdrawals', // Ajustado a plural para panel
+                        type: State.currentTx, 
                         amount: amount, 
                         label: isDeposit ? 'DEPÓSITO PENDIENTE' : 'RETIRO PENDIENTE', 
                         status: 'pending', 
@@ -342,7 +343,7 @@
                         const pub = sb.storage.from('comprobantes').getPublicUrl(fName); 
                         historyItem.evidence_url = pub.data.publicUrl; 
                     } else {
-                        // SI ES RETIRO: Descontar saldo inmediatamente
+                        // SI ES RETIRO: Limpieza absoluta para evitar error 400
                         if(State.balance < amount) throw new Error("Saldo insuficiente");
                         await this.updateBalanceDB(-amount);
                         State.balance -= amount;
@@ -355,7 +356,7 @@
                     UI.closeModal('modal-deposit'); 
                 } catch(e) { UI.notify(e.message, "error"); } finally { btn.disabled = false; btn.innerText = "CONFIRMAR"; State.isProcessing = false; } 
             },
-            async fetchHistory() { const { data: b } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20); const { data: d } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(20); const { data: w = [] } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'withdrawals').order('created_at', { ascending: false }).limit(20); const container = document.getElementById('history-lists'); container.innerHTML = `<div class="glass mb-4 p-4"><div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-bets')"><span class="font-casino text-[10px]">Jugadas</span><i class="fas fa-chevron-down" id="arrow-acc-bets"></i></div><div id="acc-bets" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(b || [], 'bets')}</div></div><div class="glass mb-4 p-4"><div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-deps')"><span class="font-casino text-[10px]">Depósitos</span><i class="fas fa-chevron-down" id="arrow-acc-deps"></i></div><div id="acc-deps" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(d || [], 'tx')}</div></div><div class="glass mb-4 p-4"><div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-wd')"><span class="font-casino text-[10px]">Retiros</span><i class="fas fa-chevron-down" id="arrow-acc-wd"></i></div><div id="acc-wd" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(w || [], 'tx')}</div></div>`; },
+            async fetchHistory() { const { data: b } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20); const { data: d } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'deposit').order('created_at', { ascending: false }).limit(20); const { data: w = [] } = await sb.from('history').select('*').eq('user_id', State.user.id).eq('type', 'withdraw').order('created_at', { ascending: false }).limit(20); const container = document.getElementById('history-lists'); container.innerHTML = `<div class="glass mb-4 p-4"><div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-bets')"><span class="font-casino text-[10px]">Jugadas</span><i class="fas fa-chevron-down" id="arrow-acc-bets"></i></div><div id="acc-bets" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(b || [], 'bets')}</div></div><div class="glass mb-4 p-4"><div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-deps')"><span class="font-casino text-[10px]">Depósitos</span><i class="fas fa-chevron-down" id="arrow-acc-deps"></i></div><div id="acc-deps" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(d || [], 'tx')}</div></div><div class="glass mb-4 p-4"><div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-wd')"><span class="font-casino text-[10px]">Retiros</span><i class="fas fa-chevron-down" id="arrow-acc-wd"></i></div><div id="acc-wd" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(w || [], 'tx')}</div></div>`; },
             renderList(items, type) { if(!items || items.length === 0) return '<p class="text-zinc-600">Sin registros</p>'; return items.map(i => { let statusColor = i.amount >= 0 ? 'text-emerald-500' : 'text-red-500'; let label = i.label; if(type === 'tx') { if(i.status === 'pending') label += " (⏳)"; else if(i.status === 'completed') label += " (✅)"; else if(i.status === 'rejected') label += " (❌)"; statusColor = 'text-white'; } return `<div class="flex justify-between border-b border-white/5 pb-1"><span>${label}</span><span class="${statusColor}">$${Math.abs(i.amount).toFixed(2)}</span></div>`; }).join(''); }
         };
 
@@ -372,7 +373,7 @@
                     <div class="mb-6"><p class="text-[8px] text-emerald-500 uppercase font-black mb-2">Tus Cartas (Puntos: <span id="player-score">0</span>)</p><div id="player-cards" class="flex justify-center gap-2 h-[70px]"></div></div>
                     <div id="bj-controls"><input id="bj-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.blackjack.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div>
                     <div id="bj-actions" class="hidden-view grid grid-cols-2 gap-3"><button onclick="GameLogic.blackjack.hit()" class="btn-action py-4 bg-zinc-800 text-white font-casino">PEDIR</button><button onclick="GameLogic.blackjack.stand()" class="btn-action py-4 font-casino">PLANTARSE</button></div>
-                    <div class="instruction-card"><h4>🃏 Reglas Blackjack</h4><p>Suma 21 o más que el crupier sin pasarte.</p></div>
+                    <div class="instruction-card"><h4>🃏 Reglas Blackjack</h4><p>El As vale 11 o 1.</p></div>
                 </div>`,
                 chicken: `<div class="glass p-4 text-center">
                     <div id="chicken-status" class="mb-4 text-emerald-500 font-casino text-2xl animate__animated animate__pulse animate__infinite">1.00x</div>
