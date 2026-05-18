@@ -46,7 +46,7 @@
         const sb = window.supabase.createClient("https://dakhnqriwbzihlzhtfcb.supabase.co", "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs");
         let currentType = 'deposits';
 
-        // CONFIGURACIÓN DE SEGURIDAD EXCLUSIVA (Pon aquí tu mismo correo que en casino5.html)
+        // ⚠️ CONFIGURACIÓN DE SEGURIDAD EXCLUSIVA (Pon aquí tu mismo correo que en tu casino)
         const CORREO_ADMIN_AUTORIZADO = "ed8108868@gmail.com"; 
 
         const AdminAuth = {
@@ -120,22 +120,23 @@
             data.forEach(item => {
                 const currentSaldo = item.usuarios ? item.usuarios.saldo : 0;
                 
-                // Procesamiento inteligente de textos para la sección de retiros
+                // SISTEMA SALVAVIDAS EXTRAE-DATOS: Parsea los textos planos para que no salgan vacíos
                 let bancoDisplay = item.bank_name || 'No especificado';
-                let titularDisplay = 'No especificado';
+                let titularDisplay = item.account_holder || 'No especificado';
                 let clabeDisplay = 'No especificado';
 
+                // Si es un retiro seguro empaquetado del casino de última versión
                 if (!isDeposit && item.account_holder) {
-                    // Separar el titular y la cuenta CLABE guardados bajo el formato del casino
                     if (item.account_holder.includes('| CLABE:')) {
                         const partes = item.account_holder.split('| CLABE:');
                         titularDisplay = partes[0].trim();
                         clabeDisplay = partes[1].trim();
-                    } else {
-                        titularDisplay = item.account_holder;
                     }
-                } else if (isDeposit) {
-                    titularDisplay = item.account_holder || 'No especificado';
+                }
+
+                // Corrección de respaldo por si el banco llegó en blanco en el objeto limpio
+                if (!isDeposit && bancoDisplay === 'No especificado' && item.bank_name) {
+                    bancoDisplay = item.bank_name;
                 }
 
                 container.innerHTML += `
@@ -154,7 +155,7 @@
                                     <p class="text-[10px] text-zinc-500 font-mono">USUARIO ID: ${item.user_id}</p>
                                     <p class="text-[11px] text-white font-bold bg-white/5 px-2 py-1 rounded w-fit">BANCO: ${bancoDisplay}</p>
                                     <p class="text-[11px] text-zinc-300 italic">TITULAR: ${titularDisplay}</p>
-                                    ${!isDeposit ? `<p class="text-[11px] text-yellow-500 font-mono bg-yellow-500/10 px-2 py-0.5 rounded w-fit">CLABE: ${clabeDisplay}</p>` : ''}
+                                    ${!isDeposit ? `<p class="text-[11px] text-yellow-500 font-mono bg-yellow-500/10 px-2 py-0.5 rounded w-fit font-bold">CLABE: ${clabeDisplay}</p>` : ''}
                                     <p class="text-[10px] text-zinc-400 uppercase">SALDO ACTUAL DEL JUGADOR: $${currentSaldo}</p>
                                 </div>
                             </div>
