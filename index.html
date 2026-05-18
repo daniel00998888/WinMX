@@ -189,7 +189,9 @@
                     <div id="tab-deposit" onclick="UI.setTxType('deposit')" class="tx-tab active">DEPOSITAR</div>
                     <div id="tab-withdrawal" onclick="UI.setTxType('withdrawal')" class="tx-tab">RETIRAR</div>
                 </div>
-                <h2 id="tx-title" class="font-casino text-emerald-500 text-center mb-6">Monto</h2>
+                <h2 id="tx-title" class="font-casino text-emerald-500 text-center mb-1">Monto</h2>
+                <p id="tx-limits-hint" class="text-[9px] text-zinc-500 font-bold uppercase tracking-wider text-center mb-4">(MIN 50 MXN MAX 3000 MXN)</p>
+                
                 <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-6 text-white">
                 <div class="space-y-3 mb-6">
                     <input id="clabe-input-field" type="number" placeholder="Cuenta CLABE (18 dígitos)" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none text-white text-[10px] font-bold uppercase hidden-view">
@@ -256,7 +258,6 @@
                 try {
                     sfx[key].pause(); 
                     sfx[key].currentTime = 0; 
-                    // Forzar recarga del elemento de audio para limpiar estados corruptos del navegador
                     sfx[key].load();
                     const p = sfx[key].play(); 
                     if(p !== undefined) p.catch(() => {}); 
@@ -264,7 +265,6 @@
             } 
         };
 
-        // Despertar de forma forzada todos los canales de Audio al primer evento de interacción táctil o clic
         const initAudioUnlock = () => {
             const unlock = () => {
                 Object.keys(sfx).forEach(key => {
@@ -313,18 +313,28 @@
             toggleAccordion(id) { const el = document.getElementById(id); const arrow = document.getElementById('arrow-' + id); el.classList.toggle('hidden-view'); if(arrow) arrow.style.transform = el.classList.contains('hidden-view') ? 'rotate(180deg)' : 'rotate(0deg)'; },
             depNextStep() { 
                 const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value)); 
+                const bank = document.getElementById('bank-name').value.trim();
+                const beneficiary = document.getElementById('beneficiary-name').value.trim();
+                const clabeVal = document.getElementById('clabe-input-field').value.trim();
+
                 if(isNaN(amt) || amt <= 0) return this.notify("Monto inválido", "error"); 
                 
-                if(State.currentTx === 'deposit' && amt < 50) {
-                    return this.notify("El depósito mínimo es de $50 MXN", "error");
+                // VALIDACIONES DE MONTOS MÍNIMOS Y MÁXIMOS SOLICITADOS
+                if(State.currentTx === 'deposit') {
+                    if(amt < 50) return this.notify("El depósito mínimo es de $50 MXN", "error");
+                    if(amt > 3000) return this.notify("El depósito máximo es de $3000 MXN", "error");
                 }
-                if(State.currentTx === 'withdrawal' && amt < 100) {
-                    return this.notify("El retiro mínimo es de $100 MXN", "error");
+                if(State.currentTx === 'withdrawal') {
+                    if(amt < 100) return this.notify("El retiro mínimo es de $100 MXN", "error");
+                    if(amt > 3000) return this.notify("El retiro máximo es de $3000 MXN", "error");
                 }
+
+                // OBLIGATORIEDAD DE CAMPOS BANCARIOS (CANDADO GENERAL)
+                if(!bank) return this.notify("El nombre del banco es obligatorio", "error");
+                if(!beneficiary) return this.notify("El nombre completo es obligatorio", "error");
                 
-                const clabeVal = document.getElementById('clabe-input-field').value;
                 if(State.currentTx === 'withdrawal') { 
-                    if(!clabeVal || clabeVal.length !== 18) return this.notify("CLABE debe ser de 18 dígitos", "error"); 
+                    if(!clabeVal || clabeVal.length !== 18) return this.notify("La cuenta CLABE de 18 dígitos es obligatoria", "error"); 
                 } 
                 
                 playSfx('click'); 
@@ -358,6 +368,13 @@
                 document.getElementById('tab-deposit').classList.toggle('active', isDep); 
                 document.getElementById('tab-withdrawal').classList.toggle('active', !isDep); 
                 document.getElementById('tx-title').innerText = isDep ? 'Monto' : 'Monto'; 
+                
+                // Actualizar texto de límites dinámicamente debajo de la palabra "Monto"
+                const hint = document.getElementById('tx-limits-hint');
+                if(hint) {
+                    hint.innerText = isDep ? "(MIN 50 MXN MAX 3000 MXN)" : "(MIN 100 MXN MAX 3000 MXN)";
+                }
+
                 document.getElementById('photo-section').classList.toggle('hidden-view', !isDep);
                 document.getElementById('clabe-section').classList.toggle('hidden-view', !isDep);
                 document.getElementById('deposit-instructions-box').classList.toggle('hidden-view', !isDep);
