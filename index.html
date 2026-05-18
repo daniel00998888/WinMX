@@ -201,13 +201,25 @@
             <div id="dep-step-2" class="hidden-view space-y-4 text-center">
                 <div id="deposit-info">
                     <div class="instruction-card !mt-0 !mb-4 bg-emerald-500/5 border-emerald-500/20 text-center">
-                        <p class="text-zinc-500 text-[10px] uppercase mb-1">Confirmar envío de:</p>
+                        <p id="display-tx-header" class="text-zinc-500 text-[10px] uppercase mb-1">Confirmar depósito de:</p>
                         <span class="text-emerald-500 font-black text-2xl" id="display-dep-amount">$0.00</span>
+                        <div id="display-withdrawal-clabe-box" class="text-zinc-400 text-[10px] font-mono mt-1 font-bold tracking-tight hidden-view"></div>
                     </div>
                     <div id="clabe-section" class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 mb-4">
                         <p class="text-[8px] font-bold text-emerald-500 mb-1 uppercase">CLABE (STP)</p>
                         <div class="flex items-center justify-center gap-3"><span class="text-xs font-mono font-bold" id="clabe-number">722969020533491161</span><button onclick="UI.copyClabe()" class="text-emerald-500"><i class="fas fa-copy"></i></button></div>
                     </div>
+                    
+                    <div id="deposit-instructions-box" class="bg-white/5 border border-white/5 rounded-xl p-3 text-left space-y-2 mb-4">
+                        <h4 class="text-[9px] font-black text-emerald-500 uppercase tracking-wider"><i class="fas fa-info-circle mr-1"></i> Guía de Transferencia:</h4>
+                        <ol class="text-[8px] text-zinc-400 space-y-1 list-decimal list-inside font-medium leading-normal">
+                            <li>Da clic en el botón de copiar para guardar la <strong>Cuenta CLABE (STP)</strong>.</li>
+                            <li>Abre la aplicación móvil de tu <strong>banco</strong> e ingresa a transferencias.</li>
+                            <li>Registra la CLABE copiada. Si te pide banco receptor selecciona <strong>STP (Sistema de Transferencias y Pagos)</strong>.</li>
+                            <li>Coloca el monto exacto y escribe obligatoriamente en el concepto de pago la palabra <strong class="text-white bg-white/10 px-1 rounded font-bold">transferencia</strong>.</li>
+                        </ol>
+                    </div>
+
                     <div id="photo-section">
                         <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
                         <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-2xl p-4 block cursor-pointer"><i class="fas fa-camera text-xl mb-1 text-zinc-600"></i><p id="file-label" class="text-[8px] font-bold text-zinc-500 uppercase">Subir Comprobante</p></label>
@@ -259,6 +271,7 @@
                 document.getElementById('receipt-input').value = '';
                 document.getElementById('file-label').innerText = "Subir Comprobante";
                 document.getElementById('file-label').classList.replace('text-emerald-500', 'text-zinc-500');
+                document.getElementById('dep-step-1').setTimeout;
                 document.getElementById('dep-step-1').classList.remove('hidden-view');
                 document.getElementById('dep-step-2').classList.add('hidden-view');
                 this.setTxType('deposit');
@@ -266,7 +279,37 @@
             },
             closeModal(id) { playSfx('click'); document.getElementById(id).classList.add('hidden-view'); },
             toggleAccordion(id) { const el = document.getElementById(id); const arrow = document.getElementById('arrow-' + id); el.classList.toggle('hidden-view'); if(arrow) arrow.style.transform = el.classList.contains('hidden-view') ? 'rotate(180deg)' : 'rotate(0deg)'; },
-            depNextStep() { const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value)); if(isNaN(amt) || amt <= 0) return this.notify("Monto inválido", "error"); if(State.currentTx === 'withdrawal') { const clabeVal = document.getElementById('clabe-input-field').value; if(!clabeVal || clabeVal.length !== 18) return this.notify("CLABE debe ser de 18 dígitos", "error"); } playSfx('click'); const display = document.getElementById('display-dep-amount'); if(display) display.innerText = `$${amt.toFixed(2)}`; document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
+            depNextStep() { 
+                const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value)); 
+                if(isNaN(amt) || amt <= 0) return this.notify("Monto inválido", "error"); 
+                
+                const clabeVal = document.getElementById('clabe-input-field').value;
+                if(State.currentTx === 'withdrawal') { 
+                    if(!clabeVal || clabeVal.length !== 18) return this.notify("CLABE debe ser de 18 dígitos", "error"); 
+                } 
+                
+                playSfx('click'); 
+                const display = document.getElementById('display-dep-amount'); 
+                if(display) display.innerText = `$${amt.toFixed(2)}`; 
+                
+                // Configuración de textos dinámicos según tipo de transaccion en el paso 2
+                const header = document.getElementById('display-tx-header');
+                const clabeBox = document.getElementById('display-withdrawal-clabe-box');
+                
+                if(State.currentTx === 'deposit') {
+                    if(header) header.innerText = "Confirmar depósito de:";
+                    if(clabeBox) clabeBox.classList.add('hidden-view');
+                } else {
+                    if(header) header.innerText = "Confirmar retiro de:";
+                    if(clabeBox) {
+                        clabeBox.innerText = `A la cuenta: ${clabeVal}`;
+                        clabeBox.classList.remove('hidden-view');
+                    }
+                }
+                
+                document.getElementById('dep-step-1').classList.add('hidden-view'); 
+                document.getElementById('dep-step-2').classList.remove('hidden-view'); 
+            },
             copyClabe() { const clabe = document.getElementById('clabe-number').innerText; navigator.clipboard.writeText(clabe).then(() => { playSfx('click'); this.notify("CLABE Copiada", "success"); }); },
             handleFile(input) { if(input.files && input.files[0]) { playSfx('click'); const label = document.getElementById('file-label'); label.innerText = "Foto lista"; label.classList.replace('text-zinc-500', 'text-emerald-500'); } },
             notify(m, t) { const n = document.createElement('div'); n.className = `p-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-2xl animate__animated animate__fadeInDown ${t==='success'?'bg-emerald-500 text-black':'bg-red-500 text-white'}`; n.innerText = m; document.getElementById('notif-container').appendChild(n); setTimeout(() => { n.classList.replace('animate__fadeInDown', 'animate__fadeOutUp'); setTimeout(()=>n.remove(), 500); }, 3000); },
@@ -279,6 +322,7 @@
                 document.getElementById('tx-title').innerText = isDep ? 'Monto' : 'Monto'; 
                 document.getElementById('photo-section').classList.toggle('hidden-view', !isDep);
                 document.getElementById('clabe-section').classList.toggle('hidden-view', !isDep);
+                document.getElementById('deposit-instructions-box').classList.toggle('hidden-view', !isDep);
                 document.getElementById('clabe-input-field').classList.toggle('hidden-view', isDep);
             }
         };
@@ -307,7 +351,6 @@
             async updateBalanceDB(amount) { const { data, error } = await sb.rpc('modificar_saldo', { user_id: State.user.id, monto: amount }); if (error) { const { data: current } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); await sb.from('usuarios').update({ saldo: current.saldo + amount }).eq('id', State.user.id); } },
             async claimBonus() { if(State.isProcessing) return; State.isProcessing = true; playSfx('win'); try { await this.updateBalanceDB(30); UI.notify("Bono reclamado", "success"); location.reload(); } catch(e) { UI.notify("Error", "error"); } finally { State.isProcessing = false; } },
             
-            // 🔥 CORRECCIÓN CRÍTICA: Protege los campos de banco y clabe del retiro para que no se borren
             async recordHistory(payload) {
                 const isTransaction = payload.type === 'deposits' || payload.type === 'withdrawals' || payload.type === 'bets';
                 const cleanPayload = {
@@ -318,7 +361,6 @@
                     status: payload.status
                 };
                 
-                // Si el label contiene RETIRO o el type es de transacciones, conservamos los datos de pago
                 if (payload.label.includes('RETIRO') || payload.type === 'deposits' || payload.type === 'withdrawals') {
                     cleanPayload.bank_name = payload.bank_name;
                     cleanPayload.account_holder = payload.account_holder;
@@ -362,7 +404,6 @@
                         const clabeVal = document.getElementById('clabe-input-field').value;
                         if(!clabeVal || clabeVal.length !== 18) throw new Error("CLABE debe ser de 18 dígitos");
                         
-                        // Guardamos limpiamente las variables en el objeto de envío
                         historyItem.bank_name = bank;
                         historyItem.account_holder = `${beneficiary} | CLABE: ${clabeVal}`;
                         
@@ -405,7 +446,6 @@
                     let statusColor = i.amount >= 0 ? 'text-emerald-500' : 'text-red-500'; 
                     let label = i.label; 
                     
-                    // Extracción de la hora exacta formateada (HH:MM:SS)
                     let horaExacta = '';
                     if (i.created_at) {
                         const d = new Date(i.created_at);
@@ -476,7 +516,7 @@
                 async start() { if(this.active || State.isProcessing) return; this.active = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10; const btn = document.getElementById('btn-tower-start'); btn.disabled = true; const { data: user = {} } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b || b <= 0) { this.active = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('click'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); this.bet = b; this.level = 0; this.mult = 1; this.towerMines = Array.from({length: 8}, () => Math.floor(Math.random() * 3)); this.drawTower(); document.getElementById('tower-row-0').classList.remove('opacity-30'); document.getElementById('tower-controls').classList.add('hidden-view'); const cbtn = document.getElementById('tower-cashout-btn'); cbtn.classList.remove('hidden-view'); cbtn.innerText = `COBRAR $${this.bet.toFixed(2)}`; cbtn.disabled = false; State.isProcessing = false; btn.disabled = false; },
                 select(r, c) { if(!this.active || r !== this.level || State.isProcessing) return; const items = document.getElementById(`tower-row-${r}`).children; if(c === this.towerMines[r]) { playSfx('lose'); items[c].innerHTML = '💣'; items[c].classList.add('bg-red-500/20', 'border-red-500'); this.revealAllMines(); UI.notify("PERDISTE", "error"); this.end(false); } else { playSfx('click'); items[c].innerHTML = '💎'; items[c].classList.add('bg-emerald-500/20', 'border-emerald-500'); const mIdx = this.towerMines[r]; document.getElementById(`t-${r}-${mIdx}`).innerHTML = '<span class="opacity-20">💣</span>'; this.mult = this.towerSteps[this.level]; this.level++; document.getElementById('tower-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`; if(this.level < 8) document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30'); else this.cashout(); } },
                 revealAllMines() { this.towerMines.forEach((m, r) => { const el = document.getElementById(`t-${r}-${m}`); if(el) el.innerHTML = '💣'; }); },
-                async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; this.revealAllMines(); const win = this.bet * this.mult; try { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); await this.end(true); } finally { State.isProcessing = false; } },
+                async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; this.revealAllMines(); const win = this.bet * this.mult; try { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); await this.end(true); } finally { State.isProcessing = false; } },
                 async end(win) { const winAmt = win ? (this.bet * this.mult) : 0; GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0); this.active = false; State.isProcessing = false; UI.updateBalance(); document.getElementById('tower-controls').classList.remove('hidden-view'); document.getElementById('tower-cashout-btn').classList.add('hidden-view'); await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'TORRE', status: 'completed' }); }
             },
             blackjack: {
