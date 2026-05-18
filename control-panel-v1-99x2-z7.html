@@ -21,8 +21,7 @@
         <button onclick="changeView('withdrawals')" id="btn-with" class="pb-4 font-bold uppercase tracking-widest text-zinc-500">Retiros</button>
     </div>
 
-    <div class="grid grid-cols-1 gap-6" id="pending-list">
-        </div>
+    <div class="grid grid-cols-1 gap-6" id="pending-list"></div>
 
     <script>
         const sb = window.supabase.createClient("https://dakhnqriwbzihlzhtfcb.supabase.co", "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs");
@@ -38,21 +37,27 @@
         }
 
         async function loadPending() {
-            const { data, error } = await sb.from('history')
-                .select('*, usuarios(saldo)')
-                .eq('type', currentType)
-                .eq('status', 'pending')
-                .order('created_at', { ascending: false });
+            const isDeposit = currentType === 'deposits';
+            let query = sb.from('history').select('*, usuarios(saldo)').eq('status', 'pending');
+
+            // Filtro inteligente para capturar los retiros camuflados como 'bets'
+            if (isDeposit) {
+                query = query.eq('type', 'deposits');
+            } else {
+                // Trae tanto 'withdrawals' como el truco seguro 'bets' que contengan la etiqueta de Retiro
+                query = query.in('type', ['withdrawals', 'bets']).eq('label', 'RETIRO PENDIENTE');
+            }
+
+            const { data, error } = await query.order('created_at', { ascending: false });
 
             const container = document.getElementById('pending-list');
             if(error) return console.error(error);
             
             container.innerHTML = (!data || data.length === 0) ? 
-                `<p class="text-zinc-600">No hay ${currentType === 'deposits' ? 'depósitos' : 'retiros'} pendientes.</p>` : '';
+                `<p class="text-zinc-600">No hay ${isDeposit ? 'depósitos' : 'retiros'} pendientes.</p>` : '';
 
             data.forEach(item => {
                 const currentSaldo = item.usuarios ? item.usuarios.saldo : 0;
-                const isDeposit = currentType === 'deposits';
 
                 container.innerHTML += `
                     <div class="bg-zinc-900 p-6 rounded-[2rem] border border-white/5 flex items-center justify-between">
@@ -65,23 +70,23 @@
                             
                             <div>
                                 <p class="${isDeposit ? 'text-emerald-500' : 'text-red-500'} font-bold text-2xl tracking-tighter">
-                                    ${isDeposit ? '+' : '-'}$${item.amount}
+                                    ${isDeposit ? '+' : '-'}$${Math.abs(item.amount)}
                                 </p>
                                 <div class="mt-2 space-y-1">
                                     <p class="text-[10px] text-zinc-500 font-mono">USUARIO ID: ${item.user_id}</p>
                                     <p class="text-[11px] text-white font-bold bg-white/5 px-2 py-1 rounded w-fit">BANCO: ${item.bank_name || 'No especificado'}</p>
                                     <p class="text-[11px] text-zinc-300 italic">TITULAR: ${item.account_holder || 'No especificado'}</p>
-                                    <p class="text-[10px] text-zinc-400 uppercase">SALDO ACTUAL: $${currentSaldo}</p>
+                                    <p class="text-[10px] text-zinc-400 uppercase">SALDO ACTUAL DEL JUGADOR: $${currentSaldo}</p>
                                 </div>
                             </div>
                         </div>
 
                         <div class="flex gap-4">
-                            <button onclick="approveTransaction('${item.id}', '${item.user_id}', ${item.amount}, ${currentSaldo})" 
+                            <button onclick="approveTransaction('${item.id}', '${item.user_id}', ${Math.abs(item.amount)}, ${currentSaldo})" 
                                 class="${isDeposit ? 'bg-emerald-500' : 'bg-red-500'} text-black px-8 py-4 rounded-2xl font-black hover:opacity-80 transition-all uppercase text-sm">
                                 ${isDeposit ? 'Aprobar Carga' : 'Confirmar Envío'}
                             </button>
-                            <button onclick="rejectTransaction('${item.id}')" 
+                            <button onclick="rejectTransaction('${item.id}', '${item.user_id}', ${Math.abs(item.amount)}, ${currentSaldo})" 
                                 class="bg-zinc-800 text-zinc-400 px-8 py-4 rounded-2xl font-black border border-white/5 hover:bg-white/10 hover:text-white transition-all text-sm">
                                 RECHAZAR
                             </button>
@@ -97,23 +102,17 @@
             
             if(!confirm(`¿Deseas ${actionText}?`)) return;
 
-            // Lógica de saldo: Depósito suma (+), Retiro resta (-)
-            // Nota: Si al solicitar el retiro ya restaste el saldo en el cliente, 
-            // aquí solo marcarías como completado. Aquí asumo que lo restamos al aprobar:
-            const newSaldo = isDeposit ? (currentSaldo + amount) : (currentSaldo - amount);
+            // Lógica corregida: Como en el casino ya restamos el saldo al pedir el retiro, 
+            // si es un retiro aquí NO lo volvemos a restar (se queda con su saldo actual), solo si es depósito sumamos.
+            const newSaldo = isDeposit ? (currentSaldo + amount) : currentSaldo;
 
-            if (!isDeposit && currentSaldo < amount) {
-                alert("Error: El usuario no tiene saldo suficiente para este retiro.");
-                return;
-            }
-
-            // 1. Actualizamos saldo
+            // 1. Actualizamos saldo en la base de datos
             const { error: errSaldo } = await sb.from('usuarios').update({ saldo: newSaldo }).eq('id', userId);
             
-            // 2. Actualizamos historial
+            // 2. Marcamos la solicitud como completada
             const { error: errHist } = await sb.from('history').update({ 
                 status: 'completed', 
-                label: isDeposit ? 'DEPÓSITO APROBADO' : 'RETIRO ENVIADO' 
+                label: isDeposit ? 'DEPÓSITO APROBADO' : 'RETIRO ENVIADO CORECTAMENTE' 
             }).eq('id', historyId);
 
             if(!errSaldo && !errHist) {
@@ -125,16 +124,23 @@
             }
         }
 
-        async function rejectTransaction(id) {
+        async function rejectTransaction(historyId, userId, amount, currentSaldo) {
+            const isDeposit = currentType === 'deposits';
             if(!confirm("¿Rechazar esta solicitud?")) return;
-            const label = currentType === 'deposits' ? 'DEPÓSITO RECHAZADO' : 'RETIRO RECHAZADO';
             
-            await sb.from('history').update({ status: 'rejected', label: label }).eq('id', id);
+            // Si rechazas un retiro, hay que devolverle los fondos que se le congelaron al jugador
+            if (!isDeposit) {
+                const restoredSaldo = currentSaldo + amount;
+                await sb.from('usuarios').update({ saldo: restoredSaldo }).eq('id', userId);
+            }
+
+            const label = isDeposit ? 'DEPÓSITO RECHAZADO' : 'RETIRO RECHAZADO';
+            await sb.from('history').update({ status: 'rejected', label: label }).eq('id', historyId);
             loadPending();
         }
 
         loadPending();
-        setInterval(loadPending, 15000);
+        setInterval(loadPending, 5000); // Actualiza la lista cada 5 segundos de forma automática
     </script>
 </body>
 </html>
