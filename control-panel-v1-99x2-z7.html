@@ -9,23 +9,80 @@
     <style>
         body { background: #050505; color: white; font-family: 'Inter', sans-serif; }
         .tab-active { border-bottom: 4px solid #10b981; color: #10b981; }
+        .hidden-view { display: none !important; }
     </style>
 </head>
 <body class="p-10">
-    <h1 class="text-4xl font-black mb-6 text-emerald-500 uppercase tracking-tighter italic">
-        WinMX Admin <span class="text-white text-sm font-normal">Gestión de Transacciones</span>
-    </h1>
 
-    <div class="flex gap-8 mb-10 border-b border-white/10">
-        <button onclick="changeView('deposits')" id="btn-dep" class="pb-4 font-bold uppercase tracking-widest tab-active">Depósitos</button>
-        <button onclick="changeView('withdrawals')" id="btn-with" class="pb-4 font-bold uppercase tracking-widest text-zinc-500">Retiros</button>
+    <div id="admin-login-view" class="min-h-[70vh] flex items-center justify-center">
+        <div class="bg-zinc-900 p-8 w-full max-w-sm text-center rounded-[2rem] border border-white/5 shadow-2xl">
+            <h2 class="text-3xl font-black mb-2 text-emerald-500 uppercase tracking-tighter italic">WinMX Admin</h2>
+            <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-6">Acceso Restringido</p>
+            <div class="space-y-4">
+                <input id="admin-email" type="email" placeholder="Correo electrónico" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm focus:border-emerald-500 transition-colors">
+                <input id="admin-password" type="password" placeholder="Contraseña de Administrador" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm focus:border-emerald-500 transition-colors">
+                <button onclick="AdminAuth.login()" class="w-full py-4 bg-emerald-500 text-black font-black rounded-2xl hover:opacity-80 transition-all uppercase tracking-widest text-sm">Ingresar al Panel</button>
+            </div>
+        </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-6" id="pending-list"></div>
+    <div id="admin-panel-content" class="hidden-view">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-4xl font-black text-emerald-500 uppercase tracking-tighter italic">
+                WinMX Admin <span class="text-white text-sm font-normal">Gestión de Transacciones</span>
+            </h1>
+            <button onclick="AdminAuth.logout()" class="px-4 py-2 border border-red-500/30 text-red-500 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-red-500/10 transition-all">Cerrar Sesión</button>
+        </div>
+
+        <div class="flex gap-8 mb-10 border-b border-white/10">
+            <button onclick="changeView('deposits')" id="btn-dep" class="pb-4 font-bold uppercase tracking-widest tab-active">Depósitos</button>
+            <button onclick="changeView('withdrawals')" id="btn-with" class="pb-4 font-bold uppercase tracking-widest text-zinc-500">Retiros</button>
+        </div>
+
+        <div class="grid grid-cols-1 gap-6" id="pending-list"></div>
+    </div>
 
     <script>
         const sb = window.supabase.createClient("https://dakhnqriwbzihlzhtfcb.supabase.co", "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs");
         let currentType = 'deposits';
+
+        // SISTEMA DE CONTROL DE ACCESO
+        const AdminAuth = {
+            async login() {
+                const email = document.getElementById('admin-email').value;
+                const password = document.getElementById('admin-password').value;
+
+                if (!email || !password) {
+                    alert("Completa todos los campos, por favor.");
+                    return;
+                }
+
+                // Autenticación directa contra los servidores de Supabase Auth
+                const { data, error } = await sb.auth.signInWithPassword({ email: email, password: password });
+
+                if (error) {
+                    alert("Credenciales incorrectas: " + error.message);
+                } else {
+                    this.showPanel();
+                }
+            },
+            async checkSession() {
+                // Valida si el administrador ya había iniciado sesión previamente
+                const { data: { session } } = await sb.auth.getSession();
+                if (session) {
+                    this.showPanel();
+                }
+            },
+            showPanel() {
+                document.getElementById('admin-login-view').classList.add('hidden-view');
+                document.getElementById('admin-panel-content').classList.remove('hidden-view');
+                loadPending();
+            },
+            async logout() {
+                await sb.auth.signOut();
+                location.reload();
+            }
+        };
 
         function changeView(type) {
             currentType = type;
@@ -40,16 +97,13 @@
             const isDeposit = currentType === 'deposits';
             let query = sb.from('history').select('*, usuarios(saldo)').eq('status', 'pending');
 
-            // Filtro inteligente para capturar los retiros camuflados como 'bets'
             if (isDeposit) {
                 query = query.eq('type', 'deposits');
             } else {
-                // Trae tanto 'withdrawals' como el truco seguro 'bets' que contengan la etiqueta de Retiro
                 query = query.in('type', ['withdrawals', 'bets']).eq('label', 'RETIRO PENDIENTE');
             }
 
             const { data, error } = await query.order('created_at', { ascending: false });
-
             const container = document.getElementById('pending-list');
             if(error) return console.error(error);
             
@@ -67,7 +121,6 @@
                                     `<img src="${item.evidence_url}" class="w-full h-full object-cover cursor-pointer" onclick="window.open('${item.evidence_url}')">` : 
                                     `<div class="text-center"><p class="text-[10px] text-zinc-500 uppercase">Solicitud de</p><p class="font-black text-red-500">RETIRO</p></div>`}
                             </div>
-                            
                             <div>
                                 <p class="${isDeposit ? 'text-emerald-500' : 'text-red-500'} font-bold text-2xl tracking-tighter">
                                     ${isDeposit ? '+' : '-'}$${Math.abs(item.amount)}
@@ -80,7 +133,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="flex gap-4">
                             <button onclick="approveTransaction('${item.id}', '${item.user_id}', ${Math.abs(item.amount)}, ${currentSaldo})" 
                                 class="${isDeposit ? 'bg-emerald-500' : 'bg-red-500'} text-black px-8 py-4 rounded-2xl font-black hover:opacity-80 transition-all uppercase text-sm">
@@ -91,25 +143,17 @@
                                 RECHAZAR
                             </button>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             });
         }
 
         async function approveTransaction(historyId, userId, amount, currentSaldo) {
             const isDeposit = currentType === 'deposits';
-            const actionText = isDeposit ? "aprobar este depósito" : "confirmar que ya enviaste el retiro";
-            
-            if(!confirm(`¿Deseas ${actionText}?`)) return;
+            if(!confirm(`¿Deseas ${isDeposit ? "aprobar este depósito" : "confirmar que ya enviaste el retiro"}?`)) return;
 
-            // Lógica corregida: Como en el casino ya restamos el saldo al pedir el retiro, 
-            // si es un retiro aquí NO lo volvemos a restar (se queda con su saldo actual), solo si es depósito sumamos.
             const newSaldo = isDeposit ? (currentSaldo + amount) : currentSaldo;
 
-            // 1. Actualizamos saldo en la base de datos
             const { error: errSaldo } = await sb.from('usuarios').update({ saldo: newSaldo }).eq('id', userId);
-            
-            // 2. Marcamos la solicitud como completada
             const { error: errHist } = await sb.from('history').update({ 
                 status: 'completed', 
                 label: isDeposit ? 'DEPÓSITO APROBADO' : 'RETIRO ENVIADO CORECTAMENTE' 
@@ -128,7 +172,6 @@
             const isDeposit = currentType === 'deposits';
             if(!confirm("¿Rechazar esta solicitud?")) return;
             
-            // Si rechazas un retiro, hay que devolverle los fondos que se le congelaron al jugador
             if (!isDeposit) {
                 const restoredSaldo = currentSaldo + amount;
                 await sb.from('usuarios').update({ saldo: restoredSaldo }).eq('id', userId);
@@ -139,8 +182,9 @@
             loadPending();
         }
 
-        loadPending();
-        setInterval(loadPending, 5000); // Actualiza la lista cada 5 segundos de forma automática
+        // Ejecutar revisión automática al cargar la página
+        AdminAuth.checkSession();
+        setInterval(loadPending, 5000); 
     </script>
 </body>
 </html>
