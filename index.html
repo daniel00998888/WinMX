@@ -118,15 +118,26 @@
             <div class="space-y-4 text-left">
                 <input id="reg-email" type="email" placeholder="Correo electrónico" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
                 <input id="reg-password" type="password" placeholder="Crea una contraseña" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
+                
                 <div class="bg-white/5 border border-white/5 p-4 rounded-xl space-y-3">
                     <p class="text-[9px] text-zinc-400 leading-relaxed uppercase font-bold">
-                        ⚠️ AVISO: Riesgo real de capital. Juega con responsabilidad.
+                        ⚠️ AVISO: Riesgo real de capital.
                     </p>
+                    <div class="h-24 overflow-y-auto bg-black/20 p-2 rounded text-[8px] text-zinc-500 font-medium leading-tight border border-white/5">
+                        <strong class="text-emerald-500">Términos y Condiciones de Riesgo:</strong><br>
+                        1. Al registrarte y jugar en WinMX, reconoces que este es un entorno de apuestas con dinero real. 
+                        2. Existe un riesgo significativo de pérdida total de tu capital. No garantizamos retornos ni ganancias. 
+                        3. WinMX no se hace responsable por ninguna pérdida financiera, error de conexión, o mal uso de la plataforma. 
+                        4. Tú eres el único responsable de tus decisiones de juego. 
+                        5. El juego puede causar adicción; juega con responsabilidad y solo con dinero que puedas permitirte perder. 
+                        6. Si no estás de acuerdo con estos riesgos, no utilices la plataforma.
+                    </div>
                     <label class="flex items-center gap-3 cursor-pointer">
                         <input type="checkbox" id="terms-check" class="w-4 h-4 accent-emerald-500">
-                        <span class="text-[10px] text-white font-bold uppercase">Acepto términos y soy mayor de edad</span>
+                        <span class="text-[10px] text-white font-bold uppercase">Acepto los términos, condiciones y riesgos</span>
                     </label>
                 </div>
+
                 <button id="btn-register" onclick="AuthManager.register()" class="btn-action w-full py-4 font-casino mt-2">Crear Cuenta</button> 
                 <button onclick="AuthManager.switchTab('login')" class="w-full py-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-2 text-center underline decoration-zinc-700">Ya tengo cuenta</button>
             </div>
@@ -252,16 +263,17 @@
             card: new Audio('https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3')
         };
 
-        const playSfx = (key) => {
-            if(sfx[key]) {
+        // Función de reproducción de SFX optimizada para forzar reinicio e interacción
+        const playSfx = (key) => { 
+            if(sfx[key]) { 
                 try {
-                    sfx[key].pause();
-                    sfx[key].currentTime = 0;
+                    sfx[key].pause(); 
+                    sfx[key].currentTime = 0; 
                     sfx[key].load();
-                    const p = sfx[key].play();
-                    if(p !== undefined) p.catch(() => {});
+                    const p = sfx[key].play(); 
+                    if(p !== undefined) p.catch(() => {}); 
                 } catch(e) {}
-            }
+            } 
         };
 
         const initAudioUnlock = () => {
@@ -282,36 +294,20 @@
         };
         initAudioUnlock();
 
-        let State = {
-            user: null,
-            balance: 0,
-            isSpinning: false,
-            luckFactor: 2.0,
-            winHistory: [],
-            sessionLoss: 0,
-            currentTx: 'deposit',
-            isProcessing: false
-        };
+        let State = { user: null, balance: 0, isSpinning: false, luckFactor: 2.0, winHistory: [], sessionLoss: 0, currentTx: 'deposit', isProcessing: false };
 
         setInterval(() => {
             const viewGame = document.getElementById('view-game');
             const nav = document.getElementById('bottom-nav-bar');
-            if (viewGame && !viewGame.classList.contains('hidden-view')) {
-                nav.style.transform = 'translateY(100%)';
-            }
+            if (viewGame && !viewGame.classList.contains('hidden-view')) { nav.style.transform = 'translateY(100%)'; }
         }, 500);
 
         const UI = {
-            updateBalance() {
-                const el = document.getElementById('balance-display');
-                if(el) el.innerText = `$${State.balance.toFixed(2)}`;
-            },
-            updateProfile() {
-                if(State.user) document.getElementById('user-email-display').innerText = State.user.email;
-            },
-            openModal(id) {
-                if(State.isProcessing) return;
-                playSfx('click');
+            updateBalance() { const el = document.getElementById('balance-display'); if(el) el.innerText = `$${State.balance.toFixed(2)}`; },
+            updateProfile() { if(State.user) document.getElementById('user-email-display').innerText = State.user.email; },
+            openModal(id) { 
+                if(State.isProcessing) return; 
+                playSfx('click'); 
                 document.getElementById('dep-amount').value = '';
                 document.getElementById('bank-name').value = '';
                 document.getElementById('beneficiary-name').value = '';
@@ -322,1068 +318,382 @@
                 document.getElementById('dep-step-1').classList.remove('hidden-view');
                 document.getElementById('dep-step-2').classList.add('hidden-view');
                 this.setTxType('deposit');
-                document.getElementById(id).classList.remove('hidden-view');
+                document.getElementById(id).classList.remove('hidden-view'); 
             },
-            closeModal(id) {
-                playSfx('click');
-                document.getElementById(id).classList.add('hidden-view');
-            },
-            toggleAccordion(id) {
-                const el = document.getElementById(id);
-                const arrow = document.getElementById('arrow-' + id);
-                el.classList.toggle('hidden-view');
-                if(arrow) arrow.style.transform = el.classList.contains('hidden-view') ? 'rotate(180deg)' : 'rotate(0deg)';
-            },
-            depNextStep() {
-                const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value));
+            closeModal(id) { playSfx('click'); document.getElementById(id).classList.add('hidden-view'); },
+            toggleAccordion(id) { const el = document.getElementById(id); const arrow = document.getElementById('arrow-' + id); el.classList.toggle('hidden-view'); if(arrow) arrow.style.transform = el.classList.contains('hidden-view') ? 'rotate(180deg)' : 'rotate(0deg)'; },
+            depNextStep() { 
+                const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value)); 
                 const bank = document.getElementById('bank-name').value.trim();
-                const name = document.getElementById('beneficiary-name').value.trim();
-                const clabe = document.getElementById('clabe-input-field').value.trim();
+                const beneficiary = document.getElementById('beneficiary-name').value.trim();
+                const clabeVal = document.getElementById('clabe-input-field').value.trim();
 
-                const minLimit = State.currentTx === 'deposit' ? 50 : 100;
-                const maxLimit = 3000;
+                if(isNaN(amt) || amt <= 0) return this.notify("Monto inválido", "error"); 
+                
+                // VALIDACIONES DE MONTOS MÍNIMOS Y MÁXIMOS SOLICITADOS
+                if(State.currentTx === 'deposit') {
+                    if(amt < 50) return this.notify("El depósito mínimo es de $50 MXN", "error");
+                    if(amt > 3000) return this.notify("El depósito máximo es de $3000 MXN", "error");
+                }
+                if(State.currentTx === 'withdrawal') {
+                    if(amt < 100) return this.notify("El retiro mínimo es de $100 MXN", "error");
+                    if(amt > 3000) return this.notify("El retiro máximo es de $3000 MXN", "error");
+                }
 
-                if(!amt || isNaN(amt) || amt < minLimit || amt > maxLimit) {
-                    return this.notify(`Monto debe ser entre $${minLimit} y $${maxLimit} MXN`, "error");
-                }
-                if(!bank || !name) {
-                    return this.notify("Banco y Nombre completo son obligatorios", "error");
-                }
-                if(State.currentTx === 'withdrawal' && clabe.length !== 18) {
-                    return this.notify("CLABE de retiro debe tener exactamente 18 dígitos", "error");
-                }
-
-                document.getElementById('display-dep-amount').innerText = `$${amt.toFixed(2)}`;
+                // OBLIGATORIEDAD DE CAMPOS BANCARIOS (CANDADO GENERAL)
+                if(!bank) return this.notify("El nombre del banco es obligatorio", "error");
+                if(!beneficiary) return this.notify("El nombre completo es obligatorio", "error");
+                
+                if(State.currentTx === 'withdrawal') { 
+                    if(!clabeVal || clabeVal.length !== 18) return this.notify("La cuenta CLABE de 18 dígitos es obligatoria", "error"); 
+                } 
+                
+                playSfx('click'); 
+                const display = document.getElementById('display-dep-amount'); 
+                if(display) display.innerText = `$${amt.toFixed(2)}`; 
+                
+                const header = document.getElementById('display-tx-header');
+                const clabeBox = document.getElementById('display-withdrawal-clabe-box');
                 
                 if(State.currentTx === 'deposit') {
-                    document.getElementById('display-tx-header').innerText = "Confirmar depósito de:";
-                    document.getElementById('clabe-section').classList.remove('hidden-view');
-                    document.getElementById('deposit-instructions-box').classList.remove('hidden-view');
-                    document.getElementById('photo-section').classList.remove('hidden-view');
-                    document.getElementById('display-withdrawal-clabe-box').classList.add('hidden-view');
+                    if(header) header.innerText = "Confirmar depósito de:";
+                    if(clabeBox) clabeBox.classList.add('hidden-view');
                 } else {
-                    document.getElementById('display-tx-header').innerText = "Solicitar retiro de:";
-                    document.getElementById('clabe-section').classList.add('hidden-view');
-                    document.getElementById('deposit-instructions-box').classList.add('hidden-view');
-                    document.getElementById('photo-section').classList.add('hidden-view');
-                    document.getElementById('display-withdrawal-clabe-box').classList.remove('hidden-view');
-                    document.getElementById('display-withdrawal-clabe-box').innerText = `CLABE destino: ${clabe}`;
+                    if(header) header.innerText = "Confirmar retiro de:";
+                    if(clabeBox) {
+                        clabeBox.innerText = `A la cuenta: ${clabeVal}`;
+                        clabeBox.classList.remove('hidden-view');
+                    }
                 }
-
-                document.getElementById('dep-step-1').classList.add('hidden-view');
-                document.getElementById('dep-step-2').classList.remove('hidden-view');
+                
+                document.getElementById('dep-step-1').classList.add('hidden-view'); 
+                document.getElementById('dep-step-2').classList.remove('hidden-view'); 
             },
-            setTxType(type) {
-                State.currentTx = type;
-                const tabDep = document.getElementById('tab-deposit');
-                const tabWit = document.getElementById('tab-withdrawal');
+            copyClabe() { const clabe = document.getElementById('clabe-number').innerText; navigator.clipboard.writeText(clabe).then(() => { playSfx('click'); this.notify("CLABE Copiada", "success"); }); },
+            handleFile(input) { if(input.files && input.files[0]) { playSfx('click'); const label = document.getElementById('file-label'); label.innerText = "Foto lista"; label.classList.replace('text-zinc-500', 'text-emerald-500'); } },
+            notify(m, t) { const n = document.createElement('div'); n.className = `p-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-2xl animate__animated animate__fadeInDown ${t==='success'?'bg-emerald-500 text-black':'bg-red-500 text-white'}`; n.innerText = m; document.getElementById('notif-container').appendChild(n); setTimeout(() => { n.classList.replace('animate__fadeInDown', 'animate__fadeOutUp'); setTimeout(()=>n.remove(), 500); }, 3000); },
+            setTxType(type) { 
+                playSfx('click'); 
+                State.currentTx = type; 
+                const isDep = type === 'deposit'; 
+                document.getElementById('tab-deposit').classList.toggle('active', isDep); 
+                document.getElementById('tab-withdrawal').classList.toggle('active', !isDep); 
+                document.getElementById('tx-title').innerText = isDep ? 'Monto' : 'Monto'; 
+                
+                // Actualizar texto de límites dinámicamente debajo de la palabra "Monto"
                 const hint = document.getElementById('tx-limits-hint');
-                const clabeField = document.getElementById('clabe-input-field');
+                if(hint) {
+                    hint.innerText = isDep ? "(MIN 50 MXN MAX 3000 MXN)" : "(MIN 100 MXN MAX 3000 MXN)";
+                }
 
-                if(type === 'deposit') {
-                    tabDep.classList.add('active');
-                    tabWit.classList.remove('active');
-                    hint.innerText = "(MIN 50 MXN MAX 3000 MXN)";
-                    clabeField.classList.add('hidden-view');
-                } else {
-                    tabWit.classList.add('active');
-                    tabDep.classList.remove('active');
-                    hint.innerText = "(MIN 100 MXN MAX 3000 MXN)";
-                    clabeField.classList.remove('hidden-view');
-                }
-            },
-            handleFile(input) {
-                if(input.files && input.files[0]) {
-                    const lbl = document.getElementById('file-label');
-                    lbl.innerText = "¡Imagen lista!";
-                    lbl.classList.replace('text-zinc-500', 'text-emerald-500');
-                }
-            },
-            async copyClabe() {
-                try {
-                    await navigator.clipboard.writeText(document.getElementById('clabe-number').innerText);
-                    this.notify("CLABE copiada", "success");
-                } catch(e) {
-                    this.notify("Error al copiar", "error");
-                }
-            },
-            notify(msg, type = "success") {
-                const c = document.getElementById('notif-container');
-                const n = document.createElement('div');
-                n.className = `glass p-4 rounded-xl text-[10px] font-casino tracking-wide text-center uppercase animate__animated animate__fadeInDown flex items-center justify-center gap-2 ${type === 'success' ? 'border-emerald-500/20 text-emerald-500 bg-emerald-950/20' : 'border-red-500/20 text-red-500 bg-red-950/20'}`;
-                n.innerHTML = type === 'success' ? `<i class="fas fa-check-circle"></i> ${msg}` : `<i class="fas fa-exclamation-circle"></i> ${msg}`;
-                c.appendChild(n);
-                setTimeout(() => {
-                    n.classList.replace('animate__fadeInDown', 'animate__fadeOutUp');
-                    setTimeout(() => n.remove(), 500);
-                }, 3000);
+                document.getElementById('photo-section').classList.toggle('hidden-view', !isDep);
+                document.getElementById('clabe-section').classList.toggle('hidden-view', !isDep);
+                document.getElementById('deposit-instructions-box').classList.toggle('hidden-view', !isDep);
+                document.getElementById('clabe-input-field').classList.toggle('hidden-view', isDep);
             }
         };
 
         const AuthManager = {
-            switchTab(tab) {
-                playSfx('click');
-                if(tab === 'register') {
-                    document.getElementById('login-container').classList.add('hidden-view');
-                    document.getElementById('register-container').classList.remove('hidden-view');
-                } else {
-                    document.getElementById('register-container').classList.add('hidden-view');
-                    document.getElementById('login-container').classList.remove('hidden-view');
-                }
+            async login() { if(State.isProcessing) return; const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value; if(!e || !p) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-login'); btn.disabled = true; const { data, error } = await sb.auth.signInWithPassword({ email: e, password: p }); if(error) { UI.notify(error.message, "error"); btn.disabled = false; } else location.reload(); },
+            async register() { 
+                if(State.isProcessing) return; 
+                if(!document.getElementById('terms-check').checked) return UI.notify("Acepta términos", "error"); 
+                const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value; 
+                if(!e || !p) return UI.notify("Completa campos", "error"); 
+                const btn = document.getElementById('btn-register'); btn.disabled = true; 
+                const { data, error } = await sb.auth.signUp({ email: e, password: p }); 
+                if(error) { UI.notify(error.message, "error"); btn.disabled = false; } 
+                else { await sb.from('usuarios').insert([{ id: data.user.id, email: e, saldo: 0 }]); UI.notify("Cuenta creada", "success"); document.getElementById('auth-view').classList.add('hidden-view'); document.getElementById('bonus-view').classList.remove('hidden-view'); State.user = data.user; } 
             },
-            async checkSession() {
-                const { data } = await sb.auth.getSession();
-                if(data.session) {
-                    State.user = data.session.user;
-                    await Core.loadUserData();
-                } else {
-                    document.getElementById('boot-loader').classList.add('hidden-view');
-                    document.getElementById('auth-view').classList.remove('hidden-view');
-                }
-            },
-            async login() {
-                const email = document.getElementById('login-email').value.trim();
-                const password = document.getElementById('login-password').value.trim();
-                if(!email || !password) return UI.notify("Completa los campos", "error");
-                
-                const btn = document.getElementById('btn-login');
-                btn.disabled = true; btn.innerText = "ENTRANDO...";
-                
-                const { data, error } = await sb.auth.signInWithPassword({ email, password });
-                if(error) {
-                    UI.notify(error.message, "error");
-                    btn.disabled = false; btn.innerText = "ENTRAR";
-                } else {
-                    State.user = data.user;
-                    await Core.loadUserData();
-                }
-            },
-            async register() {
-                const email = document.getElementById('reg-email').value.trim();
-                const password = document.getElementById('reg-password').value.trim();
-                const checked = document.getElementById('terms-check').checked;
-                
-                if(!email || !password) return UI.notify("Completa los campos", "error");
-                if(!checked) return UI.notify("Acepta los términos de riesgo", "error");
-                if(password.length < 6) return UI.notify("Mínimo 6 caracteres", "error");
-
-                const btn = document.getElementById('btn-register');
-                btn.disabled = true; btn.innerText = "CREANDO...";
-
-                const { data, error } = await sb.auth.signUp({ email, password });
-                if(error) {
-                    UI.notify(error.message, "error");
-                    btn.disabled = false; btn.innerText = "CREAR CUENTA";
-                } else {
-                    State.user = data.user;
-                    if(data.user) {
-                        const { error: profileErr } = await sb.from('profiles').insert([{ id: data.user.id, balance: 0, has_claimed_bonus: false }]);
-                        if(profileErr) {
-                            const { data: checkProf } = await sb.from('profiles').select('*').eq('id', data.user.id).single();
-                            if(checkProf) {
-                                await Core.loadUserData();
-                                return;
-                            }
-                            UI.notify("Error al crear perfil base", "error");
-                            btn.disabled = false; btn.innerText = "CREAR CUENTA";
-                        } else {
-                            await Core.loadUserData();
-                        }
-                    }
-                }
-            },
-            async logout() {
-                playSfx('click');
-                await sb.auth.signOut();
-                location.reload();
-            }
+            async logout() { await sb.auth.signOut(); location.reload(); },
+            switchTab(tab) { playSfx('click'); document.getElementById('login-container').classList.toggle('hidden-view', tab==='register'); document.getElementById('register-container').classList.toggle('hidden-view', tab==='login'); }
         };
 
         const Core = {
-            async loadUserData() {
-                if(!State.user) return;
-                document.getElementById('boot-loader').classList.remove('hidden-view');
-                document.getElementById('boot-bar').style.width = "40%";
-
-                const { data: profile, error } = await sb.from('profiles').select('*').eq('id', State.user.id).single();
-                
-                document.getElementById('boot-bar').style.width = "80%";
-                
-                if(profile) {
-                    State.balance = parseFloat(profile.balance) || 0;
-                    UI.updateBalance();
-                    UI.updateProfile();
-                    
-                    document.getElementById('auth-view').classList.add('hidden-view');
-                    document.getElementById('main-app').classList.remove('hidden-view');
-                    document.getElementById('boot-loader').classList.add('hidden-view');
-                    
-                    if(!profile.has_claimed_bonus) {
-                        document.getElementById('bonus-view').classList.remove('hidden-view');
-                    } else {
-                        Router.showView('lobby');
-                    }
-                } else {
-                    const { data: newProfile, error: createErr } = await sb.from('profiles').insert([{ id: State.user.id, balance: 0, has_claimed_bonus: false }]).select().single();
-                    if(newProfile) {
-                        State.balance = 0;
-                        UI.updateBalance();
-                        UI.updateProfile();
-                        document.getElementById('auth-view').classList.add('hidden-view');
-                        document.getElementById('main-app').classList.remove('hidden-view');
-                        document.getElementById('boot-loader').classList.add('hidden-view');
-                        document.getElementById('bonus-view').classList.remove('hidden-view');
-                    } else {
-                        UI.notify("Error crítico de sincronización", "error");
-                    }
-                }
-                await this.loadHistory();
-            },
-            async claimBonus() {
-                playSfx('winExtra');
-                document.getElementById('bonus-view').classList.add('hidden-view');
-                document.getElementById('boot-loader').classList.remove('hidden-view');
-                
-                const { error } = await sb.from('profiles').update({ balance: 30, has_claimed_bonus: true }).eq('id', State.user.id);
-                if(!error) {
-                    State.balance = 30;
-                    UI.updateBalance();
-                    UI.notify("Bono de $30 MXN cargado", "success");
-                }
-                document.getElementById('boot-loader').classList.add('hidden-view');
-                Router.showView('lobby');
-            },
-            async confirmTransaction() {
-                if(State.isProcessing) return;
-                const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value));
-                const bank = document.getElementById('bank-name').value.trim();
-                const name = document.getElementById('beneficiary-name').value.trim();
-                const clabe = document.getElementById('clabe-input-field').value.trim();
-
-                if(State.currentTx === 'withdrawal' && State.balance < amt) {
-                    return UI.notify("Saldo insuficiente para retirar", "error");
-                }
-
-                State.isProcessing = true;
-                const btn = document.getElementById('btn-confirm-dep');
-                btn.disabled = true; btn.innerText = "PROCESANDO...";
-
-                let receiptUrl = null;
-
-                if(State.currentTx === 'deposit') {
-                    const fileInput = document.getElementById('receipt-input');
-                    if(!fileInput.files || fileInput.files.length === 0) {
-                        State.isProcessing = false;
-                        btn.disabled = false; btn.innerText = "Confirmar";
-                        return UI.notify("Sube tu comprobante de pago", "error");
-                    }
-                    const file = fileInput.files[0];
-                    const fileExt = file.name.split('.').pop();
-                    const fileName = `${State.user.id}-${Date.now()}.${fileExt}`;
-                    
-                    const { data: uploadData, error: uploadErr } = await sb.storage.from('receipts').upload(fileName, file);
-                    if(uploadErr) {
-                        State.isProcessing = false;
-                        btn.disabled = false; btn.innerText = "Confirmar";
-                        return UI.notify("Error al subir imagen base", "error");
-                    }
-                    receiptUrl = fileName;
-                }
-
-                const payload = {
-                    user_id: State.user.id,
-                    type: State.currentTx,
-                    amount: amt,
-                    status: 'pending',
-                    bank_name: bank,
-                    account_holder: name,
-                    clabe_account: State.currentTx === 'withdrawal' ? clabe : null,
-                    receipt_image_url: receiptUrl
+            async init() { let p = 0; const i = setInterval(() => { p += 25; document.getElementById('boot-bar').style.width = `${p}%`; if(p >= 100) { clearInterval(i); this.check(); } }, 100); },
+            async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); this.subscribeBalance(); } else { document.getElementById('auth-view').classList.remove('hidden-view'); } },
+            async loadBalance() { const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle(); State.balance = data ? data.saldo : 0; UI.updateBalance(); },
+            subscribeBalance() { sb.channel('balance_sync').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'usuarios', filter: `id=eq.${State.user.id}` }, (payload) => { if (payload.new && typeof payload.new.saldo !== 'undefined' && !State.isSpinning) { State.balance = payload.new.saldo; UI.updateBalance(); } }).subscribe(); },
+            async updateBalanceDB(amount) { const { data, error } = await sb.rpc('modificar_saldo', { user_id: State.user.id, monto: amount }); if (error) { const { data: current } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); await sb.from('usuarios').update({ saldo: current.saldo + amount }).eq('id', State.user.id); } },
+            async claimBonus() { if(State.isProcessing) return; State.isProcessing = true; playSfx('win'); try { await this.updateBalanceDB(30); UI.notify("Bono reclamado", "success"); location.reload(); } catch(e) { UI.notify("Error", "error"); } finally { State.isProcessing = false; } },
+            
+            async recordHistory(payload) {
+                const isTransaction = payload.type === 'deposits' || payload.type === 'withdrawals' || payload.type === 'bets';
+                const cleanPayload = {
+                    user_id: payload.user_id,
+                    type: payload.type, 
+                    amount: payload.amount,
+                    label: payload.label,
+                    status: payload.status
                 };
-
-                const { error: txErr } = await sb.from('transactions').insert([payload]);
-                if(txErr) {
-                    UI.notify("Error de base de datos", "error");
-                } else {
-                    if(State.currentTx === 'withdrawal') {
-                        const newBal = State.balance - amt;
-                        await sb.from('profiles').update({ balance: newBal }).eq('id', State.user.id);
-                        State.balance = newBal;
-                        UI.updateBalance();
-                        UI.notify("Solicitud de retiro enviada", "success");
-                    } else {
-                        UI.notify("Depósito enviado a revisión", "success");
-                    }
-                    UI.closeModal('modal-deposit');
-                    await this.loadHistory();
-                }
-
-                State.isProcessing = false;
-                btn.disabled = false; btn.innerText = "Confirmar";
-            },
-            async loadHistory() {
-                if(!State.user) return;
-                const { data: txs } = await sb.from('transactions').select('*').eq('user_id', State.user.id).order('created_at', { ascending: false });
-                const { data: games } = await sb.from('game_history').select('*').eq('user_id', State.user.id).order('created_at', { ascending: false });
                 
-                const container = document.getElementById('history-lists');
-                if(!container) return;
-                container.innerHTML = '';
-
-                let txHtml = `<div class="glass p-5"><h3 class="text-[10px] font-casino text-emerald-500 tracking-wider mb-3"><i class="fas fa-exchange-alt"></i> CAJERO</h3><div class="space-y-3 history-scroll">`;
-                if(txs && txs.length > 0) {
-                    txs.forEach(t => {
-                        const isDep = t.type === 'deposit';
-                        const color = t.status === 'approved' ? 'text-emerald-500' : (t.status === 'rejected' ? 'text-red-500' : 'text-amber-500 pulse-pending');
-                        txHtml += `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5"><div class="text-left"><span class="text-[9px] font-black uppercase tracking-wider block">${isDep?'DEPÓSITO':'RETIRO'}</span><span class="text-[8px] text-zinc-500 font-bold">${new Date(t.created_at).toLocaleDateString()}</span></div><div class="text-right"><span class="font-casino text-xs block">$${parseFloat(t.amount).toFixed(2)}</span><span class="text-[8px] font-black uppercase tracking-widest ${color}">${t.status}</span></div></div>`;
-                    });
-                } else {
-                    txHtml += `<p class="text-[9px] text-zinc-600 font-bold uppercase text-center py-4">Sin movimientos</p>`;
+                if (payload.label.includes('RETIRO') || payload.type === 'deposits' || payload.type === 'withdrawals') {
+                    cleanPayload.bank_name = payload.bank_name;
+                    cleanPayload.account_holder = payload.account_holder;
+                    if (payload.evidence_url) cleanPayload.evidence_url = payload.evidence_url;
                 }
-                txHtml += `</div></div>`;
+                return await sb.from('history').insert([cleanPayload]);
+            },
 
-                let gameHtml = `<div class="glass p-5"><h3 class="text-[10px] font-casino text-purple-400 tracking-wider mb-3"><i class="fas fa-dice"></i> JUEGOS</h3><div class="space-y-3 history-scroll">`;
-                if(games && games.length > 0) {
-                    games.forEach(g => {
-                        const profit = parseFloat(g.payout) - parseFloat(g.bet);
-                        const win = profit > 0;
-                        gameHtml += `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5"><div class="text-left"><span class="text-[9px] font-black uppercase tracking-wider block text-zinc-300">${g.game_name}</span><span class="text-[8px] text-zinc-500 font-bold">Apuesta: $${parseFloat(g.bet).toFixed(2)}</span></div><div class="text-right"><span class="font-casino text-xs block ${win?'text-emerald-500':'text-zinc-500'}">${win?'+':''}$${parseFloat(g.payout).toFixed(2)}</span><span class="text-[8px] font-black uppercase tracking-widest text-zinc-600">${g.multiplier > 0 ? g.multiplier.toFixed(2)+'x' : 'PERDIDO'}</span></div></div>`;
-                    });
-                } else {
-                    gameHtml += `<p class="text-[9px] text-zinc-600 font-bold uppercase text-center py-4">Sin apuestas</p>`;
-                }
-                gameHtml += `</div></div>`;
+            async confirmTransaction() { 
+                if(State.isProcessing) return; 
+                const amountInput = document.getElementById('dep-amount').value; 
+                const amount = Math.abs(parseFloat(amountInput)); 
+                const bank = document.getElementById('bank-name').value; 
+                const beneficiary = document.getElementById('beneficiary-name').value; 
+                if(!amount || amount <= 0 || !bank || !beneficiary) return UI.notify("Completa campos", "error"); 
+                const btn = document.getElementById('btn-confirm-dep'); 
+                btn.disabled = true; btn.innerText = "PROCESANDO..."; 
+                State.isProcessing = true; 
+                try { 
+                    const isDeposit = State.currentTx === 'deposit';
+                    let historyItem = { 
+                        user_id: State.user.id, 
+                        type: isDeposit ? 'deposits' : 'bets', 
+                        amount: isDeposit ? amount : -amount, 
+                        label: isDeposit ? 'DEPÓSITO PENDIENTE' : 'RETIRO PENDIENTE', 
+                        status: 'pending'
+                    };
 
-                container.innerHTML = txHtml + gameHtml;
+                    if(isDeposit) { 
+                        const fileInput = document.getElementById('receipt-input'); 
+                        const file = fileInput.files[0]; 
+                        if(!file) throw new Error("Sube comprobante"); 
+                        const fName = `${Date.now()}_${State.user.id}.jpg`; 
+                        const uploadRes = await sb.storage.from('comprobantes').upload(fName, file); 
+                        if(uploadRes.error) throw uploadRes.error; 
+                        const pub = sb.storage.from('comprobantes').getPublicUrl(fName); 
+                        historyItem.evidence_url = pub.data.publicUrl; 
+                        historyItem.bank_name = bank;
+                        historyItem.account_holder = beneficiary;
+                    } else {
+                        const clabeVal = document.getElementById('clabe-input-field').value;
+                        if(!clabeVal || clabeVal.length !== 18) throw new Error("CLABE debe ser de 18 dígitos");
+                        
+                        historyItem.bank_name = bank;
+                        historyItem.account_holder = `${beneficiary} | CLABE: ${clabeVal}`;
+                        
+                        if(State.balance < amount) throw new Error("Saldo insuficiente");
+                        await this.updateBalanceDB(-amount);
+                        State.balance -= amount;
+                        UI.updateBalance();
+                    }
+                    
+                    const { error } = await this.recordHistory(historyItem); 
+                    if(error) throw error; 
+                    UI.notify("Solicitud enviada", "success"); 
+                    UI.closeModal('modal-deposit'); 
+                } catch(e) { UI.notify(e.message, "error"); } finally { btn.disabled = false; btn.innerText = "CONFIRMAR"; State.isProcessing = false; } 
+            },
+            async fetchHistory() { 
+                const { data: b } = await sb.from('history').select('*, created_at').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20); 
+                const { data: d } = await sb.from('history').select('*, created_at').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(20); 
+                const container = document.getElementById('history-lists'); 
+                const realBets = (b || []).filter(item => !item.label.includes('RETIRO'));
+                const realWithdrawals = (b || []).filter(item => item.label.includes('RETIRO'));
+
+                container.innerHTML = `
+                    <div class="glass mb-4 p-4">
+                        <div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-bets')"><span class="font-casino text-[10px]">Jugadas</span><i class="fas fa-chevron-down" id="arrow-acc-bets"></i></div>
+                        <div id="acc-bets" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(realBets, 'bets')}</div>
+                    </div>
+                    <div class="glass mb-4 p-4">
+                        <div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-deps')"><span class="font-casino text-[10px]">Depósitos</span><i class="fas fa-chevron-down" id="arrow-acc-deps"></i></div>
+                        <div id="acc-deps" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(d || [], 'tx')}</div>
+                    </div>
+                    <div class="glass mb-4 p-4">
+                        <div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-wds')"><span class="font-casino text-[10px]">Retiros</span><i class="fas fa-chevron-down" id="arrow-acc-wds"></i></div>
+                        <div id="acc-wds" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(realWithdrawals, 'tx')}</div>
+                    </div>`; 
+            },
+            renderList(items, type) { 
+                if(!items || items.length === 0) return '<p class="text-zinc-600">Sin registros</p>'; 
+                return items.map(i => { 
+                    let statusColor = i.amount >= 0 ? 'text-emerald-500' : 'text-red-500'; 
+                    let label = i.label; 
+                    
+                    let horaExacta = '';
+                    if (i.created_at) {
+                        const d = new Date(i.created_at);
+                        horaExacta = ` - ${d.toTimeString().split(' ')[0]}`;
+                    }
+
+                    if(type === 'tx' || label.includes('PENDIENTE')) { 
+                        if(i.status === 'pending') label += " (⏳)"; 
+                        else if(i.status === 'completed') label += " (✅)"; 
+                        else if(i.status === 'rejected') label += " (❌)"; 
+                        statusColor = 'text-white'; 
+                    } 
+                    return `<div class="flex justify-between border-b border-white/5 pb-1"><span>${label}${horaExacta}</span><span class="${statusColor}">$${Math.abs(i.amount).toFixed(2)}</span></div>`; 
+                }).join(''); 
             }
         };
 
         const Router = {
-            showView(id) {
-                playSfx('click');
-                ['view-lobby', 'view-history', 'view-profile', 'view-game'].forEach(v => {
-                    document.getElementById(v).classList.add('hidden-view');
-                });
-                ['nav-home', 'nav-history', 'nav-profile'].forEach(n => {
-                    document.getElementById(n).classList.remove('active');
-                });
-
-                document.getElementById(id).classList.remove('hidden-view');
-                
-                if(id === 'view-lobby') document.getElementById('nav-home').classList.add('active');
-                if(id === 'view-history') {
-                    document.getElementById('nav-history').classList.add('active');
-                    Core.loadHistory();
-                }
-                if(id === 'view-profile') document.getElementById('nav-profile').classList.add('active');
-                
-                const nav = document.getElementById('bottom-nav-bar');
-                if(id === 'view-game') {
-                    nav.style.transform = 'translateY(100%)';
-                } else {
-                    nav.style.transform = 'translateY(0)';
-                }
-            },
-            openGame(game) {
-                this.showView('view-game');
-                const mount = document.getElementById('game-mount');
-                mount.innerHTML = '';
-                
-                if(game === 'slots') GameLogic.slots.init(mount);
-                if(game === 'mines') GameLogic.mines.init(mount);
-                if(game === 'crash') GameLogic.crash.init(mount);
-                if(game === 'tower') GameLogic.tower.init(mount);
-                if(game === 'blackjack') GameLogic.blackjack.init(mount);
-                if(game === 'chicken') GameLogic.chicken.init(mount);
+            showView(viewId) { if(State.isSpinning || State.isProcessing) return; playSfx('click'); document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden-view')); document.getElementById(`view-${viewId}`).classList.remove('hidden-view'); document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); const navId = {'lobby':'nav-home','history':'nav-history','profile':'nav-profile'}[viewId]; if(navId) document.getElementById(navId).classList.add('active'); document.getElementById('bottom-nav-bar').style.transform = 'translateY(0)'; if(viewId === 'history') Core.fetchHistory(); if(viewId === 'profile') UI.updateProfile(); },
+            openGame(game) { if(State.isProcessing) return; playSfx('click'); this.showView('game'); document.getElementById('game-mount').innerHTML = this.templates[game]; document.getElementById('view-game').scrollTop = 0; document.getElementById('bottom-nav-bar').style.transform = 'translateY(100%)'; if(game === 'slots') GameLogic.slots.init(); if(game === 'mines') GameLogic.mines.drawGrid(); if(game === 'tower') GameLogic.tower.drawTower(); if(game === 'blackjack') GameLogic.blackjack.renderInitial(); if(game === 'chicken') GameLogic.chicken.init(); },
+            templates: {
+                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><input id="slots-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4>🎰 Reglas Slots</h4><p>Combina 3 símbolos para ganar.</p></div></div>`,
+                mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div class="risk-badge"><i class="fas fa-bomb"></i> 3 Minas Activas</div><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view flex justify-between p-3 bg-emerald-500/10 rounded-xl mb-3"><div class="flex flex-col items-start"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><span id="mines-next-hint" class="text-[7px] text-zinc-500 font-bold uppercase">Siguiente: --</span></div><button id="mines-cashout-btn" onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-4 py-1 rounded font-bold text-[9px]">COBRAR $0.00</button></div><div id="mines-controls"><input id="mines-bet-input" type="number" value="10" class="input-bet"><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><div class="instruction-card"><h4>💣 Reglas Minas</h4><p>Encuentra diamantes y evita las minas.</p></div></div>`,
+                crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div id="crash-area"><div id="crash-bg" class="bg-infinite"><div class="bg-part"></div><div class="bg-part"></div></div><div id="crash-rocket-container"><div id="crash-rocket">🚀</div></div></div><input id="crash-bet-input" type="number" value="10" class="input-bet mt-6"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button><div class="instruction-card"><h4>🚀 Reglas Aviator</h4><p>Cobra antes del crash.</p></div></div>`,
+                tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div class="risk-badge" style="color: #fbbf24; background: rgba(251,191,36,0.1)"><i class="fas fa-bolt"></i> 1 Peligro por Piso</div><div id="tower-container" class="gap-3 mb-4 flex flex-col-reverse"></div><div id="tower-controls"><input id="tower-bet-input" type="number" value="10" class="input-bet"><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino">COBRAR $0.00</button><div class="instruction-card"><h4>🗼 Reglas Torre</h4><p>Sube pisos sin tocar minas.</p></div></div>`,
+                blackjack: `<div class="glass p-4 text-center max-w-[320px] mx-auto animate__animated animate__fadeIn">
+                    <div class="mb-4"><p class="text-[8px] text-zinc-500 uppercase font-black mb-2">Crupier (Puntos: <span id="dealer-score">?</span>)</p><div id="dealer-cards" class="flex justify-center gap-2 h-[70px]"></div></div>
+                    <div class="mb-6"><p class="text-[8px] text-emerald-500 uppercase font-black mb-2">Tus Cartas (Puntos: <span id="player-score">0</span>)</p><div id="player-cards" class="flex justify-center gap-2 h-[70px]"></div></div>
+                    <div id="bj-controls"><input id="bj-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.blackjack.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div>
+                    <div id="bj-actions" class="hidden-view grid grid-cols-2 gap-3"><button onclick="GameLogic.blackjack.hit()" class="btn-action py-4 bg-zinc-800 text-white font-casino">PEDIR</button><button onclick="GameLogic.blackjack.stand()" class="btn-action py-4 font-casino">PLANTARSE</button></div>
+                    <div class="instruction-card"><h4>🃏 Reglas Blackjack</h4><p>Suma 21 o más que el crupier sin pasarte.</p></div>
+                </div>`,
+                chicken: `<div class="glass p-4 text-center">
+                    <div id="chicken-status" class="mb-4 text-emerald-500 font-casino text-2xl animate__animated animate__pulse animate__infinite">1.00x</div>
+                    <div id="chicken-world" class="flex"></div>
+                    <div id="chicken-controls"><input id="chicken-bet-input" type="number" value="10" class="input-bet"><button onclick="GameLogic.chicken.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div>
+                    <div id="chicken-actions" class="hidden-view grid grid-cols-2 gap-3 mt-4"><button onclick="GameLogic.chicken.move()" class="btn-action py-5 bg-emerald-500 text-black font-black text-lg">AVANZAR</button><button id="chicken-cashout-btn" onclick="GameLogic.chicken.cashout()" class="btn-action py-5 bg-zinc-800 text-white font-black">COBRAR $0.00</button></div>
+                    <div class="instruction-card"><h4>🐥 Reglas Chicken Road</h4><p>Cruza los carriles sin ser atropellado.</p></div>
+                </div>`
             }
         };
 
         const GameLogic = {
-            adjustLuck(win, bet, mult = 0) {
-                if(win > 0) {
-                    State.sessionLoss -= (win - bet);
-                } else {
-                    State.sessionLoss += bet;
-                }
-                if(State.sessionLoss > 200) State.luckFactor = 3.5;
-                else if(State.sessionLoss < -200) State.luckFactor = 0.8;
-                else State.luckFactor = 1.8;
-            },
-            async saveBet(game, bet, payout, mult) {
-                if(!State.user) return;
-                await sb.from('game_history').insert([{ user_id: State.user.id, game_name: game, bet: bet, payout: payout, multiplier: mult }]);
-                await sb.from('profiles').update({ balance: State.balance }).eq('id', State.user.id);
+            adjustLuck(winAmt, betAmt, mult = 1) { 
+                State.winHistory.push({ bet: betAmt, win: winAmt, mult }); if(State.winHistory.length > 10) State.winHistory.shift(); 
+                if (winAmt === 0) State.sessionLoss += betAmt; else { State.sessionLoss -= (winAmt - betAmt); if (State.sessionLoss < 0) State.sessionLoss = 0; } 
+                const winRatio = State.winHistory.filter(h => h.win > 0).length / State.winHistory.length; 
+                if (State.luckFactor > 1.0) { if (State.balance > 80) State.luckFactor = 1.0; } 
+                else { if (State.sessionLoss > 200 || winRatio < 0.1) State.luckFactor = 1.8; else if (winRatio > 0.4 || winAmt > betAmt * 50) State.luckFactor = 0.4; else State.luckFactor = 1.0; }
             },
             slots: {
-                init(el) {
-                    el.innerHTML = `
-                        <div class="glass p-6 text-center animate__animated animate__fadeIn">
-                            <h2 class="font-casino text-lg text-emerald-500 mb-6 tracking-wider">PREMIUM SLOTS</h2>
-                            <div class="grid grid-cols-3 gap-3 mb-6">
-                                <div class="slot-box"><div id="reel-0" class="slot-reel"></div></div>
-                                <div class="slot-box"><div id="reel-1" class="slot-reel"></div></div>
-                                <div class="slot-box"><div id="reel-2" class="slot-reel"></div></div>
-                            </div>
-                            <input id="slot-bet" type="number" class="input-bet" value="10" placeholder="Apuesta">
-                            <button id="btn-spin" onclick="GameLogic.slots.spin()" class="btn-action w-full py-5 font-casino text-lg tracking-wide shadow-[0_0_20px_rgba(16,185,129,0.15)]">GIRAR</button>
-                        </div>
-                    `;
-                    this.buildReels();
-                },
-                buildReels() {
-                    for(let i=0; i<3; i++) {
-                        const reel = document.getElementById(`reel-${i}`);
-                        if(!reel) continue;
-                        reel.innerHTML = '';
-                        for(let j=0; j<30; j++) {
-                            const item = document.createElement('div');
-                            item.className = 'slot-item';
-                            item.innerText = SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)];
-                            reel.appendChild(item);
-                        }
-                    }
-                },
-                async spin() {
-                    if(State.isSpinning || State.isProcessing) return;
-                    const betInput = document.getElementById('slot-bet');
-                    const bet = Math.abs(parseFloat(betInput.value));
-                    if(!bet || isNaN(bet) || bet <= 0) return UI.notify("Apuesta inválida", "error");
-                    if(State.balance < bet) return UI.notify("Saldo insuficiente", "error");
-
-                    State.isSpinning = true;
-                    State.balance -= bet;
-                    UI.updateBalance();
-                    playSfx('spin');
-
-                    const btn = document.getElementById('btn-spin');
-                    btn.disabled = true; btn.innerText = "GIRANDO...";
-
-                    const isWin = Math.random() * State.luckFactor > 0.9;
-                    let results = [];
-                    if(isWin) {
-                        const symb = SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)];
-                        results = [symb, symb, symb];
-                    } else {
-                        results = [
-                            SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)],
-                            SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)],
-                            SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)]
-                        ];
-                        if(results[0] === results[1] && results[1] === results[2]) {
-                            results[2] = SYMBOLS[(SYMBOLS.indexOf(results[2])+1)%SYMBOLS.length];
-                        }
-                    }
-
-                    for(let i=0; i<3; i++) {
-                        const reel = document.getElementById(`reel-${i}`);
-                        const items = reel.querySelectorAll('.slot-item');
-                        items[28].innerText = results[i];
-                        reel.style.transition = 'none';
-                        reel.style.transform = 'translateY(0)';
-                        setTimeout(() => {
-                            reel.style.transition = 'transform 2.5s cubic-bezier(0.15, 0, 0.05, 1)';
-                            reel.style.transform = `translateY(-${28 * 90}px)`;
-                        }, 50);
-                    }
-
-                    setTimeout(async () => {
-                        State.isSpinning = false;
-                        btn.disabled = false; btn.innerText = "GIRAR";
-                        
-                        let multiplier = 0;
-                        if(results[0] === results[1] && results[1] === results[2]) {
-                            multiplier = results[0] === '7️⃣' ? 10 : (results[0] === '🔔' ? 5 : 3);
-                        }
-
-                        const winAmt = bet * multiplier;
-                        if(winAmt > 0) {
-                            State.balance += winAmt;
-                            UI.updateBalance();
-                            playSfx('win');
-                            UI.notify(`¡GANASTE $${winAmt.toFixed(2)}!`, "success");
-                        } else {
-                            playSfx('lose');
-                        }
-
-                        this.adjustLuckAfter(winAmt, bet, multiplier);
-                        await GameLogic.saveBet('Slots', bet, winAmt, multiplier);
-                    }, 2600);
-                },
-                adjustLuckAfter(w, b, m) { GameLogic.adjustLuck(w, b, m); }
+                prizes: { '7️⃣': { mult: 500, weight: 1 }, '🔔': { mult: 50, weight: 8 }, '🍋': { mult: 10, weight: 25 }, '🍒': { mult: 3, weight: 66 } },
+                init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); if(r) { r.innerHTML = ''; Array(20).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); } }); },
+                async play() { if(State.isSpinning || State.isProcessing) return; State.isSpinning = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('slots-bet-input').value)) || 10; const btn = document.getElementById('btn-slots-play'); btn.disabled = true; const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b || b <= 0) { State.isSpinning = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('spin'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); let result = []; const isWinner = Math.random() < (0.12 * State.luckFactor); if (isWinner) { const roll = Math.random() * 100; let acc = 0; let sel = '🍒'; for (const [sym, config] of Object.entries(this.prizes)) { acc += config.weight; if (roll <= acc) { sel = sym; break; } } result = [sel, sel, sel]; } else { const s1 = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)], s2 = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]; let s3 = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]; if (s1 === s2 && s2 === s3) s3 = SYMBOLS[(SYMBOLS.indexOf(s3) + 1) % SYMBOLS.length]; result = [s1, s2, s3]; } [1,2,3].forEach((id, i) => { const reel = document.getElementById(`reel-${id}`); if(reel) { const targetSymbol = result[i]; const targetPos = SYMBOLS.indexOf(targetSymbol); const scrollDist = (90 * SYMBOLS.length * 5) + (targetPos * 90); reel.style.transition = 'none'; reel.style.transform = 'translateY(0)'; setTimeout(() => { reel.style.transition = 'transform 3.5s cubic-bezier(0.15, 0, 0.05, 1)'; reel.style.transform = `translateY(-${scrollDist}px)`; }, 50); } }); setTimeout(async () => { let win = 0; if (result[0] === result[1] && result[1] === result[2]) win = b * this.prizes[result[0]].mult; if(win > 0) { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); } else { playSfx('lose'); UI.notify("SIN SUERTE", "error"); } UI.updateBalance(); GameLogic.adjustLuck(win, b, win > 0 ? 2 : 0); await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? win : -b, label: 'SLOTS', status: 'completed' }); State.isSpinning = false; State.isProcessing = false; btn.disabled = false; }, 3600); }
             },
             mines: {
-                bet: 0, active: false, board: [], revealed: 0, mineCount: 3,
-                init(el) {
-                    this.active = false; this.revealed = 0;
-                    el.innerHTML = `
-                        <div class="glass p-5 text-center animate__animated animate__fadeIn">
-                            <div class="flex justify-between items-center mb-4 px-1">
-                                <span class="font-casino text-[10px] text-zinc-500 tracking-wider">MINAS SUPREMO</span>
-                                <span id="mine-multiplier" class="font-casino text-emerald-500 text-sm">1.00x</span>
-                            </div>
-                            <div class="grid grid-cols-5 gap-2 mb-4" id="mines-grid"></div>
-                            <div class="flex gap-2">
-                                <input id="mine-bet" type="number" class="input-bet !m-0" value="10" placeholder="Apuesta">
-                                <select id="mine-count" class="bg-white/5 border border-white/10 rounded-2xl px-4 text-xs font-casino outline-none text-white">
-                                    <option value="3" class="bg-black">3 Minas</option>
-                                    <option value="5" class="bg-black">5 Minas</option>
-                                    <option value="10" class="bg-black">10 Minas</option>
-                                </select>
-                            </div>
-                            <button id="btn-mine-action" onclick="GameLogic.mines.action()" class="btn-action w-full py-4 font-casino mt-4">CORTAR MECHA</button>
-                        </div>
-                    `;
-                    this.buildGrid();
-                },
-                buildGrid() {
-                    const grid = document.getElementById('mines-grid');
-                    grid.innerHTML = '';
-                    for(let i=0; i<25; i++) {
-                        const tile = document.createElement('div');
-                        tile.className = 'aspect-square bg-white/5 border border-white/5 rounded-xl flex items-center justify-center text-xl cursor-pointer transition-all active:scale-90';
-                        tile.dataset.index = i;
-                        tile.onclick = () => this.clickTile(tile);
-                        grid.appendChild(tile);
-                    }
-                },
-                async action() {
-                    if(State.isProcessing) return;
-                    const btn = document.getElementById('btn-mine-action');
-                    if(!this.active) {
-                        const bInput = document.getElementById('mine-bet');
-                        this.bet = Math.abs(parseFloat(bInput.value));
-                        this.mineCount = parseInt(document.getElementById('mine-count').value);
-                        if(!this.bet || isNaN(this.bet) || this.bet <= 0) return UI.notify("Apuesta inválida", "error");
-                        if(State.balance < this.bet) return UI.notify("Saldo insuficiente", "error");
-
-                        State.balance -= this.bet; UI.updateBalance();
-                        this.active = true; this.revealed = 0;
-                        playSfx('click');
-                        document.getElementById('mine-bet').disabled = true;
-                        document.getElementById('mine-count').disabled = true;
-                        btn.innerText = "RETIRAR CACHO";
-                        btn.classList.replace('bg-emerald-500', 'bg-amber-500');
-
-                        this.board = Array(25).fill(false);
-                        let placed = 0;
-                        while(placed < this.mineCount) {
-                            const idx = Math.floor(Math.random()*25);
-                            if(!this.board[idx]) { this.board[idx] = true; placed++; }
-                        }
-                        this.buildGrid();
-                        this.updateMultDisplay();
-                    } else {
-                        await this.cashout();
-                    }
-                },
-                getMult() {
-                    if(this.revealed === 0) return 1.0;
-                    let m = 1.0;
-                    for(let i=0; i<this.revealed; i++) {
-                        m *= ( (25 - i) / (25 - this.mineCount - i) );
-                    }
-                    return m * 0.96;
-                },
-                updateMultDisplay() {
-                    document.getElementById('mine-multiplier').innerText = `${this.getMult().toFixed(2)}x`;
-                },
-                async clickTile(tile) {
-                    if(!this.active || tile.dataset.revealed === 'true') return;
-                    const idx = parseInt(tile.dataset.index);
-                    tile.dataset.revealed = 'true';
-                    tile.classList.remove('bg-white/5');
-
-                    const forcedLose = Math.random() * State.luckFactor < 0.45;
-
-                    if(this.board[idx] || forcedLose) {
-                        tile.innerHTML = '💣'; tile.className += ' bg-red-500/20 border-red-500/40 animate__animated animate__shakeX';
-                        playSfx('lose');
-                        UI.notify("¡BOMBA! Perdiste.", "error");
-                        await this.endGame(false);
-                    } else {
-                        tile.innerHTML = '💎'; tile.className += ' bg-emerald-500/20 border-emerald-500/40 animate__animated animate__bounceIn';
-                        playSfx('card');
-                        this.revealed++;
-                        this.updateMultDisplay();
-                        if(this.revealed === (25 - this.mineCount)) await this.cashout();
-                    }
-                },
-                async cashout() {
-                    const mult = this.getMult();
-                    const win = this.bet * mult;
-                    State.balance += win; UI.updateBalance();
-                    playSfx('win');
-                    UI.notify(`¡Retiraste $${win.toFixed(2)}!`, "success");
-                    await this.endGame(true, win, mult);
-                },
-                async endGame(win, winAmt = 0, mult = 0) {
-                    this.active = false;
-                    GameLogic.adjustLuck(winAmt, this.bet, mult);
-                    document.getElementById('mine-bet').disabled = false;
-                    document.getElementById('mine-count').disabled = false;
-                    const btn = document.getElementById('btn-mine-action');
-                    btn.innerText = "CORTAR MECHA";
-                    btn.className = 'btn-action w-full py-4 font-casino mt-4';
-
-                    const grid = document.getElementById('mines-grid');
-                    const tiles = grid.querySelectorAll('div');
-                    tiles.forEach((t, i) => {
-                        if(this.board[i]) { t.innerHTML = '💣'; t.classList.add('bg-red-500/10'); }
-                    });
-                    await GameLogic.saveBet('Minas', this.bet, winAmt, mult);
-                }
-            },
-            crash: {
-                bet: 0, active: false, mult: 1.0, interval: null,
-                init(el) {
-                    this.active = false; this.mult = 1.0;
-                    el.innerHTML = `
-                        <div class="glass p-5 text-center animate__animated animate__fadeIn">
-                            <div id="crash-area" class="mb-4">
-                                <div class="bg-infinite" id="crash-bg">
-                                    <div class="bg-part"></div><div class="bg-part"></div>
-                                </div>
-                                <div id="crash-mult" class="absolute inset-0 flex items-center justify-center font-casino text-4xl font-black text-white z-20">1.00x</div>
-                                <div id="crash-rocket-container"><span id="crash-rocket">🚀</span></div>
-                            </div>
-                            <input id="crash-bet" type="number" class="input-bet" value="10" placeholder="Apuesta">
-                            <button id="btn-crash" onclick="GameLogic.crash.action()" class="btn-action w-full py-5 font-casino text-lg">DESPEGAR</button>
-                        </div>
-                    `;
-                },
-                async action() {
-                    if(State.isProcessing) return;
-                    const btn = document.getElementById('btn-crash');
-                    if(!this.active) {
-                        const bInput = document.getElementById('crash-bet');
-                        this.bet = Math.abs(parseFloat(bInput.value));
-                        if(!this.bet || isNaN(this.bet) || this.bet <= 0) return UI.notify("Apuesta inválida", "error");
-                        if(State.balance < this.bet) return UI.notify("Saldo insuficiente", "error");
-
-                        State.balance -= this.bet; UI.updateBalance();
-                        this.active = true; this.mult = 1.0;
-                        document.getElementById('crash-bet').disabled = true;
-                        btn.innerText = "EYECTAR"; btn.className = 'btn-action w-full py-5 font-casino text-lg bg-amber-500 text-black';
-                        playSfx('rocket');
-
-                        const targetCrash = 1.0 + (Math.random() * (6.0 / State.luckFactor));
-                        const bg = document.getElementById('crash-bg');
-                        const rocket = document.getElementById('crash-rocket');
-
-                        let offset = 0;
-                        this.interval = setInterval(async () => {
-                            this.mult += 0.04;
-                            offset -= 4;
-                            if(bg) bg.style.transform = `translateX(${offset % 50}px)`;
-                            if(rocket) rocket.style.transform = `translateY(${Math.sin(Date.now()/100)*5}px)`;
-                            
-                            const multEl = document.getElementById('crash-mult');
-                            if(multEl) multEl.innerText = `${this.mult.toFixed(2)}x`;
-
-                            if(this.mult >= targetCrash) {
-                                this.explode();
-                                await GameLogic.saveBet('Aviator', this.bet, 0, 0);
-                            }
-                        }, 80);
-                    } else {
-                        clearInterval(this.interval);
-                        const win = this.bet * this.mult;
-                        State.balance += win;
-                        playSfx('win'); playSfx('winExtra');
-                        UI.notify(`GANASTE $${win.toFixed(2)}`, "success");
-                        await this.end(true);
-                    }
-                },
-                explode() {
-                    clearInterval(this.interval);
-                    playSfx('lose');
-                    UI.notify("¡EXPLOTÓ!", "error");
-                    const multEl = document.getElementById('crash-mult');
-                    if(multEl) multEl.classList.add('text-red-500');
-                    const rocketEl = document.getElementById('crash-rocket');
-                    if(rocketEl) { rocketEl.innerHTML = '💥'; rocketEl.style.transform = 'translateY(0)'; }
-                    this.end(false);
-                },
-                async end(win) {
-                    const winAmt = win ? (this.bet * this.mult) : 0;
-                    GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0);
-                    this.active = false; State.isProcessing = false;
-                    UI.updateBalance();
-                    const btn = document.getElementById('btn-crash');
-                    if(btn) {
-                        btn.innerText = "EXPLOTÓ"; btn.disabled = true;
-                        setTimeout(() => {
-                            btn.disabled = false; btn.innerText = "DESPEGAR";
-                            btn.onclick = () => GameLogic.crash.action();
-                            const multEl = document.getElementById('crash-mult');
-                            if(multEl) { multEl.classList.remove('text-red-500'); multEl.innerText = '1.00x'; }
-                            const rocketEl = document.getElementById('crash-rocket');
-                            if(rocketEl) { rocketEl.innerHTML = '🚀'; rocketEl.style.transform = 'translateY(0)'; }
-                            document.getElementById('crash-bet').disabled = false;
-                        }, 1500);
-                    }
-                    if(win) await GameLogic.saveBet('Aviator', this.bet, winAmt, this.mult);
-                }
+                active: false, mines: [], revealed: [], mult: 1, bet: 10, multSteps: [1.25, 1.30, 1.75, 2.00, 5.50, 10.20, 16.50, 28.00, 45.00, 68.00, 95.00, 130.00, 175.00, 225.00, 280.00, 330.00, 375.00, 415.00, 445.00, 470.00, 490.00, 500.00],
+                drawGrid() { const g = document.getElementById('mines-grid'); if(!g) return; g.innerHTML = ''; for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/5 border border-white/5 rounded-lg flex items-center justify-center text-xl cursor-pointer active:scale-90 transition-all"></div>`; },
+                async start() { if(this.active || State.isProcessing) return; this.active = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 10; const btn = document.getElementById('btn-mines-start'); btn.disabled = true; const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b || b <= 0) { this.active = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('click'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); this.bet = b; this.mult = 1; this.revealed = []; this.mines = []; while(this.mines.length < 3) { let r = Math.floor(Math.random()*25); if(!this.mines.includes(r)) this.mines.push(r); } document.getElementById('mines-controls').classList.add('hidden-view'); document.getElementById('mines-status').classList.remove('hidden-view'); document.getElementById('mines-mult').innerText = '1.00x'; document.getElementById('mines-next-hint').innerText = `Siguiente: x${this.multSteps[0].toFixed(2)}`; document.getElementById('mines-cashout-btn').innerText = `COBRAR $${this.bet.toFixed(2)}`; this.drawGrid(); State.isProcessing = false; btn.disabled = false; },
+                cell(i) { if(!this.active || this.revealed.includes(i) || State.isProcessing) return; const winCount = this.revealed.length; let dynamicFail = (0.12 + (winCount * 0.10)) / State.luckFactor; if (State.luckFactor > 1.4 && winCount < 3) dynamicFail = 0.01; if (winCount > 1 && Math.random() < dynamicFail) { if (!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); } } this.revealed.push(i); const el = document.getElementById(`m-${i}`); if(this.mines.includes(i)) { playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500'); this.revealRemainingMines(); UI.notify("¡BOMBA!", "error"); this.end(false); } else { playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500'); this.mult = this.multSteps[winCount] || 500.00; document.getElementById('mines-mult').innerText = this.mult.toFixed(2) + 'x'; const nVal = this.multSteps[this.revealed.length] || 500.00; document.getElementById('mines-next-hint').innerText = `Siguiente: x${nVal.toFixed(2)}`; document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`; } },
+                revealRemainingMines() { this.mines.forEach(m => { const el = document.getElementById(`m-${m}`); if (el && !this.revealed.includes(m)) { el.innerHTML = '💣'; el.classList.add('opacity-50'); } }); },
+                async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; const win = this.bet * this.mult; try { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); await this.end(true); } finally { State.isProcessing = false; } },
+                async end(win) { const winAmt = win ? (this.bet * this.mult) : 0; GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0); this.active = false; State.isProcessing = false; UI.updateBalance(); document.getElementById('mines-controls').classList.remove('hidden-view'); document.getElementById('mines-status').classList.add('hidden-view'); await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'MINAS', status: 'completed' }); }
             },
             tower: {
-                bet: 0, active: false, currentFloor: 0, multipliers: [1.2, 1.6, 2.1, 2.9, 4.0, 5.6],
-                init(el) {
-                    this.active = false; this.currentFloor = 0;
-                    el.innerHTML = `
-                        <div class="glass p-5 text-center animate__animated animate__fadeIn">
-                            <div class="flex justify-between items-center mb-4"><span class="font-casino text-[10px] text-zinc-500 tracking-wider">TORRE ESMERALDA</span><span id="tower-mult" class="font-casino text-emerald-500 text-sm">1.00x</span></div>
-                            <div class="space-y-2 mb-4 flex flex-col-reverse" id="tower-floors"></div>
-                            <input id="tower-bet" type="number" class="input-bet" value="10" placeholder="Apuesta">
-                            <button id="btn-tower-action" onclick="GameLogic.tower.action()" class="btn-action w-full py-4 font-casino">ESCALAR</button>
-                        </div>
-                    `;
-                    this.buildFloors();
-                },
-                buildFloors() {
-                    const container = document.getElementById('tower-floors');
-                    container.innerHTML = '';
-                    for(let f=0; f<6; f++) {
-                        const r = document.createElement('div');
-                        r.className = `flex gap-2 p-1 rounded-xl transition-all ${f===0?'bg-white/5':''}`;
-                        r.id = `floor-${f}`;
-                        for(let b=0; b<3; b++) {
-                            const block = document.createElement('div');
-                            block.className = 'flex-1 py-3 bg-zinc-900 border border-white/5 rounded-lg font-casino text-[10px] text-zinc-700 text-center cursor-not-allowed';
-                            block.innerText = '🧱';
-                            block.dataset.floor = f; block.dataset.block = b;
-                            block.onclick = () => this.selectBlock(block);
-                            r.appendChild(block);
-                        }
-                        container.appendChild(r);
-                    }
-                },
-                async action() {
-                    if(State.isProcessing) return;
-                    const btn = document.getElementById('btn-tower-action');
-                    if(!this.active) {
-                        const bInput = document.getElementById('tower-bet');
-                        this.bet = Math.abs(parseFloat(bInput.value));
-                        if(!this.bet || isNaN(this.bet) || this.bet <= 0) return UI.notify("Apuesta inválida", "error");
-                        if(State.balance < this.bet) return UI.notify("Saldo insuficiente", "error");
-
-                        State.balance -= this.bet; UI.updateBalance();
-                        this.active = true; this.currentFloor = 0;
-                        document.getElementById('tower-bet').disabled = true;
-                        btn.innerText = "COBRAR PISO"; btn.className = 'btn-action w-full py-4 font-casino bg-amber-500 text-black';
-                        playSfx('click');
-                        this.activateFloor(0);
-                    } else {
-                        await this.cashout();
-                    }
-                },
-                activateFloor(f) {
-                    for(let i=0; i<6; i++) {
-                        const row = document.getElementById(`floor-${i}`);
-                        if(i === f) row.classList.add('bg-emerald-500/10', 'border', 'border-emerald-500/20');
-                        else row.className = 'flex gap-2 p-1 rounded-xl';
-                        
-                        const blocks = row.querySelectorAll('div');
-                        blocks.forEach(b => {
-                            if(i === f) { b.classList.remove('cursor-not-allowed'); b.classList.add('cursor-pointer', 'bg-white/5'); b.innerText = '❓'; }
-                            else { b.classList.add('cursor-not-allowed'); }
-                        });
-                    }
-                    document.getElementById('tower-mult').innerText = `${f===0?'1.00':this.multipliers[f-1].toFixed(2)}x`;
-                },
-                async selectBlock(block) {
-                    if(!this.active || parseInt(block.dataset.floor) !== this.currentFloor) return;
-                    const f = this.currentFloor;
-                    
-                    const bombIdx = Math.floor(Math.random()*3);
-                    const isBomb = parseInt(block.dataset.block) === bombIdx || (Math.random()*State.luckFactor < 0.4);
-
-                    if(isBomb) {
-                        block.innerText = '💥'; block.className = block.className.replace('bg-white/5', 'bg-red-500/20');
-                        playSfx('lose'); UI.notify("¡La torre colapsó!", "error");
-                        await this.endGame(false);
-                    } else {
-                        block.innerText = '👑'; block.className = block.className.replace('bg-white/5', 'bg-emerald-500/20');
-                        playSfx('card');
-                        this.currentFloor++;
-                        if(this.currentFloor === 6) {
-                            await this.cashout();
-                        } else {
-                            this.activateFloor(this.currentFloor);
-                        }
-                    }
-                },
-                async cashout() {
-                    const mult = this.multipliers[this.currentFloor-1];
-                    const win = this.bet * mult;
-                    State.balance += win; UI.updateBalance();
-                    playSfx('win'); UI.notify(`Cobraste $${win.toFixed(2)}`, "success");
-                    await this.endGame(true, win, mult);
-                },
-                async endGame(win, winAmt = 0, mult = 0) {
-                    this.active = false;
-                    GameLogic.adjustLuck(winAmt, this.bet, mult);
-                    document.getElementById('tower-bet').disabled = false;
-                    const btn = document.getElementById('btn-tower-action');
-                    btn.innerText = "ESCALAR"; btn.className = 'btn-action w-full py-4 font-casino';
-                    this.buildFloors();
-                    await GameLogic.saveBet('Torre', this.bet, winAmt, mult);
-                }
+                level: 0, active: false, bet: 0, mult: 1, towerSteps: [1.65, 2.80, 4.50, 7.80, 13.50, 24.00, 42.00, 95.00], towerMines: [],
+                drawTower() { const c = document.getElementById('tower-container'); if(!c) return; c.innerHTML = ''; for(let i=0; i<8; i++) { let row = document.createElement('div'); row.className = "grid grid-cols-3 gap-3 opacity-30"; row.id = `tower-row-${i}`; for(let j=0; j<3; j++) { const nextVal = this.towerSteps[i]; row.innerHTML += `<div onclick="GameLogic.tower.select(${i}, ${j})" id="t-${i}-${j}" class="h-10 bg-white/5 border border-white/5 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all relative"><span class="text-[6px] absolute top-1 right-1 text-white/20">x${nextVal.toFixed(2)}</span></div>`; } c.appendChild(row); } },
+                async start() { if(this.active || State.isProcessing) return; this.active = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10; const btn = document.getElementById('btn-tower-start'); btn.disabled = true; const { data: user = {} } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b || b <= 0) { this.active = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('click'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); this.bet = b; this.level = 0; this.mult = 1; this.towerMines = Array.from({length: 8}, () => Math.floor(Math.random() * 3)); this.drawTower(); document.getElementById('tower-row-0').classList.remove('opacity-30'); document.getElementById('tower-controls').classList.add('hidden-view'); const cbtn = document.getElementById('tower-cashout-btn'); cbtn.classList.remove('hidden-view'); cbtn.innerText = `COBRAR $${this.bet.toFixed(2)}`; cbtn.disabled = false; State.isProcessing = false; btn.disabled = false; },
+                select(r, c) { if(!this.active || r !== this.level || State.isProcessing) return; const items = document.getElementById(`tower-row-${r}`).children; if(c === this.towerMines[r]) { playSfx('lose'); items[c].innerHTML = '💣'; items[c].classList.add('bg-red-500/20', 'border-red-500'); this.revealAllMines(); UI.notify("PERDISTE", "error"); this.end(false); } else { playSfx('click'); items[c].innerHTML = '💎'; items[c].classList.add('bg-emerald-500/20', 'border-emerald-500'); const mIdx = this.towerMines[r]; document.getElementById(`t-${r}-${mIdx}`).innerHTML = '<span class="opacity-20">💣</span>'; this.mult = this.towerSteps[this.level]; this.level++; document.getElementById('tower-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`; if(this.level < 8) document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30'); else this.cashout(); } },
+                revealAllMines() { this.towerMines.forEach((m, r) => { const el = document.getElementById(`t-${r}-${m}`); if(el) el.innerHTML = '💣'; }); },
+                async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; this.revealAllMines(); const win = this.bet * this.mult; try { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}!`, "success"); await this.end(true); } finally { State.isProcessing = false; } },
+                async end(win) { const winAmt = win ? (this.bet * this.mult) : 0; GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0); this.active = false; State.isProcessing = false; UI.updateBalance(); document.getElementById('tower-controls').classList.remove('hidden-view'); document.getElementById('tower-cashout-btn').classList.add('hidden-view'); await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'TORRE', status: 'completed' }); }
             },
             blackjack: {
-                bet: 0, active: false, pHand: [], dHand: [],
-                init(el) {
-                    this.active = false;
-                    el.innerHTML = `
-                        <div class="glass p-5 text-center animate__animated animate__fadeIn">
-                            <div class="space-y-4 mb-6">
-                                <div>
-                                    <div class="text-[8px] font-black uppercase tracking-wider text-zinc-500 mb-1">Crupier (<span id="bj-d-score">0</span>)</div>
-                                    <div id="bj-dealer-cards" class="flex justify-center gap-2 h-16"></div>
-                                </div>
-                                <div>
-                                    <div class="text-[8px] font-black uppercase tracking-wider text-emerald-500 mb-1">Tus cartas (<span id="bj-p-score">0</span>)</div>
-                                    <div id="bj-player-cards" class="flex justify-center gap-2 h-16"></div>
-                                </div>
-                            </div>
-                            <input id="bj-bet" type="number" class="input-bet" value="10" placeholder="Apuesta">
-                            <div id="bj-controls" class="space-y-2">
-                                <button onclick="GameLogic.blackjack.start()" class="btn-action w-full py-4 font-casino">REPARTIR</button>
-                            </div>
-                        </div>
-                    `;
-                },
-                getCard() {
-                    const v = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
-                    const val = v[Math.floor(Math.random()*v.length)];
-                    return { value: val, score: ['J','Q','K'].includes(val)?10:(val==='A'?11:parseInt(val)) };
-                },
-                calcScore(hand) {
-                    let s = hand.reduce((acc, c) => acc + c.score, 0);
-                    let aces = hand.filter(c => c.value === 'A').length;
-                    while(s > 21 && aces > 0) { s -= 10; aces--; }
-                    return s;
-                },
-                renderCard(c, hidden = false) {
-                    if(hidden) return `<div class="card-bj card-hidden"></div>`;
-                    const isRed = Math.random() > 0.5;
-                    return `<div class="card-bj ${isRed?'card-red':''}"><div>${c.value}</div></div>`;
-                },
+                deck: [], playerHand: [], dealerHand: [], active: false, bet: 0,
+                renderInitial() { const pC = document.getElementById('player-cards'), dC = document.getElementById('dealer-cards'); if(pC) pC.innerHTML = ''; if(dC) dC.innerHTML = ''; if(document.getElementById('player-score')) document.getElementById('player-score').innerText = '0'; if(document.getElementById('dealer-score')) document.getElementById('dealer-score').innerText = '?'; },
                 async start() {
-                    if(State.isProcessing) return;
-                    const bInput = document.getElementById('bj-bet');
-                    this.bet = Math.abs(parseFloat(bInput.value));
-                    if(!this.bet || isNaN(this.bet) || this.bet <= 0) return UI.notify("Apuesta inválida", "error");
-                    if(State.balance < this.bet) return UI.notify("Saldo insuficiente", "error");
-
-                    State.balance -= this.bet; UI.updateBalance();
-                    this.active = true;
-                    document.getElementById('bj-bet').disabled = true;
-                    playSfx('card');
-
-                    this.pHand = [this.getCard(), this.getCard()];
-                    this.dHand = [this.getCard(), this.getCard()];
-
-                    const pScore = this.calcScore(this.pHand);
-                    const forcedLose = Math.random() * State.luckFactor < 0.45;
-                    if(pScore === 21 || forcedLose) {
-                        // En caso de ajuste riguroso o juego directo
-                    }
-
-                    this.updateUI(true);
-                    
-                    document.getElementById('bj-controls').innerHTML = `
-                        <div class="flex gap-2">
-                            <button onclick="GameLogic.blackjack.hit()" class="flex-1 py-4 font-casino bg-white/5 border border-white/10 rounded-xl text-xs">PEDIR</button>
-                            <button onclick="GameLogic.blackjack.stand()" class="flex-1 py-4 font-casino btn-action">PLANTAR</button>
-                        </div>
-                    `;
+                    if(this.active || State.isProcessing) return;
+                    const b = Math.abs(parseFloat(document.getElementById('bj-bet-input').value)) || 10;
+                    const { data: user = {} } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
+                    if(!user || user.saldo < b) return UI.notify("Saldo insuficiente", "error");
+                    State.isProcessing = true; await Core.updateBalanceDB(-b); State.balance -= b; this.bet = b; UI.updateBalance();
+                    this.active = true; this.deck = this.createDeck();
+                    this.playerHand = [this.drawCard(), this.drawCard()];
+                    this.dealerHand = [this.drawCard(), this.drawCard()]; 
+                    document.getElementById('bj-controls').classList.add('hidden-view');
+                    document.getElementById('bj-actions').classList.remove('hidden-view');
+                    this.render(true); State.isProcessing = false;
+                    if(this.getFinalScore(this.playerHand) === 21) this.stand();
                 },
-                updateUI(hideDealer = true) {
-                    const pContainer = document.getElementById('bj-player-cards');
-                    const dContainer = document.getElementById('bj-dealer-cards');
+                createDeck() { 
+                    const suits = ['♠', '♣', '♥', '♦'], vls = ['2','3','4','5','6','7','8','9','10','J','Q','K','A']; 
+                    let deck = []; for(let s of suits) for(let v of vls) deck.push({s, v}); 
+                    for(let i=0; i<12; i++) deck.push({s: '♠', v: '10'});
+                    return deck.sort(() => Math.random() - 0.5); 
+                },
+                drawCard() { return this.deck.pop(); },
+                getFinalScore(hand) {
+                    let score = 0;
+                    let hasTenValue = false;
+                    let aceCount = 0;
                     
-                    pContainer.innerHTML = this.pHand.map(c => this.renderCard(c)).join('');
+                    for(let c of hand) {
+                        if(c.v === 'A') {
+                            aceCount++;
+                        } else if(['10','J','Q','K'].includes(c.v)) {
+                            hasTenValue = true;
+                            score += 10;
+                        } else {
+                            score += parseInt(c.v);
+                        }
+                    }
+                    if (aceCount === 1 && hand.length === 2 && hasTenValue) {
+                        return 21;
+                    }
+                    score += aceCount * 1;
+                    return score;
+                },
+                hit() { if(!this.active || State.isProcessing) return; playSfx('card'); this.playerHand.push(this.drawCard()); this.render(true); if(this.getFinalScore(this.playerHand) > 21) this.end('lose'); },
+                async stand() { 
+                    if(!this.active || State.isProcessing) return; 
+                    State.isProcessing = true; this.render(false); await new Promise(r => setTimeout(r, 600));
+                    while(this.getFinalScore(this.dealerHand) < 17) { playSfx('card'); this.dealerHand.push(this.drawCard()); this.render(false); await new Promise(r => setTimeout(r, 600)); } 
+                    const ps = this.getFinalScore(this.playerHand), ds = this.getFinalScore(this.dealerHand); 
+                    if(ds > 21 || ps > ds) this.end('win'); else if(ps === ds) this.end('push'); else this.end('lose'); 
+                },
+                render(hideDealer) { 
+                    const pC = document.getElementById('player-cards'), dC = document.getElementById('dealer-cards'); 
+                    if(!pC || !dC) return;
+                    pC.innerHTML = this.playerHand.map(c => `<div class="card-bj ${['♥','♦'].includes(c.s)?'card-red':''}"><span>${c.v}</span><span class="text-[10px]">${c.s}</span></div>`).join(''); 
                     if(hideDealer) {
-                        dContainer.innerHTML = this.renderCard(this.dHand[0]) + this.renderCard(null, true);
-                        document.getElementById('bj-d-score').innerText = this.dHand[0].score;
+                        dC.innerHTML = `<div class="card-bj ${['♥','♦'].includes(this.dealerHand[0].s)?'card-red':''}"><span>${this.dealerHand[0].v}</span><span class="text-[10px]">${this.dealerHand[0].s}</span></div><div class="card-bj card-hidden"></div>`;
+                        document.getElementById('dealer-score').innerText = '?';
                     } else {
-                        dContainer.innerHTML = this.dHand.map(c => this.renderCard(c)).join('');
-                        document.getElementById('bj-d-score').innerText = this.calcScore(this.dHand);
+                        dC.innerHTML = this.dealerHand.map(c => `<div class="card-bj ${['♥','♦'].includes(c.s)?'card-red':''}"><span>${c.v}</span><span class="text-[10px]">${c.s}</span></div>`).join(''); 
+                        document.getElementById('dealer-score').innerText = this.getFinalScore(this.dealerHand);
                     }
-                    document.getElementById('bj-p-score').innerText = this.calcScore(this.pHand);
+                    document.getElementById('player-score').innerText = this.getFinalScore(this.playerHand); 
                 },
-                hit() {
-                    if(!this.active) return;
-                    playSfx('card');
-                    this.pHand.push(this.getCard());
-                    this.updateUI(true);
-                    
-                    if(this.calcScore(this.pHand) > 21) {
-                        this.endGame('lose');
-                    }
-                },
-                async stand() {
-                    if(!this.active) return;
-                    this.updateUI(false);
-                    
-                    let dScore = this.calcScore(this.dHand);
-                    while(dScore < 17) {
-                        playSfx('card');
-                        this.dHand.push(this.getCard());
-                        dScore = this.calcScore(this.dHand);
-                        this.updateUI(false);
-                    }
-
-                    const pScore = this.calcScore(this.pHand);
-                    if(dScore > 21 || pScore > dScore) {
-                        this.endGame('win');
-                    } else if(pScore < dScore) {
-                        this.endGame('lose');
-                    } else {
-                        this.endGame('push');
-                    }
-                },
-                async endGame(res) {
-                    this.active = false;
-                    this.updateUI(false);
-                    let winAmt = 0; let mult = 0;
-                    
-                    if(res === 'win') {
-                        winAmt = this.bet * 2; mult = 2.0;
-                        State.balance += winAmt; UI.notify("¡Ganaste la mano!", "success"); playSfx('win');
-                    } else if(res === 'push') {
-                        winAmt = this.bet; mult = 1.0;
-                        State.balance += winAmt; UI.notify("Empate, recuperas", "success"); playSfx('click');
-                    } else {
-                        UI.notify("Perdiste la mano", "error"); playSfx('lose');
-                    }
-
-                    UI.updateBalance();
-                    GameLogic.adjustLuck(winAmt, this.bet, mult);
-                    document.getElementById('bj-bet').disabled = false;
-                    this.init(document.getElementById('game-mount'));
-                    await GameLogic.saveBet('Blackjack', this.bet, winAmt, mult);
+                async end(res) { 
+                    this.active = false; let win = 0; 
+                    if(res === 'win') { win = this.bet * 2; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); } 
+                    else if(res === 'push') { win = this.bet; playSfx('win'); playSfx('winExtra'); UI.notify(`EMPATE: RECUPERAS $${win.toFixed(2)}`, "success"); } 
+                    else { UI.notify("PERDISTE", "error"); playSfx('lose'); } 
+                    if(win > 0) { await Core.updateBalanceDB(win); State.balance += win; } 
+                    UI.updateBalance(); GameLogic.adjustLuck(win, this.bet, win > 0 ? 2 : 0);
+                    document.getElementById('bj-controls').classList.remove('hidden-view'); 
+                    document.getElementById('bj-actions').classList.add('hidden-view'); 
+                    await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? win : -this.bet, label: 'BLACKJACK', status: 'completed' }); 
+                    State.isProcessing = false; 
                 }
             },
             chicken: {
-                bet: 0, active: false, currentLane: 0, lanes: 4,
-                init(el) {
-                    this.active = false; this.currentLane = 0;
-                    el.innerHTML = `
-                        <div class="glass p-5 text-center animate__animated animate__fadeIn">
-                            <div class="flex justify-between items-center mb-4"><span class="font-casino text-[10px] text-zinc-500 tracking-wider">CHICKEN ROAD</span><span id="chicken-mult" class="font-casino text-emerald-500 text-sm">1.00x</span></div>
-                            <div id="chicken-world" class="flex"></div>
-                            <input id="chicken-bet" type="number" class="input-bet" value="10" placeholder="Apuesta">
-                            <button id="btn-chicken-action" onclick="GameLogic.chicken.action()" class="btn-action w-full py-4 font-casino">CRUZAR CARRIL</button>
-                        </div>
-                    `;
-                    this.buildWorld();
-                },
-                buildWorld() {
-                    const world = document.getElementById('chicken-world');
-                    world.innerHTML = '';
-                    for(let i=0; i<this.lanes; i++) {
-                        const lane = document.createElement('div');
-                        lane.className = `road-lane ${i===0?'current':''}`;
-                        lane.id = `lane-${i}`;
-                        lane.innerHTML = i===0?`<div class="chicken-sprite" id="chick">🐥</div>`:``;
-                        world.appendChild(lane);
-                    }
-                },
-                getMult() {
-                    if(this.currentLane === 0) return 1.0;
-                    return Math.pow(1.45, this.currentLane);
-                },
-                async action() {
-                    if(State.isProcessing) return;
-                    const btn = document.getElementById('btn-chicken-action');
-                    if(!this.active) {
-                        const bInput = document.getElementById('chicken-bet');
-                        this.bet = Math.abs(parseFloat(bInput.value));
-                        if(!this.bet || isNaN(this.bet) || this.bet <= 0) return UI.notify("Apuesta inválida", "error");
-                        if(State.balance < this.bet) return UI.notify("Saldo insuficiente", "error");
-
-                        State.balance -= this.bet; UI.updateBalance();
-                        this.active = true; this.currentLane = 0;
-                        document.getElementById('chicken-bet').disabled = true;
-                        btn.innerText = "COBRAR PASO"; btn.className = 'btn-action w-full py-4 font-casino bg-amber-500 text-black';
-                        playSfx('click');
-                        this.buildWorld();
-                    } else {
-                        await this.cashout();
-                    }
-                },
-                async advance() {
-                    if(!this.active) return;
-                    const next = this.currentLane + 1;
-                    
-                    const forcedLose = Math.random() * State.luckFactor < 0.45;
-                    const hit = Math.random() > 0.65 || forcedLose;
-
-                    if(hit) {
-                        const currentLaneEl = document.getElementById(`lane-${this.currentLane}`);
-                        const car = document.createElement('div');
-                        car.className = 'car-sprite'; car.innerText = '🚗';
-                        currentLaneEl.appendChild(car);
-                        
-                        playSfx('lose');
-                        const chick = document.getElementById('chick');
-                        if(chick) chick.innerText = '💥';
-                        UI.notify("¡Te atropellaron!", "error");
-                        await this.endGame(false);
-                    } else {
-                        playSfx('click');
-                        const oldLane = document.getElementById(`lane-${this.currentLane}`);
-                        oldLane.classList.remove('current'); oldLane.classList.add('passed');
-                        oldLane.innerHTML = '';
-
-                        this.currentLane = next;
-                        if(this.currentLane === this.lanes) {
-                            this.lanes += 2;
-                        }
-
-                        const world = document.getElementById('chicken-world');
-                        const newLane = document.createElement('div');
-                        newLane.className = 'road-lane current';
-                        newLane.id = `lane-${this.currentLane}`;
-                        newLane.innerHTML = `<div class="chicken-sprite" id="chick">🐥</div>`;
-                        world.appendChild(newLane);
-
-                        document.getElementById('chicken-mult').innerText = `${this.getMult().toFixed(2)}x`;
-                    }
-                },
-                async cashout() {
-                    const mult = this.getMult();
-                    const win = this.bet * mult;
-                    State.balance += win; UI.updateBalance();
-                    playSfx('win'); UI.notify(`¡Cruzaste con $${win.toFixed(2)}!`, "success");
-                    await this.endGame(true, win, mult);
-                },
-                async endGame(win, winAmt = 0, mult = 0) {
-                    this.active = false; this.lanes = 4;
-                    GameLogic.adjustLuck(winAmt, this.bet, mult);
-                    document.getElementById('chicken-bet').disabled = false;
-                    const btn = document.getElementById('btn-chicken-action');
-                    btn.innerText = "CRUZAR CARRIL"; btn.className = 'btn-action w-full py-4 font-casino';
-                    this.buildWorld();
-                    document.getElementById('chicken-mult').innerText = '1.00x';
-                    await GameLogic.saveBet('Chicken Road', this.bet, winAmt, mult);
+                pos: -1, active: false, bet: 0, mults: [1.2, 1.5, 2.2, 4.0, 8.5, 18.0, 45.0, 100.0], moving: false,
+                init() { const road = document.getElementById('chicken-world'); if(!road) return; road.innerHTML = `<div id="chicken-hero" class="chicken-sprite">🐥</div>`; this.mults.forEach((m, i) => { const lane = document.createElement('div'); lane.className = "road-lane"; lane.innerHTML = `<span class="text-[8px] font-black text-white/10 uppercase">${m}x</span>`; lane.id = `lane-${i}`; road.appendChild(lane); }); this.updateHero(); },
+                async start() { if(this.active || State.isProcessing) return; const b = Math.abs(parseFloat(document.getElementById('chicken-bet-input').value)) || 10; if(State.balance < b) return UI.notify("Saldo insuficiente", "error"); State.isProcessing = true; await Core.updateBalanceDB(-b); State.balance -= b; this.bet = b; UI.updateBalance(); this.pos = -1; this.active = true; this.moving = false; document.getElementById('chicken-controls').classList.add('hidden-view'); document.getElementById('chicken-actions').classList.remove('hidden-view'); document.getElementById('chicken-cashout-btn').innerText = `COBRAR $${b.toFixed(2)}`; this.init(); State.isProcessing = false; },
+                updateHero() { const hero = document.getElementById('chicken-hero'); if(!hero) return; const lanes = document.querySelectorAll('.road-lane'); lanes.forEach(l => l.classList.remove('current', 'passed')); if(this.pos === -1) hero.style.left = "-40px"; else { const targetLane = document.getElementById(`lane-${this.pos}`); if(targetLane){ const laneRect = targetLane.getBoundingClientRect(); const worldRect = document.getElementById('chicken-world').getBoundingClientRect(); hero.style.left = (laneRect.left - worldRect.left + (laneRect.width / 2) - 15) + "px"; for(let i=0; i<=this.pos; i++) { const l = document.getElementById(`lane-${i}`); if(i === this.pos) l.classList.add('current'); else l.classList.add('passed'); } } } },
+                move() { if(!this.active || State.isProcessing || this.moving) return; this.moving = true; const cBtn = document.getElementById('chicken-cashout-btn'); if(cBtn) cBtn.disabled = true; this.pos++; const risk = (0.25 + (this.pos * 0.15)) / State.luckFactor; if(Math.random() < risk) { const car = document.createElement('div'); car.className = "car-sprite"; car.innerHTML = '🚘'; const targetLane = document.getElementById(`lane-${this.pos}`); if(targetLane) car.style.left = (targetLane.offsetLeft + 10) + "px"; document.getElementById('chicken-world').appendChild(car); this.active = false; setTimeout(() => { if(document.getElementById('chicken-hero')) document.getElementById('chicken-hero').innerHTML = '💥'; playSfx('lose'); UI.notify("¡ATROPELLADO!", "error"); this.end(false); }, 300); } else { playSfx('click'); this.updateHero(); const m = this.mults[this.pos]; document.getElementById('chicken-status').innerText = m.toFixed(2) + 'x'; if(cBtn) { cBtn.innerText = `COBRAR $${(this.bet * m).toFixed(2)}`; cBtn.disabled = false; } this.moving = false; if(this.pos === 7) this.cashout(); } },
+                async cashout() { if(!this.active || State.isProcessing || this.moving) return; State.isProcessing = true; const m = this.pos === -1 ? 1 : this.mults[this.pos]; const win = this.bet * m; await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
+                async end(win) { 
+                    this.active = false; this.moving = false; const m = this.pos === -1 ? 1 : this.mults[this.pos]; 
+                    const winAmt = win ? (this.bet * m) : 0; GameLogic.adjustLuck(winAmt, this.bet, m); UI.updateBalance(); 
+                    setTimeout(() => { 
+                        if (document.getElementById('view-game').classList.contains('hidden-view')) return; 
+                        document.getElementById('chicken-controls').classList.remove('hidden-view'); 
+                        document.getElementById('chicken-actions').classList.add('hidden-view'); 
+                        document.getElementById('chicken-status').innerText = '1.00x'; 
+                    }, 1000); 
+                    await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'CHICKEN', status: 'completed' }); 
+                    State.isProcessing = false; 
                 }
+            },
+            crash: {
+                active: false, mult: 1, bet: 0, interval: null, bgPos: 0,
+                async start() { if(this.active || State.isProcessing) return; this.active = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10; const btn = document.getElementById('btn-crash'); if(btn) btn.disabled = true; const { data: user = {} } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b || b <= 0) { this.active = false; State.isProcessing = false; if(btn) btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('rocket'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); this.bet = b; this.mult = 1.0; this.bgPos = 0; if(btn) { btn.innerText = `RETIRAR $${(this.bet).toFixed(2)}`; btn.disabled = false; btn.onclick = () => this.cashout(); } if (Math.random() < 0.15 / State.luckFactor) { this.explode(); return; } let baseLimit = 1.01 + Math.random() * 0.99; if (Math.random() < 0.05) baseLimit = 2 + Math.random() * 10; State.isProcessing = false; this.interval = setInterval(() => { this.mult += 0.01; const multEl = document.getElementById('crash-mult'); if(multEl) multEl.innerText = this.mult.toFixed(2) + 'x'; let speed = 2 + (this.mult * 2); this.bgPos -= speed; if (this.bgPos <= -100) this.bgPos = 0; const bgEl = document.getElementById('crash-bg'); if(bgEl) bgEl.style.transform = `translateX(${this.bgPos}%)`; let floatY = Math.sin(Date.now() / 200) * 8; const rocketEl = document.getElementById('crash-rocket'); if(rocketEl) rocketEl.style.transform = `translateY(${floatY}px)`; if(btn) btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`; if(this.mult >= baseLimit) { clearInterval(this.interval); this.explode(); } }, 50); },
+                async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; const btn = document.getElementById('btn-crash'); if(btn) btn.disabled = true; clearInterval(this.interval); const win = this.bet * this.mult; try { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); await this.end(true); } catch(e) { State.isProcessing = false; } },
+                explode() { clearInterval(this.interval); playSfx('lose'); UI.notify("¡EXPLOTÓ!", "error"); const multEl = document.getElementById('crash-mult'); if(multEl) multEl.classList.add('text-red-500'); const rocketEl = document.getElementById('crash-rocket'); if(rocketEl) { rocketEl.innerHTML = '💥'; rocketEl.style.transform = 'translateY(0)'; } this.end(false); },
+                async end(win) { const winAmt = win ? (this.bet * this.mult) : 0; GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0); this.active = false; State.isProcessing = false; UI.updateBalance(); const btn = document.getElementById('btn-crash'); if(btn) { btn.innerText = "EXPLOTÓ"; btn.disabled = true; setTimeout(() => { btn.disabled = false; btn.innerText = "DESPEGAR"; btn.onclick = () => GameLogic.crash.start(); const multEl = document.getElementById('crash-mult'); if(multEl) { multEl.classList.remove('text-red-500'); multEl.innerText = '1.00x'; } const rocketEl = document.getElementById('crash-rocket'); if(rocketEl) { rocketEl.innerHTML = '🚀'; rocketEl.style.transform = 'translateY(0)'; } }, 2500); } await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR', status: 'completed' }); }
             }
         };
 
-        window.onload = () => {
-            let pct = 0;
-            const bInterval = setInterval(() => {
-                pct += 10;
-                const bar = document.getElementById('boot-bar');
-                if(bar) bar.style.width = `${pct}%`;
-                if(pct >= 100) {
-                    clearInterval(bInterval);
-                    AuthManager.checkSession();
-                }
-            }, 100);
-        };
+        Core.init();
     </script>
 </body>
 </html>
