@@ -737,5 +737,34 @@
         }, 300);
     </script>
 
+
+    <!-- Integración del Motor de Suerte Global -->
+    <script>
+        const GlobalLuck = {
+            luckFactor: 2.0,
+            winHistory: [],
+            sessionLoss: 0,
+
+            // Función centralizada para determinar resultados
+            calculateOutcome(betAmount) {
+                const baseChance = 0.45;
+                const adjustedChance = Math.min(baseChance * this.luckFactor, 0.95);
+                const isWin = Math.random() < adjustedChance;
+                
+                if (!isWin) {
+                    this.sessionLoss += betAmount;
+                }
+                
+                this.winHistory.push({ bet: betAmount, win: isWin, timestamp: Date.now() });
+                return isWin;
+            },
+
+            resetSession() {
+                this.sessionLoss = 0;
+                this.winHistory = [];
+            }
+        };
+    </script>
+
 </body>
 </html>
