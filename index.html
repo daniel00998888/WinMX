@@ -696,27 +696,33 @@
         Core.init();
     </script>
 
-    <!-- Botón de chat flotante a Messenger -->
-    <a href="https://m.me/721633921035642" target="_blank" class="fixed bottom-24 right-6 z-[600] bg-blue-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:scale-105 transition-transform">
+    
+
+
+    <!-- Botón de Messenger -->
+    <a id="messenger-btn" href="https://m.me/721633921035642" target="_blank" class="fixed bottom-24 right-6 z-[600] bg-blue-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:scale-105 transition-transform">
         <i class="fab fa-facebook-messenger text-2xl"></i>
     </a>
-
 
     <script>
         // Lógica para ocultar el botón de Messenger en vistas específicas
         setInterval(() => {
             const btn = document.getElementById('messenger-btn');
             if (!btn) return;
+
+            // Seleccionamos los contenedores que indican que el usuario está en una sección donde no debe verse el botón
             const authView = document.getElementById('auth-view');
             const modalDep = document.getElementById('modal-deposit');
-            
-            const isAuthVisible = authView && !authView.classList.contains('hidden-view');
-            const isModalVisible = modalDep && !modalDep.classList.contains('hidden-view');
-            
-            if (isAuthVisible || isModalVisible) {
-                btn.style.display = 'none';
+            const viewGame = document.getElementById('view-game');
+
+            // Comprobamos si alguna de esas secciones está visible
+            // (La sección está visible si existe y NO tiene la clase 'hidden-view')
+            const isVisible = (el) => el && !el.classList.contains('hidden-view');
+
+            if (isVisible(authView) || isVisible(modalDep) || isVisible(viewGame)) {
+                btn.style.setProperty('display', 'none', 'important');
             } else {
-                btn.style.display = 'flex';
+                btn.style.setProperty('display', 'flex', 'important');
             }
         }, 300);
     </script>
