@@ -412,9 +412,27 @@
 
         const Core = {
             async init() { let p = 0; const i = setInterval(() => { p += 25; document.getElementById('boot-bar').style.width = `${p}%`; if(p >= 100) { clearInterval(i); this.check(); } }, 100); },
-            async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); this.subscribeBalance(); } else { document.getElementById('auth-view').classList.remove('hidden-view'); } },
+            async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); this.subscribeBalance(); this.processPendingWins(); } else { document.getElementById('auth-view').classList.remove('hidden-view'); } },
             async loadBalance() { const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle(); State.balance = data ? data.saldo : 0; UI.updateBalance(); },
             subscribeBalance() { sb.channel('balance_sync').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'usuarios', filter: `id=eq.${State.user.id}` }, (payload) => { if (payload.new && typeof payload.new.saldo !== 'undefined' && !State.isSpinning) { State.balance = payload.new.saldo; UI.updateBalance(); } }).subscribe(); },
+            async processPendingWins() {
+                try {
+                    let saved = JSON.parse(localStorage.getItem('pendingWins') || '[]');
+                    let userWins = saved.filter(w => w.userId === State.user.id);
+                    if (userWins.length > 0) {
+                        let totalWin = userWins.reduce((sum, w) => sum + w.amount, 0);
+                        if (totalWin > 0) {
+                            await this.updateBalanceDB(totalWin);
+                            State.balance += totalWin;
+                            UI.updateBalance();
+                            await this.recordHistory({ user_id: State.user.id, type: 'bets', amount: totalWin, label: 'COBRO AUTO (DESCONEXIÓN)', status: 'completed' });
+                            setTimeout(() => { UI.notify(`Recuperaste $${totalWin.toFixed(2)} de apuesta pausada`, "success"); playSfx('win'); }, 2500);
+                        }
+                        saved = saved.filter(w => w.userId !== State.user.id);
+                        localStorage.setItem('pendingWins', JSON.stringify(saved));
+                    }
+                } catch(e) { console.error(e); }
+            },
             async updateBalanceDB(amount) { const { data, error } = await sb.rpc('modificar_saldo', { user_id: State.user.id, monto: amount }); if (error) { const { data: current } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); await sb.from('usuarios').update({ saldo: current.saldo + amount }).eq('id', State.user.id); } },
             async claimBonus() { if(State.isProcessing) return; State.isProcessing = true; playSfx('win'); try { await this.updateBalanceDB(30); UI.notify("Bono reclamado", "success"); location.reload(); } catch(e) { UI.notify("Error", "error"); } finally { State.isProcessing = false; } },
             
@@ -531,7 +549,23 @@
         };
 
         const Router = {
-            showView(viewId) { if(State.isSpinning || State.isProcessing) return; playSfx('click'); document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden-view')); document.getElementById(`view-${viewId}`).classList.remove('hidden-view'); document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); const navId = {'lobby':'nav-home','history':'nav-history','profile':'nav-profile'}[viewId]; if(navId) document.getElementById(navId).classList.add('active'); document.getElementById('bottom-nav-bar').style.transform = 'translateY(0)'; if(viewId === 'history') Core.fetchHistory(); if(viewId === 'profile') UI.updateProfile(); },
+            showView(viewId) { 
+                const hasActiveGame = GameLogic.mines?.active || GameLogic.tower?.active || GameLogic.blackjack?.active || GameLogic.chicken?.active || GameLogic.crash?.active || State.isSpinning; 
+                if (hasActiveGame && viewId !== 'game') { 
+                    UI.notify("Cobra o termina tu apuesta antes de salir", "error"); 
+                    return; 
+                } 
+                if(State.isSpinning || State.isProcessing) return; 
+                playSfx('click'); 
+                document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden-view')); 
+                document.getElementById(`view-${viewId}`).classList.remove('hidden-view'); 
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); 
+                const navId = {'lobby':'nav-home','history':'nav-history','profile':'nav-profile'}[viewId]; 
+                if(navId) document.getElementById(navId).classList.add('active'); 
+                document.getElementById('bottom-nav-bar').style.transform = 'translateY(0)'; 
+                if(viewId === 'history') Core.fetchHistory(); 
+                if(viewId === 'profile') UI.updateProfile(); 
+            },
             openGame(game) { if(State.isProcessing) return; playSfx('click'); this.showView('game'); document.getElementById('game-mount').innerHTML = this.templates[game]; document.getElementById('view-game').scrollTop = 0; document.getElementById('bottom-nav-bar').style.transform = 'translateY(100%)'; if(game === 'slots') GameLogic.slots.init(); if(game === 'mines') GameLogic.mines.drawGrid(); if(game === 'tower') GameLogic.tower.drawTower(); if(game === 'blackjack') GameLogic.blackjack.renderInitial(); if(game === 'chicken') GameLogic.chicken.init(); },
             templates: {
                 slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 3.00x</span><span class="text-amber-500">Máx: 500.00x</span></div><input id="slots-bet-input" type="number" value="10" min="1" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4>🎰 Reglas Slots</h4><p>Combina 3 símbolos para ganar.</p></div></div>`,
@@ -670,7 +704,7 @@
                 init() { const road = document.getElementById('chicken-world'); if(!road) return; road.innerHTML = `<div id="chicken-hero" class="chicken-sprite">🐥</div>`; this.mults.forEach((m, i) => { const lane = document.createElement('div'); lane.className = "road-lane"; lane.innerHTML = `<span class="text-[8px] font-black text-white/10 uppercase">${m}x</span>`; lane.id = `lane-${i}`; road.appendChild(lane); }); this.updateHero(); },
                 async start() { if(this.active || State.isProcessing) return; const b = Math.abs(parseFloat(document.getElementById('chicken-bet-input').value)) || 10; if(State.balance < b) return UI.notify("Saldo insuficiente", "error"); State.isProcessing = true; await Core.updateBalanceDB(-b); State.balance -= b; this.bet = b; UI.updateBalance(); this.pos = -1; this.active = true; this.moving = false; document.getElementById('chicken-controls').classList.add('hidden-view'); document.getElementById('chicken-actions').classList.remove('hidden-view'); document.getElementById('chicken-cashout-btn').innerText = `COBRAR $${b.toFixed(2)}`; this.init(); State.isProcessing = false; },
                 updateHero() { const hero = document.getElementById('chicken-hero'); if(!hero) return; const lanes = document.querySelectorAll('.road-lane'); lanes.forEach(l => l.classList.remove('current', 'passed')); if(this.pos === -1) hero.style.left = "-40px"; else { const targetLane = document.getElementById(`lane-${this.pos}`); if(targetLane){ const laneRect = targetLane.getBoundingClientRect(); const worldRect = document.getElementById('chicken-world').getBoundingClientRect(); hero.style.left = (laneRect.left - worldRect.left + (laneRect.width / 2) - 15) + "px"; for(let i=0; i<=this.pos; i++) { const l = document.getElementById(`lane-${i}`); if(i === this.pos) l.classList.add('current'); else l.classList.add('passed'); } } } },
-                move() { if(!this.active || State.isProcessing || this.moving) return; this.moving = true; const cBtn = document.getElementById('chicken-cashout-btn'); if(cBtn) cBtn.disabled = true; this.pos++; const risk = (0.13 + (this.pos * 0.15)) / State.luckFactor; if(Math.random() < risk) { const car = document.createElement('div'); car.className = "car-sprite"; car.innerHTML = '🚘'; const targetLane = document.getElementById(`lane-${this.pos}`); if(targetLane) car.style.left = (targetLane.offsetLeft + 10) + "px"; document.getElementById('chicken-world').appendChild(car); this.active = false; setTimeout(() => { if(document.getElementById('chicken-hero')) document.getElementById('chicken-hero').innerHTML = '💥'; playSfx('lose'); UI.notify("¡ATROPELLADO!", "error"); this.end(false); }, 300); } else { playSfx('click'); this.updateHero(); const m = this.mults[this.pos]; document.getElementById('chicken-status').innerText = m.toFixed(2) + 'x'; if(cBtn) { cBtn.innerText = `COBRAR $${(this.bet * m).toFixed(2)}`; cBtn.disabled = false; } this.moving = false; if(this.pos === 7) this.cashout(); } },
+                move() { if(!this.active || State.isProcessing || this.moving) return; this.moving = true; const cBtn = document.getElementById('chicken-cashout-btn'); if(cBtn) cBtn.disabled = true; this.pos++; const risk = (0.25 + (this.pos * 0.15)) / State.luckFactor; if(Math.random() < risk) { const car = document.createElement('div'); car.className = "car-sprite"; car.innerHTML = '🚘'; const targetLane = document.getElementById(`lane-${this.pos}`); if(targetLane) car.style.left = (targetLane.offsetLeft + 10) + "px"; document.getElementById('chicken-world').appendChild(car); this.active = false; setTimeout(() => { if(document.getElementById('chicken-hero')) document.getElementById('chicken-hero').innerHTML = '💥'; playSfx('lose'); UI.notify("¡ATROPELLADO!", "error"); this.end(false); }, 300); } else { playSfx('click'); this.updateHero(); const m = this.mults[this.pos]; document.getElementById('chicken-status').innerText = m.toFixed(2) + 'x'; if(cBtn) { cBtn.innerText = `COBRAR $${(this.bet * m).toFixed(2)}`; cBtn.disabled = false; } this.moving = false; if(this.pos === 7) this.cashout(); } },
                 async cashout() { if(!this.active || State.isProcessing || this.moving) return; State.isProcessing = true; const m = this.pos === -1 ? 1 : this.mults[this.pos]; const win = this.bet * m; await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
                 async end(win) { 
                     this.active = false; this.moving = false; const m = this.pos === -1 ? 1 : this.mults[this.pos]; 
@@ -687,24 +721,34 @@
             },
             crash: {
                 active: false, mult: 1, bet: 0, interval: null, bgPos: 0,
-               async start() { if(this.active || State.isProcessing) return; this.active = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10; const btn = document.getElementById('btn-crash'); if(btn) btn.disabled = true; const { data: user = {} } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b || b <= 0) { this.active = false; State.isProcessing = false; if(btn) btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('rocket'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); this.bet = b; this.mult = 1.0; this.bgPos = 0; if(btn) { btn.innerText = `RETIRAR $${(this.bet).toFixed(2)}`; btn.disabled = false; btn.onclick = () => this.cashout(); } if (Math.random() < 0.20 / State.luckFactor) { this.explode(); return; } let baseLimit = 1.01 + Math.random() * 1.45; if (Math.random() < 0.05) baseLimit = 2 + Math.random() * 10; State.isProcessing = false; this.interval = setInterval(() => { this.mult += 0.01; const multEl = document.getElementById('crash-mult'); if(multEl) multEl.innerText = this.mult.toFixed(2) + 'x'; let speed = 2 + (this.mult * 2); this.bgPos -= speed; if (this.bgPos <= -100) this.bgPos = 0; const bgEl = document.getElementById('crash-bg'); if(bgEl) bgEl.style.transform = `translateX(${this.bgPos}%)`; let floatY = Math.sin(Date.now() / 200) * 8; const rocketEl = document.getElementById('crash-rocket'); if(rocketEl) rocketEl.style.transform = `translateY(${floatY}px)`; if(btn) btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`; if(this.mult >= baseLimit) { clearInterval(this.interval); this.explode(); } }, 50); },
+               async start() { if(this.active || State.isProcessing) return; this.active = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 10; const btn = document.getElementById('btn-crash'); if(btn) btn.disabled = true; const { data: user = {} } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b || b <= 0) { this.active = false; State.isProcessing = false; if(btn) btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('rocket'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); this.bet = b; this.mult = 1.0; this.bgPos = 0; if(btn) { btn.innerText = `RETIRAR $${(this.bet).toFixed(2)}`; btn.disabled = false; btn.onclick = () => this.cashout(); } if (Math.random() < 0.15 / State.luckFactor) { this.explode(); return; } let baseLimit = 1.01 + Math.random() * 0.99; if (Math.random() < 0.05) baseLimit = 2 + Math.random() * 10; State.isProcessing = false; this.interval = setInterval(() => { this.mult += 0.01; const multEl = document.getElementById('crash-mult'); if(multEl) multEl.innerText = this.mult.toFixed(2) + 'x'; let speed = 2 + (this.mult * 2); this.bgPos -= speed; if (this.bgPos <= -100) this.bgPos = 0; const bgEl = document.getElementById('crash-bg'); if(bgEl) bgEl.style.transform = `translateX(${this.bgPos}%)`; let floatY = Math.sin(Date.now() / 200) * 8; const rocketEl = document.getElementById('crash-rocket'); if(rocketEl) rocketEl.style.transform = `translateY(${floatY}px)`; if(btn) btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`; if(this.mult >= baseLimit) { clearInterval(this.interval); this.explode(); } }, 50); },
                 async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; const btn = document.getElementById('btn-crash'); if(btn) btn.disabled = true; clearInterval(this.interval); const win = this.bet * this.mult; try { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); await this.end(true); } catch(e) { State.isProcessing = false; } },
                 explode() { clearInterval(this.interval); playSfx('lose'); UI.notify("¡EXPLOTÓ!", "error"); const multEl = document.getElementById('crash-mult'); if(multEl) multEl.classList.add('text-red-500'); const rocketEl = document.getElementById('crash-rocket'); if(rocketEl) { rocketEl.innerHTML = '💥'; rocketEl.style.transform = 'translateY(0)'; } this.end(false); },
                 async end(win) { const winAmt = win ? (this.bet * this.mult) : 0; GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0); this.active = false; State.isProcessing = false; UI.updateBalance(); const btn = document.getElementById('btn-crash'); if(btn) { btn.innerText = "EXPLOTÓ"; btn.disabled = true; setTimeout(() => { btn.disabled = false; btn.innerText = "DESPEGAR"; btn.onclick = () => GameLogic.crash.start(); const multEl = document.getElementById('crash-mult'); if(multEl) { multEl.classList.remove('text-red-500'); multEl.innerText = '1.00x'; } const rocketEl = document.getElementById('crash-rocket'); if(rocketEl) { rocketEl.innerHTML = '🚀'; rocketEl.style.transform = 'translateY(0)'; } }, 2500); } await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR', status: 'completed' }); }
             }
         };
 
+        // Guardado automático en caso de desconexión o recarga de la página
+        window.addEventListener('beforeunload', (e) => {
+            if (!State.user) return;
+            let pendingWin = 0;
+            if (GameLogic.mines?.active) { pendingWin = GameLogic.mines.bet * GameLogic.mines.mult; }
+            else if (GameLogic.tower?.active) { pendingWin = GameLogic.tower.bet * GameLogic.tower.mult; }
+            else if (GameLogic.chicken?.active) {
+                const m = GameLogic.chicken.pos === -1 ? 1 : GameLogic.chicken.mults[GameLogic.chicken.pos];
+                pendingWin = GameLogic.chicken.bet * m;
+            }
+            else if (GameLogic.crash?.active) { pendingWin = GameLogic.crash.bet * GameLogic.crash.mult; }
+
+            if (pendingWin > 0) {
+                let saved = JSON.parse(localStorage.getItem('pendingWins') || '[]');
+                saved.push({ userId: State.user.id, amount: pendingWin, timestamp: Date.now() });
+                localStorage.setItem('pendingWins', JSON.stringify(saved));
+            }
+        });
+
         Core.init();
     </script>
-
-    
-
-
-    
-
-
-    
-
 
     <div id="messenger-container" class="fixed bottom-24 right-6 z-[600] flex flex-col items-center gap-1">
         <a id="messenger-btn" 
