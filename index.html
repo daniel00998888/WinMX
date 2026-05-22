@@ -648,7 +648,7 @@
                 const aspect = container.clientWidth / container.clientHeight;
                 const viewSize = 10; 
                 this.camera = new THREE.OrthographicCamera(-viewSize/2, viewSize/2, viewSize/aspect/2, -viewSize/aspect/2, 0.1, 100);
-                this.camera.position.set(0, 5.8, 7.5);
+                this.camera.position.set(0, 5, 7.5);
                 this.camera.lookAt(0, 0, 0);
 
                 // 3. Renderizador
@@ -674,11 +674,21 @@
                 this.scene.add(road);
 
                 // 6. El Pollito (Cubo Amarillo)
-                const chickenGeo = new THREE.BoxGeometry(0.6, 0.6, 0.6);
-                const chickenMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24 }); 
-                this.chicken = new THREE.Mesh(chickenGeo, chickenMat);
-                this.chicken.position.set(-4.5, 0.3, 0);
-                this.chicken.castShadow = true;
+               this.chicken = new THREE.Group();
+                // Cuerpo
+                const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshStandardMaterial({ color: 0xfbbf24 }));
+                body.position.y = 0.3;
+                this.chicken.add(body);
+                // Pico
+                const beak = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.15, 0.2), new THREE.MeshStandardMaterial({ color: 0xf97316 }));
+                beak.position.set(0, 0.3, 0.35);
+                this.chicken.add(beak);
+                // Cresta
+                const crest = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.2, 0.3), new THREE.MeshStandardMaterial({ color: 0xef4444 }));
+                crest.position.set(0, 0.65, 0);
+                this.chicken.add(crest);
+                
+                this.chicken.position.set(-5.625, 0, 0); // Empieza afuera a la izquierda
                 this.scene.add(this.chicken);
 
                 this.animate();
