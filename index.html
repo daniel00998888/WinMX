@@ -645,8 +645,10 @@
                 this.scene.background = new THREE.Color(0x111111);
 
                 // 2. Cámara (Vista Isométrica)
-                this.camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
-                this.camera.position.set(0, 6, 7);
+                const aspect = container.clientWidth / container.clientHeight;
+                const viewSize = 10; 
+                this.camera = new THREE.OrthographicCamera(-viewSize/2, viewSize/2, viewSize/aspect/2, -viewSize/aspect/2, 0.1, 100);
+                this.camera.position.set(0, 5, 5);
                 this.camera.lookAt(0, 0, 0);
 
                 // 3. Renderizador
