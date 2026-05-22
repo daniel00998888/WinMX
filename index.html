@@ -676,9 +676,66 @@
                 sidewalk.receiveShadow = true;
                 this.scene.add(sidewalk);
 
+                // 2.5 BANQUETA FINAL (Zona Segura de Llegada)
+                const finalSidewalk = new THREE.Mesh(sidewalkGeo, sidewalkMat);
+                finalSidewalk.position.set(3.88, 0.075, 0); // Exactamente al final después de los 6 carriles
+                finalSidewalk.receiveShadow = true;
+                this.scene.add(finalSidewalk);
+
+                // 2.7 DETALLES DE CIUDAD - FAROLAS Y POSTES
+                const postMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.5 });
+                const lampMat = new THREE.MeshStandardMaterial({ color: 0xffdd33, emissive: 0xffdd33, emissiveIntensity: 0.5, roughness: 0.3 });
+                
+                // Farolas en el lado izquierdo
+                for (let z = -12; z <= 12; z += 6) {
+                    const postGeo = new THREE.CylinderGeometry(0.1, 0.12, 3, 8);
+                    const post = new THREE.Mesh(postGeo, postMat);
+                    post.position.set(-5.5, 1.5, z);
+                    post.castShadow = true;
+                    this.scene.add(post);
+                    
+                    const lampGeo = new THREE.BoxGeometry(0.4, 0.3, 0.4);
+                    const lamp = new THREE.Mesh(lampGeo, lampMat);
+                    lamp.position.set(-5.5, 3.1, z);
+                    lamp.castShadow = true;
+                    this.scene.add(lamp);
+                }
+
+                // Farolas en el lado derecho
+                for (let z = -12; z <= 12; z += 6) {
+                    const postGeo = new THREE.CylinderGeometry(0.1, 0.12, 3, 8);
+                    const post = new THREE.Mesh(postGeo, postMat);
+                    post.position.set(4.7, 1.5, z);
+                    post.castShadow = true;
+                    this.scene.add(post);
+                    
+                    const lampGeo = new THREE.BoxGeometry(0.4, 0.3, 0.4);
+                    const lamp = new THREE.Mesh(lampGeo, lampMat);
+                    lamp.position.set(4.7, 3.1, z);
+                    lamp.castShadow = true;
+                    this.scene.add(lamp);
+                }
+
+                // 2.8 EDIFICIOS EN BACKGROUND
+                const buildingMat = new THREE.MeshStandardMaterial({ color: 0x4a5568, roughness: 0.8 });
+                
+                // Edificios lado izquierdo
+                const leftBuildGeo = new THREE.BoxGeometry(2, 4, 0.5);
+                const leftBuilding = new THREE.Mesh(leftBuildGeo, buildingMat);
+                leftBuilding.position.set(-6.5, 2, 0);
+                leftBuilding.receiveShadow = true;
+                this.scene.add(leftBuilding);
+
+                // Edificios lado derecho
+                const rightBuildGeo = new THREE.BoxGeometry(2, 4, 0.5);
+                const rightBuilding = new THREE.Mesh(rightBuildGeo, buildingMat);
+                rightBuilding.position.set(5.7, 2, 0);
+                rightBuilding.receiveShadow = true;
+                this.scene.add(rightBuilding);
+
                 // 3. LÍNEAS DE LA CARRETERA (Separadores Blancos)
                 const lineMat = new THREE.MeshStandardMaterial({ color: 0xd4d4d8, roughness: 0.9 });
-                for (let col = 1; col <= 6; col++) { // 6 separadores entre los 6 carriles vehiculares
+                for (let col = 1; col <= 7; col++) { // 7 separadores para los 6 carriles + banqueta final
                     const separatorX = -3.98 + (col * 1.14) - 0.57; 
                     for (let z = -15; z <= 15; z += 2.5) {
                         const dashGeo = new THREE.BoxGeometry(0.06, 0.02, 1.2);
@@ -764,9 +821,9 @@
                 if (!this.camera) return;
                 this.camera.aspect = w / h;
                 this.camera.updateProjectionMatrix();
-                if (w < h) this.camera.position.set(0, 6.2, 5.2);
-                else this.camera.position.set(0, 5.2, 5.2);
-                this.camera.lookAt(0, 0.3, 0);
+                if (w < h) this.camera.position.set(0, 7, 4.8);
+                else this.camera.position.set(0, 6.5, 4.8);
+                this.camera.lookAt(0, 0.2, 0);
             },
 
             reset() {
