@@ -81,19 +81,12 @@
         
         .risk-badge { background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.05) 100%); border: 1px solid rgba(239, 68, 68, 0.4); color: #ff6b6b; font-size: 9px; font-weight: 900; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1); letter-spacing: 0.5px; }
 
-        /* 3D Coin Styles */
-        .coin-3d-wrapper { perspective: 1200px; width: 200px; height: 200px; margin: 0 auto; }
-        .coin-3d { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
-        .coin-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 80px; font-weight: 900; box-shadow: inset 0 2px 8px rgba(0,0,0,0.5), 0 8px 20px rgba(16, 185, 129, 0.3); border: 3px solid rgba(16, 185, 129, 0.4); }
-        .coin-heads { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); }
-        .coin-tails { background: linear-gradient(135deg, #10b981 0%, #059669 100%); transform: rotateY(180deg); }
-        
-        /* Plinko Ball Animation */
-        @keyframes plinko-drop { 
-            0% { transform: translateY(-300px); opacity: 1; }
-            100% { transform: translateY(0); opacity: 1; }
-        }
-        .plinko-ball { position: absolute; width: 16px; height: 16px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #ff6b6b, #ff0000); box-shadow: 0 4px 12px rgba(255, 0, 0, 0.5), inset -2px -2px 5px rgba(0,0,0,0.5); animation: plinko-drop 0.5s ease-in; z-index: 100; }
+        /* 3D Coin Flip */
+        .coin-flip-scene { perspective: 1500px; width: 180px; height: 180px; margin: 0 auto; }
+        .coin-flip-object { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+        .coin-flip-side { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 60px; font-weight: 900; box-shadow: 0 8px 20px rgba(0,0,0,0.6), inset 0 2px 10px rgba(255,255,255,0.3); border: 4px solid rgba(255,255,255,0.2); }
+        .coin-flip-heads { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #78350f; }
+        .coin-flip-tails { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #064e3b; transform: rotateY(180deg); }
 
         .tx-selector { display: flex; background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0) 100%); border-radius: 1rem; padding: 6px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.08); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
         .tx-tab { flex: 1; text-align: center; padding: 10px; border-radius: 0.8rem; font-size: 10px; font-weight: 900; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); cursor: pointer; color: #666; }
@@ -611,7 +604,7 @@
                 if(viewId === 'history') Core.fetchHistory(); 
                 if(viewId === 'profile') UI.updateProfile(); 
             },
-            openGame(game) { if(State.isProcessing) return; playSfx('click'); this.showView('game'); document.getElementById('game-mount').innerHTML = this.templates[game]; document.getElementById('view-game').scrollTop = 0; document.getElementById('bottom-nav-bar').style.transform = 'translateY(100%)'; if(game === 'slots') GameLogic.slots.init(); if(game === 'mines') GameLogic.mines.drawGrid(); if(game === 'tower') GameLogic.tower.drawTower(); if(game === 'blackjack') GameLogic.blackjack.renderInitial(); if(game === 'chicken') GameLogic.chicken.init(); if(game === 'plinko') GameLogic.plinko.initCanvas(); if(game === 'coinflip') GameLogic.coinflip.init(); },
+            openGame(game) { if(State.isProcessing) return; playSfx('click'); this.showView('game'); document.getElementById('game-mount').innerHTML = this.templates[game]; document.getElementById('view-game').scrollTop = 0; document.getElementById('bottom-nav-bar').style.transform = 'translateY(100%)'; if(game === 'slots') GameLogic.slots.init(); if(game === 'mines') GameLogic.mines.drawGrid(); if(game === 'tower') GameLogic.tower.drawTower(); if(game === 'blackjack') GameLogic.blackjack.renderInitial(); if(game === 'chicken') GameLogic.chicken.init(); if(game === 'plinko') setTimeout(() => GameLogic.plinko.draw(), 100); if(game === 'coinflip') GameLogic.coinflip.reset(); },
             templates: {
                 slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 3.00x</span><span class="text-amber-500">Máx: 500.00x</span></div><input id="slots-bet-input" type="number" value="3" min="3" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4>🎰 Reglas Slots</h4><p>Combina 3 símbolos para ganar. <div class="grid grid-cols-2 gap-2 text-[10px] font-bold uppercase mt-2"><div>🍒 x3</div><div>🍋 x10</div><div>🔔 x50</div><div class="text-emerald-500">7️⃣ x500</div></p>`,
                 mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div class="risk-badge"><i class="fas fa-bomb"></i> 3 Minas Activas</div><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view flex justify-between p-3 bg-emerald-500/10 rounded-xl mb-3"><div class="flex flex-col items-start"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><span id="mines-next-hint" class="text-[7px] text-zinc-500 font-bold uppercase">Siguiente: --</span></div><button id="mines-cashout-btn" onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-4 py-1 rounded font-bold text-[9px]">COBRAR $0.00</button></div><div id="mines-controls"><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 1.25x</span><span class="text-amber-500">Máx: 500.00x</span></div><input id="mines-bet-input" type="number" value="3" min="3" class="input-bet"><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><div class="instruction-card"><h4>💣 Reglas Minas</h4><p>Encuentra diamantes y evita las minas.</p></div></div>`,
@@ -631,8 +624,8 @@
                     <div id="chicken-actions" class="hidden-view grid grid-cols-2 gap-3 mt-4"><button onclick="GameLogic.chicken.move()" class="btn-action py-5 bg-emerald-500 text-black font-black text-lg">AVANZAR</button><button id="chicken-cashout-btn" onclick="GameLogic.chicken.cashout()" class="btn-action py-5 bg-zinc-800 text-white font-black">COBRAR $0.00</button></div>
                     <div class="instruction-card"><h4>🐥 Reglas Chicken Road</h4><p>Cruza los carriles sin ser atropellado.</p></div>
                 </div>`,
-                plinko: `<div class="glass p-4 mx-auto max-w-[320px] text-center"><div class="risk-badge" style="color: #60a5fa; background: rgba(96,165,250,0.1)"><i class="fas fa-circle"></i> Bola Cayendo</div><div id="plinko-board" style="width: 100%; height: 320px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 1rem; border: 2px solid rgba(96,165,250,0.3); position: relative; overflow: hidden; margin-bottom: 20px;"><canvas id="plinko-canvas" width="300" height="320" style="display: block;"></canvas><div id="plinko-result" class="hidden-view absolute bottom-4 left-0 right-0 text-center text-2xl font-casino" style="color: var(--mx-green);">0.00x</div></div><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 0.50x</span><span class="text-amber-500">Máx: 20.00x</span></div><input id="plinko-bet-input" type="number" value="5" min="1" class="input-bet"><button id="btn-plinko-drop" onclick="GameLogic.plinko.drop()" class="btn-action w-full py-4 font-casino">SOLTAR BOLA</button><div class="instruction-card"><h4>⚪ Reglas Plinko</h4><p>Deja caer la bola y gana según dónde caiga.</p></div></div>`,
-                coinflip: `<div class="glass p-4 mx-auto max-w-[320px] text-center"><div class="risk-badge" style="color: #fbbf24; background: rgba(251,191,36,0.1)"><i class="fas fa-coins"></i> 50/50</div><div style="height: 240px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; perspective: 1200px;"><div class="coin-3d-wrapper" id="coin-wrapper"><div class="coin-3d" id="coin-3d"><div class="coin-face coin-heads">C</div><div class="coin-face coin-tails">+</div></div></div></div><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 1.50x</span><span class="text-amber-500">Máx: 2.00x</span></div><div class="flex gap-2 mb-3"><select id="coinflip-choice" class="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-white text-[10px] font-bold"><option value="heads">CARA</option><option value="tails">CRUZ</option></select></div><input id="coinflip-bet-input" type="number" value="5" min="1" class="input-bet"><button id="btn-coinflip-flip" onclick="GameLogic.coinflip.flip()" class="btn-action w-full py-4 font-casino">LANZAR MONEDA</button><div id="coinflip-result-text" class="hidden-view mt-4 text-lg font-casino" style="color: var(--mx-green);">CARA ✓</div><div class="instruction-card"><h4>🪙 Reglas Coinflip</h4><p>Elige Cara o Cruz y gana 2x si aciertas.</p></div></div>`
+                plinko: `<div class="glass p-4 mx-auto max-w-[360px] text-center"><div class="risk-badge" style="color: #3b82f6; background: rgba(59,130,246,0.1)"><i class="fas fa-circle"></i> Bola Cayendo</div><canvas id="plinko-canvas" width="340" height="400" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 1rem; border: 2px solid rgba(59,130,246,0.3); display: block; margin-bottom: 20px;"></canvas><div id="plinko-mult" class="hidden-view text-3xl font-casino mb-4" style="color: var(--mx-green);">0.00x</div><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 0.5x</span><span class="text-amber-500">Máx: 20x</span></div><input id="plinko-bet-input" type="number" value="5" min="1" class="input-bet"><button id="btn-plinko" onclick="GameLogic.plinko.play()" class="btn-action w-full py-4 font-casino">SOLTAR BOLA</button><div class="instruction-card"><h4>⚪ Plinko</h4><p>Deja caer la bola por las clavijas y gana según dónde caiga.</p></div></div>`,
+                coinflip: `<div class="glass p-4 mx-auto max-w-[320px] text-center"><div class="risk-badge" style="color: #fbbf24; background: rgba(251,191,36,0.1)"><i class="fas fa-coins"></i> 50/50</div><div style="height: 220px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;"><div class="coin-flip-scene"><div class="coin-flip-object" id="coin-object"><div class="coin-flip-side coin-flip-heads">🪙</div><div class="coin-flip-side coin-flip-tails">🪙</div></div></div></div><div id="coinflip-result" class="hidden-view text-2xl font-casino mb-4" style="color: var(--mx-green);">CARA ✓</div><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 1.50x</span><span class="text-amber-500">Máx: 2.00x</span></div><div class="flex gap-2 mb-3"><select id="coinflip-pick" class="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-white text-[10px] font-bold"><option value="heads">CARA 🪙</option><option value="tails">CRUZ 🪙</option></select></div><input id="coinflip-bet-input" type="number" value="5" min="1" class="input-bet"><button id="btn-coinflip" onclick="GameLogic.coinflip.play()" class="btn-action w-full py-4 font-casino">LANZAR MONEDA</button><div class="instruction-card"><h4>🪙 Coinflip</h4><p>Elige cara o cruz. Si aciertas, ganas 2x tu apuesta.</p></div></div>`
             }
         };
 
@@ -838,160 +831,16 @@
                 async end(win) { const winAmt = win ? (this.bet * this.mult) : 0; GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0); this.active = false; State.isProcessing = false; UI.updateBalance(); const btn = document.getElementById('btn-crash'); if(btn) { btn.innerText = "EXPLOTÓ"; btn.disabled = true; setTimeout(() => { btn.disabled = false; btn.innerText = "DESPEGAR"; btn.onclick = () => GameLogic.crash.start(); const multEl = document.getElementById('crash-mult'); if(multEl) { multEl.classList.remove('text-red-500'); multEl.innerText = '1.00x'; } const rocketEl = document.getElementById('crash-rocket'); if(rocketEl) { rocketEl.innerHTML = '🚀'; rocketEl.style.transform = 'translateY(0)'; } }, 2500); } await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR', status: 'completed' }); }
             },
             plinko: {
-                active: false, bet: 0, mult: 1, canvas: null, ctx: null,
-                multipliers: [0.5, 1, 1.5, 2, 3, 5, 8, 12, 20, 12, 8, 5, 3, 2, 1.5, 1, 0.5],
-                pegs: [],
-                initCanvas() {
-                    this.canvas = document.getElementById('plinko-canvas');
-                    if(!this.canvas) return;
-                    this.ctx = this.canvas.getContext('2d');
-                    this.drawPegs();
-                },
-                drawPegs() {
-                    this.ctx.fillStyle = 'rgba(96, 165, 250, 0.4)';
-                    this.pegs = [];
-                    const pegRadius = 5;
-                    const pegSpacing = 20;
-                    for(let row = 0; row < 10; row++) {
-                        for(let col = 0; col < row + 1; col++) {
-                            const x = (this.canvas.width / 2) - (row * pegSpacing / 2) + (col * pegSpacing);
-                            const y = 20 + (row * pegSpacing);
-                            this.pegs.push({x, y, r: pegRadius});
-                            this.ctx.beginPath();
-                            this.ctx.arc(x, y, pegRadius, 0, Math.PI * 2);
-                            this.ctx.fill();
-                        }
-                    }
-                },
-                async drop() {
-                    if(this.active || State.isProcessing) return;
-                    this.active = true;
-                    State.isProcessing = true;
-                    const b = Math.abs(parseFloat(document.getElementById('plinko-bet-input').value)) || 5;
-                    const btn = document.getElementById('btn-plinko-drop');
-                    if(btn) btn.disabled = true;
-                    if(b < 1) { this.active = false; State.isProcessing = false; if(btn) btn.disabled = false; return UI.notify("Apuesta mínima $1 MXN", "error"); }
-                    const { data: user = {} } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    if(!user || user.saldo < b) { this.active = false; State.isProcessing = false; if(btn) btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); }
-                    playSfx('click');
-                    await Core.updateBalanceDB(-b);
-                    State.balance -= b;
-                    UI.updateBalance();
-                    this.bet = b;
-                    const resultIdx = Math.floor(Math.random() * this.multipliers.length);
-                    this.mult = this.multipliers[resultIdx];
-                    const failChance = (resultIdx > 6 || resultIdx < 6) ? (0.15 * GlobalLuck.luckFactor) : 0;
-                    if(Math.random() < failChance) { this.mult = this.multipliers[Math.max(0, resultIdx - 2)]; }
-                    this.animateBall(resultIdx);
-                },
-                animateBall(resultIdx) {
-                    const ball = {x: this.canvas.width / 2, y: 10, vx: 0, vy: 2, r: 8};
-                    const animateFrame = () => {
-                        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                        this.drawPegs();
-                        ball.y += ball.vy;
-                        ball.x += ball.vx;
-                        ball.vy += 0.3;
-                        for(let peg of this.pegs) {
-                            const dx = ball.x - peg.x;
-                            const dy = ball.y - peg.y;
-                            const dist = Math.sqrt(dx*dx + dy*dy);
-                            if(dist < ball.r + peg.r) {
-                                ball.vx += (ball.x - peg.x) * 0.3;
-                                ball.vy *= -0.6;
-                            }
-                        }
-                        this.ctx.fillStyle = 'rgba(255, 0, 0, 0.9)';
-                        this.ctx.beginPath();
-                        this.ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
-                        this.ctx.fill();
-                        this.ctx.strokeStyle = 'rgba(255, 100, 100, 0.6)';
-                        this.ctx.lineWidth = 2;
-                        this.ctx.stroke();
-                        if(ball.y < this.canvas.height - 30) {
-                            requestAnimationFrame(animateFrame);
-                        } else {
-                            const resultEl = document.getElementById('plinko-result');
-                            if(resultEl) { resultEl.classList.remove('hidden-view'); resultEl.innerText = this.mult.toFixed(2) + 'x'; }
-                            const win = this.bet * this.mult;
-                            if(this.mult > 1) {
-                                playSfx('win');
-                                playSfx('winExtra');
-                                UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success");
-                            } else {
-                                playSfx('lose');
-                                UI.notify("SIN SUERTE", "error");
-                            }
-                            GameLogic.adjustLuck(win - this.bet, this.bet, this.mult);
-                            setTimeout(async () => {
-                                if(this.mult > 1) { await Core.updateBalanceDB(win); State.balance += win; }
-                                UI.updateBalance();
-                                this.active = false;
-                                State.isProcessing = false;
-                                const btn = document.getElementById('btn-plinko-drop');
-                                if(btn) btn.disabled = false;
-                                const resultEl2 = document.getElementById('plinko-result');
-                                if(resultEl2) resultEl2.classList.add('hidden-view');
-                                await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win - this.bet, label: 'PLINKO', status: 'completed' });
-                            }, 2000);
-                        }
-                    };
-                    requestAnimationFrame(animateFrame);
-                }
+                canvas: null, ctx: null, balls: [], pegs: [], mults: [0.5, 1, 1.5, 2, 3, 5, 8, 12, 20, 12, 8, 5, 3, 2, 1.5, 1, 0.5], active: false, bet: 0, result: 0,
+                draw() { this.canvas = document.getElementById('plinko-canvas'); if(!this.canvas) return; this.ctx = this.canvas.getContext('2d'); this.createPegs(); this.animate(); },
+                createPegs() { this.pegs = []; const pegRadius = 8, spacingX = 30, spacingY = 35; for(let row = 0; row < 11; row++) { for(let col = 0; col <= row; col++) { const x = 170 + (col * spacingX) - (row * spacingX / 2); const y = 20 + (row * spacingY); this.pegs.push({x, y, r: pegRadius}); } } },
+                animate() { this.ctx.fillStyle = '#0f172a'; this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height); this.ctx.fillStyle = 'rgba(59, 130, 246, 0.6)'; this.pegs.forEach(p => { this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); this.ctx.fill(); }); this.balls.forEach((b, i) => { b.y += b.vy; b.x += b.vx; b.vy += 0.4; this.pegs.forEach(p => { const dx = b.x - p.x, dy = b.y - p.y, dist = Math.sqrt(dx*dx + dy*dy); if(dist < b.r + p.r) { b.vx += dx * 0.2; b.vy *= -0.7; } }); if(b.x < 5) b.vx = 2; if(b.x > 335) b.vx = -2; this.ctx.fillStyle = '#ff4444'; this.ctx.beginPath(); this.ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); this.ctx.fill(); }); if(this.balls.length > 0 && this.balls[0].y < 380) requestAnimationFrame(() => this.animate()); },
+                async play() { if(this.active || State.isProcessing) return; this.active = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('plinko-bet-input').value)) || 5; const btn = document.getElementById('btn-plinko'); if(btn) btn.disabled = true; if(b < 1) { this.active = false; State.isProcessing = false; if(btn) btn.disabled = false; return UI.notify("Min $1", "error"); } const {data: user = {}} = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b) { this.active = false; State.isProcessing = false; if(btn) btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('click'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); this.bet = b; const idx = Math.floor(Math.random() * this.mults.length); this.result = this.mults[idx]; this.balls = [{x: 170, y: 5, vx: (Math.random() - 0.5) * 4, vy: 0, r: 6}]; this.animate(); setTimeout(async () => { const mult = this.result, win = this.bet * mult; const multEl = document.getElementById('plinko-mult'); if(multEl) { multEl.classList.remove('hidden-view'); multEl.innerText = mult.toFixed(2) + 'x'; } if(mult > 1) { playSfx('win'); playSfx('winExtra'); UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); } else { playSfx('lose'); UI.notify("Sin suerte", "error"); } GameLogic.adjustLuck(win - this.bet, this.bet, mult); setTimeout(async () => { if(mult > 1) { await Core.updateBalanceDB(win); State.balance += win; } UI.updateBalance(); this.active = false; State.isProcessing = false; if(btn) btn.disabled = false; if(multEl) multEl.classList.add('hidden-view'); await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win - this.bet, label: 'PLINKO', status: 'completed' }); }, 1500); }, 2500); }
             },
             coinflip: {
-                active: false, bet: 0, mult: 2,
-                init() { const coin = document.getElementById('coin-3d'); if(coin) coin.style.transform = 'rotateY(0deg)'; },
-                async flip() {
-                    if(this.active || State.isProcessing) return;
-                    this.active = true;
-                    State.isProcessing = true;
-                    const b = Math.abs(parseFloat(document.getElementById('coinflip-bet-input').value)) || 5;
-                    const choice = document.getElementById('coinflip-choice')?.value || 'heads';
-                    const btn = document.getElementById('btn-coinflip-flip');
-                    const resultText = document.getElementById('coinflip-result-text');
-                    if(btn) btn.disabled = true;
-                    if(b < 1) { this.active = false; State.isProcessing = false; if(btn) btn.disabled = false; return UI.notify("Apuesta mínima $1 MXN", "error"); }
-                    const { data: user = {} } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    if(!user || user.saldo < b) { this.active = false; State.isProcessing = false; if(btn) btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); }
-                    playSfx('click');
-                    await Core.updateBalanceDB(-b);
-                    State.balance -= b;
-                    UI.updateBalance();
-                    this.bet = b;
-                    const coin = document.getElementById('coin-3d');
-                    const luckyFail = (0.25 / GlobalLuck.luckFactor) > Math.random();
-                    const flip = luckyFail ? (choice === 'heads' ? 'tails' : 'heads') : (Math.random() > 0.5 ? 'heads' : 'tails');
-                    const isWin = (flip === choice);
-                    if(coin) { coin.style.transform = `rotateY(${flip === 'heads' ? 0 : 180}deg) rotateX(${Math.random() * 720}deg) rotateZ(${Math.random() * 720}deg)`; }
-                    setTimeout(() => {
-                        if(coin) { coin.style.transform = flip === 'heads' ? 'rotateY(0deg)' : 'rotateY(180deg)'; }
-                        if(resultText) { 
-                            resultText.classList.remove('hidden-view');
-                            resultText.innerText = flip === 'heads' ? 'CARA ✓' : 'CRUZ ✓';
-                            resultText.style.color = isWin ? 'var(--mx-green)' : '#ff6b6b';
-                        }
-                        const win = isWin ? (this.bet * this.mult) : 0;
-                        if(isWin) {
-                            playSfx('win');
-                            playSfx('winExtra');
-                            UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success");
-                        } else {
-                            playSfx('lose');
-                            UI.notify("FALLASTE", "error");
-                        }
-                        GameLogic.adjustLuck(win - this.bet, this.bet, isWin ? this.mult : 0);
-                        setTimeout(async () => {
-                            if(isWin) { await Core.updateBalanceDB(win); State.balance += win; }
-                            UI.updateBalance();
-                            this.active = false;
-                            State.isProcessing = false;
-                            if(btn) btn.disabled = false;
-                            if(resultText) resultText.classList.add('hidden-view');
-                            await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win - this.bet, label: 'COINFLIP', status: 'completed' });
-                        }, 2500);
-                    }, 1200);
-                }
+                active: false, bet: 0,
+                reset() { const coin = document.getElementById('coin-object'); if(coin) coin.style.transform = 'rotateY(0deg)'; },
+                async play() { if(this.active || State.isProcessing) return; this.active = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('coinflip-bet-input').value)) || 5; const pick = document.getElementById('coinflip-pick')?.value || 'heads'; const btn = document.getElementById('btn-coinflip'); if(btn) btn.disabled = true; if(b < 1) { this.active = false; State.isProcessing = false; if(btn) btn.disabled = false; return UI.notify("Min $1", "error"); } const {data: user = {}} = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b) { this.active = false; State.isProcessing = false; if(btn) btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('click'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); this.bet = b; const coin = document.getElementById('coin-object'); const luckyFail = (0.25 / GlobalLuck.luckFactor) > Math.random(); const result = luckyFail ? (pick === 'heads' ? 'tails' : 'heads') : (Math.random() > 0.5 ? 'heads' : 'tails'); const isWin = result === pick; if(coin) coin.style.transform = `rotateX(${Math.random() * 1080}deg) rotateY(${result === 'heads' ? 0 : 1080}deg) rotateZ(${Math.random() * 720}deg)`; setTimeout(() => { if(coin) coin.style.transform = result === 'heads' ? 'rotateY(0deg)' : 'rotateY(180deg)'; const resultEl = document.getElementById('coinflip-result'); if(resultEl) { resultEl.classList.remove('hidden-view'); resultEl.innerText = (result === 'heads' ? 'CARA' : 'CRUZ') + ' ✓'; resultEl.style.color = isWin ? 'var(--mx-green)' : '#ff6b6b'; } const win = isWin ? this.bet * 2 : 0; if(isWin) { playSfx('win'); playSfx('winExtra'); UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); } else { playSfx('lose'); UI.notify("Perdiste", "error"); } GameLogic.adjustLuck(win - this.bet, this.bet, isWin ? 2 : 0); setTimeout(async () => { if(isWin) { await Core.updateBalanceDB(win); State.balance += win; } UI.updateBalance(); this.active = false; State.isProcessing = false; if(btn) btn.disabled = false; if(resultEl) resultEl.classList.add('hidden-view'); await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win - this.bet, label: 'COINFLIP', status: 'completed' }); }, 1500); }, 1500); }
             }
         };
 
@@ -1006,8 +855,8 @@
                 pendingWin = GameLogic.chicken.bet * m;
             }
             else if (GameLogic.crash?.active) { pendingWin = GameLogic.crash.bet * GameLogic.crash.mult; }
-            else if (GameLogic.plinko?.active) { pendingWin = GameLogic.plinko.bet * GameLogic.plinko.mult; }
-            else if (GameLogic.coinflip?.active) { pendingWin = GameLogic.coinflip.bet * GameLogic.coinflip.mult; }
+            else if (GameLogic.plinko?.active) { pendingWin = GameLogic.plinko.bet * GameLogic.plinko.result; }
+            else if (GameLogic.coinflip?.active) { pendingWin = GameLogic.coinflip.bet * 2; }
 
             if (pendingWin > 0) {
                 let saved = JSON.parse(localStorage.getItem('pendingWins') || '[]');
