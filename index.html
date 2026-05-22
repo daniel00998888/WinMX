@@ -652,29 +652,12 @@
                 this.renderer.shadowMap.enabled = true;
                 container.appendChild(this.renderer.domElement);
 
-                const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+                const ambient = new THREE.AmbientLight(0xffffff, 0.6);
                 this.scene.add(ambient);
-                const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+                const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
                 dirLight.position.set(5, 10, 5);
                 dirLight.castShadow = true;
-                dirLight.shadow.mapSize.width = 2048;
-                dirLight.shadow.mapSize.height = 2048;
                 this.scene.add(dirLight);
-
-                // Luces de punto coloridas para ambiente nocturno
-                // Farolas azules izquierda
-                for (let z = -12; z <= 12; z += 6) {
-                    const blueLight = new THREE.PointLight(0x00d9ff, 1.5, 15);
-                    blueLight.position.set(-5.5, 3.5, z);
-                    this.scene.add(blueLight);
-                }
-
-                // Farolas magenta derecha
-                for (let z = -12; z <= 12; z += 6) {
-                    const magentaLight = new THREE.PointLight(0xff00ff, 1.5, 15);
-                    magentaLight.position.set(4.7, 3.5, z);
-                    this.scene.add(magentaLight);
-                }
 
                 // 1. ASFALTO (Carretera principal)
                 const roadGeo = new THREE.PlaneGeometry(20, 30);
@@ -693,101 +676,14 @@
                 sidewalk.receiveShadow = true;
                 this.scene.add(sidewalk);
 
-                // BANQUETA FINAL (Zona Segura de Llegada)
-                const finalSidewalk = new THREE.Mesh(sidewalkGeo, sidewalkMat);
-                finalSidewalk.position.set(3.88, 0.075, 0); 
-                finalSidewalk.receiveShadow = true;
-                this.scene.add(finalSidewalk);
-
-                // DETALLES - FAROLAS COLORIDAS
-                const postMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.5 });
-                
-                // Farolas izquierda - AZUL
-                for (let z = -12; z <= 12; z += 6) {
-                    const postGeo = new THREE.CylinderGeometry(0.12, 0.14, 3.5, 8);
-                    const post = new THREE.Mesh(postGeo, postMat);
-                    post.position.set(-5.5, 1.75, z);
-                    post.castShadow = true;
-                    this.scene.add(post);
-                    
-                    const lampGeo = new THREE.BoxGeometry(0.5, 0.35, 0.5);
-                    const lampMat = new THREE.MeshStandardMaterial({ color: 0x00d9ff, emissive: 0x00d9ff, emissiveIntensity: 0.8, roughness: 0.2 });
-                    const lamp = new THREE.Mesh(lampGeo, lampMat);
-                    lamp.position.set(-5.5, 3.3, z);
-                    lamp.castShadow = true;
-                    this.scene.add(lamp);
-                }
-
-                // Farolas derecha - ROSA/MAGENTA
-                for (let z = -12; z <= 12; z += 6) {
-                    const postGeo = new THREE.CylinderGeometry(0.12, 0.14, 3.5, 8);
-                    const post = new THREE.Mesh(postGeo, postMat);
-                    post.position.set(4.7, 1.75, z);
-                    post.castShadow = true;
-                    this.scene.add(post);
-                    
-                    const lampGeo = new THREE.BoxGeometry(0.5, 0.35, 0.5);
-                    const lampMat = new THREE.MeshStandardMaterial({ color: 0xff00ff, emissive: 0xff00ff, emissiveIntensity: 0.8, roughness: 0.2 });
-                    const lamp = new THREE.Mesh(lampGeo, lampMat);
-                    lamp.position.set(4.7, 3.3, z);
-                    lamp.castShadow = true;
-                    this.scene.add(lamp);
-                }
-
-                // EDIFICIOS COLORIDOS - LADO IZQUIERDO (Gradiente RGB)
-                const buildingColors = [0xFF3366, 0xFF6600, 0xFFCC00]; // Rojo, Naranja, Amarillo
-                for (let i = 0; i < 3; i++) {
-                    const buildGeo = new THREE.BoxGeometry(2.2, 4.5, 0.6);
-                    const buildMat = new THREE.MeshStandardMaterial({ color: buildingColors[i], roughness: 0.6, metalness: 0.1 });
-                    const building = new THREE.Mesh(buildGeo, buildMat);
-                    building.position.set(-6.8, 2.25, -8 + i * 8);
-                    building.castShadow = true;
-                    building.receiveShadow = true;
-                    this.scene.add(building);
-                    
-                    // Windows
-                    const winGeo = new THREE.PlaneGeometry(0.4, 0.4);
-                    const winMat = new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0xffff00, emissiveIntensity: 0.6 });
-                    for (let wx = -0.8; wx <= 0.8; wx += 0.5) {
-                        for (let wy = 0.5; wy <= 3.5; wy += 0.7) {
-                            const window = new THREE.Mesh(winGeo, winMat);
-                            window.position.set(-6.85, wy, -8 + i * 8 + 0.31);
-                            this.scene.add(window);
-                        }
-                    }
-                }
-
-                // EDIFICIOS COLORIDOS - LADO DERECHO (Gradiente Cyan-Magenta)
-                const buildingColors2 = [0x00CCFF, 0x00FF99, 0xFF00FF]; // Cyan, Verde, Magenta
-                for (let i = 0; i < 3; i++) {
-                    const buildGeo = new THREE.BoxGeometry(2.2, 4.5, 0.6);
-                    const buildMat = new THREE.MeshStandardMaterial({ color: buildingColors2[i], roughness: 0.6, metalness: 0.1 });
-                    const building = new THREE.Mesh(buildGeo, buildMat);
-                    building.position.set(5.9, 2.25, -8 + i * 8);
-                    building.castShadow = true;
-                    building.receiveShadow = true;
-                    this.scene.add(building);
-                    
-                    // Windows
-                    const winGeo = new THREE.PlaneGeometry(0.4, 0.4);
-                    const winMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.8 });
-                    for (let wx = -0.8; wx <= 0.8; wx += 0.5) {
-                        for (let wy = 0.5; wy <= 3.5; wy += 0.7) {
-                            const window = new THREE.Mesh(winGeo, winMat);
-                            window.position.set(5.95, wy, -8 + i * 8 + 0.31);
-                            this.scene.add(window);
-                        }
-                    }
-                }
-
                 // 3. LÍNEAS DE LA CARRETERA (Separadores Blancos)
-                const lineMat = new THREE.MeshStandardMaterial({ color: 0xffff00, roughness: 0.4, emissive: 0xffff00, emissiveIntensity: 0.2 });
-                for (let col = 1; col <= 6; col++) { // 7 separadores: 6 entre carriles + 1 para banqueta final
-                    const separatorX = -3.98 + (col * 1.14); // Posición centrada de cada separador
+                const lineMat = new THREE.MeshStandardMaterial({ color: 0xd4d4d8, roughness: 0.9 });
+                for (let col = 1; col <= 6; col++) { // 6 separadores entre los 6 carriles vehiculares
+                    const separatorX = -3.98 + (col * 1.14) - 0.57; 
                     for (let z = -15; z <= 15; z += 2.5) {
-                        const dashGeo = new THREE.BoxGeometry(0.08, 0.02, 1.2);
+                        const dashGeo = new THREE.BoxGeometry(0.06, 0.02, 1.2);
                         const dash = new THREE.Mesh(dashGeo, lineMat);
-                        dash.position.set(separatorX, 0.011, z); // A ras de piso
+                        dash.position.set(separatorX, 0.01, z); // A ras de piso
                         dash.receiveShadow = true;
                         this.scene.add(dash);
                     }
@@ -870,7 +766,7 @@
                 this.camera.updateProjectionMatrix();
                 if (w < h) this.camera.position.set(0, 6.2, 5.2);
                 else this.camera.position.set(0, 5.2, 5.2);
-                this.camera.lookAt(0, 0.1, 0);
+                this.camera.lookAt(0, 0.3, 0);
             },
 
             reset() {
