@@ -598,10 +598,7 @@
             openGame(game) { if(State.isProcessing) return; playSfx('click'); this.showView('game'); document.getElementById('game-mount').innerHTML = this.templates[game]; document.getElementById('view-game').scrollTop = 0; document.getElementById('bottom-nav-bar').style.transform = 'translateY(100%)'; if(game === 'slots') GameLogic.slots.init(); if(game === 'mines') GameLogic.mines.drawGrid(); if(game === 'tower') GameLogic.tower.drawTower(); if(game === 'blackjack') GameLogic.blackjack.renderInitial(); if(game === 'chicken') GameLogic.chicken.init(); },
             templates: {
                 slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn relative">
-                    <div class="relative inline-block w-full">
-                        <div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div>
-                        <button id="btn-slots-speed" onclick="GameLogic.slots.toggleSpeed()" class="absolute top-0 right-0 text-2xl transition-all duration-300 hover:scale-110 -mt-2 -mr-2" style="color: #9ca3af; text-shadow: 0 0 0px rgba(251, 191, 36, 0);">⚡</button>
-                    </div>
+                    <div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div>
                     <div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 3.00x</span><span class="text-amber-500">Máx: 500.00x</span></div>
                     <input id="slots-bet-input" type="number" value="3" min="3" class="input-bet">
                     
@@ -799,7 +796,8 @@
                             UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); 
                         } else { 
                             playSfx('lose'); 
-                            UI.notify("SIN SUERTE", "error"); 
+                            // Silenciar el mensaje rojo en modo auto para que no se llene la pantalla
+                            if (!this.isAutoMode) UI.notify("SIN SUERTE", "error"); 
                         } 
                         
                         UI.updateBalance(); 
