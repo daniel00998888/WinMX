@@ -740,7 +740,7 @@
                 updateAutoUI() {
                     const btn = document.getElementById('btn-slots-auto');
                     if(btn) {
-                        if(this.isAutoMode && this.autoSpinsLeft > -1) {
+                        if(this.isAutoMode && this.autoSpinsLeft > 0) {
                             // Cambia a rojo y muestra el contador de giros
                             btn.innerHTML = `<span class="text-xs font-black">${this.autoSpinsLeft}</span><i class="fas fa-stop text-[10px] mt-1"></i>`;
                             btn.classList.replace('text-emerald-500', 'text-red-500');
