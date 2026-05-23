@@ -629,7 +629,7 @@
                 else { if (GlobalLuck.sessionLoss > 200 || winRatio < 0.1) GlobalLuck.luckFactor = 1.8; else if (winRatio > 0.4 || winAmt > betAmt * 50) GlobalLuck.luckFactor = 0.4; else GlobalLuck.luckFactor = 1.0; }
             },
             slots: {
-                prizes: { '7️⃣': { mult: 500, weight: 0.01 }, '🔔': { mult: 50, weight: 1 }, '🍋': { mult: 10, weight: 10 }, '🍒': { mult: 3, weight: 88 } },
+                prizes: { '7️⃣': { mult: 500, weight: 0.01 }, '🔔': { mult: 50, weight: 0.60 }, '🍋': { mult: 10, weight: 10 }, '🍒': { mult: 3, weight: 88 } },
                 init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); if(r) { r.innerHTML = ''; Array(20).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); } }); },
                 async play() { 
                     if(State.isSpinning || State.isProcessing) return; State.isSpinning = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('slots-bet-input').value)) || 3; const btn = document.getElementById('btn-slots-play'); btn.disabled = true; if(b < 3) { State.isSpinning = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Apuesta mínima $3 MXN", "error"); } const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b) { State.isSpinning = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('spin'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); let result = []; 
