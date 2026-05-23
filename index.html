@@ -11,7 +11,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@300;400;600;900&display=swap');
@@ -51,6 +50,8 @@
         
         .pulse-pending { animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 50% { opacity: 0.8; } 100% { opacity: 1; box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); } }
+        @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
+        @keyframes glow { 0%, 100% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); } 50% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.8); } }
 
         .input-bet { background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 1rem; padding: 14px; width: 100%; text-align: center; color: white; font-family: 'Archivo Black', sans-serif; outline: none; margin-bottom: 12px; transition: all 0.3s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
         .input-bet:focus { border-color: rgba(16, 185, 129, 0.5); box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 0 12px rgba(16, 185, 129, 0.2); }
@@ -73,6 +74,7 @@
             backdrop-filter: blur(10px);
             transition: all 0.3s ease;
         }
+        .instruction-card:hover { border-color: rgba(16, 185, 129, 0.6); box-shadow: 0 12px 32px rgba(16, 185, 129, 0.25), inset 0 1px 1px rgba(255,255,255,0.05); }
         .instruction-card h4 { font-family: 'Archivo Black', sans-serif; font-size: 12px; color: var(--mx-green); text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; letter-spacing: 1px; }
         .instruction-card p { font-size: 11px; color: #ddd; line-height: 1.6; font-weight: 500; }
         .instruction-card strong { color: white; font-weight: 800; }
@@ -86,6 +88,14 @@
         .card-bj { width: 45px; height: 65px; background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%); color: black; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2rem; box-shadow: 0 8px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4); animation: backInDown 0.5s; position: relative; border: 1px solid #ddd; }
         .card-red { color: #ef4444; }
         .card-hidden { background: linear-gradient(45deg, #1e293b 25%, #0f172a 25%, #0f172a 50%, #1e293b 50%, #1e293b 75%, #0f172a 75%, #0f172a 100%); background-size: 10px 10px; border: 2px solid #334155; }
+
+        #chicken-world { width: 100%; height: 200px; background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%); border-radius: 1rem; position: relative; overflow: hidden; border: 1px solid rgba(16, 185, 129, 0.15); box-shadow: inset 0 2px 8px rgba(0,0,0,0.8), 0 4px 12px rgba(0,0,0,0.5); margin-bottom: 1rem; }
+        .road-lane { height: 100%; border-right: 1px dashed rgba(16, 185, 129, 0.2); flex: 1; position: relative; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); display: flex; align-items: center; justify-content: center; }
+        .road-lane.passed { background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%); border-right-color: rgba(16, 185, 129, 0.3); }
+        .road-lane.current { background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(16, 185, 129, 0.1) 100%); box-shadow: inset 0 0 20px rgba(16, 185, 129, 0.3); border-right-color: rgba(16, 185, 129, 0.5); }
+        .chicken-sprite { font-size: 2rem; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: absolute; z-index: 20; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
+        .car-sprite { position: absolute; font-size: 1.5rem; animation: carMove 1s forwards; z-index: 10; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5)); }
+        @keyframes carMove { from { top: -50px; } to { top: 250px; } }
     </style>
 </head>
 <body class="antialiased select-none">
@@ -169,7 +179,7 @@
                 <div onclick="Router.openGame('crash')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🚀</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Cohetrix</span></div>
                 <div onclick="Router.openGame('tower')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🗼</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Torre</span></div>
                 <div onclick="Router.openGame('blackjack')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🃏</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Blackjack</span></div>
-                <div onclick="Router.openGame('chicken')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🐥</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Chicken 3D</span></div>
+                <div onclick="Router.openGame('chicken')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🐥</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Chicken Road</span></div>
             </div>
         </div>
 
@@ -585,21 +595,9 @@
                 if(viewId === 'history') Core.fetchHistory(); 
                 if(viewId === 'profile') UI.updateProfile(); 
             },
-            openGame(game) { 
-                if(State.isProcessing) return; 
-                playSfx('click'); 
-                this.showView('game'); 
-                document.getElementById('game-mount').innerHTML = this.templates[game]; 
-                document.getElementById('view-game').scrollTop = 0; 
-                document.getElementById('bottom-nav-bar').style.transform = 'translateY(100%)'; 
-                if(game === 'slots') GameLogic.slots.init(); 
-                if(game === 'mines') GameLogic.mines.drawGrid(); 
-                if(game === 'tower') GameLogic.tower.drawTower(); 
-                if(game === 'blackjack') GameLogic.blackjack.renderInitial(); 
-                if(game === 'chicken') GameLogic.chicken.init(); 
-            },
+            openGame(game) { if(State.isProcessing) return; playSfx('click'); this.showView('game'); document.getElementById('game-mount').innerHTML = this.templates[game]; document.getElementById('view-game').scrollTop = 0; document.getElementById('bottom-nav-bar').style.transform = 'translateY(100%)'; if(game === 'slots') GameLogic.slots.init(); if(game === 'mines') GameLogic.mines.drawGrid(); if(game === 'tower') GameLogic.tower.drawTower(); if(game === 'blackjack') GameLogic.blackjack.renderInitial(); if(game === 'chicken') GameLogic.chicken.init(); },
             templates: {
-                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 3.00x</span><span class="text-amber-500">Máx: 500.00x</span></div><input id="slots-bet-input" type="number" value="3" min="3" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4>🎰 Reglas Slots</h4><p>Combina 3 símbolos para ganar. <div class="grid grid-cols-2 gap-2 text-[10px] font-bold uppercase mt-2"><div>🍒 x3</div><div>🍋 x10</div><div>🔔 x50</div><div class="text-emerald-500">7️⃣ x500</div></p></div>`,
+                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 3.00x</span><span class="text-amber-500">Máx: 500.00x</span></div><input id="slots-bet-input" type="number" value="3" min="3" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4>🎰 Reglas Slots</h4><p>Combina 3 símbolos para ganar. <div class="grid grid-cols-2 gap-2 text-[10px] font-bold uppercase mt-2"><div>🍒 x3</div><div>🍋 x10</div><div>🔔 x50</div><div class="text-emerald-500">7️⃣ x500</div></p>`,
                 mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div class="risk-badge"><i class="fas fa-bomb"></i> 3 Minas Activas</div><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view flex justify-between p-3 bg-emerald-500/10 rounded-xl mb-3"><div class="flex flex-col items-start"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><span id="mines-next-hint" class="text-[7px] text-zinc-500 font-bold uppercase">Siguiente: --</span></div><button id="mines-cashout-btn" onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-4 py-1 rounded font-bold text-[9px]">COBRAR $0.00</button></div><div id="mines-controls"><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 1.25x</span><span class="text-amber-500">Máx: 500.00x</span></div><input id="mines-bet-input" type="number" value="3" min="3" class="input-bet"><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><div class="instruction-card"><h4>💣 Reglas Minas</h4><p>Encuentra diamantes y evita las minas.</p></div></div>`,
                 crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div id="crash-area"><div id="crash-bg" class="bg-infinite"><div class="bg-part"></div><div class="bg-part"></div></div><div id="crash-rocket-container"><div id="crash-rocket">🚀</div></div></div><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider mt-6"><span class="text-emerald-500">Mín: 1.01x</span><span class="text-amber-500">Máx: ∞</span></div><input id="crash-bet-input" type="number" value="3" min="3" class="input-bet"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button><div class="instruction-card"><h4>🚀 Reglas Aviator</h4><p>Cobra antes del crash.</p></div></div>`,
                 tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div class="risk-badge" style="color: #fbbf24; background: rgba(251,191,36,0.1)"><i class="fas fa-bolt"></i> 1 Peligro por Piso</div><div id="tower-container" class="gap-3 mb-4 flex flex-col-reverse"></div><div id="tower-controls"><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 1.65x</span><span class="text-amber-500">Máx: 95.00x</span></div><input id="tower-bet-input" type="number" value="3" min="3" class="input-bet"><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino">COBRAR $0.00</button><div class="instruction-card"><h4>🗼 Reglas Torre</h4><p>Sube pisos sin tocar minas.</p></div></div>`,
@@ -611,474 +609,14 @@
                     <div class="instruction-card"><h4>🃏 Reglas Blackjack</h4><p>Suma 21 o más que el crupier sin pasarte.</p></div>
                 </div>`,
                 chicken: `<div class="glass p-4 text-center">
-                    
-                    <div id="chicken-world-container" style="position: relative; width: 100%; height: 260px; border-radius: 1rem; overflow: hidden; border: 1px solid rgba(16, 185, 129, 0.15); margin-bottom: 1rem; box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);">
-                        <div id="chicken-world-3d" style="width: 100%; height: 100%; position: absolute; top:0; left:0;"></div>
-                        </div>
-
+                    <div id="chicken-status" class="mb-4 text-emerald-500 font-casino text-2xl animate__animated animate__pulse animate__infinite">1.00x</div>
+                    <div id="chicken-world" class="flex"></div>
                     <div id="chicken-controls"><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 1.20x</span><span class="text-amber-500">Máx: 100.00x</span></div><input id="chicken-bet-input" type="number" value="3" min="3" class="input-bet"><button onclick="GameLogic.chicken.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div>
                     <div id="chicken-actions" class="hidden-view grid grid-cols-2 gap-3 mt-4"><button onclick="GameLogic.chicken.move()" class="btn-action py-5 bg-emerald-500 text-black font-black text-lg">AVANZAR</button><button id="chicken-cashout-btn" onclick="GameLogic.chicken.cashout()" class="btn-action py-5 bg-zinc-800 text-white font-black">COBRAR $0.00</button></div>
-                    <div class="instruction-card"><h4>🐥 Reglas Chicken 3D 4K HD</h4><p>Cruza los carriles sin ser atropellado. Mira los multiplicadores en el asfalto.</p></div>
+                    <div class="instruction-card"><h4>🐥 Reglas Chicken Road</h4><p>Cruza los carriles sin ser atropellado.</p></div>
                 </div>`
             }
         };
-
-        // ==========================================
-        // MOTOR 3D PARA CHICKEN ROAD CON THREE.JS (NEW YORK CITYSCAPE FOTORREALISTA HD 4K)
-        // ==========================================
-        const Chicken3D = {
-            scene: null, camera: null, renderer: null, chicken: null, cars: [], animationId: null, initialized: false, targetX: -3.98,
-            multiplierMeshes: [],
-
-            // Helper para generar ruido procedimental (fotorrealismo concrete/asphalt)
-            generateNoiseTexture(w, h, colorBase, noiseAmp = 20) {
-                const canvas = document.createElement('canvas');
-                canvas.width = w; canvas.height = h;
-                const ctx = canvas.getContext('2d');
-                const imgData = ctx.createImageData(w, h);
-                for (let i = 0; i < imgData.data.length; i += 4) {
-                    const noise = Math.random() * noiseAmp - (noiseAmp/2);
-                    imgData.data[i] = Math.max(0, Math.min(255, colorBase.r + noise));
-                    imgData.data[i+1] = Math.max(0, Math.min(255, colorBase.g + noise));
-                    imgData.data[i+2] = Math.max(0, Math.min(255, colorBase.b + noise));
-                    imgData.data[i+3] = 255;
-                }
-                ctx.putImageData(imgData, 0, 0);
-                return new THREE.CanvasTexture(canvas);
-            },
-
-            // Helper para crear mallas de texto en el asfalto (Neón)
-            createTextMesh(text, color = '#ffffff') {
-                const canvas = document.createElement('canvas');
-                canvas.width = 256; canvas.height = 128;
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = color;
-                ctx.font = 'Bold 80px Archivo Black, sans-serif';
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillText(text, 128, 64);
-                
-                const texture = new THREE.CanvasTexture(canvas);
-                const mat = new THREE.MeshStandardMaterial({ 
-                    map: texture, transparent: true, opacity: 0.6,
-                    emissive: new THREE.Color(color), emissiveIntensity: 0.3, // Brillo neón
-                    depthWrite: false
-                });
-                const geo = new THREE.PlaneGeometry(0.9, 0.45);
-                const mesh = new THREE.Mesh(geo, mat);
-                mesh.rotation.x = -Math.PI / 2; 
-                mesh.position.y = 0.02; // A ras de piso
-                return mesh;
-            },
-
-            init(containerId) {
-                const container = document.getElementById(containerId);
-                if (!container) return;
-                
-                if (this.initialized) {
-                    if (this.renderer) this.renderer.setSize(container.clientWidth, container.clientHeight);
-                    this.adjustCamera(container.clientWidth, container.clientHeight);
-                    return;
-                }
-                this.initialized = true;
-
-                this.scene = new THREE.Scene();
-                // Cielo Nocturno Moderno (Deep Blue/Slate)
-                this.scene.background = new THREE.Color(0x050510); 
-                // Niebla para dar profundidad atmosférica fotorrealista
-                this.scene.fog = new THREE.Fog(0x050510, 15, 60); 
-
-                this.camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
-                this.adjustCamera(container.clientWidth, container.clientHeight);
-
-                this.renderer = new THREE.WebGLRenderer({ antialias: true });
-                this.renderer.setSize(container.clientWidth, container.clientHeight);
-                this.renderer.shadowMap.enabled = true;
-                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
-                container.appendChild(this.renderer.domElement);
-
-                // Iluminación cinemática HD
-                const ambient = new THREE.AmbientLight(0x222244, 0.6); // Luz de luna blanca
-                this.scene.add(ambient);
-                const violetLight = new THREE.DirectionalLight(0x7c3aed, 0.8); // Luz cool de ciudad
-                violetLight.position.set(5, 10, 8);
-                violetLight.castShadow = true;
-                violetLight.shadow.mapSize.width = 1024; violetLight.shadow.mapSize.height = 1024;
-                this.scene.add(violetLight);
-                const warmLight = new THREE.DirectionalLight(0xffaa44, 0.5); // Balance warm de ciudad
-                warmLight.position.set(-10, 5, -5);
-                this.scene.add(warmLight);
-
-                // 1. ASFALTO FOTORREALISTA (Metalness para reflejos de ciudad)
-                const roadTex = this.generateNoiseTexture(256, 256, {r: 24, g: 24, b: 27});
-                roadTex.wrapS = roadTex.wrapT = THREE.RepeatWrapping; roadTex.repeat.set(1, 10);
-                const roadGeo = new THREE.PlaneGeometry(20, 50);
-                const roadMat = new THREE.MeshStandardMaterial({ map: roadTex, roughness: 0.15, metalness: 0.8 }); // Alto reflejo
-                const road = new THREE.Mesh(roadGeo, roadMat);
-                road.rotation.x = -Math.PI / 2;
-                road.receiveShadow = true;
-                this.scene.add(road);
-
-                // Geometría y Textura de Concreto para Banquetes
-                const concreteTex = this.generateNoiseTexture(128, 128, {r: 63, g: 63, b: 70}, 30);
-                concreteTex.wrapS = concreteTex.wrapT = THREE.RepeatWrapping; concreteTex.repeat.set(1, 15);
-                const sidewalkGeo = new THREE.BoxGeometry(1.6, 0.15, 50);
-                const sidewalkMat = new THREE.MeshStandardMaterial({ map: concreteTex, roughness: 1.0 });
-
-                // 2a. BANQUETA INICIO (Izquierda)
-                const sidewalkStart = new THREE.Mesh(sidewalkGeo, sidewalkMat);
-                sidewalkStart.position.set(-4.1, 0.075, 0); 
-                sidewalkStart.receiveShadow = true;
-                this.scene.add(sidewalkStart);
-                // Texto neón "INICIO"
-                const startText = this.createTextMesh("INICIO", "#10b981");
-                startText.position.set(-4.1, 0.16, 0); // Ligeramente elevado
-                startText.scale.set(0.6, 0.6, 1);
-                this.scene.add(startText);
-
-                // 2b. BANQUETA META (Derecha - Zona Segura Final)
-                const sidewalkEnd = new THREE.Mesh(sidewalkGeo, sidewalkMat);
-                sidewalkEnd.position.set(5.2, 0.075, 0); 
-                sidewalkEnd.receiveShadow = true;
-                this.scene.add(sidewalkEnd);
-                // Texto neón "META"
-                const endText = this.createTextMesh("META", "#fbbf24");
-                endText.position.set(5.2, 0.16, 0);
-                endText.scale.set(0.6, 0.6, 1);
-                this.scene.add(endText);
-
-                // 3. LÍNEAS DE CARRETERA (Luminosas/Emisivas)
-                const lineMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.2 });
-                for (let col = 1; col <= 6; col++) { 
-                    const separatorX = -3.98 + (col * 1.14) - 0.57; 
-                    for (let z = -20; z <= 20; z += 3.0) {
-                        const dashGeo = new THREE.BoxGeometry(0.06, 0.015, 1.5);
-                        const dash = new THREE.Mesh(dashGeo, lineMat);
-                        dash.position.set(separatorX, 0.01, z); 
-                        dash.receiveShadow = true;
-                        this.scene.add(dash);
-                    }
-                }
-
-                // POSTES DE LUZ (Street Lamps Modernos HD)
-                const lampPoleMat = new THREE.MeshStandardMaterial({ color: 0x52525b });
-                const lampLightMat = new THREE.MeshStandardMaterial({ color: 0xffffee, emissive: 0xffffee, emissiveIntensity: 2 });
-                for(let i=0; i<8; i++) {
-                    const zPos = -20 + i*6;
-                    const side = (i % 2 === 0) ? -4.9 : 4.4; // Alternar lados
-                    
-                    const lampGroup = new THREE.Group();
-                    lampGroup.position.set(side, 0, zPos);
-                    
-                    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.5), lampPoleMat);
-                    pole.position.y = 1.25;
-                    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.8), lampPoleMat);
-                    arm.rotation.z = Math.PI / 2;
-                    arm.position.set( (side<0?0.4:-0.4), 2.4, 0);
-                    const lightFix = new THREE.Mesh(new THREE.SphereGeometry(0.15), lampLightMat);
-                    lightFix.position.set( (side<0?0.8:-0.8), 2.4, 0);
-                    lampGroup.add(pole, arm, lightFix);
-                    
-                    const pl = new THREE.PointLight(0xffffee, 0.5, 8); // Luz real
-                    pl.position.set( (side<0?0.8:-0.8), 2.4, 0);
-                    lampGroup.add(pl);
-                    this.scene.add(lampGroup);
-                }
-
-                // 4. MULTIPLICADORES 3D (Neones en el piso)
-                this.multiplierMeshes = [];
-                const multValues = [1.5, 2.2, 4.0, 18.0, 45.0, 100.0];
-                multValues.forEach((val, i) => {
-                    const textMesh = this.createTextMesh(`${val}x`);
-                    const laneIndex3D = i + 1; 
-                    const laneX = -3.98 + (laneIndex3D * 1.14);
-                    textMesh.position.set(laneX, 0.02, 0); 
-                    this.scene.add(textMesh);
-                    this.multiplierMeshes.push(textMesh);
-                });
-
-                // 5. CITYSCAPE NEW YORK HD (Fondo Moderno)
-                this.buildCityscape();
-
-                // 6. EL POLLITO
-                this.chicken = new THREE.Group();
-                const matBody = new THREE.MeshStandardMaterial({ color: 0xfbbf24, roughness: 0.6 });
-                const matBeak = new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.5 });
-                const matRed = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.4 });
-                const matWhite = new THREE.MeshStandardMaterial({ color: 0xffffff });
-                const matBlack = new THREE.MeshStandardMaterial({ color: 0x111111 });
-
-                const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.5, 0.7), matBody);
-                body.position.set(0, 0.4, 0); body.castShadow = true; this.chicken.add(body);
-                const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), matBody);
-                head.position.set(0, 0.75, 0.25); head.castShadow = true; this.chicken.add(head);
-
-                const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.1, 0.1), matWhite);
-                eyeR.position.set(0.2, 0.8, 0.3);
-                const pupilR = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, 0.05), matBlack);
-                pupilR.position.set(0.21, 0.8, 0.32);
-                this.chicken.add(eyeR, pupilR);
-
-                const eyeL = eyeR.clone(); eyeL.position.x = -0.2;
-                const pupilL = pupilR.clone(); pupilL.position.x = -0.21;
-                this.chicken.add(eyeL, pupilL);
-
-                const beak = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.15, 0.2), matBeak);
-                beak.position.set(0, 0.7, 0.5); beak.castShadow = true; this.chicken.add(beak);
-
-                const crest = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.3), matRed);
-                crest.position.set(0, 1.0, 0.25);
-                const wattle = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.15, 0.1), matRed);
-                wattle.position.set(0, 0.55, 0.45);
-                this.chicken.add(crest, wattle);
-
-                const wingR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.3, 0.4), matBody);
-                wingR.position.set(0.35, 0.4, 0);
-                const wingL = wingR.clone(); wingL.position.x = -0.35;
-                this.chicken.add(wingR, wingL);
-
-                const legGeo = new THREE.BoxGeometry(0.08, 0.2, 0.08);
-                const footGeo = new THREE.BoxGeometry(0.15, 0.05, 0.2);
-                const legR = new THREE.Mesh(legGeo, matBeak); legR.position.set(0.15, 0.1, 0);
-                const footR = new THREE.Mesh(footGeo, matBeak); footR.position.set(0.15, 0.025, 0.05);
-                const legL = legR.clone(); legL.position.x = -0.15;
-                const footL = footR.clone(); footL.position.x = -0.15;
-                this.chicken.add(legR, footR, legL, footL);
-
-                this.chicken.position.set(-3.98, 0.15, 0);
-                this.chicken.rotation.y = Math.PI / 2; 
-                this.scene.add(this.chicken);
-
-                this.animate();
-            },
-            
-            // Función para construir edificios realistas, modernos y detallados (New York 4K Style)
-            buildCityscape() {
-                const cityGroup = new THREE.Group();
-                cityGroup.position.set(0, 0, -22); // Profundidad tras la carretera
-
-                // Texturas procedimentales concrete/wall
-                const wallColors = [{r:39,g:39,b:42}, {r:24,g:24,b:27}, {r:63,g:63,b:70}]; 
-
-                // Ventanas encendidas
-                const windowMat = new THREE.MeshStandardMaterial({ 
-                    color: 0xfef08a, emissive: 0xfef08a, emissiveIntensity: 2.0, roughness: 0.1 
-                }); 
-                const winGeo = new THREE.PlaneGeometry(0.15, 0.25);
-
-                const windowColors = [0x00e5ff, 0xff0055, 0xffaa00, 0x8800ff, 0xffffff]; 
-                
-                // Generar 20 edificios detallados
-                for (let i = 0; i < 20; i++) {
-                    const bW = 2.5 + Math.random() * 4;
-                    const bH = 15 + Math.random() * 25; // Rascacielos altos
-                    const bD = 2.5 + Math.random() * 4;
-                    
-                    const wallTex = this.generateNoiseTexture(128, 128, wallColors[i % 3], 20);
-                    wallTex.wrapS = wallTex.wrapT = THREE.RepeatWrapping; wallTex.repeat.set(2, bH/3);
-                    const bMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.8, metalness: 0.2 });
-                    const building = new THREE.Mesh(new THREE.BoxGeometry(bW, bH, bD), bMat);
-                    building.position.set(-25 + Math.random() * 50, bH/2, Math.random() * 5);
-                    building.castShadow = true; building.receiveShadow = true;
-                    
-                    const glowColor = windowColors[Math.floor(Math.random() * windowColors.length)];
-                    const glowMat = new THREE.MeshStandardMaterial({ color: glowColor, emissive: glowColor, emissiveIntensity: 3.0 });
-                    
-                    const style = Math.random();
-                    if (style > 0.6) {
-                        // Tiras LED modernas en cornisas/bordes
-                        const stripeGeo = new THREE.BoxGeometry(0.1, bH, 0.1);
-                        const stripe1 = new THREE.Mesh(stripeGeo, glowMat); stripe1.position.set(-bW/2, 0, bD/2 + 0.01);
-                        const stripe2 = new THREE.Mesh(stripeGeo, glowMat); stripe2.position.set(bW/2, 0, bD/2 + 0.01);
-                        building.add(stripe1, stripe2);
-                    } else if (style > 0.3) {
-                        // CIENTOS de Ventanas de oficinas iluminadas
-                        const rows = Math.floor(bH * 1.5);
-                        const cols = Math.floor(bW * 1.5);
-                        for(let r=0; r<rows; r++) {
-                            for(let c=0; c<cols; c++) {
-                                if(Math.random() > 0.5) { // 50% encendidas
-                                    const win = new THREE.Mesh(winGeo, windowMat);
-                                    win.position.set(
-                                        -bW/2 + 0.4 + c*(bW-0.8)/(cols>1?cols-1:1), 
-                                        -bH/2 + 0.6 + r*(bH-1.2)/(rows>1?rows-1:1), 
-                                        bD/2 + 0.01
-                                    );
-                                    building.add(win);
-                                }
-                            }
-                        }
-                    } else {
-                        // Letreros luminosos HD (Billboards) - WINMX Casino
-                        const signMat = new THREE.MeshStandardMaterial({ color: glowColor, emissive: glowColor, emissiveIntensity: 4.0 });
-                        const sign = new THREE.Mesh(new THREE.PlaneGeometry(bW - 0.5, 3), signMat);
-                        sign.position.set(0, bH/2 - 2, bD/2 + 0.05);
-                        building.add(sign);
-                    }
-                    
-                    // Detalles en techo (antenas procedimentales)
-                    if (Math.random() < 0.7) {
-                        const antennaCount = 1 + Math.floor(Math.random()*3);
-                        for(let a=0; a<antennaCount; a++) {
-                            const aH = 1 + Math.random()*4;
-                            const antenna = new THREE.Mesh(
-                                new THREE.CylinderGeometry(0.02, 0.02, aH),
-                                new THREE.MeshStandardMaterial({ color: 0x52525b })
-                            );
-                            antenna.position.set(Math.random()*bW - bW/2, bH/2 + aH/2, Math.random()*bD - bD/2);
-                            building.add(antenna);
-                        }
-                    }
-
-                    cityGroup.add(building);
-                }
-                this.scene.add(cityGroup);
-            },
-            
-            adjustCamera(w, h) {
-                if (!this.camera) return;
-                this.camera.aspect = w / h;
-                this.camera.updateProjectionMatrix();
-                if (w < h) this.camera.position.set(0, 6.2, 5.2);
-                else this.camera.position.set(0, 5.2, 5.2);
-                this.camera.lookAt(0, 0.3, 0);
-            },
-
-            reset() {
-                this.targetX = -3.98;
-                if(this.chicken) {
-                    this.chicken.position.set(-3.98, 0.15, 0); 
-                    this.chicken.scale.set(1, 1, 1);
-                }
-                this.cars.forEach(c => this.scene.remove(c.mesh));
-                this.cars = [];
-                // Resetear neones neblina
-                if(this.multiplierMeshes) {
-                    this.multiplierMeshes.forEach(mesh => {
-                        mesh.material.emissive.set('#ffffff'); 
-                        mesh.material.emissiveIntensity = 0.3;
-                    });
-                }
-            },
-
-            setLane(laneIndex) {
-                const laneIndex3D = laneIndex + 1; 
-                this.targetX = -3.98 + (laneIndex3D * 1.14);
-            },
-
-            jumpToEnd(callback) {
-                // Punto de meta exacta en la banqueta final (x=5.2)
-                this.targetX = 5.2; 
-                let jumpProgress = 0;
-                const jumpDuration = 0.8; 
-                const startTime = Date.now();
-                
-                const jumpAnimation = () => {
-                    const elapsed = (Date.now() - startTime) / 1000;
-                    jumpProgress = Math.min(elapsed / jumpDuration, 1);
-                    
-                    if(this.chicken) {
-                        this.chicken.position.x += (this.targetX - this.chicken.position.x) * 0.15;
-                        const jumpHeight = Math.sin(jumpProgress * Math.PI) * 0.5;
-                        // Ajustamos la altura final a 0.15 (banqueta)
-                        this.chicken.position.y = Math.max(0.15, jumpHeight);
-                    }
-                    
-                    if(jumpProgress < 1) {
-                        requestAnimationFrame(jumpAnimation);
-                    } else {
-                        if(this.chicken) this.chicken.position.y = 0.15; 
-                        if(callback) callback();
-                    }
-                };
-                jumpAnimation();
-            },
-
-            spawnCar(laneIndex, callback) {
-                const carGroup = new THREE.Group();
-                const bodyMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.2, metalness: 0.7 });
-                const glassMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.1, metalness: 0.9 });
-                const wheelMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.9 });
-                const lightFrontMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 5 });
-                const lightBackMat = new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 5 });
-
-                const chasis = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.4, 3.0), bodyMat);
-                chasis.position.y = 0.3; chasis.castShadow = true; carGroup.add(chasis);
-
-                const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.4, 1.6), glassMat);
-                cabin.position.set(0, 0.7, -0.2); cabin.castShadow = true; carGroup.add(cabin);
-                
-                const roof = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.05, 1.62), bodyMat);
-                roof.position.set(0, 0.925, -0.2); carGroup.add(roof);
-
-                const wheelGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.2, 16);
-                wheelGeo.rotateZ(Math.PI / 2);
-                const wheelPositions = [[-0.8, 0.25, 1.0], [0.8, 0.25, 1.0], [-0.8, 0.25, -1.0], [0.8, 0.25, -1.0]];
-                wheelPositions.forEach(pos => {
-                    const wheel = new THREE.Mesh(wheelGeo, wheelMat);
-                    wheel.position.set(...pos); wheel.castShadow = true; carGroup.add(wheel);
-                });
-
-                const headlightGeo = new THREE.BoxGeometry(0.3, 0.15, 0.1);
-                const hlR = new THREE.Mesh(headlightGeo, lightFrontMat); hlR.position.set(0.5, 0.35, 1.51);
-                const hlL = hlR.clone(); hlL.position.x = -0.5;
-                carGroup.add(hlR, hlL);
-
-                const taillightGeo = new THREE.BoxGeometry(0.4, 0.1, 0.1);
-                const tlR = new THREE.Mesh(taillightGeo, lightBackMat); tlR.position.set(0.5, 0.35, -1.51);
-                const tlL = tlR.clone(); tlL.position.x = -0.5;
-                carGroup.add(tlR, tlL);
-
-                carGroup.scale.set(0.42, 0.42, 0.42);
-                const laneIndex3D = laneIndex + 1;
-                const laneX = -3.98 + (laneIndex3D * 1.14);
-                carGroup.position.set(laneX, 0, -12);
-                this.scene.add(carGroup);
-                this.cars.push({ mesh: carGroup, speed: 0.6, cb: callback, hit: false });
-            },
-
-            animate() {
-                this.animationId = requestAnimationFrame(() => this.animate());
-                
-                if(this.chicken) {
-                    this.chicken.position.x += (this.targetX - this.chicken.position.x) * 0.15;
-                    
-                    if (this.chicken.scale.y < 0.5) {
-                        this.chicken.position.y = 0; 
-                    } else {
-                        // FIX ALTURA: Pollo en banqueta INICIO (x<-3.3) o banqueta META (x>4.4) sube a 0.15
-                        let baseY = (this.chicken.position.x < -3.3 || this.chicken.position.x > 4.4) ? 0.15 : 0;
-                        this.chicken.position.y = baseY + Math.abs(Math.sin((this.chicken.position.x - this.targetX) * Math.PI)) * 0.7;
-                    }
-                }
-
-                for (let i = this.cars.length - 1; i >= 0; i--) {
-                    let carData = this.cars[i];
-                    carData.mesh.position.z += carData.speed;
-                    carData.mesh.position.y = Math.abs(Math.sin(Date.now() / 60)) * 0.015;
-
-                    if (carData.mesh.position.z > -0.6 && carData.mesh.position.z < 0.8 && !carData.hit) {
-                        if (Math.abs(this.chicken.position.x - carData.mesh.position.x) < 0.6) {
-                            carData.hit = true;
-                            if(this.chicken) {
-                                this.chicken.scale.set(1.6, 0.05, 1.6);
-                                this.chicken.position.y = 0;
-                            }
-                            if(carData.cb) carData.cb();
-                        }
-                    }
-                    
-                    if (carData.mesh.position.z > 12) {
-                        this.scene.remove(carData.mesh);
-                        this.cars.splice(i, 1);
-                    }
-                }
-
-                if(this.renderer && this.scene && this.camera) {
-                    this.renderer.render(this.scene, this.camera);
-                }
-            }
-        };
-        // ==========================================
 
         const GameLogic = {
             adjustLuck(winAmt, betAmt, mult = 1) { 
@@ -1231,67 +769,10 @@
                 }
             },
             chicken: {
-                pos: -1, active: false, bet: 0, 
-                mults: [1.5, 2.2, 4.0, 18.0, 45.0, 100.0], 
-                moving: false,
-                
-                init() { 
-                    Chicken3D.init('chicken-world-3d');
-                    this.updateHero(); 
-                },
-                async start() { 
-                    if(this.active || State.isProcessing) return; 
-                    const b = Math.abs(parseFloat(document.getElementById('chicken-bet-input').value)) || 3; 
-                    if(b < 3) return UI.notify("Apuesta mínima $3 MXN", "error"); 
-                    if(State.balance < b) return UI.notify("Saldo insuficiente", "error"); 
-                    
-                    State.isProcessing = true; 
-                    await Core.updateBalanceDB(-b); 
-                    State.balance -= b; 
-                    this.bet = b; 
-                    UI.updateBalance(); 
-                    this.pos = -1; // Inicia en la banqueta
-                    this.active = true; 
-                    this.moving = false; 
-                    
-                    document.getElementById('chicken-controls').classList.add('hidden-view'); 
-                    document.getElementById('chicken-actions').classList.remove('hidden-view'); 
-                    
-                    Chicken3D.reset();
-                    this.init(); 
-                    document.getElementById('chicken-cashout-btn').innerText = `COBRAR $${this.bet.toFixed(2)}`; 
-                    document.getElementById('chicken-cashout-btn').disabled = true; // No cobrar en banqueta inicio
-                    
-                    State.isProcessing = false; 
-                },
-                updateHero(isDead = false) { 
-                    Chicken3D.setLane(this.pos);
-
-                    // FIX SINTAXIS: Actualizar Iluminación de los Multiplicadores 3D
-                    if(Chicken3D.multiplierMeshes) {
-                        Chicken3D.multiplierMeshes.forEach((mesh, i) => {
-                            mesh.material.emissive.set('#ffffff');
-                            mesh.material.emissiveIntensity = 0.3;
-                            mesh.material.opacity = 0.6;
-
-                            if (i === this.pos) {
-                                if (isDead) {
-                                    mesh.material.emissive.set('#ef4444'); // Rojo fuerte
-                                    mesh.material.emissiveIntensity = 3.0;
-                                    mesh.material.opacity = 1.0;
-                                } else {
-                                    mesh.material.emissive.set('#10b981'); // Verde brillante
-                                    mesh.material.emissiveIntensity = 3.0;
-                                    mesh.material.opacity = 1.0;
-                                }
-                            } else if (i < this.pos) {
-                                mesh.material.emissive.set('#10b981'); // Verde superado
-                                mesh.material.emissiveIntensity = 0.4;
-                                mesh.material.opacity = 0.8;
-                            }
-                        });
-                    }
-                },
+                pos: -1, active: false, bet: 0, mults: [1.2, 1.5, 2.2, 4.0, 8.5, 18.0, 45.0, 100.0], moving: false,
+                init() { const road = document.getElementById('chicken-world'); if(!road) return; road.innerHTML = `<div id="chicken-hero" class="chicken-sprite">🐥</div>`; this.mults.forEach((m, i) => { const lane = document.createElement('div'); lane.className = "road-lane"; lane.innerHTML = `<span class="text-[8px] font-black text-white/10 uppercase">${m}x</span>`; lane.id = `lane-${i}`; road.appendChild(lane); }); this.updateHero(); },
+                async start() { if(this.active || State.isProcessing) return; const b = Math.abs(parseFloat(document.getElementById('chicken-bet-input').value)) || 3; if(b < 3) return UI.notify("Apuesta mínima $3 MXN", "error"); if(State.balance < b) return UI.notify("Saldo insuficiente", "error"); State.isProcessing = true; await Core.updateBalanceDB(-b); State.balance -= b; this.bet = b; UI.updateBalance(); this.pos = -1; this.active = true; this.moving = false; document.getElementById('chicken-controls').classList.add('hidden-view'); document.getElementById('chicken-actions').classList.remove('hidden-view'); document.getElementById('chicken-cashout-btn').innerText = `COBRAR $${b.toFixed(2)}`; this.init(); State.isProcessing = false; },
+                updateHero() { const hero = document.getElementById('chicken-hero'); if(!hero) return; const lanes = document.querySelectorAll('.road-lane'); lanes.forEach(l => l.classList.remove('current', 'passed')); if(this.pos === -1) hero.style.left = "-40px"; else { const targetLane = document.getElementById(`lane-${this.pos}`); if(targetLane){ const laneRect = targetLane.getBoundingClientRect(); const worldRect = document.getElementById('chicken-world').getBoundingClientRect(); hero.style.left = (laneRect.left - worldRect.left + (laneRect.width / 2) - 15) + "px"; for(let i=0; i<=this.pos; i++) { const l = document.getElementById(`lane-${i}`); if(i === this.pos) l.classList.add('current'); else l.classList.add('passed'); } } } },
                 move() { 
                     if(!this.active || State.isProcessing || this.moving) return; 
                     this.moving = true; 
@@ -1300,78 +781,25 @@
                     this.pos++; 
                     
                     let risk = (0.15 + (this.pos * 0.15)) / GlobalLuck.luckFactor; 
-                    if (this.pos === this.mults.length - 1) risk = 0.98; 
-                    else risk = Math.min(risk, 0.96); 
+                    if (this.pos === 7) risk = 0.98; else risk = Math.min(risk, 0.96); 
                     
                     if(Math.random() < risk) { 
-                        this.updateHero(true); 
-
-                        Chicken3D.spawnCar(this.pos, () => {
-                            this.active = false; 
-                            playSfx('lose'); 
-                            UI.notify("¡ATROPELLADO!", "error"); 
-                            
-                            setTimeout(() => {
-                                this.end(false); 
-                            }, 1000);
-                        });
+                        const car = document.createElement('div'); car.className = "car-sprite"; car.innerHTML = '🚘'; const targetLane = document.getElementById(`lane-${this.pos}`); if(targetLane) car.style.left = (targetLane.offsetLeft + 10) + "px"; document.getElementById('chicken-world').appendChild(car); this.active = false; setTimeout(() => { if(document.getElementById('chicken-hero')) document.getElementById('chicken-hero').innerHTML = '💥'; playSfx('lose'); UI.notify("¡ATROPELLADO!", "error"); this.end(false); }, 300); 
                     } else { 
-                        playSfx('click'); 
-                        this.updateHero(false); 
-                        const m = this.mults[this.pos]; 
-                        
-                        if(cBtn) { 
-                            cBtn.innerText = `COBRAR $${(this.bet * m).toFixed(2)}`; 
-                            cBtn.disabled = false; 
-                        } 
-                        this.moving = false; 
-                        
-                        // Si llega al final exitosamente (100x), se cobra en automático
-                        if(this.pos === this.mults.length - 1) {
-                            this.moving = true;
-                            if(cBtn) cBtn.disabled = true;
-                            playSfx('win');
-                            playSfx('winExtra');
-                            
-                            // Animación de salto final a la banqueta de meta
-                            Chicken3D.jumpToEnd(() => {
-                                setTimeout(() => {
-                                    this.cashout();
-                                }, 1000); 
-                            });
-                        }
+                        playSfx('click'); this.updateHero(); const m = this.mults[this.pos]; document.getElementById('chicken-status').innerText = m.toFixed(2) + 'x'; if(cBtn) { cBtn.innerText = `COBRAR $${(this.bet * m).toFixed(2)}`; cBtn.disabled = false; } this.moving = false; if(this.pos === 7) this.cashout(); 
                     } 
                 },
-                async cashout() { 
-                    if(!this.active || State.isProcessing || this.moving) return; 
-                    State.isProcessing = true; 
-                    const m = this.pos === -1 ? 1 : this.mults[this.pos]; 
-                    const win = this.bet * m; 
-                    await Core.updateBalanceDB(win); 
-                    State.balance += win; 
-                    playSfx('win'); 
-                    playSfx('winExtra'); 
-                    UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); 
-                    this.end(true); 
-                },
+                async cashout() { if(!this.active || State.isProcessing || this.moving) return; State.isProcessing = true; const m = this.pos === -1 ? 1 : this.mults[this.pos]; const win = this.bet * m; await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
                 async end(win) { 
-                    this.active = false; 
-                    this.moving = false; 
-                    const m = this.pos === -1 ? 1 : this.mults[this.pos]; 
-                    const winAmt = win ? (this.bet * m) : 0; 
-                    GameLogic.adjustLuck(winAmt, this.bet, m); 
-                    UI.updateBalance(); 
-                    
+                    this.active = false; this.moving = false; const m = this.pos === -1 ? 1 : this.mults[this.pos]; 
+                    const winAmt = win ? (this.bet * m) : 0; GameLogic.adjustLuck(winAmt, this.bet, m); UI.updateBalance(); 
                     setTimeout(() => { 
                         if (document.getElementById('view-game').classList.contains('hidden-view')) return; 
                         document.getElementById('chicken-controls').classList.remove('hidden-view'); 
                         document.getElementById('chicken-actions').classList.add('hidden-view'); 
-                        Chicken3D.reset();
-                        this.pos = -1;
-                        this.updateHero();
+                        document.getElementById('chicken-status').innerText = '1.00x'; 
                     }, 1000); 
-                    
-                    await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'CHICKEN 3D', status: 'completed' }); 
+                    await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'CHICKEN', status: 'completed' }); 
                     State.isProcessing = false; 
                 }
             },
