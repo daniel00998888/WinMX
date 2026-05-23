@@ -624,11 +624,28 @@
         };
 
         // ==========================================
-        // MOTOR 3D PARA CHICKEN ROAD CON THREE.JS (NEW YORK CITYSCAPE)
+        // MOTOR 3D PARA CHICKEN ROAD CON THREE.JS (NEW YORK CITYSCAPE FOTORREALISTA HD 4K)
         // ==========================================
         const Chicken3D = {
             scene: null, camera: null, renderer: null, chicken: null, cars: [], animationId: null, initialized: false, targetX: -3.98,
             multiplierMeshes: [],
+
+            // Helper para generar ruido procedimental (fotorrealismo concrete/asphalt)
+            generateNoiseTexture(w, h, colorBase, noiseAmp = 20) {
+                const canvas = document.createElement('canvas');
+                canvas.width = w; canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                const imgData = ctx.createImageData(w, h);
+                for (let i = 0; i < imgData.data.length; i += 4) {
+                    const noise = Math.random() * noiseAmp - (noiseAmp/2);
+                    imgData.data[i] = Math.max(0, Math.min(255, colorBase.r + noise));
+                    imgData.data[i+1] = Math.max(0, Math.min(255, colorBase.g + noise));
+                    imgData.data[i+2] = Math.max(0, Math.min(255, colorBase.b + noise));
+                    imgData.data[i+3] = 255;
+                }
+                ctx.putImageData(imgData, 0, 0);
+                return new THREE.CanvasTexture(canvas);
+            },
 
             // Helper para crear mallas de texto en el asfalto (Neón)
             createTextMesh(text, color = '#ffffff') {
@@ -643,7 +660,7 @@
                 const texture = new THREE.CanvasTexture(canvas);
                 const mat = new THREE.MeshStandardMaterial({ 
                     map: texture, transparent: true, opacity: 0.6,
-                    emissive: new THREE.Color(color), emissiveIntensity: 0.2, // Brillo neón
+                    emissive: new THREE.Color(color), emissiveIntensity: 0.3, // Brillo neón
                     depthWrite: false
                 });
                 const geo = new THREE.PlaneGeometry(0.9, 0.45);
@@ -665,9 +682,10 @@
                 this.initialized = true;
 
                 this.scene = new THREE.Scene();
-                this.scene.background = new THREE.Color(0x020205); // Noche profunda
-                // Niebla para dar profundidad atmosférica a los edificios
-                this.scene.fog = new THREE.FogExp2(0x020205, 0.035); 
+                // Cielo Nocturno Moderno (Deep Blue/Slate)
+                this.scene.background = new THREE.Color(0x050510); 
+                // Niebla para dar profundidad atmosférica fotorrealista
+                this.scene.fog = new THREE.Fog(0x050510, 15, 60); 
 
                 this.camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
                 this.adjustCamera(container.clientWidth, container.clientHeight);
@@ -678,32 +696,57 @@
                 this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
                 container.appendChild(this.renderer.domElement);
 
-                // Iluminación cinemática
-                const ambient = new THREE.AmbientLight(0x111122, 0.8);
+                // Iluminación cinemática HD
+                const ambient = new THREE.AmbientLight(0x222244, 0.6); // Luz de luna blanca
                 this.scene.add(ambient);
-                const dirLight = new THREE.DirectionalLight(0x7c3aed, 1.5); // Luz violeta de ciudad
-                dirLight.position.set(5, 10, 8);
-                dirLight.castShadow = true;
-                dirLight.shadow.mapSize.width = 1024; dirLight.shadow.mapSize.height = 1024;
-                this.scene.add(dirLight);
+                const violetLight = new THREE.DirectionalLight(0x7c3aed, 0.8); // Luz cool de ciudad
+                violetLight.position.set(5, 10, 8);
+                violetLight.castShadow = true;
+                violetLight.shadow.mapSize.width = 1024; violetLight.shadow.mapSize.height = 1024;
+                this.scene.add(violetLight);
+                const warmLight = new THREE.DirectionalLight(0xffaa44, 0.5); // Balance warm de ciudad
+                warmLight.position.set(-10, 5, -5);
+                this.scene.add(warmLight);
 
-                // 1. ASFALTO REFLECTANTE (Efecto lluvia/noche)
+                // 1. ASFALTO FOTORREALISTA (Metalness para reflejos de ciudad)
+                const roadTex = this.generateNoiseTexture(256, 256, {r: 24, g: 24, b: 27});
+                roadTex.wrapS = roadTex.wrapT = THREE.RepeatWrapping; roadTex.repeat.set(1, 10);
                 const roadGeo = new THREE.PlaneGeometry(20, 50);
-                const roadMat = new THREE.MeshStandardMaterial({ color: 0x050508, roughness: 0.15, metalness: 0.8 }); // Alto reflejo
+                const roadMat = new THREE.MeshStandardMaterial({ map: roadTex, roughness: 0.15, metalness: 0.8 }); // Alto reflejo
                 const road = new THREE.Mesh(roadGeo, roadMat);
                 road.rotation.x = -Math.PI / 2;
                 road.receiveShadow = true;
                 this.scene.add(road);
 
-                // 2. BANQUETA
+                // Geometría y Textura de Concreto para Banquetes
+                const concreteTex = this.generateNoiseTexture(128, 128, {r: 63, g: 63, b: 70}, 30);
+                concreteTex.wrapS = concreteTex.wrapT = THREE.RepeatWrapping; concreteTex.repeat.set(1, 15);
                 const sidewalkGeo = new THREE.BoxGeometry(1.6, 0.15, 50);
-                const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.9 });
-                const sidewalk = new THREE.Mesh(sidewalkGeo, sidewalkMat);
-                sidewalk.position.set(-4.1, 0.075, 0); 
-                sidewalk.receiveShadow = true;
-                this.scene.add(sidewalk);
+                const sidewalkMat = new THREE.MeshStandardMaterial({ map: concreteTex, roughness: 1.0 });
 
-                // 3. LÍNEAS DE CARRETERA (Luminosas)
+                // 2a. BANQUETA INICIO (Izquierda)
+                const sidewalkStart = new THREE.Mesh(sidewalkGeo, sidewalkMat);
+                sidewalkStart.position.set(-4.1, 0.075, 0); 
+                sidewalkStart.receiveShadow = true;
+                this.scene.add(sidewalkStart);
+                // Texto neón "INICIO"
+                const startText = this.createTextMesh("INICIO", "#10b981");
+                startText.position.set(-4.1, 0.16, 0); // Ligeramente elevado
+                startText.scale.set(0.6, 0.6, 1);
+                this.scene.add(startText);
+
+                // 2b. BANQUETA META (Derecha - Zona Segura Final)
+                const sidewalkEnd = new THREE.Mesh(sidewalkGeo, sidewalkMat);
+                sidewalkEnd.position.set(5.2, 0.075, 0); 
+                sidewalkEnd.receiveShadow = true;
+                this.scene.add(sidewalkEnd);
+                // Texto neón "META"
+                const endText = this.createTextMesh("META", "#fbbf24");
+                endText.position.set(5.2, 0.16, 0);
+                endText.scale.set(0.6, 0.6, 1);
+                this.scene.add(endText);
+
+                // 3. LÍNEAS DE CARRETERA (Luminosas/Emisivas)
                 const lineMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.2 });
                 for (let col = 1; col <= 6; col++) { 
                     const separatorX = -3.98 + (col * 1.14) - 0.57; 
@@ -711,8 +754,34 @@
                         const dashGeo = new THREE.BoxGeometry(0.06, 0.015, 1.5);
                         const dash = new THREE.Mesh(dashGeo, lineMat);
                         dash.position.set(separatorX, 0.01, z); 
+                        dash.receiveShadow = true;
                         this.scene.add(dash);
                     }
+                }
+
+                // POSTES DE LUZ (Street Lamps Modernos HD)
+                const lampPoleMat = new THREE.MeshStandardMaterial({ color: 0x52525b });
+                const lampLightMat = new THREE.MeshStandardMaterial({ color: 0xffffee, emissive: 0xffffee, emissiveIntensity: 2 });
+                for(let i=0; i<8; i++) {
+                    const zPos = -20 + i*6;
+                    const side = (i % 2 === 0) ? -4.9 : 4.4; // Alternar lados
+                    
+                    const lampGroup = new THREE.Group();
+                    lampGroup.position.set(side, 0, zPos);
+                    
+                    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.5), lampPoleMat);
+                    pole.position.y = 1.25;
+                    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.8), lampPoleMat);
+                    arm.rotation.z = Math.PI / 2;
+                    arm.position.set( (side<0?0.4:-0.4), 2.4, 0);
+                    const lightFix = new THREE.Mesh(new THREE.SphereGeometry(0.15), lampLightMat);
+                    lightFix.position.set( (side<0?0.8:-0.8), 2.4, 0);
+                    lampGroup.add(pole, arm, lightFix);
+                    
+                    const pl = new THREE.PointLight(0xffffee, 0.5, 8); // Luz real
+                    pl.position.set( (side<0?0.8:-0.8), 2.4, 0);
+                    lampGroup.add(pl);
+                    this.scene.add(lampGroup);
                 }
 
                 // 4. MULTIPLICADORES 3D (Neones en el piso)
@@ -727,7 +796,7 @@
                     this.multiplierMeshes.push(textMesh);
                 });
 
-                // 5. CITYSCAPE NEW YORK
+                // 5. CITYSCAPE NEW YORK HD (Fondo Moderno)
                 this.buildCityscape();
 
                 // 6. EL POLLITO
@@ -782,51 +851,84 @@
                 this.animate();
             },
             
+            // Función para construir edificios realistas, modernos y detallados (New York 4K Style)
             buildCityscape() {
                 const cityGroup = new THREE.Group();
-                cityGroup.position.set(0, 0, -22); 
+                cityGroup.position.set(0, 0, -22); // Profundidad tras la carretera
 
-                const buildingMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0e, roughness: 0.6, metalness: 0.5 });
+                // Texturas procedimentales concrete/wall
+                const wallColors = [{r:39,g:39,b:42}, {r:24,g:24,b:27}, {r:63,g:63,b:70}]; 
+
+                // Ventanas encendidas
+                const windowMat = new THREE.MeshStandardMaterial({ 
+                    color: 0xfef08a, emissive: 0xfef08a, emissiveIntensity: 2.0, roughness: 0.1 
+                }); 
+                const winGeo = new THREE.PlaneGeometry(0.15, 0.25);
+
                 const windowColors = [0x00e5ff, 0xff0055, 0xffaa00, 0x8800ff, 0xffffff]; 
                 
-                for (let i = 0; i < 25; i++) {
-                    const bW = 2 + Math.random() * 4;
-                    const bH = 15 + Math.random() * 25;
-                    const bD = 2 + Math.random() * 4;
+                // Generar 20 edificios detallados
+                for (let i = 0; i < 20; i++) {
+                    const bW = 2.5 + Math.random() * 4;
+                    const bH = 15 + Math.random() * 25; // Rascacielos altos
+                    const bD = 2.5 + Math.random() * 4;
                     
-                    const building = new THREE.Mesh(new THREE.BoxGeometry(bW, bH, bD), buildingMat);
-                    building.position.set(-25 + Math.random() * 50, bH/2, -Math.random() * 15);
+                    const wallTex = this.generateNoiseTexture(128, 128, wallColors[i % 3], 20);
+                    wallTex.wrapS = wallTex.wrapT = THREE.RepeatWrapping; wallTex.repeat.set(2, bH/3);
+                    const bMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.8, metalness: 0.2 });
+                    const building = new THREE.Mesh(new THREE.BoxGeometry(bW, bH, bD), bMat);
+                    building.position.set(-25 + Math.random() * 50, bH/2, Math.random() * 5);
+                    building.castShadow = true; building.receiveShadow = true;
                     
                     const glowColor = windowColors[Math.floor(Math.random() * windowColors.length)];
-                    const glowMat = new THREE.MeshStandardMaterial({ color: glowColor, emissive: glowColor, emissiveIntensity: 2.5 });
+                    const glowMat = new THREE.MeshStandardMaterial({ color: glowColor, emissive: glowColor, emissiveIntensity: 3.0 });
                     
                     const style = Math.random();
                     if (style > 0.6) {
-                        // Tiras LED en los bordes
+                        // Tiras LED modernas en cornisas/bordes
                         const stripeGeo = new THREE.BoxGeometry(0.1, bH, 0.1);
-                        const stripe1 = new THREE.Mesh(stripeGeo, glowMat); stripe1.position.set(-bW/2, 0, bD/2);
-                        const stripe2 = new THREE.Mesh(stripeGeo, glowMat); stripe2.position.set(bW/2, 0, bD/2);
+                        const stripe1 = new THREE.Mesh(stripeGeo, glowMat); stripe1.position.set(-bW/2, 0, bD/2 + 0.01);
+                        const stripe2 = new THREE.Mesh(stripeGeo, glowMat); stripe2.position.set(bW/2, 0, bD/2 + 0.01);
                         building.add(stripe1, stripe2);
                     } else if (style > 0.3) {
-                        // Ventanas de oficinas iluminadas
-                        const cols = Math.floor(bW);
-                        const rows = Math.floor(bH / 1.5);
+                        // CIENTOS de Ventanas de oficinas iluminadas
+                        const rows = Math.floor(bH * 1.5);
+                        const cols = Math.floor(bW * 1.5);
                         for(let r=0; r<rows; r++) {
                             for(let c=0; c<cols; c++) {
-                                if(Math.random() > 0.7) {
-                                    const win = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.4), glowMat);
-                                    win.position.set(-bW/2 + 0.5 + c*(bW-1)/(cols>1?cols-1:1), -bH/2 + 1 + r*1.5, bD/2 + 0.01);
+                                if(Math.random() > 0.5) { // 50% encendidas
+                                    const win = new THREE.Mesh(winGeo, windowMat);
+                                    win.position.set(
+                                        -bW/2 + 0.4 + c*(bW-0.8)/(cols>1?cols-1:1), 
+                                        -bH/2 + 0.6 + r*(bH-1.2)/(rows>1?rows-1:1), 
+                                        bD/2 + 0.01
+                                    );
                                     building.add(win);
                                 }
                             }
                         }
                     } else {
-                        // Letreros luminosos (Billboards)
-                        const sign = new THREE.Mesh(new THREE.PlaneGeometry(bW - 0.5, 3), glowMat);
+                        // Letreros luminosos HD (Billboards) - WINMX Casino
+                        const signMat = new THREE.MeshStandardMaterial({ color: glowColor, emissive: glowColor, emissiveIntensity: 4.0 });
+                        const sign = new THREE.Mesh(new THREE.PlaneGeometry(bW - 0.5, 3), signMat);
                         sign.position.set(0, bH/2 - 2, bD/2 + 0.05);
                         building.add(sign);
                     }
                     
+                    // Detalles en techo (antenas procedimentales)
+                    if (Math.random() < 0.7) {
+                        const antennaCount = 1 + Math.floor(Math.random()*3);
+                        for(let a=0; a<antennaCount; a++) {
+                            const aH = 1 + Math.random()*4;
+                            const antenna = new THREE.Mesh(
+                                new THREE.CylinderGeometry(0.02, 0.02, aH),
+                                new THREE.MeshStandardMaterial({ color: 0x52525b })
+                            );
+                            antenna.position.set(Math.random()*bW - bW/2, bH/2 + aH/2, Math.random()*bD - bD/2);
+                            building.add(antenna);
+                        }
+                    }
+
                     cityGroup.add(building);
                 }
                 this.scene.add(cityGroup);
@@ -849,11 +951,11 @@
                 }
                 this.cars.forEach(c => this.scene.remove(c.mesh));
                 this.cars = [];
-                // Resetear color neón
+                // Resetear neones neblina
                 if(this.multiplierMeshes) {
                     this.multiplierMeshes.forEach(mesh => {
                         mesh.material.emissive.set('#ffffff'); 
-                        mesh.material.emissiveIntensity = 0.2;
+                        mesh.material.emissiveIntensity = 0.3;
                     });
                 }
             },
@@ -864,7 +966,8 @@
             },
 
             jumpToEnd(callback) {
-                this.targetX = -3.98 + (7 * 1.14); 
+                // Punto de meta exacta en la banqueta final (x=5.2)
+                this.targetX = 5.2; 
                 let jumpProgress = 0;
                 const jumpDuration = 0.8; 
                 const startTime = Date.now();
@@ -876,7 +979,8 @@
                     if(this.chicken) {
                         this.chicken.position.x += (this.targetX - this.chicken.position.x) * 0.15;
                         const jumpHeight = Math.sin(jumpProgress * Math.PI) * 0.5;
-                        this.chicken.position.y = 0.15 + jumpHeight;
+                        // Ajustamos la altura final a 0.15 (banqueta)
+                        this.chicken.position.y = Math.max(0.15, jumpHeight);
                     }
                     
                     if(jumpProgress < 1) {
@@ -941,7 +1045,8 @@
                     if (this.chicken.scale.y < 0.5) {
                         this.chicken.position.y = 0; 
                     } else {
-                        let baseY = (this.chicken.position.x < -3.41) ? 0.15 : 0;
+                        // FIX ALTURA: Pollo en banqueta INICIO (x<-3.3) o banqueta META (x>4.4) sube a 0.15
+                        let baseY = (this.chicken.position.x < -3.3 || this.chicken.position.x > 4.4) ? 0.15 : 0;
                         this.chicken.position.y = baseY + Math.abs(Math.sin((this.chicken.position.x - this.targetX) * Math.PI)) * 0.7;
                     }
                 }
@@ -1145,7 +1250,7 @@
                     State.balance -= b; 
                     this.bet = b; 
                     UI.updateBalance(); 
-                    this.pos = -1; 
+                    this.pos = -1; // Inicia en la banqueta
                     this.active = true; 
                     this.moving = false; 
                     
@@ -1155,18 +1260,18 @@
                     Chicken3D.reset();
                     this.init(); 
                     document.getElementById('chicken-cashout-btn').innerText = `COBRAR $${this.bet.toFixed(2)}`; 
-                    document.getElementById('chicken-cashout-btn').disabled = true; 
+                    document.getElementById('chicken-cashout-btn').disabled = true; // No cobrar en banqueta inicio
                     
                     State.isProcessing = false; 
                 },
                 updateHero(isDead = false) { 
                     Chicken3D.setLane(this.pos);
 
-                    // FIX SINTAXIS: Se corrigió el error de "multiplierMeshes"
+                    // FIX SINTAXIS: Actualizar Iluminación de los Multiplicadores 3D
                     if(Chicken3D.multiplierMeshes) {
                         Chicken3D.multiplierMeshes.forEach((mesh, i) => {
                             mesh.material.emissive.set('#ffffff');
-                            mesh.material.emissiveIntensity = 0.2;
+                            mesh.material.emissiveIntensity = 0.3;
                             mesh.material.opacity = 0.6;
 
                             if (i === this.pos) {
@@ -1221,12 +1326,14 @@
                         } 
                         this.moving = false; 
                         
+                        // Si llega al final exitosamente (100x), se cobra en automático
                         if(this.pos === this.mults.length - 1) {
                             this.moving = true;
                             if(cBtn) cBtn.disabled = true;
                             playSfx('win');
                             playSfx('winExtra');
                             
+                            // Animación de salto final a la banqueta de meta
                             Chicken3D.jumpToEnd(() => {
                                 setTimeout(() => {
                                     this.cashout();
