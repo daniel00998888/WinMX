@@ -598,59 +598,28 @@
             openGame(game) { if(State.isProcessing) return; playSfx('click'); this.showView('game'); document.getElementById('game-mount').innerHTML = this.templates[game]; document.getElementById('view-game').scrollTop = 0; document.getElementById('bottom-nav-bar').style.transform = 'translateY(100%)'; if(game === 'slots') GameLogic.slots.init(); if(game === 'mines') GameLogic.mines.drawGrid(); if(game === 'tower') GameLogic.tower.drawTower(); if(game === 'blackjack') GameLogic.blackjack.renderInitial(); if(game === 'chicken') GameLogic.chicken.init(); },
             templates: {
                 slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn relative">
-                    <div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div>
+                    <div class="relative inline-block w-full">
+                        <div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div>
+                        <button id="btn-slots-speed" onclick="GameLogic.slots.toggleSpeed()" class="absolute top-0 right-0 text-2xl transition-all duration-300 hover:scale-110 -mt-2 -mr-2" style="color: #9ca3af; text-shadow: 0 0 0px rgba(251, 191, 36, 0);">⚡</button>
+                    </div>
                     <div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 3.00x</span><span class="text-amber-500">Máx: 500.00x</span></div>
                     <input id="slots-bet-input" type="number" value="3" min="3" class="input-bet">
-                    
-                    <!-- Botón de velocidad rápida -->
-                    <button id="btn-slots-speed" onclick="GameLogic.slots.toggleSpeed()" class="mb-3 text-3xl transition-all duration-300 hover:scale-110" style="color: #9ca3af; text-shadow: 0 0 0px rgba(251, 191, 36, 0);">⚡</button>
                     
                     <div class="flex gap-2 mb-4">
                         <button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action flex-1 py-5 font-casino text-xl">GIRAR</button>
                         <button id="btn-slots-auto" onclick="GameLogic.slots.toggleAutoMenu()" class="btn-action w-16 py-5 font-casino text-xl flex flex-col items-center justify-center bg-zinc-800 text-emerald-500 transition-colors"><i class="fas fa-robot"></i></button>
                     </div>
 
-                    <div id="slots-auto-menu" class="hidden-view absolute bottom-28 left-3 right-3 z-50 rounded-xl overflow-hidden shadow-2xl border-3 border-emerald-400" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-                        
-                        <!-- Header profesional -->
-                        <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 16px; border-bottom: 3px solid #0d9488;">
-                            <div class="flex items-center justify-center gap-3">
-                                <i class="fas fa-robot text-white text-3xl" style="animation: bounce 1s infinite;"></i>
-                                <div class="text-center flex-1">
-                                    <h3 class="text-white font-casino text-2xl font-black uppercase tracking-widest">GIROS AUTOMÁTICOS</h3>
-                                    <span class="text-yellow-300 text-3xl font-black" id="auto-spins-display">10</span>
-                                </div>
-                            </div>
+                    <div id="slots-auto-menu" class="hidden-view absolute bottom-28 left-6 right-6 glass p-6 z-50 border border-emerald-500/30 shadow-2xl">
+                        <h3 class="text-emerald-500 font-casino text-sm mb-3">Giros Automáticos</h3>
+                        <div class="grid grid-cols-4 gap-2 mb-4">
+                            <button onclick="GameLogic.slots.selectAuto(10)" class="auto-opt btn-action py-2 text-xs bg-emerald-500 text-black">10</button>
+                            <button onclick="GameLogic.slots.selectAuto(20)" class="auto-opt btn-action py-2 text-xs bg-zinc-800 text-white">20</button>
+                            <button onclick="GameLogic.slots.selectAuto(50)" class="auto-opt btn-action py-2 text-xs bg-zinc-800 text-white">50</button>
+                            <button onclick="GameLogic.slots.selectAuto(100)" class="auto-opt btn-action py-2 text-xs bg-zinc-800 text-white">100</button>
                         </div>
-
-                        <!-- Contenido -->
-                        <div class="p-6" style="background: rgba(5, 150, 105, 0.5);">
-                            <!-- Botones de opciones mejorados -->
-                            <div class="grid grid-cols-4 gap-3 mb-6">
-                                <button onclick="GameLogic.slots.selectAuto(10)" class="auto-opt relative group py-5 rounded-lg font-black text-sm transition-all duration-300 border-2 border-white bg-emerald-500 text-black hover:bg-emerald-400 active:scale-95 shadow-lg">
-                                    10
-                                </button>
-                                <button onclick="GameLogic.slots.selectAuto(20)" class="auto-opt relative group py-5 rounded-lg font-black text-sm transition-all duration-300 border-2 border-white bg-teal-600 text-white hover:bg-teal-500 active:scale-95 shadow-lg">
-                                    20
-                                </button>
-                                <button onclick="GameLogic.slots.selectAuto(50)" class="auto-opt relative group py-5 rounded-lg font-black text-sm transition-all duration-300 border-2 border-white bg-teal-600 text-white hover:bg-teal-500 active:scale-95 shadow-lg">
-                                    50
-                                </button>
-                                <button onclick="GameLogic.slots.selectAuto(100)" class="auto-opt relative group py-5 rounded-lg font-black text-sm transition-all duration-300 border-2 border-white bg-teal-600 text-white hover:bg-teal-500 active:scale-95 shadow-lg">
-                                    100
-                                </button>
-                            </div>
-
-                            <!-- Botón iniciar -->
-                            <button onclick="GameLogic.slots.startAuto()" class="w-full py-4 font-casino text-lg font-black rounded-lg transition-all duration-300 shadow-lg mb-3 border-2 border-white uppercase tracking-wider bg-emerald-500 hover:bg-emerald-400 text-black hover:shadow-emerald-500/50">
-                                <i class="fas fa-play mr-2"></i> INICIAR
-                            </button>
-
-                            <!-- Botón cancelar -->
-                            <button onclick="GameLogic.slots.toggleAutoMenu()" class="w-full py-3 text-white uppercase font-bold text-[12px] tracking-widest rounded-lg border-2 border-white hover:bg-white/20 transition-all duration-300 bg-black/30">
-                                <i class="fas fa-times mr-1"></i> CANCELAR
-                            </button>
-                        </div>
+                        <button onclick="GameLogic.slots.startAuto()" class="btn-action w-full py-4 font-casino">INICIAR AUTO</button>
+                        <button onclick="GameLogic.slots.toggleAutoMenu()" class="w-full mt-3 text-[10px] text-zinc-500 uppercase font-bold">Cancelar</button>
                     </div>
 
                     <div class="instruction-card"><h4>🎰 Reglas Slots</h4><p>Combina 3 símbolos para ganar.</p><div class="grid grid-cols-2 gap-2 text-[10px] font-bold uppercase mt-2"><div>🍒 x3</div><div>🍋 x10</div><div>🔔 x50</div><div class="text-emerald-500">7️⃣ x500</div></div></div>
@@ -690,7 +659,6 @@
                 autoSpinsLeft: 0,
                 selectedAutoCount: 10,
                 isAutoMode: false,
-                fastSpeedEnabled: false,
                 
                 init() { 
                     this.stopAuto(); // Resetea cualquier giro automático al cargar
@@ -740,29 +708,6 @@
                     this.updateAutoUI();
                     const input = document.getElementById('slots-bet-input');
                     if(input) input.disabled = false;
-                },
-                
-                toggleSpeed() {
-                    this.fastSpeedEnabled = !this.fastSpeedEnabled;
-                    const btn = document.getElementById('btn-slots-speed');
-                    if(btn) {
-                        if(this.fastSpeedEnabled) {
-                            // ACTIVO - Rayo BRILLANTE
-                            btn.style.color = '#FFD700';
-                            btn.style.textShadow = '0 0 20px #FFD700, 0 0 40px #FFA500, 0 0 60px #FF6B00';
-                            btn.style.transform = 'scale(1.2)';
-                            btn.style.filter = 'drop-shadow(0 0 8px #FFD700)';
-                            btn.style.animation = 'pulse 0.5s infinite';
-                        } else {
-                            // INACTIVO - Rayo gris
-                            btn.style.color = '#9ca3af';
-                            btn.style.textShadow = '0 0 0px rgba(251, 191, 36, 0)';
-                            btn.style.transform = 'scale(1)';
-                            btn.style.filter = 'drop-shadow(0 0 0px)';
-                            btn.style.animation = 'none';
-                        }
-                    }
-                    playSfx('click');
                 },
                 
                 updateAutoUI() {
@@ -827,10 +772,6 @@
                         result = [s1, s2, s3]; 
                     } 
                     
-                    // Calcular duración del giro basado en velocidad activada
-                    const spinDuration = this.fastSpeedEnabled ? 1.75 : 3.5;
-                    const spinDurationMs = this.fastSpeedEnabled ? 1750 : 3500;
-                    
                     [1,2,3].forEach((id, i) => { 
                         const reel = document.getElementById(`reel-${id}`); 
                         if(reel) { 
@@ -840,7 +781,7 @@
                             reel.style.transition = 'none'; 
                             reel.style.transform = 'translateY(0)'; 
                             setTimeout(() => { 
-                                reel.style.transition = `transform ${spinDuration}s cubic-bezier(0.15, 0, 0.05, 1)`; 
+                                reel.style.transition = 'transform 3.5s cubic-bezier(0.15, 0, 0.05, 1)'; 
                                 reel.style.transform = `translateY(-${scrollDist}px)`; 
                             }, 50); 
                         } 
@@ -858,8 +799,7 @@
                             UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); 
                         } else { 
                             playSfx('lose'); 
-                            // Silenciar el mensaje rojo en modo auto para que no se llene la pantalla
-                            if (!this.isAutoMode) UI.notify("SIN SUERTE", "error"); 
+                            UI.notify("SIN SUERTE", "error"); 
                         } 
                         
                         UI.updateBalance(); 
@@ -891,7 +831,7 @@
                         } else {
                             document.getElementById('slots-bet-input').disabled = false;
                         }
-                    }, spinDurationMs); 
+                    }, 3600); 
                 }
             },
             mines: {
