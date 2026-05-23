@@ -597,7 +597,30 @@
             },
             openGame(game) { if(State.isProcessing) return; playSfx('click'); this.showView('game'); document.getElementById('game-mount').innerHTML = this.templates[game]; document.getElementById('view-game').scrollTop = 0; document.getElementById('bottom-nav-bar').style.transform = 'translateY(100%)'; if(game === 'slots') GameLogic.slots.init(); if(game === 'mines') GameLogic.mines.drawGrid(); if(game === 'tower') GameLogic.tower.drawTower(); if(game === 'blackjack') GameLogic.blackjack.renderInitial(); if(game === 'chicken') GameLogic.chicken.init(); },
             templates: {
-                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 3.00x</span><span class="text-amber-500">Máx: 500.00x</span></div><input id="slots-bet-input" type="number" value="3" min="3" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4>🎰 Reglas Slots</h4><p>Combina 3 símbolos para ganar. <div class="grid grid-cols-2 gap-2 text-[10px] font-bold uppercase mt-2"><div>🍒 x3</div><div>🍋 x10</div><div>🔔 x50</div><div class="text-emerald-500">7️⃣ x500</div></p>`,
+                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn relative">
+                    <div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div>
+                    <div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 3.00x</span><span class="text-amber-500">Máx: 500.00x</span></div>
+                    <input id="slots-bet-input" type="number" value="3" min="3" class="input-bet">
+                    
+                    <div class="flex gap-2 mb-4">
+                        <button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action flex-1 py-5 font-casino text-xl">GIRAR</button>
+                        <button id="btn-slots-auto" onclick="GameLogic.slots.toggleAutoMenu()" class="btn-action w-16 py-5 font-casino text-xl flex flex-col items-center justify-center bg-zinc-800 text-emerald-500 transition-colors"><i class="fas fa-robot"></i></button>
+                    </div>
+
+                    <div id="slots-auto-menu" class="hidden-view absolute bottom-28 left-6 right-6 glass p-6 z-50 border border-emerald-500/30 shadow-2xl">
+                        <h3 class="text-emerald-500 font-casino text-sm mb-3">Giros Automáticos</h3>
+                        <div class="grid grid-cols-4 gap-2 mb-4">
+                            <button onclick="GameLogic.slots.selectAuto(10)" class="auto-opt btn-action py-2 text-xs bg-emerald-500 text-black">10</button>
+                            <button onclick="GameLogic.slots.selectAuto(20)" class="auto-opt btn-action py-2 text-xs bg-zinc-800 text-white">20</button>
+                            <button onclick="GameLogic.slots.selectAuto(50)" class="auto-opt btn-action py-2 text-xs bg-zinc-800 text-white">50</button>
+                            <button onclick="GameLogic.slots.selectAuto(100)" class="auto-opt btn-action py-2 text-xs bg-zinc-800 text-white">100</button>
+                        </div>
+                        <button onclick="GameLogic.slots.startAuto()" class="btn-action w-full py-4 font-casino">INICIAR AUTO</button>
+                        <button onclick="GameLogic.slots.toggleAutoMenu()" class="w-full mt-3 text-[10px] text-zinc-500 uppercase font-bold">Cancelar</button>
+                    </div>
+
+                    <div class="instruction-card"><h4>🎰 Reglas Slots</h4><p>Combina 3 símbolos para ganar.</p><div class="grid grid-cols-2 gap-2 text-[10px] font-bold uppercase mt-2"><div>🍒 x3</div><div>🍋 x10</div><div>🔔 x50</div><div class="text-emerald-500">7️⃣ x500</div></div></div>
+                </div>`,
                 mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div class="risk-badge"><i class="fas fa-bomb"></i> 3 Minas Activas</div><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view flex justify-between p-3 bg-emerald-500/10 rounded-xl mb-3"><div class="flex flex-col items-start"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><span id="mines-next-hint" class="text-[7px] text-zinc-500 font-bold uppercase">Siguiente: --</span></div><button id="mines-cashout-btn" onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-4 py-1 rounded font-bold text-[9px]">COBRAR $0.00</button></div><div id="mines-controls"><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 1.25x</span><span class="text-amber-500">Máx: 500.00x</span></div><input id="mines-bet-input" type="number" value="3" min="3" class="input-bet"><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><div class="instruction-card"><h4>💣 Reglas Minas</h4><p>Encuentra diamantes y evita las minas.</p></div></div>`,
                 crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div id="crash-area"><div id="crash-bg" class="bg-infinite"><div class="bg-part"></div><div class="bg-part"></div></div><div id="crash-rocket-container"><div id="crash-rocket">🚀</div></div></div><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider mt-6"><span class="text-emerald-500">Mín: 1.01x</span><span class="text-amber-500">Máx: ∞</span></div><input id="crash-bet-input" type="number" value="3" min="3" class="input-bet"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button><div class="instruction-card"><h4>🚀 Reglas Aviator</h4><p>Cobra antes del crash.</p></div></div>`,
                 tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div class="risk-badge" style="color: #fbbf24; background: rgba(251,191,36,0.1)"><i class="fas fa-bolt"></i> 1 Peligro por Piso</div><div id="tower-container" class="gap-3 mb-4 flex flex-col-reverse"></div><div id="tower-controls"><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 1.65x</span><span class="text-amber-500">Máx: 95.00x</span></div><input id="tower-bet-input" type="number" value="3" min="3" class="input-bet"><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino">COBRAR $0.00</button><div class="instruction-card"><h4>🗼 Reglas Torre</h4><p>Sube pisos sin tocar minas.</p></div></div>`,
@@ -630,12 +653,183 @@
             },
             slots: {
                 prizes: { '7️⃣': { mult: 500, weight: 0.01 }, '🔔': { mult: 50, weight: 1 }, '🍋': { mult: 10, weight: 10 }, '🍒': { mult: 3, weight: 88 } },
-                init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); if(r) { r.innerHTML = ''; Array(20).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); } }); },
+                autoSpinsLeft: 0,
+                selectedAutoCount: 10,
+                isAutoMode: false,
+                
+                init() { 
+                    this.stopAuto(); // Resetea cualquier giro automático al cargar
+                    [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); if(r) { r.innerHTML = ''; Array(20).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); } }); 
+                },
+                
+                toggleAutoMenu() {
+                    // Si ya está girando en automático, presionar el botón lo detiene
+                    if(this.isAutoMode) { this.stopAuto(); return; }
+                    const menu = document.getElementById('slots-auto-menu');
+                    if(menu) menu.classList.toggle('hidden-view');
+                },
+                
+                selectAuto(count) {
+                    playSfx('click');
+                    this.selectedAutoCount = count;
+                    document.querySelectorAll('.auto-opt').forEach(btn => {
+                        btn.classList.remove('bg-emerald-500', 'text-black');
+                        btn.classList.add('bg-zinc-800', 'text-white');
+                        if(parseInt(btn.innerText) === count) {
+                            btn.classList.remove('bg-zinc-800', 'text-white');
+                            btn.classList.add('bg-emerald-500', 'text-black');
+                        }
+                    });
+                },
+                
+                startAuto() {
+                    playSfx('click');
+                    const b = Math.abs(parseFloat(document.getElementById('slots-bet-input').value)) || 3;
+                    const requiredBalance = b * this.selectedAutoCount;
+                    
+                    // Validación inicial: ¿Alcanza para todos los giros solicitados?
+                    if(State.balance < requiredBalance) {
+                        return UI.notify(`Saldo insuficiente para ${this.selectedAutoCount} giros (Req: $${requiredBalance.toFixed(2)})`, "error");
+                    }
+                    
+                    document.getElementById('slots-auto-menu').classList.add('hidden-view');
+                    this.autoSpinsLeft = this.selectedAutoCount;
+                    this.isAutoMode = true;
+                    this.updateAutoUI();
+                    this.play(); // Dispara el primer giro
+                },
+                
+                stopAuto() {
+                    this.isAutoMode = false;
+                    this.autoSpinsLeft = 0;
+                    this.updateAutoUI();
+                    const input = document.getElementById('slots-bet-input');
+                    if(input) input.disabled = false;
+                },
+                
+                updateAutoUI() {
+                    const btn = document.getElementById('btn-slots-auto');
+                    if(btn) {
+                        if(this.isAutoMode && this.autoSpinsLeft > 0) {
+                            // Cambia a rojo y muestra el contador de giros
+                            btn.innerHTML = `<span class="text-xs font-black">${this.autoSpinsLeft}</span><i class="fas fa-stop text-[10px] mt-1"></i>`;
+                            btn.classList.replace('text-emerald-500', 'text-red-500');
+                            btn.classList.add('animate-pulse');
+                        } else {
+                            // Estado normal
+                            btn.innerHTML = `<i class="fas fa-robot"></i>`;
+                            btn.classList.replace('text-red-500', 'text-emerald-500');
+                            btn.classList.remove('animate-pulse');
+                        }
+                    }
+                },
+                
                 async play() { 
-                    if(State.isSpinning || State.isProcessing) return; State.isSpinning = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('slots-bet-input').value)) || 3; const btn = document.getElementById('btn-slots-play'); btn.disabled = true; if(b < 3) { State.isSpinning = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Apuesta mínima $3 MXN", "error"); } const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b) { State.isSpinning = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('spin'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); let result = []; 
-                    let winChance = Math.min(0.15 * GlobalLuck.luckFactor, 0.20); 
+                    if(State.isSpinning || State.isProcessing) return; 
+                    State.isSpinning = true; State.isProcessing = true; 
+                    
+                    const b = Math.abs(parseFloat(document.getElementById('slots-bet-input').value)) || 3; 
+                    const btn = document.getElementById('btn-slots-play'); 
+                    btn.disabled = true; 
+                    
+                    if(b < 3) { 
+                        State.isSpinning = false; State.isProcessing = false; btn.disabled = false; this.stopAuto();
+                        return UI.notify("Apuesta mínima $3 MXN", "error"); 
+                    } 
+                    
+                    const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); 
+                    if(!user || user.saldo < b) { 
+                        State.isSpinning = false; State.isProcessing = false; btn.disabled = false; this.stopAuto();
+                        return UI.notify("Saldo insuficiente", "error"); 
+                    } 
+                    
+                    // Bloquea el campo de apuesta para que no hagan trampa cambiándolo a la mitad de los giros
+                    document.getElementById('slots-bet-input').disabled = this.isAutoMode;
+
+                    // Descuenta saldo individual de este giro
+                    playSfx('spin'); 
+                    await Core.updateBalanceDB(-b); 
+                    State.balance -= b; 
+                    UI.updateBalance(); 
+                    
+                    let result = []; 
+                    let winChance = Math.min(0.15 * GlobalLuck.luckFactor, 0.35); 
                     const isWinner = Math.random() < winChance; 
-                    if (isWinner) { const roll = Math.random() * 100; let acc = 0; let sel = '🍒'; for (const [sym, config] of Object.entries(this.prizes)) { acc += config.weight; if (roll <= acc) { sel = sym; break; } } result = [sel, sel, sel]; } else { const s1 = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)], s2 = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]; let s3 = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]; if (s1 === s2 && s2 === s3) s3 = SYMBOLS[(SYMBOLS.indexOf(s3) + 1) % SYMBOLS.length]; result = [s1, s2, s3]; } [1,2,3].forEach((id, i) => { const reel = document.getElementById(`reel-${id}`); if(reel) { const targetSymbol = result[i]; const targetPos = SYMBOLS.indexOf(targetSymbol); const scrollDist = (90 * SYMBOLS.length * 5) + (targetPos * 90); reel.style.transition = 'none'; reel.style.transform = 'translateY(0)'; setTimeout(() => { reel.style.transition = 'transform 3.5s cubic-bezier(0.15, 0, 0.05, 1)'; reel.style.transform = `translateY(-${scrollDist}px)`; }, 50); } }); setTimeout(async () => { let win = 0; if (result[0] === result[1] && result[1] === result[2]) win = b * this.prizes[result[0]].mult; if(win > 0) { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); } else { playSfx('lose'); UI.notify("SIN SUERTE", "error"); } UI.updateBalance(); GameLogic.adjustLuck(win, b, win > 0 ? 2 : 0); await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? win : -b, label: 'SLOTS', status: 'completed' }); State.isSpinning = false; State.isProcessing = false; btn.disabled = false; }, 3600); 
+                    
+                    if (isWinner) { 
+                        const roll = Math.random() * 100; let acc = 0; let sel = '🍒'; 
+                        for (const [sym, config] of Object.entries(this.prizes)) { 
+                            acc += config.weight; if (roll <= acc) { sel = sym; break; } 
+                        } 
+                        result = [sel, sel, sel]; 
+                    } else { 
+                        const s1 = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)], s2 = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]; 
+                        let s3 = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]; 
+                        if (s1 === s2 && s2 === s3) s3 = SYMBOLS[(SYMBOLS.indexOf(s3) + 1) % SYMBOLS.length]; 
+                        result = [s1, s2, s3]; 
+                    } 
+                    
+                    [1,2,3].forEach((id, i) => { 
+                        const reel = document.getElementById(`reel-${id}`); 
+                        if(reel) { 
+                            const targetSymbol = result[i]; 
+                            const targetPos = SYMBOLS.indexOf(targetSymbol); 
+                            const scrollDist = (90 * SYMBOLS.length * 5) + (targetPos * 90); 
+                            reel.style.transition = 'none'; 
+                            reel.style.transform = 'translateY(0)'; 
+                            setTimeout(() => { 
+                                reel.style.transition = 'transform 3.5s cubic-bezier(0.15, 0, 0.05, 1)'; 
+                                reel.style.transform = `translateY(-${scrollDist}px)`; 
+                            }, 50); 
+                        } 
+                    }); 
+                    
+                    // Fin del giro actual
+                    setTimeout(async () => { 
+                        let win = 0; 
+                        if (result[0] === result[1] && result[1] === result[2]) win = b * this.prizes[result[0]].mult; 
+                        
+                        if(win > 0) { 
+                            await Core.updateBalanceDB(win); 
+                            State.balance += win; 
+                            playSfx('win'); playSfx('winExtra'); 
+                            UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); 
+                        } else { 
+                            playSfx('lose'); 
+                            // Silenciar el mensaje rojo en modo auto para que no se llene la pantalla
+                            if (!this.isAutoMode) UI.notify("SIN SUERTE", "error"); 
+                        } 
+                        
+                        UI.updateBalance(); 
+                        GameLogic.adjustLuck(win, b, win > 0 ? 2 : 0); 
+                        await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? win : -b, label: 'SLOTS', status: 'completed' }); 
+                        
+                        State.isSpinning = false; 
+                        State.isProcessing = false; 
+                        btn.disabled = false; 
+
+                        // LÓGICA RECURSIVA PARA AUTO SPIN
+                        if (this.isAutoMode) {
+                            this.autoSpinsLeft--;
+                            this.updateAutoUI();
+                            
+                            if (this.autoSpinsLeft > 0) {
+                                // Revisa una última vez por seguridad
+                                if (State.balance >= b) {
+                                    // 1 segundo de retraso para que el usuario alcance a ver qué salió
+                                    setTimeout(() => this.play(), 1000);
+                                } else {
+                                    UI.notify("Saldo insuficiente para continuar giros", "error");
+                                    this.stopAuto();
+                                }
+                            } else {
+                                this.stopAuto();
+                                UI.notify("Giros automáticos finalizados", "success");
+                            }
+                        } else {
+                            document.getElementById('slots-bet-input').disabled = false;
+                        }
+                    }, 3600); 
                 }
             },
             mines: {
