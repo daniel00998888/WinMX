@@ -451,7 +451,7 @@
             matches: [],         
             lastFetch: 0,
             CACHE_TTL: 60000,    
-            x-apisports-key: '72c2eb4e301410624eb9172ac3671cb1',   
+            xapisportskey: '72c2eb4e301410624eb9172ac3671cb1',   
             WC_LEAGUE: 1,        
             WC_SEASON: 2026,
 
@@ -503,7 +503,7 @@
                 const res = await fetch(url.toString(), {
                     headers: {
                         // Header oficial de API-Sports
-                        'x-apisports-key': this.RAPIDAPI_KEY 
+                        'xapisportskey': this.RAPIDAPI_KEY 
                     }
                 });
                 if (!res.ok) throw new Error(`API error ${res.status}`);
