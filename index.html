@@ -242,33 +242,6 @@
             <div id="wc-partidos">
                 <div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:16px; scrollbar-width:none;" id="wc-group-filters"></div>
                 <div id="wc-matches-list"></div>
-
-                <!-- Ticket inline (aparece al seleccionar picks) -->
-                <div id="wc-inline-ticket" class="hidden-view" style="margin-top:16px; background:linear-gradient(135deg,#0d0d0d 0%,#111 100%); border:1px solid rgba(16,185,129,0.4); border-radius:1.5rem; padding:20px; box-shadow:0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(16,185,129,0.1);">
-                    <!-- Header -->
-                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
-                        <span style="font-size:20px;">🎫</span>
-                        <span style="font-family:'Archivo Black',sans-serif; font-size:13px; color:#10b981; text-transform:uppercase; letter-spacing:1px; flex:1;">Tu Ticket</span>
-                        <span id="wc-ticket-count" style="background:rgba(16,185,129,0.15); color:#10b981; font-size:9px; font-weight:900; padding:3px 10px; border-radius:99px; border:1px solid rgba(16,185,129,0.3);">0 selecciones</span>
-                    </div>
-                    <!-- Picks list -->
-                    <div id="wc-slip-items" style="max-height:240px; overflow-y:auto; margin-bottom:14px; scrollbar-width:none;"></div>
-                    <!-- Totals row -->
-                    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.15); border-radius:1rem; padding:12px 14px; margin-bottom:14px;">
-                        <div>
-                            <span style="font-size:8px; color:#555; font-weight:700; text-transform:uppercase; display:block; margin-bottom:2px;">Cuota Total</span>
-                            <span id="wc-total-odd" style="font-family:'Archivo Black',sans-serif; color:#10b981; font-size:20px;">1.00x</span>
-                        </div>
-                        <div style="text-align:right;">
-                            <span style="font-size:8px; color:#555; font-weight:700; text-transform:uppercase; display:block; margin-bottom:2px;">Ganancia Potencial</span>
-                            <span id="wc-potential-win" style="font-family:'Archivo Black',sans-serif; color:white; font-size:20px;">$0.00</span>
-                        </div>
-                    </div>
-                    <!-- Input + buttons -->
-                    <input id="wc-bet-amount" type="number" min="10" placeholder="Monto a apostar ($10 mín)" class="input-bet" oninput="WC.updatePotential()">
-                    <button onclick="WC.placeBet()" class="btn-action w-full py-4 font-casino text-lg" style="margin-bottom:10px;">⚽ APOSTAR TICKET</button>
-                    <button onclick="WC.clearSlip()" style="width:100%; font-size:9px; font-weight:900; color:#444; text-transform:uppercase; background:none; border:none; cursor:pointer; padding:4px;">Limpiar selecciones</button>
-                </div>
             </div>
 
             <!-- Tab Mis Apuestas -->
@@ -302,6 +275,36 @@
             <div onclick="Router.showView('history')" id="nav-history" class="nav-item"><i class="fas fa-receipt text-xl mb-1"></i><span>Historial</span></div>
             <div onclick="Router.showView('profile')" id="nav-profile" class="nav-item"><i class="fas fa-user-circle text-xl mb-1"></i><span>Perfil</span></div>
         </nav>
+    </div>
+
+    <!-- MODAL TICKET MUNDIAL - centrado en pantalla -->
+    <div id="wc-inline-ticket" class="hidden-view fixed inset-0 z-[250] flex items-center justify-center p-5" style="background:rgba(0,0,0,0.75); backdrop-filter:blur(6px);">
+        <div style="background:linear-gradient(135deg,#0d0d0d 0%,#111 100%); border:1px solid rgba(16,185,129,0.4); border-radius:1.5rem; padding:20px; width:100%; max-width:380px; box-shadow:0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(16,185,129,0.1);">
+            <!-- Header -->
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+                <span style="font-size:20px;">🎫</span>
+                <span style="font-family:'Archivo Black',sans-serif; font-size:13px; color:#10b981; text-transform:uppercase; letter-spacing:1px; flex:1;">Tu Ticket</span>
+                <span id="wc-ticket-count" style="background:rgba(16,185,129,0.15); color:#10b981; font-size:9px; font-weight:900; padding:3px 10px; border-radius:99px; border:1px solid rgba(16,185,129,0.3);">0 selecciones</span>
+                <button onclick="WC.closeTicketModal()" style="width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); color:#aaa; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+            </div>
+            <!-- Picks list -->
+            <div id="wc-slip-items" style="max-height:240px; overflow-y:auto; margin-bottom:14px; scrollbar-width:none;"></div>
+            <!-- Totals row -->
+            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.15); border-radius:1rem; padding:12px 14px; margin-bottom:14px;">
+                <div>
+                    <span style="font-size:8px; color:#555; font-weight:700; text-transform:uppercase; display:block; margin-bottom:2px;">Cuota Total</span>
+                    <span id="wc-total-odd" style="font-family:'Archivo Black',sans-serif; color:#10b981; font-size:20px;">1.00x</span>
+                </div>
+                <div style="text-align:right;">
+                    <span style="font-size:8px; color:#555; font-weight:700; text-transform:uppercase; display:block; margin-bottom:2px;">Ganancia Potencial</span>
+                    <span id="wc-potential-win" style="font-family:'Archivo Black',sans-serif; color:white; font-size:20px;">$0.00</span>
+                </div>
+            </div>
+            <!-- Input + buttons -->
+            <input id="wc-bet-amount" type="number" min="10" placeholder="Monto a apostar ($10 mín)" class="input-bet" oninput="WC.updatePotential()">
+            <button onclick="WC.placeBet()" class="btn-action w-full py-4 font-casino text-lg" style="margin-bottom:10px;">⚽ APOSTAR TICKET</button>
+            <button onclick="WC.clearSlip()" style="width:100%; font-size:9px; font-weight:900; color:#444; text-transform:uppercase; background:none; border:none; cursor:pointer; padding:4px;">Limpiar selecciones</button>
+        </div>
     </div>
 
     <div id="modal-deposit" class="fixed inset-0 bg-black/95 z-[100] hidden-view flex items-center justify-center p-6">
@@ -1114,11 +1117,6 @@
                 const ticketEl = document.getElementById('wc-inline-ticket');
                 if (!ticketEl) return;
                 const items = Object.entries(this.slip);
-                if (items.length === 0) {
-                    ticketEl.classList.add('hidden-view');
-                    return;
-                }
-                ticketEl.classList.remove('hidden-view');
                 // Render slip items
                 const slipItemsEl = document.getElementById('wc-slip-items');
                 if (slipItemsEl) {
@@ -1137,30 +1135,40 @@
                 }
                 this.updateTicketCount();
                 this.updatePotential();
-                // Scroll down to ticket
-                setTimeout(() => { ticketEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 100);
+                // Abrir como modal centrado
+                if (items.length > 0) {
+                    ticketEl.classList.remove('hidden-view');
+                }
             },
 
-            // renderSlip kept for compatibility (no longer used for tab)
+            closeTicketModal() {
+                const ticketEl = document.getElementById('wc-inline-ticket');
+                if (ticketEl) ticketEl.classList.add('hidden-view');
+            },
+
+            // renderSlip kept for compatibility
             renderSlip() { this.renderInlineTicket(); },
 
             removePick(matchId) {
                 delete this.slip[matchId];
-                this.updateTicketCount();
-                // Re-render card to deselect
                 const m = this.matches.find(x => x.id === matchId);
                 if (m) {
                     const card = document.getElementById(`mc-${matchId}`);
                     if (card) { const d = document.createElement('div'); d.innerHTML = this.matchCard(m); card.replaceWith(d.firstElementChild); }
                 }
-                this.renderInlineTicket();
+                if (Object.keys(this.slip).length === 0) {
+                    this.closeTicketModal();
+                    this.updateTicketCount();
+                } else {
+                    this.renderInlineTicket();
+                }
             },
 
             clearSlip() {
                 const prevSlip = {...this.slip};
                 this.slip = {};
+                this.closeTicketModal();
                 this.updateTicketCount();
-                // Re-render all affected cards
                 Object.keys(prevSlip).forEach(matchId => {
                     const m = this.matches.find(x => x.id === matchId);
                     if (m) {
@@ -1168,7 +1176,6 @@
                         if (card) { const d = document.createElement('div'); d.innerHTML = this.matchCard(m); card.replaceWith(d.firstElementChild); }
                     }
                 });
-                this.renderInlineTicket();
             },
 
             async placeBet() {
