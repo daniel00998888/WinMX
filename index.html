@@ -15,7 +15,7 @@
         body { background: var(--mx-dark); color: white; font-family: 'Inter', sans-serif; height: 100dvh; overflow: hidden; margin: 0; -webkit-tap-highlight-color: transparent; }
         .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
         .app-container { height: 100dvh; display: flex; flex-direction: column; }
-        .view-content { flex: 1; overflow-y: auto; padding-bottom: 120px; scroll-behavior: smooth; }
+        .view-content { flex: 1; overflow-y: auto; padding-bottom: 160px !important; scroll-behavior: smooth; }
         .view-content::-webkit-scrollbar { width: 6px; }
         .view-content::-webkit-scrollbar-track { background: transparent; }
         .view-content::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.3); border-radius: 10px; }
@@ -181,7 +181,7 @@
             </div>
         </header>
 
-        <div id="view-lobby" class="view-content p-5 space-y-6">
+        <div id="view-lobby" class="view-content px-5 pt-5 space-y-6">
 
             <!-- ── CARRUSEL HERO ── -->
             <div style="position:relative;overflow:hidden;border-radius:2rem;">
@@ -219,7 +219,7 @@
             </div>
         </div>
 
-        <div id="view-mundial" class="view-content p-5 hidden-view">
+        <div id="view-mundial" class="view-content px-5 pt-5 hidden-view">
             <div class="wc-header mb-5">
                 <div class="flex items-center gap-3">
                     <span class="text-3xl">🏆</span>
@@ -253,12 +253,12 @@
             </div>
         </div>
 
-        <div id="view-history" class="view-content p-5 space-y-4 hidden-view">
+        <div id="view-history" class="view-content px-5 pt-5 space-y-4 hidden-view">
             <h2 class="font-casino text-center text-zinc-600 text-xs mb-4 tracking-widest italic">Mi Actividad</h2>
             <div id="history-lists" class="space-y-4"></div>
         </div>
 
-        <div id="view-profile" class="view-content p-5 space-y-4 hidden-view">
+        <div id="view-profile" class="view-content px-5 pt-5 space-y-4 hidden-view">
             <div class="glass p-10 text-center">
                 <div class="w-24 h-24 bg-emerald-500 rounded-full mx-auto mb-6 flex items-center justify-center text-black text-4xl font-black"><i class="fas fa-user"></i></div>
                 <p id="user-email-display" class="text-sm font-bold text-zinc-300 truncate mb-1">Cargando...</p>
@@ -267,7 +267,7 @@
             <button onclick="AuthManager.logout()" class="w-full p-5 rounded-2xl border border-red-500/20 text-red-500 font-casino text-[10px] bg-red-500/5 mt-6 active:scale-95 transition-transform">Cerrar Sesión</button>
         </div>
 
-        <div id="view-game" class="view-content hidden-view p-5">
+        <div id="view-game" class="view-content hidden-view px-5 pt-5">
             <button onclick="Router.showView('lobby')" class="mb-4 text-zinc-600 text-[10px] font-bold uppercase flex items-center"><i class="fas fa-arrow-left mr-2"></i> Volver al Lobby</button>
             <div id="game-mount" class="w-full"></div>
         </div>
@@ -906,6 +906,32 @@
     </div>
 
     <script>
+        // ── CARRUSEL HERO AUTO-SCROLL ──
+        (function() {
+            let current = 0;
+            const total = 2;
+            function goTo(idx) {
+                current = idx;
+                const track = document.getElementById('hero-track');
+                if (!track) return;
+                track.style.transform = 'translateX(-' + (current * 100) + '%)';
+                for (let i = 0; i < total; i++) {
+                    const dot = document.getElementById('hero-dot-' + i);
+                    if (!dot) continue;
+                    if (i === current) {
+                        dot.style.width = '20px';
+                        dot.style.background = '#10b981';
+                    } else {
+                        dot.style.width = '6px';
+                        dot.style.background = 'rgba(255,255,255,0.2)';
+                    }
+                }
+            }
+            setInterval(() => {
+                goTo((current + 1) % total);
+            }, 3500);
+        })();
+
         setInterval(() => {
             const container = document.getElementById('messenger-container');
             if (!container) return;
