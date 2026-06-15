@@ -4,29 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WinMX | Premium Casino</title>
-    
     <link class="hidden" rel="icon" href="data:,">
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@300;400;600;900&display=swap');
         :root { --mx-green: #10b981; --mx-dark: #070707; }
         body { background: var(--mx-dark); color: white; font-family: 'Inter', sans-serif; height: 100dvh; overflow: hidden; margin: 0; -webkit-tap-highlight-color: transparent; }
         .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
         .app-container { height: 100dvh; display: flex; flex-direction: column; }
-        
         .view-content { flex: 1; overflow-y: auto; padding-bottom: 120px; scroll-behavior: smooth; }
         .view-content::-webkit-scrollbar { width: 6px; }
         .view-content::-webkit-scrollbar-track { background: transparent; }
         .view-content::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.3); border-radius: 10px; }
         .view-content::-webkit-scrollbar-thumb:hover { background: rgba(16, 185, 129, 0.5); }
-        
         .hidden-view { display: none !important; }
-        
         .bottom-nav { background: linear-gradient(180deg, rgba(10, 10, 10, 0.85) 0%, rgba(0, 0, 0, 0.95) 100%); backdrop-filter: blur(20px); border-top: 1px solid rgba(16, 185, 129, 0.1); z-index: 50; transition: transform 0.3s ease; box-shadow: 0 -4px 12px rgba(0,0,0,0.5); }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: #555; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); cursor: pointer; position: relative; }
         .nav-item.active { color: var(--mx-green); }
@@ -40,55 +34,35 @@
         .balance-pill { background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.04) 100%); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 99px; padding: 4px 4px 4px 12px; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15); }
         .btn-plus { width: 32px; height: 32px; background: linear-gradient(135deg, var(--mx-green) 0%, #059669 100%); color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); transition: all 0.3s ease; }
         .btn-plus:hover { transform: scale(1.1); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4); }
-        
         .history-scroll { max-height: 280px; overflow-y: auto; scrollbar-width: none; }
         .history-scroll::-webkit-scrollbar { display: none; }
-
         .slot-box { height: 90px; overflow: hidden; background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%); border-radius: 1rem; border: 1px solid rgba(255,255,255,0.08); box-shadow: inset 0 2px 8px rgba(0,0,0,0.8), 0 4px 12px rgba(0,0,0,0.5); }
         .slot-item { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
         .slot-reel { transition: transform 3.5s cubic-bezier(0.15, 0, 0.05, 1); filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.2)); }
-        
         .pulse-pending { animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 50% { opacity: 0.8; } 100% { opacity: 1; box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); } }
         @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
         @keyframes glow { 0%, 100% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); } 50% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.8); } }
-
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .input-bet { background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 1rem; padding: 14px; width: 100%; text-align: center; color: white; font-family: 'Archivo Black', sans-serif; outline: none; margin-bottom: 12px; transition: all 0.3s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
         .input-bet:focus { border-color: rgba(16, 185, 129, 0.5); box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 0 12px rgba(16, 185, 129, 0.2); }
-        
         #crash-area { position: relative; width: 100%; height: 160px; overflow: hidden; background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%); border-radius: 1rem; border: 1px solid rgba(16, 185, 129, 0.1); box-shadow: inset 0 2px 8px rgba(0,0,0,0.8), 0 4px 12px rgba(0,0,0,0.5); }
         .bg-infinite { position: absolute; top: 0; left: 0; height: 100%; width: 200%; display: flex; }
         .bg-part { width: 50%; height: 100%; background-size: 50px 50px; background-image: radial-gradient(circle, rgba(16, 185, 129, 0.08) 1px, transparent 1px); }
-        
         #crash-rocket-container { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 10; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; }
         #crash-rocket { font-size: 3rem; display: inline-block; transition: transform 0.1s linear; filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.4)); }
-
-        .instruction-card { 
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.02) 100%); 
-            border: 1px solid rgba(16, 185, 129, 0.4); 
-            border-radius: 1.2rem; 
-            padding: 20px; 
-            margin-top: 24px; 
-            text-align: left;
-            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15), inset 0 1px 1px rgba(255,255,255,0.05);
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-        }
+        .instruction-card { background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.02) 100%); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 1.2rem; padding: 20px; margin-top: 24px; text-align: left; box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15), inset 0 1px 1px rgba(255,255,255,0.05); backdrop-filter: blur(10px); transition: all 0.3s ease; }
         .instruction-card:hover { border-color: rgba(16, 185, 129, 0.6); box-shadow: 0 12px 32px rgba(16, 185, 129, 0.25), inset 0 1px 1px rgba(255,255,255,0.05); }
         .instruction-card h4 { font-family: 'Archivo Black', sans-serif; font-size: 12px; color: var(--mx-green); text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; letter-spacing: 1px; }
         .instruction-card p { font-size: 11px; color: #ddd; line-height: 1.6; font-weight: 500; }
         .instruction-card strong { color: white; font-weight: 800; }
-        
         .risk-badge { background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.05) 100%); border: 1px solid rgba(239, 68, 68, 0.4); color: #ff6b6b; font-size: 9px; font-weight: 900; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1); letter-spacing: 0.5px; }
-
         .tx-selector { display: flex; background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0) 100%); border-radius: 1rem; padding: 6px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.08); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
         .tx-tab { flex: 1; text-align: center; padding: 10px; border-radius: 0.8rem; font-size: 10px; font-weight: 900; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); cursor: pointer; color: #666; }
         .tx-tab.active { background: linear-gradient(135deg, var(--mx-green) 0%, #059669 100%); color: black; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
-
         .card-bj { width: 45px; height: 65px; background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%); color: black; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2rem; box-shadow: 0 8px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4); animation: backInDown 0.5s; position: relative; border: 1px solid #ddd; }
         .card-red { color: #ef4444; }
         .card-hidden { background: linear-gradient(45deg, #1e293b 25%, #0f172a 25%, #0f172a 50%, #1e293b 50%, #1e293b 75%, #0f172a 75%, #0f172a 100%); background-size: 10px 10px; border: 2px solid #334155; }
-
         #chicken-world { width: 100%; height: 200px; background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%); border-radius: 1rem; position: relative; overflow: hidden; border: 1px solid rgba(16, 185, 129, 0.15); box-shadow: inset 0 2px 8px rgba(0,0,0,0.8), 0 4px 12px rgba(0,0,0,0.5); margin-bottom: 1rem; }
         .road-lane { height: 100%; border-right: 1px dashed rgba(16, 185, 129, 0.2); flex: 1; position: relative; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); display: flex; align-items: center; justify-content: center; }
         .road-lane.passed { background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%); border-right-color: rgba(16, 185, 129, 0.3); }
@@ -96,8 +70,7 @@
         .chicken-sprite { font-size: 2rem; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: absolute; z-index: 20; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
         .car-sprite { position: absolute; font-size: 1.5rem; animation: carMove 1s forwards; z-index: 10; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5)); }
         @keyframes carMove { from { top: -50px; } to { top: 250px; } }
-
-        /* ====== MUNDIAL 2026 STYLES ====== */
+        /* MUNDIAL 2026 STYLES */
         .wc-header { background: linear-gradient(135deg, #003580 0%, #002060 40%, #8B0000 100%); border-radius: 1.5rem; padding: 20px; position: relative; overflow: hidden; }
         .wc-header::before { content: '⚽'; position: absolute; right: -10px; top: -10px; font-size: 5rem; opacity: 0.12; transform: rotate(-20deg); }
         .wc-header::after { content: '🏆'; position: absolute; right: 30px; bottom: -5px; font-size: 3rem; opacity: 0.15; }
@@ -108,13 +81,10 @@
         .odd-btn { flex: 1; padding: 10px 6px; border-radius: 0.8rem; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); text-align: center; cursor: pointer; transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1); position: relative; }
         .odd-btn:active { transform: scale(0.96); }
         .odd-btn.selected { background: linear-gradient(135deg, var(--mx-green) 0%, #059669 100%); border-color: var(--mx-green); box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
-        .odd-btn.selected .odd-label { color: black; }
-        .odd-btn.selected .odd-value { color: black; }
         .odd-label { font-size: 8px; font-weight: 900; text-transform: uppercase; color: #888; display: block; margin-bottom: 3px; letter-spacing: 0.5px; }
         .odd-value { font-family: 'Archivo Black', sans-serif; font-size: 15px; color: white; display: block; }
         .odd-btn.selected .odd-label, .odd-btn.selected .odd-value { color: black !important; }
         .bet-slip-bar { background: linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(16,185,129,0.05) 100%); border: 1px solid rgba(16,185,129,0.3); border-radius: 1.2rem; padding: 14px 16px; margin: 12px 0; }
-        .flag-emoji { font-size: 1.5rem; line-height: 1; }
         .phase-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 99px; font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; }
         .phase-group { background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: #60a5fa; }
         .phase-oct { background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.3); color: #c084fc; }
@@ -123,10 +93,28 @@
         .phase-final { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #34d399; }
         .wc-tab { flex:1; text-align:center; padding:10px 6px; border-radius:0.8rem; font-size:9px; font-weight:900; text-transform:uppercase; cursor:pointer; color:#555; transition:all 0.3s; letter-spacing:0.5px; }
         .wc-tab.active { background: linear-gradient(135deg, var(--mx-green) 0%, #059669 100%); color:black; box-shadow:0 4px 12px rgba(16,185,129,0.3); }
-        .result-badge { font-size: 9px; font-weight: 900; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; }
         .live-pulse { animation: livePulse 1.5s infinite; }
         @keyframes livePulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
-        .score-display { font-family: 'Archivo Black', sans-serif; font-size: 22px; color: white; letter-spacing: 4px; }
+        /* TICKET BOTTOM SHEET */
+        #wc-inline-ticket { transition: none; }
+        #wc-ticket-sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 250; transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1); background: linear-gradient(180deg, #111 0%, #0a0a0a 100%); border-top: 1px solid rgba(16,185,129,0.4); border-radius: 1.5rem 1.5rem 0 0; padding: 0 0 24px 0; box-shadow: 0 -8px 40px rgba(0,0,0,0.8), 0 0 30px rgba(16,185,129,0.08); max-height: 85dvh; display: flex; flex-direction: column; }
+        #wc-ticket-sheet.sheet-open { transform: translateY(0); }
+        #wc-ticket-overlay { position: fixed; inset: 0; z-index: 249; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.35s ease; }
+        #wc-ticket-overlay.sheet-open { opacity: 1; pointer-events: all; }
+        .sheet-handle { width: 40px; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; margin: 12px auto 0; flex-shrink: 0; }
+        .sheet-body { overflow-y: auto; flex: 1; padding: 0 20px; scrollbar-width: none; }
+        .sheet-body::-webkit-scrollbar { display: none; }
+
+        /* ── API KEY SETUP BANNER ── */
+        #api-key-banner {
+            background: linear-gradient(135deg, rgba(251,191,36,0.12) 0%, rgba(251,191,36,0.04) 100%);
+            border: 1px solid rgba(251,191,36,0.4);
+            border-radius: 1.2rem;
+            padding: 16px;
+            margin-bottom: 16px;
+            display: none;
+        }
+        #api-key-banner.show { display: block; }
     </style>
 </head>
 <body class="antialiased select-none">
@@ -163,29 +151,22 @@
             <div class="space-y-4 text-left">
                 <input id="reg-email" type="email" placeholder="Correo electrónico" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
                 <input id="reg-password" type="password" placeholder="Crea una contraseña" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none text-white text-sm">
-                
                 <div class="bg-white/5 border border-white/5 p-4 rounded-xl space-y-3">
-                    <p class="text-[9px] text-zinc-400 leading-relaxed uppercase font-bold">
-                        ⚠️ AVISO: Riesgo real de capital. (Leer atentamente)
-                    </p>
+                    <p class="text-[9px] text-zinc-400 leading-relaxed uppercase font-bold">⚠️ AVISO: Riesgo real de capital.</p>
                     <div class="h-24 overflow-y-auto bg-black/20 p-2 rounded text-[8px] text-zinc-500 font-medium leading-tight border border-white/5">
                         <strong class="text-emerald-500">Términos y Condiciones de Riesgo:</strong><br>
-                        <li>Al registrarte y jugar en WinMX, reconoces que este es un entorno de apuestas con dinero real.<li>
-                        <li>Existe un riesgo significativo de pérdida total de tu capital. No garantizamos retornos ni ganancias.<li> 
-                        <li>WinMX no se hace responsable por ninguna pérdida financiera, error de conexión, o mal uso de la plataforma.<li> 
-                        <li>Tú eres el único responsable de tus decisiones de juego.<li> 
-                        <li>El juego puede causar adicción; juega con responsabilidad y solo con dinero que puedas permitirte perder.<li> 
-                        <li>Si no estás de acuerdo con estos riesgos, no utilices la plataforma.<li>
-                        <li>La plataforma WinMX tiene mas probabilidad de ganar sobre el jugador, pero la probabilidad de ganar del jugador Nunca sera 0.</li>
-                        <li>Si detectamos que usaste un correo no existente o no valido en tu registro.. podemos bloquear tu cuenta de WinMX Permanentemente y los fondos no seran transferidos y se perderan<li>
+                        <li>Al registrarte reconoces que es un entorno de apuestas con dinero real.</li>
+                        <li>Existe un riesgo significativo de pérdida total de tu capital.</li>
+                        <li>WinMX no se hace responsable por ninguna pérdida financiera.</li>
+                        <li>El juego puede causar adicción; juega con responsabilidad.</li>
+                        <li>Si detectamos un correo inválido podemos bloquear tu cuenta permanentemente.</li>
                     </div>
                     <label class="flex items-center gap-3 cursor-pointer">
                         <input type="checkbox" id="terms-check" class="w-4 h-4 accent-emerald-500">
                         <span class="text-[10px] text-white font-bold uppercase">Acepto los términos, condiciones y riesgos</span>
                     </label>
                 </div>
-
-                <button id="btn-register" onclick="AuthManager.register()" class="btn-action w-full py-4 font-casino mt-2">Crear Cuenta</button> 
+                <button id="btn-register" onclick="AuthManager.register()" class="btn-action w-full py-4 font-casino mt-2">Crear Cuenta</button>
                 <button onclick="AuthManager.switchTab('login')" class="w-full py-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-2 text-center underline decoration-zinc-700">Ya tengo cuenta</button>
             </div>
         </div>
@@ -201,28 +182,8 @@
         </header>
 
         <div id="view-lobby" class="view-content p-5 space-y-6">
-            <!-- ── CARRUSEL HERO ── -->
-            <div style="position:relative;overflow:hidden;border-radius:2rem;">
-                <div id="hero-track" style="display:flex;transition:transform 0.6s cubic-bezier(0.4,0,0.2,1);will-change:transform;">
-                    <!-- Slide 1: Mundial 2026 -->
-                    <div onclick="Router.showView('mundial')" style="min-width:100%;background:linear-gradient(135deg,#003580 0%,#002060 40%,#8B0000 100%);padding:24px;border-radius:2rem;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(0,32,96,0.5);">
-                        <div style="position:absolute;right:-10px;top:-10px;font-size:5rem;opacity:0.12;transform:rotate(-20deg);">⚽</div>
-                        <div style="position:absolute;right:28px;bottom:-6px;font-size:3rem;opacity:0.15;">🏆</div>
-                        <p style="font-size:9px;font-weight:900;color:rgba(100,160,255,0.7);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;">Apuestas Deportivas · En Vivo</p>
-                        <h2 style="font-family:'Archivo Black',sans-serif;font-size:24px;color:white;text-transform:uppercase;letter-spacing:-0.5px;line-height:1.1;margin-bottom:10px;">Mundial<br><span style="color:#fbbf24;">2026</span> 🇺🇸🇲🇽🇨🇦</h2>
-                        <p style="font-size:10px;font-weight:700;color:rgba(147,197,253,0.7);">Toca para apostar →</p>
-                    </div>
-                    <!-- Slide 2: Suerte hoy -->
-                    <div style="min-width:100%;background:linear-gradient(135deg,#10b981 0%,#059669 100%);padding:24px;border-radius:2rem;box-shadow:0 8px 32px rgba(16,185,129,0.3);">
-                        <p style="font-size:9px;font-weight:900;color:rgba(0,0,0,0.4);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;">¡Bienvenido!</p>
-                        <h2 style="font-family:'Archivo Black',sans-serif;font-size:26px;color:black;text-transform:uppercase;letter-spacing:-0.5px;line-height:1.1;margin-bottom:12px;">Suerte<br>hoy 🍀</h2>
-                        <p style="font-size:10px;font-weight:700;color:rgba(0,0,0,0.55);">Juega responsablemente.</p>
-                    </div>
-                </div>
-                <div style="display:flex;justify-content:center;gap:6px;margin-top:10px;padding-bottom:2px;">
-                    <div id="hero-dot-0" style="width:20px;height:4px;border-radius:2px;background:#10b981;transition:all 0.3s;"></div>
-                    <div id="hero-dot-1" style="width:6px;height:4px;border-radius:2px;background:rgba(255,255,255,0.2);transition:all 0.3s;"></div>
-                </div>
+            <div class="bg-gradient-to-br from-emerald-500 to-emerald-800 p-6 rounded-[2.2rem] shadow-xl">
+                <h2 class="text-2xl font-casino italic text-white">Suerte hoy</h2>
             </div>
             <div class="grid grid-cols-2 gap-4">
                 <div onclick="Router.openGame('slots')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🎰</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Slots</span></div>
@@ -231,31 +192,48 @@
                 <div onclick="Router.openGame('tower')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🗼</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Torre</span></div>
                 <div onclick="Router.openGame('blackjack')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🃏</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Blackjack</span></div>
                 <div onclick="Router.openGame('chicken')" class="glass p-6 text-center active:scale-95 transition-transform cursor-pointer"><span class="text-4xl block mb-2">🐥</span><span class="font-casino text-[9px] text-zinc-500 tracking-widest">Chicken Road</span></div>
+                <div onclick="Router.showView('mundial')" class="col-span-2 active:scale-95 transition-transform cursor-pointer wc-header flex items-center gap-4 p-5" style="border-radius:1.5rem; margin-bottom: 8px;">
+                    <div>
+                        <span class="font-casino text-white text-lg italic tracking-tighter block leading-tight">Mundial <span class="text-yellow-400">2026</span></span>
+                        <span class="text-[9px] text-blue-300 font-bold uppercase tracking-widest">Apuestas Deportivas · En Vivo</span>
+                    </div>
+                    <div class="ml-auto flex gap-1 text-2xl">🇺🇸🇲🇽🇨🇦</div>
+                </div>
             </div>
         </div>
 
         <div id="view-mundial" class="view-content p-5 hidden-view">
+            <button onclick="Router.showView('lobby')" class="mb-4 text-zinc-600 text-[10px] font-bold uppercase flex items-center"><i class="fas fa-arrow-left mr-2"></i> Volver al Lobby</button>
             <div class="wc-header mb-5">
                 <div class="flex items-center gap-3">
                     <span class="text-3xl">🏆</span>
                     <div>
                         <h2 class="font-casino text-white text-xl italic">FIFA Mundial <span class="text-yellow-400">2026</span></h2>
+                        <p class="text-[9px] text-blue-300 font-bold uppercase tracking-widest">Datos en tiempo real · API-Football</p>
                     </div>
+                    <button onclick="WC.loadFixtures(true)" style="margin-left:auto;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:#10b981;border-radius:8px;padding:6px 10px;font-size:8px;font-weight:900;text-transform:uppercase;cursor:pointer;">🔄 Actualizar</button>
                 </div>
             </div>
-            <!-- Solo 2 tabs: Partidos y Mis Apuestas -->
+
+            <!-- API Key Banner (shown when key not configured) -->
+            <div id="api-key-banner">
+                <p style="font-size:9px;font-weight:900;color:#fbbf24;text-transform:uppercase;margin-bottom:8px;">⚠️ Configura tu API Key</p>
+                <p style="font-size:8px;color:#aaa;margin-bottom:10px;">Para ver partidos reales necesitas una API Key gratuita de <strong style="color:white;">api-football.com</strong> vía RapidAPI.</p>
+                <div style="display:flex;gap:8px;">
+                    <input id="api-key-input" type="text" placeholder="Pega aquí tu RapidAPI Key..." style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(251,191,36,0.3);border-radius:8px;padding:8px 10px;color:white;font-size:9px;outline:none;">
+                    <button onclick="WC.saveApiKey()" style="background:rgba(251,191,36,0.2);border:1px solid rgba(251,191,36,0.4);color:#fbbf24;border-radius:8px;padding:8px 14px;font-size:9px;font-weight:900;text-transform:uppercase;cursor:pointer;white-space:nowrap;">Guardar</button>
+                </div>
+                <a href="https://rapidapi.com/api-sports/api/api-football" target="_blank" style="font-size:8px;color:#10b981;display:block;margin-top:8px;text-decoration:underline;">→ Obtener API Key gratis (500 req/día)</a>
+            </div>
+
             <div style="display:flex; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); border-radius:1rem; padding:6px; margin-bottom:20px;">
                 <div class="wc-tab active" id="wc-tab-partidos" onclick="WC.setTab('partidos')">⚽ Partidos</div>
                 <div class="wc-tab" id="wc-tab-mis" onclick="WC.setTab('mis')">📋 Mis Apuestas</div>
             </div>
-
-            <!-- Tab Partidos -->
             <div id="wc-partidos">
                 <div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:16px; scrollbar-width:none;" id="wc-group-filters"></div>
                 <div id="wc-matches-list"></div>
             </div>
-
-            <!-- Tab Mis Apuestas -->
             <div id="wc-mis" class="hidden-view">
                 <div id="wc-my-bets-list"></div>
             </div>
@@ -288,19 +266,19 @@
         </nav>
     </div>
 
-    <!-- MODAL TICKET MUNDIAL -->
-    <div id="wc-ticket-modal" class="hidden-view" style="position:fixed; inset:0; z-index:300; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(0,0,0,0.7); backdrop-filter:blur(6px);">
-        <div style="background:linear-gradient(135deg,#0d0d0d 0%,#111 100%); border:1px solid rgba(16,185,129,0.4); border-radius:1.5rem; padding:20px; width:100%; max-width:380px; box-shadow:0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(16,185,129,0.1); animation: slideUp 0.25s cubic-bezier(0.34,1.56,0.64,1);">
-            <!-- Header -->
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
-                <span style="font-size:20px;">🎫</span>
-                <span style="font-family:'Archivo Black',sans-serif; font-size:13px; color:#10b981; text-transform:uppercase; letter-spacing:1px; flex:1;">Tu Ticket</span>
-                <span id="wc-ticket-count" style="background:rgba(16,185,129,0.15); color:#10b981; font-size:9px; font-weight:900; padding:3px 10px; border-radius:99px; border:1px solid rgba(16,185,129,0.3);">0 selecciones</span>
-                <button onclick="WC.closeTicketModal()" style="width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); color:#777; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
-            </div>
-            <!-- Picks list -->
-            <div id="wc-slip-items" style="max-height:240px; overflow-y:auto; margin-bottom:14px; scrollbar-width:none;"></div>
-            <!-- Totals row -->
+    <!-- TICKET BOTTOM SHEET -->
+    <div id="wc-ticket-overlay" onclick="WC.closeTicketModal()"></div>
+    <div id="wc-inline-ticket" style="display:none;"></div>
+    <div id="wc-ticket-sheet">
+        <div class="sheet-handle"></div>
+        <div style="display:flex; align-items:center; gap:10px; padding:16px 20px 12px; flex-shrink:0;">
+            <span style="font-size:20px;">🎫</span>
+            <span style="font-family:'Archivo Black',sans-serif; font-size:13px; color:#10b981; text-transform:uppercase; letter-spacing:1px; flex:1;">Tu Ticket</span>
+            <span id="wc-ticket-count" style="background:rgba(16,185,129,0.15); color:#10b981; font-size:9px; font-weight:900; padding:3px 10px; border-radius:99px; border:1px solid rgba(16,185,129,0.3);">0 selecciones</span>
+            <button onclick="WC.closeTicketModal()" style="width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); color:#aaa; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+        </div>
+        <div class="sheet-body">
+            <div id="wc-slip-items" style="margin-bottom:14px;"></div>
             <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.15); border-radius:1rem; padding:12px 14px; margin-bottom:14px;">
                 <div>
                     <span style="font-size:8px; color:#555; font-weight:700; text-transform:uppercase; display:block; margin-bottom:2px;">Cuota Total</span>
@@ -311,7 +289,6 @@
                     <span id="wc-potential-win" style="font-family:'Archivo Black',sans-serif; color:white; font-size:20px;">$0.00</span>
                 </div>
             </div>
-            <!-- Input + buttons -->
             <input id="wc-bet-amount" type="number" min="10" placeholder="Monto a apostar ($10 mín)" class="input-bet" oninput="WC.updatePotential()">
             <button onclick="WC.placeBet()" class="btn-action w-full py-4 font-casino text-lg" style="margin-bottom:10px;">⚽ APOSTAR TICKET</button>
             <button onclick="WC.clearSlip()" style="width:100%; font-size:9px; font-weight:900; color:#444; text-transform:uppercase; background:none; border:none; cursor:pointer; padding:4px;">Limpiar selecciones</button>
@@ -327,7 +304,6 @@
                 </div>
                 <h2 id="tx-title" class="font-casino text-emerald-500 text-center mb-1">Monto</h2>
                 <p id="tx-limits-hint" class="text-[9px] text-zinc-500 font-bold uppercase tracking-wider text-center mb-4">(MIN 50 MXN MAX 3000 MXN)</p>
-                
                 <input id="dep-amount" type="number" placeholder="$0" class="w-full bg-transparent text-center text-5xl font-casino outline-none mb-6 text-white">
                 <div class="space-y-3 mb-6">
                     <input id="clabe-input-field" type="number" placeholder="Cuenta CLABE (18 dígitos)" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none text-white text-[10px] font-bold uppercase hidden-view">
@@ -347,19 +323,17 @@
                         <p class="text-[8px] font-bold text-emerald-500 mb-1 uppercase">CLABE (STP)</p>
                         <div class="flex items-center justify-center gap-3"><span class="text-xs font-mono font-bold" id="clabe-number">722969020533491161</span><button onclick="UI.copyClabe()" class="text-emerald-500"><i class="fas fa-copy"></i></button></div>
                     </div>
-                    
                     <div id="deposit-instructions-box" class="bg-white/5 border border-white/5 rounded-xl p-3 text-left space-y-2 mb-4">
                         <h4 class="text-[9px] font-black text-emerald-500 uppercase tracking-wider"><i class="fas fa-info-circle mr-1"></i> Guía de Transferencia:</h4>
                         <ol class="text-[8px] text-zinc-400 space-y-1 list-decimal list-inside font-medium leading-normal">
-                            <li>Da clic en el botón de copiar para guardar la <strong>Cuenta CLABE (STP)</strong>.</li>
-                            <li>Abre la aplicación móvil de tu <strong>banco</strong> e ingresa a transferencias.</li>
-                            <li>Registra la CLABE copiada. Si te pide banco receptor selecciona <strong>STP (Sistema de Transferencias y Pagos)</strong>.</li>
-                            <li>Coloca el monto exacto y escribe obligatoriamente en el concepto de pago la palabra <strong class="text-white bg-white/10 px-1 rounded font-bold">transferencia</strong>.</li>
-                            <li>Toma una captura al comprobante de la transferencia<strong> y colócala aquí abajo (Subir Comprobante)</strong>.</li>
-                            <li>Espera<strong> a que un administrador apruebe tu depósito (TARDA DE 5 MINUTOS A 24 HRS EN REFLEJARSE EN TU CUENTA DE WINMX)</strong>.</li>
+                            <li>Copia la <strong>Cuenta CLABE (STP)</strong>.</li>
+                            <li>Abre tu app bancaria e ingresa a transferencias.</li>
+                            <li>Registra la CLABE. Banco receptor: <strong>STP</strong>.</li>
+                            <li>Concepto obligatorio: <strong class="text-white bg-white/10 px-1 rounded">transferencia</strong>.</li>
+                            <li>Sube captura del comprobante.</li>
+                            <li>Espera aprobación del administrador (5 min – 24 hrs).</li>
                         </ol>
                     </div>
-
                     <div id="photo-section">
                         <input type="file" id="receipt-input" class="hidden" accept="image/*" onchange="UI.handleFile(this)">
                         <label for="receipt-input" class="border-2 border-dashed border-zinc-800 rounded-2xl p-4 block cursor-pointer"><i class="fas fa-camera text-xl mb-1 text-zinc-600"></i><p id="file-label" class="text-[8px] font-bold text-zinc-500 uppercase">Subir Comprobante</p></label>
@@ -387,163 +361,36 @@
             rocket: new Audio('https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3'),
             card: new Audio('https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3')
         };
-
-        const playSfx = (key) => { 
-            if(sfx[key]) { 
-                try {
-                    sfx[key].pause(); 
-                    sfx[key].currentTime = 0; 
-                    sfx[key].load();
-                    const p = sfx[key].play(); 
-                    if(p !== undefined) p.catch(() => {}); 
-                } catch(e) {}
-            } 
-        };
-
-        const initAudioUnlock = () => {
-            const unlock = () => {
-                Object.keys(sfx).forEach(key => {
-                    if (sfx[key]) {
-                        sfx[key].play().then(() => {
-                            sfx[key].pause();
-                            sfx[key].currentTime = 0;
-                        }).catch(() => {});
-                    }
-                });
-                document.removeEventListener('click', unlock);
-                document.removeEventListener('touchstart', unlock);
-            };
-            document.addEventListener('click', unlock);
-            document.addEventListener('touchstart', unlock);
-        };
+        const playSfx = (key) => { if(sfx[key]) { try { sfx[key].pause(); sfx[key].currentTime = 0; sfx[key].load(); const p = sfx[key].play(); if(p !== undefined) p.catch(() => {}); } catch(e) {} } };
+        const initAudioUnlock = () => { const unlock = () => { Object.keys(sfx).forEach(key => { if (sfx[key]) { sfx[key].play().then(() => { sfx[key].pause(); sfx[key].currentTime = 0; }).catch(() => {}); } }); document.removeEventListener('click', unlock); document.removeEventListener('touchstart', unlock); }; document.addEventListener('click', unlock); document.addEventListener('touchstart', unlock); };
         initAudioUnlock();
 
         const GlobalLuck = {
-            luckFactor: 1.38,
-            winHistory: [],
-            sessionLoss: 0,
-            calculateOutcome(betAmount) {
-                const baseChance = 0.45;
-                const adjustedChance = Math.min(baseChance * this.luckFactor, 0.95);
-                const isWin = Math.random() < adjustedChance;
-                if (!isWin) { this.sessionLoss += betAmount; }
-                this.winHistory.push({ bet: betAmount, win: isWin, timestamp: Date.now() });
-                return isWin;
-            },
-            resetSession() {
-                this.sessionLoss = 0;
-                this.winHistory = [];
-            }
+            luckFactor: 1.38, winHistory: [], sessionLoss: 0,
+            calculateOutcome(betAmount) { const baseChance = 0.45; const adjustedChance = Math.min(baseChance * this.luckFactor, 0.95); const isWin = Math.random() < adjustedChance; if (!isWin) { this.sessionLoss += betAmount; } this.winHistory.push({ bet: betAmount, win: isWin, timestamp: Date.now() }); return isWin; },
+            resetSession() { this.sessionLoss = 0; this.winHistory = []; }
         };
 
         let State = { user: null, balance: 0, isSpinning: false, currentTx: 'deposit', isProcessing: false };
 
-        setInterval(() => {
-            const viewGame = document.getElementById('view-game');
-            const nav = document.getElementById('bottom-nav-bar');
-            if (viewGame && !viewGame.classList.contains('hidden-view')) { nav.style.transform = 'translateY(100%)'; }
-        }, 500);
+        setInterval(() => { const viewGame = document.getElementById('view-game'); const nav = document.getElementById('bottom-nav-bar'); if (viewGame && !viewGame.classList.contains('hidden-view')) { nav.style.transform = 'translateY(100%)'; } }, 500);
 
         const UI = {
             updateBalance() { const el = document.getElementById('balance-display'); if(el) el.innerText = `$${State.balance.toFixed(2)}`; },
             updateProfile() { if(State.user) document.getElementById('user-email-display').innerText = State.user.email; },
-            openModal(id) { 
-                if(State.isProcessing) return; 
-                playSfx('click'); 
-                document.getElementById('dep-amount').value = '';
-                document.getElementById('bank-name').value = '';
-                document.getElementById('beneficiary-name').value = '';
-                document.getElementById('clabe-input-field').value = '';
-                document.getElementById('receipt-input').value = '';
-                document.getElementById('file-label').innerText = "Subir Comprobante";
-                document.getElementById('file-label').classList.replace('text-emerald-500', 'text-zinc-500');
-                document.getElementById('dep-step-1').classList.remove('hidden-view');
-                document.getElementById('dep-step-2').classList.add('hidden-view');
-                this.setTxType('deposit');
-                document.getElementById(id).classList.remove('hidden-view'); 
-            },
+            openModal(id) { if(State.isProcessing) return; playSfx('click'); document.getElementById('dep-amount').value = ''; document.getElementById('bank-name').value = ''; document.getElementById('beneficiary-name').value = ''; document.getElementById('clabe-input-field').value = ''; document.getElementById('receipt-input').value = ''; document.getElementById('file-label').innerText = "Subir Comprobante"; document.getElementById('file-label').classList.replace('text-emerald-500', 'text-zinc-500'); document.getElementById('dep-step-1').classList.remove('hidden-view'); document.getElementById('dep-step-2').classList.add('hidden-view'); this.setTxType('deposit'); document.getElementById(id).classList.remove('hidden-view'); },
             closeModal(id) { playSfx('click'); document.getElementById(id).classList.add('hidden-view'); },
             toggleAccordion(id) { const el = document.getElementById(id); const arrow = document.getElementById('arrow-' + id); el.classList.toggle('hidden-view'); if(arrow) arrow.style.transform = el.classList.contains('hidden-view') ? 'rotate(180deg)' : 'rotate(0deg)'; },
-            depNextStep() { 
-                const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value)); 
-                const bank = document.getElementById('bank-name').value.trim();
-                const beneficiary = document.getElementById('beneficiary-name').value.trim();
-                const clabeVal = document.getElementById('clabe-input-field').value.trim();
-
-                if(isNaN(amt) || amt <= 0) return this.notify("Monto inválido", "error"); 
-                
-                if(State.currentTx === 'deposit') {
-                    if(amt < 50) return this.notify("El depósito mínimo es de $50 MXN", "error");
-                    if(amt > 3000) return this.notify("El depósito máximo es de $3000 MXN", "error");
-                }
-                if(State.currentTx === 'withdrawal') {
-                    if(amt < 100) return this.notify("El retiro mínimo es de $100 MXN", "error");
-                    if(amt > 3000) return this.notify("El retiro máximo es de $3000 MXN", "error");
-                }
-
-                if(!bank) return this.notify("El nombre del banco es obligatorio", "error");
-                if(!beneficiary) return this.notify("El nombre completo es obligatorio", "error");
-                
-                if(State.currentTx === 'withdrawal') { 
-                    if(!clabeVal || clabeVal.length !== 18) return this.notify("La cuenta CLABE de 18 dígitos es obligatoria", "error"); 
-                } 
-                
-                playSfx('click'); 
-                const display = document.getElementById('display-dep-amount'); 
-                if(display) display.innerText = `$${amt.toFixed(2)}`; 
-                
-                const header = document.getElementById('display-tx-header');
-                const clabeBox = document.getElementById('display-withdrawal-clabe-box');
-                
-                if(State.currentTx === 'deposit') {
-                    if(header) header.innerText = "Confirmar depósito de:";
-                    if(clabeBox) clabeBox.classList.add('hidden-view');
-                } else {
-                    if(header) header.innerText = "Confirmar retiro de:";
-                    if(clabeBox) {
-                        clabeBox.innerText = `A la cuenta: ${clabeVal}`;
-                        clabeBox.classList.remove('hidden-view');
-                    }
-                }
-                
-                document.getElementById('dep-step-1').classList.add('hidden-view'); 
-                document.getElementById('dep-step-2').classList.remove('hidden-view'); 
-            },
+            depNextStep() { const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value)); const bank = document.getElementById('bank-name').value.trim(); const beneficiary = document.getElementById('beneficiary-name').value.trim(); const clabeVal = document.getElementById('clabe-input-field').value.trim(); if(isNaN(amt) || amt <= 0) return this.notify("Monto inválido", "error"); if(State.currentTx === 'deposit') { if(amt < 50) return this.notify("El depósito mínimo es de $50 MXN", "error"); if(amt > 3000) return this.notify("El depósito máximo es de $3000 MXN", "error"); } if(State.currentTx === 'withdrawal') { if(amt < 100) return this.notify("El retiro mínimo es de $100 MXN", "error"); if(amt > 3000) return this.notify("El retiro máximo es de $3000 MXN", "error"); } if(!bank) return this.notify("El nombre del banco es obligatorio", "error"); if(!beneficiary) return this.notify("El nombre completo es obligatorio", "error"); if(State.currentTx === 'withdrawal') { if(!clabeVal || clabeVal.length !== 18) return this.notify("La cuenta CLABE de 18 dígitos es obligatoria", "error"); } playSfx('click'); const display = document.getElementById('display-dep-amount'); if(display) display.innerText = `$${amt.toFixed(2)}`; const header = document.getElementById('display-tx-header'); const clabeBox = document.getElementById('display-withdrawal-clabe-box'); if(State.currentTx === 'deposit') { if(header) header.innerText = "Confirmar depósito de:"; if(clabeBox) clabeBox.classList.add('hidden-view'); } else { if(header) header.innerText = "Confirmar retiro de:"; if(clabeBox) { clabeBox.innerText = `A la cuenta: ${clabeVal}`; clabeBox.classList.remove('hidden-view'); } } document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
             copyClabe() { const clabe = document.getElementById('clabe-number').innerText; navigator.clipboard.writeText(clabe).then(() => { playSfx('click'); this.notify("CLABE Copiada", "success"); }); },
             handleFile(input) { if(input.files && input.files[0]) { playSfx('click'); const label = document.getElementById('file-label'); label.innerText = "Foto lista"; label.classList.replace('text-zinc-500', 'text-emerald-500'); } },
             notify(m, t) { const n = document.createElement('div'); n.className = `p-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-2xl animate__animated animate__fadeInDown ${t==='success'?'bg-emerald-500 text-black':'bg-red-500 text-white'}`; n.innerText = m; document.getElementById('notif-container').appendChild(n); setTimeout(() => { n.classList.replace('animate__fadeInDown', 'animate__fadeOutUp'); setTimeout(()=>n.remove(), 500); }, 3000); },
-            setTxType(type) { 
-                playSfx('click'); 
-                State.currentTx = type; 
-                const isDep = type === 'deposit'; 
-                document.getElementById('tab-deposit').classList.toggle('active', isDep); 
-                document.getElementById('tab-withdrawal').classList.toggle('active', !isDep); 
-                document.getElementById('tx-title').innerText = isDep ? 'Monto' : 'Monto'; 
-                
-                const hint = document.getElementById('tx-limits-hint');
-                if(hint) {
-                    hint.innerText = isDep ? "(MIN 50 MXN MAX 3000 MXN)" : "(MIN 100 MXN MAX 3000 MXN)";
-                }
-
-                document.getElementById('photo-section').classList.toggle('hidden-view', !isDep);
-                document.getElementById('clabe-section').classList.toggle('hidden-view', !isDep);
-                document.getElementById('deposit-instructions-box').classList.toggle('hidden-view', !isDep);
-                document.getElementById('clabe-input-field').classList.toggle('hidden-view', isDep);
-            }
+            setTxType(type) { playSfx('click'); State.currentTx = type; const isDep = type === 'deposit'; document.getElementById('tab-deposit').classList.toggle('active', isDep); document.getElementById('tab-withdrawal').classList.toggle('active', !isDep); const hint = document.getElementById('tx-limits-hint'); if(hint) hint.innerText = isDep ? "(MIN 50 MXN MAX 3000 MXN)" : "(MIN 100 MXN MAX 3000 MXN)"; document.getElementById('photo-section').classList.toggle('hidden-view', !isDep); document.getElementById('clabe-section').classList.toggle('hidden-view', !isDep); document.getElementById('deposit-instructions-box').classList.toggle('hidden-view', !isDep); document.getElementById('clabe-input-field').classList.toggle('hidden-view', isDep); }
         };
 
         const AuthManager = {
             async login() { if(State.isProcessing) return; const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value; if(!e || !p) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-login'); btn.disabled = true; const { data, error } = await sb.auth.signInWithPassword({ email: e, password: p }); if(error) { UI.notify(error.message, "error"); btn.disabled = false; } else location.reload(); },
-            async register() { 
-                if(State.isProcessing) return; 
-                if(!document.getElementById('terms-check').checked) return UI.notify("Acepta términos", "error"); 
-                const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value; 
-                if(!e || !p) return UI.notify("Completa campos", "error"); 
-                const btn = document.getElementById('btn-register'); btn.disabled = true; 
-                const { data, error } = await sb.auth.signUp({ email: e, password: p }); 
-                if(error) { UI.notify(error.message, "error"); btn.disabled = false; } 
-                else { await sb.from('usuarios').insert([{ id: data.user.id, email: e, saldo: 0 }]); UI.notify("Cuenta creada", "success"); document.getElementById('auth-view').classList.add('hidden-view'); document.getElementById('bonus-view').classList.remove('hidden-view'); State.user = data.user; } 
-            },
+            async register() { if(State.isProcessing) return; if(!document.getElementById('terms-check').checked) return UI.notify("Acepta términos", "error"); const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value; if(!e || !p) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-register'); btn.disabled = true; const { data, error } = await sb.auth.signUp({ email: e, password: p }); if(error) { UI.notify(error.message, "error"); btn.disabled = false; } else { await sb.from('usuarios').insert([{ id: data.user.id, email: e, saldo: 0 }]); UI.notify("Cuenta creada", "success"); document.getElementById('auth-view').classList.add('hidden-view'); document.getElementById('bonus-view').classList.remove('hidden-view'); State.user = data.user; } },
             async logout() { await sb.auth.signOut(); location.reload(); },
             switchTab(tab) { playSfx('click'); document.getElementById('login-container').classList.toggle('hidden-view', tab==='register'); document.getElementById('register-container').classList.toggle('hidden-view', tab==='login'); }
         };
@@ -553,462 +400,132 @@
             async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); this.subscribeBalance(); this.processPendingWins(); } else { document.getElementById('auth-view').classList.remove('hidden-view'); } },
             async loadBalance() { const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle(); State.balance = data ? data.saldo : 0; UI.updateBalance(); },
             subscribeBalance() { sb.channel('balance_sync').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'usuarios', filter: `id=eq.${State.user.id}` }, (payload) => { if (payload.new && typeof payload.new.saldo !== 'undefined' && !State.isSpinning) { State.balance = payload.new.saldo; UI.updateBalance(); } }).subscribe(); },
-            async processPendingWins() {
-                try {
-                    let saved = JSON.parse(localStorage.getItem('pendingWins') || '[]');
-                    let userWins = saved.filter(w => w.userId === State.user.id);
-                    if (userWins.length > 0) {
-                        let totalWin = userWins.reduce((sum, w) => sum + w.amount, 0);
-                        if (totalWin > 0) {
-                            await this.updateBalanceDB(totalWin);
-                            State.balance += totalWin;
-                            UI.updateBalance();
-                            await this.recordHistory({ user_id: State.user.id, type: 'bets', amount: totalWin, label: 'COBRO AUTO (DESCONEXIÓN)', status: 'completed' });
-                            setTimeout(() => { UI.notify(`Recuperaste $${totalWin.toFixed(2)} de apuesta pausada`, "success"); playSfx('win'); }, 2500);
-                        }
-                        saved = saved.filter(w => w.userId !== State.user.id);
-                        localStorage.setItem('pendingWins', JSON.stringify(saved));
-                    }
-                } catch(e) { console.error(e); }
-            },
+            async processPendingWins() { try { let saved = JSON.parse(localStorage.getItem('pendingWins') || '[]'); let userWins = saved.filter(w => w.userId === State.user.id); if (userWins.length > 0) { let totalWin = userWins.reduce((sum, w) => sum + w.amount, 0); if (totalWin > 0) { await this.updateBalanceDB(totalWin); State.balance += totalWin; UI.updateBalance(); await this.recordHistory({ user_id: State.user.id, type: 'bets', amount: totalWin, label: 'COBRO AUTO (DESCONEXIÓN)', status: 'completed' }); setTimeout(() => { UI.notify(`Recuperaste $${totalWin.toFixed(2)} de apuesta pausada`, "success"); playSfx('win'); }, 2500); } saved = saved.filter(w => w.userId !== State.user.id); localStorage.setItem('pendingWins', JSON.stringify(saved)); } } catch(e) { console.error(e); } },
             async updateBalanceDB(amount) { const { data, error } = await sb.rpc('modificar_saldo', { user_id: State.user.id, monto: amount }); if (error) { const { data: current } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); await sb.from('usuarios').update({ saldo: current.saldo + amount }).eq('id', State.user.id); } },
             async claimBonus() { if(State.isProcessing) return; State.isProcessing = true; playSfx('win'); try { await this.updateBalanceDB(30); UI.notify("Bono reclamado", "success"); location.reload(); } catch(e) { UI.notify("Error", "error"); } finally { State.isProcessing = false; } },
-            
-            async recordHistory(payload) {
-                const isTransaction = payload.type === 'deposits' || payload.type === 'withdrawals' || payload.type === 'bets';
-                const cleanPayload = {
-                    user_id: payload.user_id,
-                    type: payload.type, 
-                    amount: payload.amount,
-                    label: payload.label,
-                    status: payload.status
-                };
-                
-                if (payload.label.includes('RETIRO') || payload.type === 'deposits' || payload.type === 'withdrawals') {
-                    cleanPayload.bank_name = payload.bank_name;
-                    cleanPayload.account_holder = payload.account_holder;
-                    if (payload.evidence_url) cleanPayload.evidence_url = payload.evidence_url;
-                }
-                return await sb.from('history').insert([cleanPayload]);
-            },
-
-            async confirmTransaction() { 
-                if(State.isProcessing) return; 
-                const amountInput = document.getElementById('dep-amount').value; 
-                const amount = Math.abs(parseFloat(amountInput)); 
-                const bank = document.getElementById('bank-name').value; 
-                const beneficiary = document.getElementById('beneficiary-name').value; 
-                if(!amount || amount <= 0 || !bank || !beneficiary) return UI.notify("Completa campos", "error"); 
-                const btn = document.getElementById('btn-confirm-dep'); 
-                btn.disabled = true; btn.innerText = "PROCESANDO..."; 
-                State.isProcessing = true; 
-                try { 
-                    const isDeposit = State.currentTx === 'deposit';
-                    let historyItem = { 
-                        user_id: State.user.id, 
-                        type: isDeposit ? 'deposits' : 'bets', 
-                        amount: isDeposit ? amount : -amount, 
-                        label: isDeposit ? 'DEPÓSITO PENDIENTE' : 'RETIRO PENDIENTE', 
-                        status: 'pending'
-                    };
-
-                    if(isDeposit) { 
-                        const fileInput = document.getElementById('receipt-input'); 
-                        const file = fileInput.files[0]; 
-                        if(!file) throw new Error("Sube comprobante"); 
-                        const fName = `${Date.now()}_${State.user.id}.jpg`; 
-                        const uploadRes = await sb.storage.from('comprobantes').upload(fName, file); 
-                        if(uploadRes.error) throw uploadRes.error; 
-                        const pub = sb.storage.from('comprobantes').getPublicUrl(fName); 
-                        historyItem.evidence_url = pub.data.publicUrl; 
-                        historyItem.bank_name = bank;
-                        historyItem.account_holder = beneficiary;
-                    } else {
-                        const clabeVal = document.getElementById('clabe-input-field').value;
-                        if(!clabeVal || clabeVal.length !== 18) throw new Error("CLABE debe ser de 18 dígitos");
-                        
-                        historyItem.bank_name = bank;
-                        historyItem.account_holder = `${beneficiary} | CLABE: ${clabeVal}`;
-                        
-                        if(State.balance < amount) throw new Error("Saldo insuficiente");
-                        await this.updateBalanceDB(-amount);
-                        State.balance -= amount;
-                        UI.updateBalance();
-                    }
-                    
-                    const { error } = await this.recordHistory(historyItem); 
-                    if(error) throw error; 
-                    UI.notify("Solicitud enviada", "success"); 
-                    UI.closeModal('modal-deposit'); 
-                } catch(e) { UI.notify(e.message, "error"); } finally { btn.disabled = false; btn.innerText = "CONFIRMAR"; State.isProcessing = false; } 
-            },
-            async fetchHistory() { 
-                const { data: b } = await sb.from('history').select('*, created_at').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20); 
-                const { data: d } = await sb.from('history').select('*, created_at').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(20); 
-                const container = document.getElementById('history-lists'); 
-                const realBets = (b || []).filter(item => !item.label.includes('RETIRO'));
-                const realWithdrawals = (b || []).filter(item => item.label.includes('RETIRO'));
-
-                container.innerHTML = `
-                    <div class="glass mb-4 p-4">
-                        <div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-bets')"><span class="font-casino text-[10px]">Jugadas</span><i class="fas fa-chevron-down" id="arrow-acc-bets"></i></div>
-                        <div id="acc-bets" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(realBets, 'bets')}</div>
-                    </div>
-                    <div class="glass mb-4 p-4">
-                        <div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-deps')"><span class="font-casino text-[10px]">Depósitos</span><i class="fas fa-chevron-down" id="arrow-acc-deps"></i></div>
-                        <div id="acc-deps" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(d || [], 'tx')}</div>
-                    </div>
-                    <div class="glass mb-4 p-4">
-                        <div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-wds')"><span class="font-casino text-[10px]">Retiros</span><i class="fas fa-chevron-down" id="arrow-acc-wds"></i></div>
-                        <div id="acc-wds" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(realWithdrawals, 'tx')}</div>
-                    </div>`; 
-            },
-            renderList(items, type) { 
-                if(!items || items.length === 0) return '<p class="text-zinc-600">Sin registros</p>'; 
-                return items.map(i => { 
-                    let statusColor = i.amount >= 0 ? 'text-emerald-500' : 'text-red-500'; 
-                    let label = i.label; 
-                    
-                    let horaExacta = '';
-                    if (i.created_at) {
-                        const d = new Date(i.created_at);
-                        horaExacta = ` - ${d.toTimeString().split(' ')[0]}`;
-                    }
-
-                    if(type === 'tx' || label.includes('PENDIENTE')) { 
-                        if(i.status === 'pending') label += " (⏳)"; 
-                        else if(i.status === 'completed') label += " (✅)"; 
-                        else if(i.status === 'rejected') label += " (❌)"; 
-                        statusColor = 'text-white'; 
-                    } 
-                    return `<div class="flex justify-between border-b border-white/5 pb-1"><span>${label}${horaExacta}</span><span class="${statusColor}">$${Math.abs(i.amount).toFixed(2)}</span></div>`; 
-                }).join(''); 
-            }
+            async recordHistory(payload) { const cleanPayload = { user_id: payload.user_id, type: payload.type, amount: payload.amount, label: payload.label, status: payload.status }; if (payload.label.includes('RETIRO') || payload.type === 'deposits' || payload.type === 'withdrawals') { cleanPayload.bank_name = payload.bank_name; cleanPayload.account_holder = payload.account_holder; if (payload.evidence_url) cleanPayload.evidence_url = payload.evidence_url; } return await sb.from('history').insert([cleanPayload]); },
+            async confirmTransaction() { if(State.isProcessing) return; const amountInput = document.getElementById('dep-amount').value; const amount = Math.abs(parseFloat(amountInput)); const bank = document.getElementById('bank-name').value; const beneficiary = document.getElementById('beneficiary-name').value; if(!amount || amount <= 0 || !bank || !beneficiary) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-confirm-dep'); btn.disabled = true; btn.innerText = "PROCESANDO..."; State.isProcessing = true; try { const isDeposit = State.currentTx === 'deposit'; let historyItem = { user_id: State.user.id, type: isDeposit ? 'deposits' : 'bets', amount: isDeposit ? amount : -amount, label: isDeposit ? 'DEPÓSITO PENDIENTE' : 'RETIRO PENDIENTE', status: 'pending' }; if(isDeposit) { const fileInput = document.getElementById('receipt-input'); const file = fileInput.files[0]; if(!file) throw new Error("Sube comprobante"); const fName = `${Date.now()}_${State.user.id}.jpg`; const uploadRes = await sb.storage.from('comprobantes').upload(fName, file); if(uploadRes.error) throw uploadRes.error; const pub = sb.storage.from('comprobantes').getPublicUrl(fName); historyItem.evidence_url = pub.data.publicUrl; historyItem.bank_name = bank; historyItem.account_holder = beneficiary; } else { const clabeVal = document.getElementById('clabe-input-field').value; if(!clabeVal || clabeVal.length !== 18) throw new Error("CLABE debe ser de 18 dígitos"); historyItem.bank_name = bank; historyItem.account_holder = `${beneficiary} | CLABE: ${clabeVal}`; if(State.balance < amount) throw new Error("Saldo insuficiente"); await this.updateBalanceDB(-amount); State.balance -= amount; UI.updateBalance(); } const { error } = await this.recordHistory(historyItem); if(error) throw error; UI.notify("Solicitud enviada", "success"); UI.closeModal('modal-deposit'); } catch(e) { UI.notify(e.message, "error"); } finally { btn.disabled = false; btn.innerText = "CONFIRMAR"; State.isProcessing = false; } },
+            async fetchHistory() { const { data: b } = await sb.from('history').select('*, created_at').eq('user_id', State.user.id).eq('type', 'bets').order('created_at', { ascending: false }).limit(20); const { data: d } = await sb.from('history').select('*, created_at').eq('user_id', State.user.id).eq('type', 'deposits').order('created_at', { ascending: false }).limit(20); const container = document.getElementById('history-lists'); const realBets = (b || []).filter(item => !item.label.includes('RETIRO')); const realWithdrawals = (b || []).filter(item => item.label.includes('RETIRO')); container.innerHTML = `<div class="glass mb-4 p-4"><div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-bets')"><span class="font-casino text-[10px]">Jugadas</span><i class="fas fa-chevron-down" id="arrow-acc-bets"></i></div><div id="acc-bets" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(realBets, 'bets')}</div></div><div class="glass mb-4 p-4"><div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-deps')"><span class="font-casino text-[10px]">Depósitos</span><i class="fas fa-chevron-down" id="arrow-acc-deps"></i></div><div id="acc-deps" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(d || [], 'tx')}</div></div><div class="glass mb-4 p-4"><div class="flex justify-between items-center" onclick="UI.toggleAccordion('acc-wds')"><span class="font-casino text-[10px]">Retiros</span><i class="fas fa-chevron-down" id="arrow-acc-wds"></i></div><div id="acc-wds" class="hidden-view mt-4 space-y-2 text-[10px] uppercase font-bold">${this.renderList(realWithdrawals, 'tx')}</div></div>`; },
+            renderList(items, type) { if(!items || items.length === 0) return '<p class="text-zinc-600">Sin registros</p>'; return items.map(i => { let statusColor = i.amount >= 0 ? 'text-emerald-500' : 'text-red-500'; let label = i.label; let horaExacta = ''; if (i.created_at) { const d = new Date(i.created_at); horaExacta = ` - ${d.toTimeString().split(' ')[0]}`; } if(type === 'tx' || label.includes('PENDIENTE')) { if(i.status === 'pending') label += " (⏳)"; else if(i.status === 'completed') label += " (✅)"; else if(i.status === 'rejected') label += " (❌)"; statusColor = 'text-white'; } return `<div class="flex justify-between border-b border-white/5 pb-1"><span>${label}${horaExacta}</span><span class="${statusColor}">$${Math.abs(i.amount).toFixed(2)}</span></div>`; }).join(''); }
         };
 
         const Router = {
-            showView(viewId) { 
-                const hasActiveGame = GameLogic.mines?.active || GameLogic.tower?.active || GameLogic.blackjack?.active || GameLogic.chicken?.active || GameLogic.crash?.active || State.isSpinning; 
-                if (hasActiveGame && viewId !== 'game') { 
-                    UI.notify("Cobra o termina tu apuesta antes de salir", "error"); 
-                    return; 
-                } 
-                if(State.isSpinning || State.isProcessing) return; 
-                playSfx('click'); 
-                document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden-view')); 
-                document.getElementById(`view-${viewId}`).classList.remove('hidden-view'); 
-                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); 
-                const navId = {'lobby':'nav-home','history':'nav-history','profile':'nav-profile','mundial':'nav-mundial'}[viewId]; 
-                if(navId) document.getElementById(navId).classList.add('active'); 
-                document.getElementById('bottom-nav-bar').style.transform = 'translateY(0)'; 
-                if(viewId === 'history') Core.fetchHistory(); 
-                if(viewId === 'profile') UI.updateProfile();
-                if(viewId === 'mundial') WC.init();
-            },
+            showView(viewId) { const hasActiveGame = GameLogic.mines?.active || GameLogic.tower?.active || GameLogic.blackjack?.active || GameLogic.chicken?.active || GameLogic.crash?.active || State.isSpinning; if (hasActiveGame && viewId !== 'game') { UI.notify("Cobra o termina tu apuesta antes de salir", "error"); return; } if(State.isSpinning || State.isProcessing) return; playSfx('click'); document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden-view')); document.getElementById(`view-${viewId}`).classList.remove('hidden-view'); document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); const navId = {'lobby':'nav-home','history':'nav-history','profile':'nav-profile','mundial':'nav-mundial'}[viewId]; if(navId) document.getElementById(navId).classList.add('active'); document.getElementById('bottom-nav-bar').style.transform = 'translateY(0)'; if(viewId === 'history') Core.fetchHistory(); if(viewId === 'profile') UI.updateProfile(); if(viewId === 'mundial') WC.init(); },
             openGame(game) { if(State.isProcessing) return; playSfx('click'); this.showView('game'); document.getElementById('game-mount').innerHTML = this.templates[game]; document.getElementById('view-game').scrollTop = 0; document.getElementById('bottom-nav-bar').style.transform = 'translateY(100%)'; if(game === 'slots') GameLogic.slots.init(); if(game === 'mines') GameLogic.mines.drawGrid(); if(game === 'tower') GameLogic.tower.drawTower(); if(game === 'blackjack') GameLogic.blackjack.renderInitial(); if(game === 'chicken') GameLogic.chicken.init(); },
             templates: {
-                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 3.00x</span><span class="text-amber-500">Máx: 500.00x</span></div><input id="slots-bet-input" type="number" value="3" min="3" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4>🎰 Reglas Slots</h4><p>Combina 3 símbolos para ganar. <div class="grid grid-cols-2 gap-2 text-[10px] font-bold uppercase mt-2"><div>🍒 x3</div><div>🍋 x10</div><div>🔔 x50</div><div class="text-emerald-500">7️⃣ x500</div></p>`,
+                slots: `<div class="glass p-6 text-center animate__animated animate__fadeIn"><div class="grid grid-cols-3 gap-2 mb-8"><div class="slot-box"><div id="reel-1" class="slot-reel"></div></div><div class="slot-box"><div id="reel-2" class="slot-reel"></div></div><div class="slot-box"><div id="reel-3" class="slot-reel"></div></div></div><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 3.00x</span><span class="text-amber-500">Máx: 500.00x</span></div><input id="slots-bet-input" type="number" value="3" min="3" class="input-bet"><button id="btn-slots-play" onclick="GameLogic.slots.play()" class="btn-action w-full py-5 font-casino text-xl">GIRAR</button><div class="instruction-card"><h4>🎰 Reglas Slots</h4><p>Combina 3 símbolos. 🍒x3 🍋x10 🔔x50 <span class="text-emerald-400">7️⃣x500</span></p></div></div>`,
                 mines: `<div class="glass p-4 text-center mx-auto max-w-[300px]"><div class="risk-badge"><i class="fas fa-bomb"></i> 3 Minas Activas</div><div id="mines-grid" class="grid grid-cols-5 gap-1.5 mb-4"></div><div id="mines-status" class="hidden-view flex justify-between p-3 bg-emerald-500/10 rounded-xl mb-3"><div class="flex flex-col items-start"><span id="mines-mult" class="font-casino text-emerald-500 text-xs">1.00x</span><span id="mines-next-hint" class="text-[7px] text-zinc-500 font-bold uppercase">Siguiente: --</span></div><button id="mines-cashout-btn" onclick="GameLogic.mines.cashout()" class="bg-emerald-500 text-black px-4 py-1 rounded font-bold text-[9px]">COBRAR $0.00</button></div><div id="mines-controls"><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 1.25x</span><span class="text-amber-500">Máx: 500.00x</span></div><input id="mines-bet-input" type="number" value="3" min="3" class="input-bet"><button id="btn-mines-start" onclick="GameLogic.mines.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><div class="instruction-card"><h4>💣 Reglas Minas</h4><p>Encuentra diamantes y evita las minas.</p></div></div>`,
                 crash: `<div class="glass p-6 text-center"><div id="crash-mult" class="text-5xl font-casino italic mb-4">1.00x</div><div id="crash-area"><div id="crash-bg" class="bg-infinite"><div class="bg-part"></div><div class="bg-part"></div></div><div id="crash-rocket-container"><div id="crash-rocket">🚀</div></div></div><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider mt-6"><span class="text-emerald-500">Mín: 1.01x</span><span class="text-amber-500">Máx: ∞</span></div><input id="crash-bet-input" type="number" value="3" min="3" class="input-bet"><button id="btn-crash" onclick="GameLogic.crash.start()" class="btn-action w-full py-4 font-casino">DESPEGAR</button><div class="instruction-card"><h4>🚀 Reglas Aviator</h4><p>Cobra antes del crash.</p></div></div>`,
-                tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div class="risk-badge" style="color: #fbbf24; background: rgba(251,191,36,0.1)"><i class="fas fa-bolt"></i> 1 Peligro por Piso</div><div id="tower-container" class="gap-3 mb-4 flex flex-col-reverse"></div><div id="tower-controls"><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 1.65x</span><span class="text-amber-500">Máx: 95.00x</span></div><input id="tower-bet-input" type="number" value="3" min="3" class="input-bet"><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino">COBRAR $0.00</button><div class="instruction-card"><h4>🗼 Reglas Torre</h4><p>Sube pisos sin tocar minas.</p></div></div>`,
-                blackjack: `<div class="glass p-4 text-center max-w-[320px] mx-auto animate__animated animate__fadeIn">
-                    <div class="mb-4"><p class="text-[8px] text-zinc-500 uppercase font-black mb-2">Crupier (Puntos: <span id="dealer-score">?</span>)</p><div id="dealer-cards" class="flex justify-center gap-2 h-[70px]"></div></div>
-                    <div class="mb-6"><p class="text-[8px] text-emerald-500 uppercase font-black mb-2">Tus Cartas (Puntos: <span id="player-score">0</span>)</p><div id="player-cards" class="flex justify-center gap-2 h-[70px]"></div></div>
-                    <div id="bj-controls"><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 1.00x</span><span class="text-amber-500">Máx: 2.00x</span></div><input id="bj-bet-input" type="number" value="3" min="3" class="input-bet"><button onclick="GameLogic.blackjack.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div>
-                    <div id="bj-actions" class="hidden-view grid grid-cols-2 gap-3"><button onclick="GameLogic.blackjack.hit()" class="btn-action py-4 bg-zinc-800 text-white font-casino">PEDIR</button><button onclick="GameLogic.blackjack.stand()" class="btn-action py-4 font-casino">PLANTARSE</button></div>
-                    <div class="instruction-card"><h4>🃏 Reglas Blackjack</h4><p>Suma 21 o más que el crupier sin pasarte.</p></div>
-                </div>`,
-                chicken: `<div class="glass p-4 text-center">
-                    <div id="chicken-status" class="mb-4 text-emerald-500 font-casino text-2xl animate__animated animate__pulse animate__infinite">1.00x</div>
-                    <div id="chicken-world" class="flex"></div>
-                    <div id="chicken-controls"><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 1.20x</span><span class="text-amber-500">Máx: 100.00x</span></div><input id="chicken-bet-input" type="number" value="3" min="3" class="input-bet"><button onclick="GameLogic.chicken.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div>
-                    <div id="chicken-actions" class="hidden-view grid grid-cols-2 gap-3 mt-4"><button onclick="GameLogic.chicken.move()" class="btn-action py-5 bg-emerald-500 text-black font-black text-lg">AVANZAR</button><button id="chicken-cashout-btn" onclick="GameLogic.chicken.cashout()" class="btn-action py-5 bg-zinc-800 text-white font-black">COBRAR $0.00</button></div>
-                    <div class="instruction-card"><h4>🐥 Reglas Chicken Road</h4><p>Cruza los carriles sin ser atropellado.</p></div>
-                </div>`
+                tower: `<div class="glass p-4 mx-auto max-w-[280px] text-center"><div class="risk-badge" style="color:#fbbf24;background:rgba(251,191,36,0.1)"><i class="fas fa-bolt"></i> 1 Peligro por Piso</div><div id="tower-container" class="gap-3 mb-4 flex flex-col-reverse"></div><div id="tower-controls"><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 1.65x</span><span class="text-amber-500">Máx: 95.00x</span></div><input id="tower-bet-input" type="number" value="3" min="3" class="input-bet"><button id="btn-tower-start" onclick="GameLogic.tower.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><button id="tower-cashout-btn" onclick="GameLogic.tower.cashout()" class="hidden-view btn-action w-full py-4 font-casino">COBRAR $0.00</button><div class="instruction-card"><h4>🗼 Reglas Torre</h4><p>Sube pisos sin tocar minas.</p></div></div>`,
+                blackjack: `<div class="glass p-4 text-center max-w-[320px] mx-auto animate__animated animate__fadeIn"><div class="mb-4"><p class="text-[8px] text-zinc-500 uppercase font-black mb-2">Crupier (Puntos: <span id="dealer-score">?</span>)</p><div id="dealer-cards" class="flex justify-center gap-2 h-[70px]"></div></div><div class="mb-6"><p class="text-[8px] text-emerald-500 uppercase font-black mb-2">Tus Cartas (Puntos: <span id="player-score">0</span>)</p><div id="player-cards" class="flex justify-center gap-2 h-[70px]"></div></div><div id="bj-controls"><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 1.00x</span><span class="text-amber-500">Máx: 2.00x</span></div><input id="bj-bet-input" type="number" value="3" min="3" class="input-bet"><button onclick="GameLogic.blackjack.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><div id="bj-actions" class="hidden-view grid grid-cols-2 gap-3"><button onclick="GameLogic.blackjack.hit()" class="btn-action py-4 bg-zinc-800 text-white font-casino">PEDIR</button><button onclick="GameLogic.blackjack.stand()" class="btn-action py-4 font-casino">PLANTARSE</button></div><div class="instruction-card"><h4>🃏 Reglas Blackjack</h4><p>Suma 21 o más que el crupier sin pasarte.</p></div></div>`,
+                chicken: `<div class="glass p-4 text-center"><div id="chicken-status" class="mb-4 text-emerald-500 font-casino text-2xl animate__animated animate__pulse animate__infinite">1.00x</div><div id="chicken-world" class="flex"></div><div id="chicken-controls"><div class="flex justify-between text-[9px] font-black uppercase mb-1 px-2 tracking-wider"><span class="text-emerald-500">Mín: 1.20x</span><span class="text-amber-500">Máx: 100.00x</span></div><input id="chicken-bet-input" type="number" value="3" min="3" class="input-bet"><button onclick="GameLogic.chicken.start()" class="btn-action w-full py-4 font-casino">APOSTAR</button></div><div id="chicken-actions" class="hidden-view grid grid-cols-2 gap-3 mt-4"><button onclick="GameLogic.chicken.move()" class="btn-action py-5 bg-emerald-500 text-black font-black text-lg">AVANZAR</button><button id="chicken-cashout-btn" onclick="GameLogic.chicken.cashout()" class="btn-action py-5 bg-zinc-800 text-white font-black">COBRAR $0.00</button></div><div class="instruction-card"><h4>🐥 Reglas Chicken Road</h4><p>Cruza los carriles sin ser atropellado.</p></div></div>`
             }
         };
 
         const GameLogic = {
-            adjustLuck(winAmt, betAmt, mult = 1) { 
-                GlobalLuck.winHistory.push({ bet: betAmt, win: winAmt > 0 ? 1 : 0, mult }); 
-                if(GlobalLuck.winHistory.length > 10) GlobalLuck.winHistory.shift(); 
-                if (winAmt === 0) GlobalLuck.sessionLoss += betAmt; 
-                else { GlobalLuck.sessionLoss -= (winAmt - betAmt); if (GlobalLuck.sessionLoss < 0) GlobalLuck.sessionLoss = 0; } 
-                const winRatio = GlobalLuck.winHistory.filter(h => h.win > 0).length / GlobalLuck.winHistory.length; 
-                if (GlobalLuck.luckFactor > 1.0) { if (State.balance > 80) GlobalLuck.luckFactor = 1.0; } 
-                else { if (GlobalLuck.sessionLoss > 200 || winRatio < 0.1) GlobalLuck.luckFactor = 1.8; else if (winRatio > 0.4 || winAmt > betAmt * 50) GlobalLuck.luckFactor = 0.4; else GlobalLuck.luckFactor = 1.0; }
-            },
-            slots: {
-                prizes: { '7️⃣': { mult: 500, weight: 0.01 }, '🔔': { mult: 50, weight: 1 }, '🍋': { mult: 10, weight: 10 }, '🍒': { mult: 3, weight: 88 } },
-                init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); if(r) { r.innerHTML = ''; Array(20).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); } }); },
-                async play() { 
-                    if(State.isSpinning || State.isProcessing) return; State.isSpinning = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('slots-bet-input').value)) || 3; const btn = document.getElementById('btn-slots-play'); btn.disabled = true; if(b < 3) { State.isSpinning = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Apuesta mínima $3 MXN", "error"); } const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b) { State.isSpinning = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('spin'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); let result = []; 
-                    let winChance = Math.min(0.15 * GlobalLuck.luckFactor, 0.35); 
-                    const isWinner = Math.random() < winChance; 
-                    if (isWinner) { const roll = Math.random() * 100; let acc = 0; let sel = '🍒'; for (const [sym, config] of Object.entries(this.prizes)) { acc += config.weight; if (roll <= acc) { sel = sym; break; } } result = [sel, sel, sel]; } else { const s1 = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)], s2 = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]; let s3 = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]; if (s1 === s2 && s2 === s3) s3 = SYMBOLS[(SYMBOLS.indexOf(s3) + 1) % SYMBOLS.length]; result = [s1, s2, s3]; } [1,2,3].forEach((id, i) => { const reel = document.getElementById(`reel-${id}`); if(reel) { const targetSymbol = result[i]; const targetPos = SYMBOLS.indexOf(targetSymbol); const scrollDist = (90 * SYMBOLS.length * 5) + (targetPos * 90); reel.style.transition = 'none'; reel.style.transform = 'translateY(0)'; setTimeout(() => { reel.style.transition = 'transform 3.5s cubic-bezier(0.15, 0, 0.05, 1)'; reel.style.transform = `translateY(-${scrollDist}px)`; }, 50); } }); setTimeout(async () => { let win = 0; if (result[0] === result[1] && result[1] === result[2]) win = b * this.prizes[result[0]].mult; if(win > 0) { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); } else { playSfx('lose'); UI.notify("SIN SUERTE", "error"); } UI.updateBalance(); GameLogic.adjustLuck(win, b, win > 0 ? 2 : 0); await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? win : -b, label: 'SLOTS', status: 'completed' }); State.isSpinning = false; State.isProcessing = false; btn.disabled = false; }, 3600); 
-                }
-            },
-            mines: {
-                active: false, mines: [], revealed: [], mult: 1, bet: 10, multSteps: [1.25, 1.30, 1.75, 2.00, 5.50, 10.20, 16.50, 28.00, 45.00, 68.00, 95.00, 130.00, 175.00, 225.00, 280.00, 330.00, 375.00, 415.00, 445.00, 470.00, 490.00, 500.00],
-                drawGrid() { const g = document.getElementById('mines-grid'); if(!g) return; g.innerHTML = ''; for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/5 border border-white/5 rounded-lg flex items-center justify-center text-xl cursor-pointer active:scale-90 transition-all"></div>`; },
-                async start() { if(this.active || State.isProcessing) return; this.active = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 3; const btn = document.getElementById('btn-mines-start'); btn.disabled = true; if(b < 3) { this.active = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Apuesta mínima $3 MXN", "error"); } const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b) { this.active = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('click'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); this.bet = b; this.mult = 1; this.revealed = []; this.mines = []; while(this.mines.length < 3) { let r = Math.floor(Math.random()*25); if(!this.mines.includes(r)) this.mines.push(r); } document.getElementById('mines-controls').classList.add('hidden-view'); document.getElementById('mines-status').classList.remove('hidden-view'); document.getElementById('mines-mult').innerText = '1.00x'; document.getElementById('mines-next-hint').innerText = `Siguiente: x${this.multSteps[0].toFixed(2)}`; document.getElementById('mines-cashout-btn').innerText = `COBRAR $${this.bet.toFixed(2)}`; this.drawGrid(); State.isProcessing = false; btn.disabled = false; },
-                cell(i) { 
-                    if(!this.active || this.revealed.includes(i) || State.isProcessing) return; 
-                    const winCount = this.revealed.length; 
-                    
-                    let dynamicFail = (0.12 + (winCount * 0.12)) / GlobalLuck.luckFactor; 
-                    if (GlobalLuck.luckFactor > 1.4 && winCount < 2) dynamicFail = 0.01; 
-                    dynamicFail = Math.min(dynamicFail, 0.96); 
-                    
-                    if (Math.random() < dynamicFail) { 
-                        if (!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); } 
-                    } else {
-                        if (this.mines.includes(i)) { 
-                            this.mines = this.mines.filter(m => m !== i); 
-                            let emptySpots = []; 
-                            for(let j=0; j<25; j++) if(!this.revealed.includes(j) && j!==i) emptySpots.push(j); 
-                            if(emptySpots.length > 0) this.mines.push(emptySpots[Math.floor(Math.random()*emptySpots.length)]); 
-                        }
-                    }
-
-                    this.revealed.push(i); 
-                    const el = document.getElementById(`m-${i}`); 
-                    if(this.mines.includes(i)) { playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500'); this.revealRemainingMines(); UI.notify("¡BOMBA!", "error"); this.end(false); } else { playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500'); this.mult = this.multSteps[winCount] || 500.00; document.getElementById('mines-mult').innerText = this.mult.toFixed(2) + 'x'; const nVal = this.multSteps[this.revealed.length] || 500.00; document.getElementById('mines-next-hint').innerText = `Siguiente: x${nVal.toFixed(2)}`; document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`; } 
-                },
-                revealRemainingMines() { this.mines.forEach(m => { const el = document.getElementById(`m-${m}`); if (el && !this.revealed.includes(m)) { el.innerHTML = '💣'; el.classList.add('opacity-50'); } }); },
-                async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; const win = this.bet * this.mult; try { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); await this.end(true); } finally { State.isProcessing = false; } },
-                async end(win) { const winAmt = win ? (this.bet * this.mult) : 0; GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0); this.active = false; State.isProcessing = false; UI.updateBalance(); document.getElementById('mines-controls').classList.remove('hidden-view'); document.getElementById('mines-status').classList.add('hidden-view'); await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'MINAS', status: 'completed' }); }
-            },
-            tower: {
-                level: 0, active: false, bet: 0, mult: 1, towerSteps: [1.65, 2.80, 4.50, 7.80, 13.50, 24.00, 42.00, 95.00], towerMines: [],
-                drawTower() { const c = document.getElementById('tower-container'); if(!c) return; c.innerHTML = ''; for(let i=0; i<8; i++) { let row = document.createElement('div'); row.className = "grid grid-cols-3 gap-3 opacity-30"; row.id = `tower-row-${i}`; for(let j=0; j<3; j++) { const nextVal = this.towerSteps[i]; row.innerHTML += `<div onclick="GameLogic.tower.select(${i}, ${j})" id="t-${i}-${j}" class="h-10 bg-white/5 border border-white/5 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all relative"><span class="text-[6px] absolute top-1 right-1 text-white/20">x${nextVal.toFixed(2)}</span></div>`; } c.appendChild(row); } },
-                async start() { if(this.active || State.isProcessing) return; this.active = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10; const btn = document.getElementById('btn-tower-start'); btn.disabled = true; const { data: user = {} } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b || b <= 0) { this.active = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('click'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); this.bet = b; this.level = 0; this.mult = 1; this.towerMines = Array.from({length: 8}, () => Math.floor(Math.random() * 3)); this.drawTower(); document.getElementById('tower-row-0').classList.remove('opacity-30'); document.getElementById('tower-controls').classList.add('hidden-view'); const cbtn = document.getElementById('tower-cashout-btn'); cbtn.classList.remove('hidden-view'); cbtn.innerText = `COBRAR $${this.bet.toFixed(2)}`; cbtn.disabled = false; State.isProcessing = false; btn.disabled = false; },
-                select(r, c) { if(!this.active || r !== this.level || State.isProcessing) return; const items = document.getElementById(`tower-row-${r}`).children; if(this.towerMines[r] !== c) { let dynFail = (0.34 + (this.level * 0.09)) / GlobalLuck.luckFactor; if(GlobalLuck.luckFactor > 1.4 && this.level < 3) dynFail = 0.15; if(Math.random() < dynFail) this.towerMines[r] = c; } if(c === this.towerMines[r]) { playSfx('lose'); items[c].innerHTML = '💣'; items[c].classList.add('bg-red-500/20', 'border-red-500'); this.revealAllMines(); UI.notify("PERDISTE", "error"); this.end(false); } else { playSfx('click'); items[c].innerHTML = '💎'; items[c].classList.add('bg-emerald-500/20', 'border-emerald-500'); const mIdx = this.towerMines[r]; document.getElementById(`t-${r}-${mIdx}`).innerHTML = '<span class="opacity-20">💣</span>'; this.mult = this.towerSteps[this.level]; this.level++; document.getElementById('tower-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`; if(this.level < 8) document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30'); else this.cashout(); } },
-                revealAllMines() { this.towerMines.forEach((m, r) => { const el = document.getElementById(`t-${r}-${m}`); if(el) el.innerHTML = '💣'; }); },
-                async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; this.revealAllMines(); const win = this.bet * this.mult; try { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}!`, "success"); await this.end(true); } finally { State.isProcessing = false; } },
-                async end(win) { const winAmt = win ? (this.bet * this.mult) : 0; GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0); this.active = false; State.isProcessing = false; UI.updateBalance(); document.getElementById('tower-controls').classList.remove('hidden-view'); document.getElementById('tower-cashout-btn').classList.add('hidden-view'); await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'TORRE', status: 'completed' }); }
-            },
-            blackjack: {
-                deck: [], playerHand: [], dealerHand: [], active: false, bet: 0,
-                renderInitial() { const pC = document.getElementById('player-cards'), dC = document.getElementById('dealer-cards'); if(pC) pC.innerHTML = ''; if(dC) dC.innerHTML = ''; if(document.getElementById('player-score')) document.getElementById('player-score').innerText = '0'; if(document.getElementById('dealer-score')) document.getElementById('dealer-score').innerText = '?'; },
-                async start() {
-                    if(this.active || State.isProcessing) return;
-                    const b = Math.abs(parseFloat(document.getElementById('bj-bet-input').value)) || 3;
-                    if(b < 3) return UI.notify("Apuesta mínima $3 MXN", "error");
-                    const { data: user = {} } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single();
-                    if(!user || user.saldo < b) return UI.notify("Saldo insuficiente", "error");
-                    State.isProcessing = true; await Core.updateBalanceDB(-b); State.balance -= b; this.bet = b; UI.updateBalance();
-                    this.active = true; this.deck = this.createDeck();
-                    this.playerHand = [this.drawCard(), this.drawCard()];
-                    this.dealerHand = [this.drawCard(), this.drawCard()]; 
-                    document.getElementById('bj-controls').classList.add('hidden-view');
-                    document.getElementById('bj-actions').classList.remove('hidden-view');
-                    this.render(true); State.isProcessing = false;
-                    if(this.getFinalScore(this.playerHand) === 21) this.stand();
-                },
-                createDeck() { 
-                    const suits = ['♠', '♣', '♥', '♦'], vls = ['2','3','4','5','6','7','8','9','10','J','Q','K','A']; 
-                    let deck = []; for(let s of suits) for(let v of vls) deck.push({s, v}); 
-                    for(let i=0; i<12; i++) deck.push({s: '♠', v: '10'});
-                    return deck.sort(() => Math.random() - 0.5); 
-                },
-                drawCard() { return this.deck.pop(); },
-                getFinalScore(hand) {
-                    let score = 0;
-                    let hasTenValue = false;
-                    let aceCount = 0;
-                    
-                    for(let c of hand) {
-                        if(c.v === 'A') {
-                            aceCount++;
-                        } else if(['10','J','Q','K'].includes(c.v)) {
-                            hasTenValue = true;
-                            score += 10;
-                        } else {
-                            score += parseInt(c.v);
-                        }
-                    }
-                    if (aceCount === 1 && hand.length === 2 && hasTenValue) {
-                        return 21;
-                    }
-                    score += aceCount * 1;
-                    return score;
-                },
-                hit() { if(!this.active || State.isProcessing) return; playSfx('card'); this.playerHand.push(this.drawCard()); this.render(true); if(this.getFinalScore(this.playerHand) > 21) this.end('lose'); },
-                async stand() { 
-                    if(!this.active || State.isProcessing) return; 
-                    State.isProcessing = true; this.render(false); await new Promise(r => setTimeout(r, 600));
-                    
-                    while(this.getFinalScore(this.dealerHand) < 17) { 
-                        playSfx('card'); this.dealerHand.push(this.drawCard()); this.render(false); await new Promise(r => setTimeout(r, 600)); 
-                    } 
-                    let ps = this.getFinalScore(this.playerHand), ds = this.getFinalScore(this.dealerHand); 
-                    
-                    let cheatRisk = 0.35 / GlobalLuck.luckFactor; 
-                    if (ps <= 21 && ds < ps && ds >= 17 && Math.random() < cheatRisk) { 
-                        playSfx('card'); this.dealerHand.push(this.drawCard()); this.render(false); await new Promise(r => setTimeout(r, 600)); 
-                        ds = this.getFinalScore(this.dealerHand); 
-                    } 
-                    
-                    if(ds > 21 || ps > ds) this.end('win'); else if(ps === ds) this.end('push'); else this.end('lose'); 
-                },
-                render(hideDealer) { 
-                    const pC = document.getElementById('player-cards'), dC = document.getElementById('dealer-cards'); 
-                    if(!pC || !dC) return;
-                    pC.innerHTML = this.playerHand.map(c => `<div class="card-bj ${['♥','♦'].includes(c.s)?'card-red':''}"><span>${c.v}</span><span class="text-[10px]">${c.s}</span></div>`).join(''); 
-                    if(hideDealer) {
-                        dC.innerHTML = `<div class="card-bj ${['♥','♦'].includes(this.dealerHand[0].s)?'card-red':''}"><span>${this.dealerHand[0].v}</span><span class="text-[10px]">${this.dealerHand[0].s}</span></div><div class="card-bj card-hidden"></div>`;
-                        document.getElementById('dealer-score').innerText = '?';
-                    } else {
-                        dC.innerHTML = this.dealerHand.map(c => `<div class="card-bj ${['♥','♦'].includes(c.s)?'card-red':''}"><span>${c.v}</span><span class="text-[10px]">${c.s}</span></div>`).join(''); 
-                        document.getElementById('dealer-score').innerText = this.getFinalScore(this.dealerHand);
-                    }
-                    document.getElementById('player-score').innerText = this.getFinalScore(this.playerHand); 
-                },
-                async end(res) { 
-                    this.active = false; let win = 0; 
-                    if(res === 'win') { win = this.bet * 2; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); } 
-                    else if(res === 'push') { win = this.bet; playSfx('win'); playSfx('winExtra'); UI.notify(`EMPATE: RECUPERAS $${win.toFixed(2)}`, "success"); } 
-                    else { UI.notify("PERDISTE", "error"); playSfx('lose'); } 
-                    if(win > 0) { await Core.updateBalanceDB(win); State.balance += win; } 
-                    UI.updateBalance(); GameLogic.adjustLuck(win, this.bet, win > 0 ? 2 : 0);
-                    document.getElementById('bj-controls').classList.remove('hidden-view'); 
-                    document.getElementById('bj-actions').classList.add('hidden-view'); 
-                    await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? win : -this.bet, label: 'BLACKJACK', status: 'completed' }); 
-                    State.isProcessing = false; 
-                }
-            },
-            chicken: {
-                pos: -1, active: false, bet: 0, mults: [1.2, 1.5, 2.2, 4.0, 8.5, 18.0, 45.0, 100.0], moving: false,
-                init() { const road = document.getElementById('chicken-world'); if(!road) return; road.innerHTML = `<div id="chicken-hero" class="chicken-sprite">🐥</div>`; this.mults.forEach((m, i) => { const lane = document.createElement('div'); lane.className = "road-lane"; lane.innerHTML = `<span class="text-[8px] font-black text-white/10 uppercase">${m}x</span>`; lane.id = `lane-${i}`; road.appendChild(lane); }); this.updateHero(); },
-                async start() { if(this.active || State.isProcessing) return; const b = Math.abs(parseFloat(document.getElementById('chicken-bet-input').value)) || 3; if(b < 3) return UI.notify("Apuesta mínima $3 MXN", "error"); if(State.balance < b) return UI.notify("Saldo insuficiente", "error"); State.isProcessing = true; await Core.updateBalanceDB(-b); State.balance -= b; this.bet = b; UI.updateBalance(); this.pos = -1; this.active = true; this.moving = false; document.getElementById('chicken-controls').classList.add('hidden-view'); document.getElementById('chicken-actions').classList.remove('hidden-view'); document.getElementById('chicken-cashout-btn').innerText = `COBRAR $${b.toFixed(2)}`; this.init(); State.isProcessing = false; },
-                updateHero() { const hero = document.getElementById('chicken-hero'); if(!hero) return; const lanes = document.querySelectorAll('.road-lane'); lanes.forEach(l => l.classList.remove('current', 'passed')); if(this.pos === -1) hero.style.left = "-40px"; else { const targetLane = document.getElementById(`lane-${this.pos}`); if(targetLane){ const laneRect = targetLane.getBoundingClientRect(); const worldRect = document.getElementById('chicken-world').getBoundingClientRect(); hero.style.left = (laneRect.left - worldRect.left + (laneRect.width / 2) - 15) + "px"; for(let i=0; i<=this.pos; i++) { const l = document.getElementById(`lane-${i}`); if(i === this.pos) l.classList.add('current'); else l.classList.add('passed'); } } } },
-                move() { 
-                    if(!this.active || State.isProcessing || this.moving) return; 
-                    this.moving = true; 
-                    const cBtn = document.getElementById('chicken-cashout-btn'); 
-                    if(cBtn) cBtn.disabled = true; 
-                    this.pos++; 
-                    
-                    let risk = (0.15 + (this.pos * 0.15)) / GlobalLuck.luckFactor; 
-                    if (this.pos === 7) risk = 0.98; else risk = Math.min(risk, 0.96); 
-                    
-                    if(Math.random() < risk) { 
-                        const car = document.createElement('div'); car.className = "car-sprite"; car.innerHTML = '🚘'; const targetLane = document.getElementById(`lane-${this.pos}`); if(targetLane) car.style.left = (targetLane.offsetLeft + 10) + "px"; document.getElementById('chicken-world').appendChild(car); this.active = false; setTimeout(() => { if(document.getElementById('chicken-hero')) document.getElementById('chicken-hero').innerHTML = '💥'; playSfx('lose'); UI.notify("¡ATROPELLADO!", "error"); this.end(false); }, 300); 
-                    } else { 
-                        playSfx('click'); this.updateHero(); const m = this.mults[this.pos]; document.getElementById('chicken-status').innerText = m.toFixed(2) + 'x'; if(cBtn) { cBtn.innerText = `COBRAR $${(this.bet * m).toFixed(2)}`; cBtn.disabled = false; } this.moving = false; if(this.pos === 7) this.cashout(); 
-                    } 
-                },
-                async cashout() { if(!this.active || State.isProcessing || this.moving) return; State.isProcessing = true; const m = this.pos === -1 ? 1 : this.mults[this.pos]; const win = this.bet * m; await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); },
-                async end(win) { 
-                    this.active = false; this.moving = false; const m = this.pos === -1 ? 1 : this.mults[this.pos]; 
-                    const winAmt = win ? (this.bet * m) : 0; GameLogic.adjustLuck(winAmt, this.bet, m); UI.updateBalance(); 
-                    setTimeout(() => { 
-                        if (document.getElementById('view-game').classList.contains('hidden-view')) return; 
-                        document.getElementById('chicken-controls').classList.remove('hidden-view'); 
-                        document.getElementById('chicken-actions').classList.add('hidden-view'); 
-                        document.getElementById('chicken-status').innerText = '1.00x'; 
-                    }, 1000); 
-                    await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'CHICKEN', status: 'completed' }); 
-                    State.isProcessing = false; 
-                }
-            },
-            crash: {
-                active: false, mult: 1, bet: 0, interval: null, bgPos: 0,
-               async start() { 
-                   if(this.active || State.isProcessing) return; this.active = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 3; const btn = document.getElementById('btn-crash'); if(btn) btn.disabled = true; if(b < 3) { this.active = false; State.isProcessing = false; if(btn) btn.disabled = false; return UI.notify("Apuesta mínima $3 MXN", "error"); } const { data: user = {} } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b) { this.active = false; State.isProcessing = false; if(btn) btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('rocket'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); this.bet = b; this.mult = 1.0; this.bgPos = 0; if(btn) { btn.innerText = `RETIRAR $${(this.bet).toFixed(2)}`; btn.disabled = false; btn.onclick = () => this.cashout(); } 
-                   
-                   if (Math.random() < 0.15 / GlobalLuck.luckFactor) { this.explode(); return; } 
-                   let roll = Math.random(); 
-                   let baseLimit = 1.01 + (1 / (roll + 0.02)) * (GlobalLuck.luckFactor / 2); 
-                   State.isProcessing = false; 
-                   
-                   this.interval = setInterval(() => { this.mult += 0.01; const multEl = document.getElementById('crash-mult'); if(multEl) multEl.innerText = this.mult.toFixed(2) + 'x'; let speed = 2 + (this.mult * 2); this.bgPos -= speed; if (this.bgPos <= -100) this.bgPos = 0; const bgEl = document.getElementById('crash-bg'); if(bgEl) bgEl.style.transform = `translateX(${this.bgPos}%)`; let floatY = Math.sin(Date.now() / 200) * 8; const rocketEl = document.getElementById('crash-rocket'); if(rocketEl) rocketEl.style.transform = `translateY(${floatY}px)`; if(btn) btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`; if(this.mult >= baseLimit) { clearInterval(this.interval); this.explode(); } }, 50); 
-                },
-                async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; const btn = document.getElementById('btn-crash'); if(btn) btn.disabled = true; clearInterval(this.interval); const win = this.bet * this.mult; try { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); await this.end(true); } catch(e) { State.isProcessing = false; } },
-                explode() { clearInterval(this.interval); playSfx('lose'); UI.notify("¡EXPLOTÓ!", "error"); const multEl = document.getElementById('crash-mult'); if(multEl) multEl.classList.add('text-red-500'); const rocketEl = document.getElementById('crash-rocket'); if(rocketEl) { rocketEl.innerHTML = '💥'; rocketEl.style.transform = 'translateY(0)'; } this.end(false); },
-                async end(win) { const winAmt = win ? (this.bet * this.mult) : 0; GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0); this.active = false; State.isProcessing = false; UI.updateBalance(); const btn = document.getElementById('btn-crash'); if(btn) { btn.innerText = "EXPLOTÓ"; btn.disabled = true; setTimeout(() => { btn.disabled = false; btn.innerText = "DESPEGAR"; btn.onclick = () => GameLogic.crash.start(); const multEl = document.getElementById('crash-mult'); if(multEl) { multEl.classList.remove('text-red-500'); multEl.innerText = '1.00x'; } const rocketEl = document.getElementById('crash-rocket'); if(rocketEl) { rocketEl.innerHTML = '🚀'; rocketEl.style.transform = 'translateY(0)'; } }, 2500); } await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR', status: 'completed' }); }
-            }
+            adjustLuck(winAmt, betAmt, mult = 1) { GlobalLuck.winHistory.push({ bet: betAmt, win: winAmt > 0 ? 1 : 0, mult }); if(GlobalLuck.winHistory.length > 10) GlobalLuck.winHistory.shift(); if (winAmt === 0) GlobalLuck.sessionLoss += betAmt; else { GlobalLuck.sessionLoss -= (winAmt - betAmt); if (GlobalLuck.sessionLoss < 0) GlobalLuck.sessionLoss = 0; } const winRatio = GlobalLuck.winHistory.filter(h => h.win > 0).length / GlobalLuck.winHistory.length; if (GlobalLuck.luckFactor > 1.0) { if (State.balance > 80) GlobalLuck.luckFactor = 1.0; } else { if (GlobalLuck.sessionLoss > 200 || winRatio < 0.1) GlobalLuck.luckFactor = 1.8; else if (winRatio > 0.4 || winAmt > betAmt * 50) GlobalLuck.luckFactor = 0.4; else GlobalLuck.luckFactor = 1.0; } },
+            slots: { prizes: { '7️⃣': { mult: 500, weight: 0.01 }, '🔔': { mult: 50, weight: 1 }, '🍋': { mult: 10, weight: 10 }, '🍒': { mult: 3, weight: 88 } }, init() { [1,2,3].forEach(id => { const r = document.getElementById(`reel-${id}`); if(r) { r.innerHTML = ''; Array(20).fill(SYMBOLS).flat().forEach(s => r.innerHTML += `<div class="slot-item">${s}</div>`); } }); }, async play() { if(State.isSpinning || State.isProcessing) return; State.isSpinning = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('slots-bet-input').value)) || 3; const btn = document.getElementById('btn-slots-play'); btn.disabled = true; if(b < 3) { State.isSpinning = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Apuesta mínima $3 MXN", "error"); } const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b) { State.isSpinning = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('spin'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); let result = []; let winChance = Math.min(0.15 * GlobalLuck.luckFactor, 0.35); const isWinner = Math.random() < winChance; if (isWinner) { const roll = Math.random() * 100; let acc = 0; let sel = '🍒'; for (const [sym, config] of Object.entries(this.prizes)) { acc += config.weight; if (roll <= acc) { sel = sym; break; } } result = [sel, sel, sel]; } else { const s1 = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)], s2 = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]; let s3 = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]; if (s1 === s2 && s2 === s3) s3 = SYMBOLS[(SYMBOLS.indexOf(s3) + 1) % SYMBOLS.length]; result = [s1, s2, s3]; } [1,2,3].forEach((id, i) => { const reel = document.getElementById(`reel-${id}`); if(reel) { const targetSymbol = result[i]; const targetPos = SYMBOLS.indexOf(targetSymbol); const scrollDist = (90 * SYMBOLS.length * 5) + (targetPos * 90); reel.style.transition = 'none'; reel.style.transform = 'translateY(0)'; setTimeout(() => { reel.style.transition = 'transform 3.5s cubic-bezier(0.15, 0, 0.05, 1)'; reel.style.transform = `translateY(-${scrollDist}px)`; }, 50); } }); setTimeout(async () => { let win = 0; if (result[0] === result[1] && result[1] === result[2]) win = b * this.prizes[result[0]].mult; if(win > 0) { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`¡GANASTE $${win.toFixed(2)}!`, "success"); } else { playSfx('lose'); UI.notify("SIN SUERTE", "error"); } UI.updateBalance(); GameLogic.adjustLuck(win, b, win > 0 ? 2 : 0); await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? win : -b, label: 'SLOTS', status: 'completed' }); State.isSpinning = false; State.isProcessing = false; btn.disabled = false; }, 3600); } },
+            mines: { active: false, mines: [], revealed: [], mult: 1, bet: 10, multSteps: [1.25, 1.30, 1.75, 2.00, 5.50, 10.20, 16.50, 28.00, 45.00, 68.00, 95.00, 130.00, 175.00, 225.00, 280.00, 330.00, 375.00, 415.00, 445.00, 470.00, 490.00, 500.00], drawGrid() { const g = document.getElementById('mines-grid'); if(!g) return; g.innerHTML = ''; for(let i=0; i<25; i++) g.innerHTML += `<div onclick="GameLogic.mines.cell(${i})" id="m-${i}" class="aspect-square bg-white/5 border border-white/5 rounded-lg flex items-center justify-center text-xl cursor-pointer active:scale-90 transition-all"></div>`; }, async start() { if(this.active || State.isProcessing) return; this.active = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('mines-bet-input').value)) || 3; const btn = document.getElementById('btn-mines-start'); btn.disabled = true; if(b < 3) { this.active = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Apuesta mínima $3 MXN", "error"); } const { data: user } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b) { this.active = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('click'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); this.bet = b; this.mult = 1; this.revealed = []; this.mines = []; while(this.mines.length < 3) { let r = Math.floor(Math.random()*25); if(!this.mines.includes(r)) this.mines.push(r); } document.getElementById('mines-controls').classList.add('hidden-view'); document.getElementById('mines-status').classList.remove('hidden-view'); document.getElementById('mines-mult').innerText = '1.00x'; document.getElementById('mines-next-hint').innerText = `Siguiente: x${this.multSteps[0].toFixed(2)}`; document.getElementById('mines-cashout-btn').innerText = `COBRAR $${this.bet.toFixed(2)}`; this.drawGrid(); State.isProcessing = false; btn.disabled = false; }, cell(i) { if(!this.active || this.revealed.includes(i) || State.isProcessing) return; const winCount = this.revealed.length; let dynamicFail = (0.12 + (winCount * 0.12)) / GlobalLuck.luckFactor; if (GlobalLuck.luckFactor > 1.4 && winCount < 2) dynamicFail = 0.01; dynamicFail = Math.min(dynamicFail, 0.96); if (Math.random() < dynamicFail) { if (!this.mines.includes(i)) { this.mines.pop(); this.mines.push(i); } } else { if (this.mines.includes(i)) { this.mines = this.mines.filter(m => m !== i); let emptySpots = []; for(let j=0; j<25; j++) if(!this.revealed.includes(j) && j!==i) emptySpots.push(j); if(emptySpots.length > 0) this.mines.push(emptySpots[Math.floor(Math.random()*emptySpots.length)]); } } this.revealed.push(i); const el = document.getElementById(`m-${i}`); if(this.mines.includes(i)) { playSfx('lose'); el.innerHTML = '💣'; el.classList.add('bg-red-500/20', 'border-red-500'); this.revealRemainingMines(); UI.notify("¡BOMBA!", "error"); this.end(false); } else { playSfx('click'); el.innerHTML = '💎'; el.classList.add('bg-emerald-500/20', 'border-emerald-500'); this.mult = this.multSteps[winCount] || 500.00; document.getElementById('mines-mult').innerText = this.mult.toFixed(2) + 'x'; const nVal = this.multSteps[this.revealed.length] || 500.00; document.getElementById('mines-next-hint').innerText = `Siguiente: x${nVal.toFixed(2)}`; document.getElementById('mines-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`; } }, revealRemainingMines() { this.mines.forEach(m => { const el = document.getElementById(`m-${m}`); if (el && !this.revealed.includes(m)) { el.innerHTML = '💣'; el.classList.add('opacity-50'); } }); }, async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; const win = this.bet * this.mult; try { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); await this.end(true); } finally { State.isProcessing = false; } }, async end(win) { const winAmt = win ? (this.bet * this.mult) : 0; GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0); this.active = false; State.isProcessing = false; UI.updateBalance(); document.getElementById('mines-controls').classList.remove('hidden-view'); document.getElementById('mines-status').classList.add('hidden-view'); await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'MINAS', status: 'completed' }); } },
+            tower: { level: 0, active: false, bet: 0, mult: 1, towerSteps: [1.65, 2.80, 4.50, 7.80, 13.50, 24.00, 42.00, 95.00], towerMines: [], drawTower() { const c = document.getElementById('tower-container'); if(!c) return; c.innerHTML = ''; for(let i=0; i<8; i++) { let row = document.createElement('div'); row.className = "grid grid-cols-3 gap-3 opacity-30"; row.id = `tower-row-${i}`; for(let j=0; j<3; j++) { const nextVal = this.towerSteps[i]; row.innerHTML += `<div onclick="GameLogic.tower.select(${i}, ${j})" id="t-${i}-${j}" class="h-10 bg-white/5 border border-white/5 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all relative"><span class="text-[6px] absolute top-1 right-1 text-white/20">x${nextVal.toFixed(2)}</span></div>`; } c.appendChild(row); } }, async start() { if(this.active || State.isProcessing) return; this.active = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('tower-bet-input').value)) || 10; const btn = document.getElementById('btn-tower-start'); btn.disabled = true; const { data: user = {} } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b || b <= 0) { this.active = false; State.isProcessing = false; btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('click'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); this.bet = b; this.level = 0; this.mult = 1; this.towerMines = Array.from({length: 8}, () => Math.floor(Math.random() * 3)); this.drawTower(); document.getElementById('tower-row-0').classList.remove('opacity-30'); document.getElementById('tower-controls').classList.add('hidden-view'); const cbtn = document.getElementById('tower-cashout-btn'); cbtn.classList.remove('hidden-view'); cbtn.innerText = `COBRAR $${this.bet.toFixed(2)}`; cbtn.disabled = false; State.isProcessing = false; btn.disabled = false; }, select(r, c) { if(!this.active || r !== this.level || State.isProcessing) return; const items = document.getElementById(`tower-row-${r}`).children; if(this.towerMines[r] !== c) { let dynFail = (0.34 + (this.level * 0.09)) / GlobalLuck.luckFactor; if(GlobalLuck.luckFactor > 1.4 && this.level < 3) dynFail = 0.15; if(Math.random() < dynFail) this.towerMines[r] = c; } if(c === this.towerMines[r]) { playSfx('lose'); items[c].innerHTML = '💣'; items[c].classList.add('bg-red-500/20', 'border-red-500'); this.revealAllMines(); UI.notify("PERDISTE", "error"); this.end(false); } else { playSfx('click'); items[c].innerHTML = '💎'; items[c].classList.add('bg-emerald-500/20', 'border-emerald-500'); const mIdx = this.towerMines[r]; document.getElementById(`t-${r}-${mIdx}`).innerHTML = '<span class="opacity-20">💣</span>'; this.mult = this.towerSteps[this.level]; this.level++; document.getElementById('tower-cashout-btn').innerText = `COBRAR $${(this.bet * this.mult).toFixed(2)}`; if(this.level < 8) document.getElementById(`tower-row-${this.level}`).classList.remove('opacity-30'); else this.cashout(); } }, revealAllMines() { this.towerMines.forEach((m, r) => { const el = document.getElementById(`t-${r}-${m}`); if(el) el.innerHTML = '💣'; }); }, async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; this.revealAllMines(); const win = this.bet * this.mult; try { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}!`, "success"); await this.end(true); } finally { State.isProcessing = false; } }, async end(win) { const winAmt = win ? (this.bet * this.mult) : 0; GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0); this.active = false; State.isProcessing = false; UI.updateBalance(); document.getElementById('tower-controls').classList.remove('hidden-view'); document.getElementById('tower-cashout-btn').classList.add('hidden-view'); await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'TORRE', status: 'completed' }); } },
+            blackjack: { deck: [], playerHand: [], dealerHand: [], active: false, bet: 0, renderInitial() { const pC = document.getElementById('player-cards'), dC = document.getElementById('dealer-cards'); if(pC) pC.innerHTML = ''; if(dC) dC.innerHTML = ''; if(document.getElementById('player-score')) document.getElementById('player-score').innerText = '0'; if(document.getElementById('dealer-score')) document.getElementById('dealer-score').innerText = '?'; }, async start() { if(this.active || State.isProcessing) return; const b = Math.abs(parseFloat(document.getElementById('bj-bet-input').value)) || 3; if(b < 3) return UI.notify("Apuesta mínima $3 MXN", "error"); const { data: user = {} } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b) return UI.notify("Saldo insuficiente", "error"); State.isProcessing = true; await Core.updateBalanceDB(-b); State.balance -= b; this.bet = b; UI.updateBalance(); this.active = true; this.deck = this.createDeck(); this.playerHand = [this.drawCard(), this.drawCard()]; this.dealerHand = [this.drawCard(), this.drawCard()]; document.getElementById('bj-controls').classList.add('hidden-view'); document.getElementById('bj-actions').classList.remove('hidden-view'); this.render(true); State.isProcessing = false; if(this.getFinalScore(this.playerHand) === 21) this.stand(); }, createDeck() { const suits = ['♠', '♣', '♥', '♦'], vls = ['2','3','4','5','6','7','8','9','10','J','Q','K','A']; let deck = []; for(let s of suits) for(let v of vls) deck.push({s, v}); for(let i=0; i<12; i++) deck.push({s: '♠', v: '10'}); return deck.sort(() => Math.random() - 0.5); }, drawCard() { return this.deck.pop(); }, getFinalScore(hand) { let score = 0; let hasTenValue = false; let aceCount = 0; for(let c of hand) { if(c.v === 'A') { aceCount++; } else if(['10','J','Q','K'].includes(c.v)) { hasTenValue = true; score += 10; } else { score += parseInt(c.v); } } if (aceCount === 1 && hand.length === 2 && hasTenValue) { return 21; } score += aceCount * 1; return score; }, hit() { if(!this.active || State.isProcessing) return; playSfx('card'); this.playerHand.push(this.drawCard()); this.render(true); if(this.getFinalScore(this.playerHand) > 21) this.end('lose'); }, async stand() { if(!this.active || State.isProcessing) return; State.isProcessing = true; this.render(false); await new Promise(r => setTimeout(r, 600)); while(this.getFinalScore(this.dealerHand) < 17) { playSfx('card'); this.dealerHand.push(this.drawCard()); this.render(false); await new Promise(r => setTimeout(r, 600)); } let ps = this.getFinalScore(this.playerHand), ds = this.getFinalScore(this.dealerHand); let cheatRisk = 0.35 / GlobalLuck.luckFactor; if (ps <= 21 && ds < ps && ds >= 17 && Math.random() < cheatRisk) { playSfx('card'); this.dealerHand.push(this.drawCard()); this.render(false); await new Promise(r => setTimeout(r, 600)); ds = this.getFinalScore(this.dealerHand); } if(ds > 21 || ps > ds) this.end('win'); else if(ps === ds) this.end('push'); else this.end('lose'); }, render(hideDealer) { const pC = document.getElementById('player-cards'), dC = document.getElementById('dealer-cards'); if(!pC || !dC) return; pC.innerHTML = this.playerHand.map(c => `<div class="card-bj ${['♥','♦'].includes(c.s)?'card-red':''}"><span>${c.v}</span><span class="text-[10px]">${c.s}</span></div>`).join(''); if(hideDealer) { dC.innerHTML = `<div class="card-bj ${['♥','♦'].includes(this.dealerHand[0].s)?'card-red':''}"><span>${this.dealerHand[0].v}</span><span class="text-[10px]">${this.dealerHand[0].s}</span></div><div class="card-bj card-hidden"></div>`; document.getElementById('dealer-score').innerText = '?'; } else { dC.innerHTML = this.dealerHand.map(c => `<div class="card-bj ${['♥','♦'].includes(c.s)?'card-red':''}"><span>${c.v}</span><span class="text-[10px]">${c.s}</span></div>`).join(''); document.getElementById('dealer-score').innerText = this.getFinalScore(this.dealerHand); } document.getElementById('player-score').innerText = this.getFinalScore(this.playerHand); }, async end(res) { this.active = false; let win = 0; if(res === 'win') { win = this.bet * 2; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); } else if(res === 'push') { win = this.bet; playSfx('win'); playSfx('winExtra'); UI.notify(`EMPATE: RECUPERAS $${win.toFixed(2)}`, "success"); } else { UI.notify("PERDISTE", "error"); playSfx('lose'); } if(win > 0) { await Core.updateBalanceDB(win); State.balance += win; } UI.updateBalance(); GameLogic.adjustLuck(win, this.bet, win > 0 ? 2 : 0); document.getElementById('bj-controls').classList.remove('hidden-view'); document.getElementById('bj-actions').classList.add('hidden-view'); await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? win : -this.bet, label: 'BLACKJACK', status: 'completed' }); State.isProcessing = false; } },
+            chicken: { pos: -1, active: false, bet: 0, mults: [1.2, 1.5, 2.2, 4.0, 8.5, 18.0, 45.0, 100.0], moving: false, init() { const road = document.getElementById('chicken-world'); if(!road) return; road.innerHTML = `<div id="chicken-hero" class="chicken-sprite">🐥</div>`; this.mults.forEach((m, i) => { const lane = document.createElement('div'); lane.className = "road-lane"; lane.innerHTML = `<span class="text-[8px] font-black text-white/10 uppercase">${m}x</span>`; lane.id = `lane-${i}`; road.appendChild(lane); }); this.updateHero(); }, async start() { if(this.active || State.isProcessing) return; const b = Math.abs(parseFloat(document.getElementById('chicken-bet-input').value)) || 3; if(b < 3) return UI.notify("Apuesta mínima $3 MXN", "error"); if(State.balance < b) return UI.notify("Saldo insuficiente", "error"); State.isProcessing = true; await Core.updateBalanceDB(-b); State.balance -= b; this.bet = b; UI.updateBalance(); this.pos = -1; this.active = true; this.moving = false; document.getElementById('chicken-controls').classList.add('hidden-view'); document.getElementById('chicken-actions').classList.remove('hidden-view'); document.getElementById('chicken-cashout-btn').innerText = `COBRAR $${b.toFixed(2)}`; this.init(); State.isProcessing = false; }, updateHero() { const hero = document.getElementById('chicken-hero'); if(!hero) return; const lanes = document.querySelectorAll('.road-lane'); lanes.forEach(l => l.classList.remove('current', 'passed')); if(this.pos === -1) hero.style.left = "-40px"; else { const targetLane = document.getElementById(`lane-${this.pos}`); if(targetLane){ const laneRect = targetLane.getBoundingClientRect(); const worldRect = document.getElementById('chicken-world').getBoundingClientRect(); hero.style.left = (laneRect.left - worldRect.left + (laneRect.width / 2) - 15) + "px"; for(let i=0; i<=this.pos; i++) { const l = document.getElementById(`lane-${i}`); if(i === this.pos) l.classList.add('current'); else l.classList.add('passed'); } } } }, move() { if(!this.active || State.isProcessing || this.moving) return; this.moving = true; const cBtn = document.getElementById('chicken-cashout-btn'); if(cBtn) cBtn.disabled = true; this.pos++; let risk = (0.15 + (this.pos * 0.15)) / GlobalLuck.luckFactor; if (this.pos === 7) risk = 0.98; else risk = Math.min(risk, 0.96); if(Math.random() < risk) { const car = document.createElement('div'); car.className = "car-sprite"; car.innerHTML = '🚘'; const targetLane = document.getElementById(`lane-${this.pos}`); if(targetLane) car.style.left = (targetLane.offsetLeft + 10) + "px"; document.getElementById('chicken-world').appendChild(car); this.active = false; setTimeout(() => { if(document.getElementById('chicken-hero')) document.getElementById('chicken-hero').innerHTML = '💥'; playSfx('lose'); UI.notify("¡ATROPELLADO!", "error"); this.end(false); }, 300); } else { playSfx('click'); this.updateHero(); const m = this.mults[this.pos]; document.getElementById('chicken-status').innerText = m.toFixed(2) + 'x'; if(cBtn) { cBtn.innerText = `COBRAR $${(this.bet * m).toFixed(2)}`; cBtn.disabled = false; } this.moving = false; if(this.pos === 7) this.cashout(); } }, async cashout() { if(!this.active || State.isProcessing || this.moving) return; State.isProcessing = true; const m = this.pos === -1 ? 1 : this.mults[this.pos]; const win = this.bet * m; await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); this.end(true); }, async end(win) { this.active = false; this.moving = false; const m = this.pos === -1 ? 1 : this.mults[this.pos]; const winAmt = win ? (this.bet * m) : 0; GameLogic.adjustLuck(winAmt, this.bet, m); UI.updateBalance(); setTimeout(() => { if (document.getElementById('view-game').classList.contains('hidden-view')) return; document.getElementById('chicken-controls').classList.remove('hidden-view'); document.getElementById('chicken-actions').classList.add('hidden-view'); document.getElementById('chicken-status').innerText = '1.00x'; }, 1000); await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'CHICKEN', status: 'completed' }); State.isProcessing = false; } },
+            crash: { active: false, mult: 1, bet: 0, interval: null, bgPos: 0, async start() { if(this.active || State.isProcessing) return; this.active = true; State.isProcessing = true; const b = Math.abs(parseFloat(document.getElementById('crash-bet-input').value)) || 3; const btn = document.getElementById('btn-crash'); if(btn) btn.disabled = true; if(b < 3) { this.active = false; State.isProcessing = false; if(btn) btn.disabled = false; return UI.notify("Apuesta mínima $3 MXN", "error"); } const { data: user = {} } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).single(); if(!user || user.saldo < b) { this.active = false; State.isProcessing = false; if(btn) btn.disabled = false; return UI.notify("Saldo insuficiente", "error"); } playSfx('rocket'); await Core.updateBalanceDB(-b); State.balance -= b; UI.updateBalance(); this.bet = b; this.mult = 1.0; this.bgPos = 0; if(btn) { btn.innerText = `RETIRAR $${(this.bet).toFixed(2)}`; btn.disabled = false; btn.onclick = () => this.cashout(); } if (Math.random() < 0.15 / GlobalLuck.luckFactor) { this.explode(); return; } let roll = Math.random(); let baseLimit = 1.01 + (1 / (roll + 0.02)) * (GlobalLuck.luckFactor / 2); State.isProcessing = false; this.interval = setInterval(() => { this.mult += 0.01; const multEl = document.getElementById('crash-mult'); if(multEl) multEl.innerText = this.mult.toFixed(2) + 'x'; let speed = 2 + (this.mult * 2); this.bgPos -= speed; if (this.bgPos <= -100) this.bgPos = 0; const bgEl = document.getElementById('crash-bg'); if(bgEl) bgEl.style.transform = `translateX(${this.bgPos}%)`; let floatY = Math.sin(Date.now() / 200) * 8; const rocketEl = document.getElementById('crash-rocket'); if(rocketEl) rocketEl.style.transform = `translateY(${floatY}px)`; if(btn) btn.innerText = `RETIRAR $${(this.bet * this.mult).toFixed(2)}`; if(this.mult >= baseLimit) { clearInterval(this.interval); this.explode(); } }, 50); }, async cashout() { if(!this.active || State.isProcessing) return; State.isProcessing = true; const btn = document.getElementById('btn-crash'); if(btn) btn.disabled = true; clearInterval(this.interval); const win = this.bet * this.mult; try { await Core.updateBalanceDB(win); State.balance += win; playSfx('win'); playSfx('winExtra'); UI.notify(`GANASTE $${win.toFixed(2)}`, "success"); await this.end(true); } catch(e) { State.isProcessing = false; } }, explode() { clearInterval(this.interval); playSfx('lose'); UI.notify("¡EXPLOTÓ!", "error"); const multEl = document.getElementById('crash-mult'); if(multEl) multEl.classList.add('text-red-500'); const rocketEl = document.getElementById('crash-rocket'); if(rocketEl) { rocketEl.innerHTML = '💥'; rocketEl.style.transform = 'translateY(0)'; } this.end(false); }, async end(win) { const winAmt = win ? (this.bet * this.mult) : 0; GameLogic.adjustLuck(winAmt, this.bet, win ? this.mult : 0); this.active = false; State.isProcessing = false; UI.updateBalance(); const btn = document.getElementById('btn-crash'); if(btn) { btn.innerText = "EXPLOTÓ"; btn.disabled = true; setTimeout(() => { btn.disabled = false; btn.innerText = "DESPEGAR"; btn.onclick = () => GameLogic.crash.start(); const multEl = document.getElementById('crash-mult'); if(multEl) { multEl.classList.remove('text-red-500'); multEl.innerText = '1.00x'; } const rocketEl = document.getElementById('crash-rocket'); if(rocketEl) { rocketEl.innerHTML = '🚀'; rocketEl.style.transform = 'translateY(0)'; } }, 2500); } await Core.recordHistory({ user_id: State.user.id, type: 'bets', amount: win ? winAmt : -this.bet, label: 'AVIATOR', status: 'completed' }); } }
         };
 
-        // Guardado automático en caso de desconexión o recarga de la página
         window.addEventListener('beforeunload', (e) => {
             if (!State.user) return;
             let pendingWin = 0;
             if (GameLogic.mines?.active) { pendingWin = GameLogic.mines.bet * GameLogic.mines.mult; }
             else if (GameLogic.tower?.active) { pendingWin = GameLogic.tower.bet * GameLogic.tower.mult; }
-            else if (GameLogic.chicken?.active) {
-                const m = GameLogic.chicken.pos === -1 ? 1 : GameLogic.chicken.mults[GameLogic.chicken.pos];
-                pendingWin = GameLogic.chicken.bet * m;
-            }
+            else if (GameLogic.chicken?.active) { const m = GameLogic.chicken.pos === -1 ? 1 : GameLogic.chicken.mults[GameLogic.chicken.pos]; pendingWin = GameLogic.chicken.bet * m; }
             else if (GameLogic.crash?.active) { pendingWin = GameLogic.crash.bet * GameLogic.crash.mult; }
-
-            if (pendingWin > 0) {
-                let saved = JSON.parse(localStorage.getItem('pendingWins') || '[]');
-                saved.push({ userId: State.user.id, amount: pendingWin, timestamp: Date.now() });
-                localStorage.setItem('pendingWins', JSON.stringify(saved));
-            }
+            if (pendingWin > 0) { let saved = JSON.parse(localStorage.getItem('pendingWins') || '[]'); saved.push({ userId: State.user.id, amount: pendingWin, timestamp: Date.now() }); localStorage.setItem('pendingWins', JSON.stringify(saved)); }
         });
 
-        // ========================================
-        // MUNDIAL 2026 — BETTING ENGINE
-        // ========================================
+        // ========================================================
+
+        // ========================================================
+        // MUNDIAL 2026 — MOTOR SUPABASE (Admin-Controlled)
+        // Los partidos y marcadores los controla el admin en tiempo real
+        // ========================================================
         const WC = {
-            slip: {}, // { matchId: { pick, label, odd } }
+            slip: {},
             activeTab: 'partidos',
             currentFilter: 'all',
             initialized: false,
+            matches: [],
 
-            // Solo partidos de Fase de Grupos (equipos conocidos)
-            matches: [
-                // GRUPO A
-                { id:'ga1', phase:'Grupos', group:'A', home:'🇲🇽 México', away:'🇿🇦 Sudáfrica', homeOdd:1.85, drawOdd:3.50, awayOdd:4.20, date:'Jun 12', time:'17:00', venue:'SoFi, Los Ángeles', status:'upcoming' },
-                { id:'ga2', phase:'Grupos', group:'A', home:'🇺🇸 EE.UU.', away:'🇺🇾 Uruguay', homeOdd:2.10, drawOdd:3.30, awayOdd:3.60, date:'Jun 12', time:'20:00', venue:'MetLife, New York', status:'upcoming' },
-                { id:'ga3', phase:'Grupos', group:'A', home:'🇲🇽 México', away:'🇺🇾 Uruguay', homeOdd:2.40, drawOdd:3.10, awayOdd:2.90, date:'Jun 16', time:'19:00', venue:'AT&T, Dallas', status:'upcoming' },
-                { id:'ga4', phase:'Grupos', group:'A', home:'🇺🇸 EE.UU.', away:'🇿🇦 Sudáfrica', homeOdd:1.55, drawOdd:3.80, awayOdd:6.50, date:'Jun 16', time:'22:00', venue:'Rose Bowl, LA', status:'upcoming' },
-                { id:'ga5', phase:'Grupos', group:'A', home:'🇲🇽 México', away:'🇺🇸 EE.UU.', homeOdd:2.80, drawOdd:3.20, awayOdd:2.40, date:'Jun 20', time:'20:00', venue:'MetLife, NY', status:'upcoming' },
-                { id:'ga6', phase:'Grupos', group:'A', home:'🇺🇾 Uruguay', away:'🇿🇦 Sudáfrica', homeOdd:1.65, drawOdd:3.60, awayOdd:5.80, date:'Jun 20', time:'20:00', venue:'Hard Rock, Miami', status:'upcoming' },
-                // GRUPO B
-                { id:'gb1', phase:'Grupos', group:'B', home:'🇵🇹 Portugal', away:'🇨🇿 Rep. Checa', homeOdd:1.45, drawOdd:4.20, awayOdd:7.00, date:'Jun 13', time:'16:00', venue:'LA Memorial Coliseum', status:'upcoming' },
-                { id:'gb2', phase:'Grupos', group:'B', home:'🇹🇷 Turquía', away:'🇬🇪 Georgia', homeOdd:1.75, drawOdd:3.50, awayOdd:4.80, date:'Jun 13', time:'19:00', venue:'NRG, Houston', status:'upcoming' },
-                { id:'gb3', phase:'Grupos', group:'B', home:'🇵🇹 Portugal', away:'🇹🇷 Turquía', homeOdd:1.60, drawOdd:3.80, awayOdd:5.20, date:'Jun 17', time:'18:00', venue:'MetLife, New York', status:'upcoming' },
-                { id:'gb4', phase:'Grupos', group:'B', home:'🇬🇪 Georgia', away:'🇨🇿 Rep. Checa', homeOdd:2.60, drawOdd:3.10, awayOdd:2.70, date:'Jun 17', time:'18:00', venue:'SoFi, Los Ángeles', status:'upcoming' },
-                { id:'gb5', phase:'Grupos', group:'B', home:'🇵🇹 Portugal', away:'🇬🇪 Georgia', homeOdd:1.30, drawOdd:5.00, awayOdd:9.00, date:'Jun 21', time:'20:00', venue:'AT&T, Dallas', status:'upcoming' },
-                { id:'gb6', phase:'Grupos', group:'B', home:'🇨🇿 Rep. Checa', away:'🇹🇷 Turquía', homeOdd:2.80, drawOdd:3.20, awayOdd:2.50, date:'Jun 21', time:'20:00', venue:'Hard Rock, Miami', status:'upcoming' },
-                // GRUPO C
-                { id:'gc1', phase:'Grupos', group:'C', home:'🇦🇷 Argentina', away:'🇨🇱 Chile', homeOdd:1.28, drawOdd:5.50, awayOdd:9.00, date:'Jun 13', time:'22:00', venue:'Hard Rock, Miami', status:'upcoming' },
-                { id:'gc2', phase:'Grupos', group:'C', home:'🇦🇷 Argentina', away:'🇦🇺 Australia', homeOdd:1.22, drawOdd:6.00, awayOdd:12.00, date:'Jun 17', time:'20:00', venue:'Rose Bowl, LA', status:'upcoming' },
-                { id:'gc3', phase:'Grupos', group:'C', home:'🇦🇷 Argentina', away:'🇳🇦 Namibia', homeOdd:1.05, drawOdd:14.00, awayOdd:40.00, date:'Jun 21', time:'20:00', venue:'NRG, Houston', status:'upcoming' },
-                { id:'gc4', phase:'Grupos', group:'C', home:'🇦🇺 Australia', away:'🇨🇱 Chile', homeOdd:2.20, drawOdd:3.10, awayOdd:3.20, date:'Jun 13', time:'22:00', venue:'AT&T, Dallas', status:'upcoming' },
-                // GRUPO D
-                { id:'gd1', phase:'Grupos', group:'D', home:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 Inglaterra', away:'🇸🇳 Senegal', homeOdd:1.35, drawOdd:4.80, awayOdd:8.50, date:'Jun 14', time:'17:00', venue:'SoFi, Los Ángeles', status:'upcoming' },
-                { id:'gd2', phase:'Grupos', group:'D', home:'🇩🇪 Alemania', away:'🇯🇵 Japón', homeOdd:1.70, drawOdd:3.60, awayOdd:5.00, date:'Jun 14', time:'20:00', venue:'AT&T, Dallas', status:'upcoming' },
-                { id:'gd3', phase:'Grupos', group:'D', home:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 Inglaterra', away:'🇩🇪 Alemania', homeOdd:2.20, drawOdd:3.10, awayOdd:3.20, date:'Jun 18', time:'20:00', venue:'MetLife, New York', status:'upcoming' },
-                { id:'gd4', phase:'Grupos', group:'D', home:'🇯🇵 Japón', away:'🇸🇳 Senegal', homeOdd:2.00, drawOdd:3.20, awayOdd:3.60, date:'Jun 18', time:'17:00', venue:'Rose Bowl, LA', status:'upcoming' },
-                { id:'gd5', phase:'Grupos', group:'D', home:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 Inglaterra', away:'🇯🇵 Japón', homeOdd:1.45, drawOdd:4.20, awayOdd:7.50, date:'Jun 22', time:'20:00', venue:'Hard Rock, Miami', status:'upcoming' },
-                { id:'gd6', phase:'Grupos', group:'D', home:'🇩🇪 Alemania', away:'🇸🇳 Senegal', homeOdd:1.55, drawOdd:3.80, awayOdd:6.00, date:'Jun 22', time:'20:00', venue:'NRG, Houston', status:'upcoming' },
-                // GRUPO E
-                { id:'ge1', phase:'Grupos', group:'E', home:'🇫🇷 Francia', away:'🇲🇦 Marruecos', homeOdd:1.50, drawOdd:4.00, awayOdd:6.50, date:'Jun 14', time:'22:00', venue:'Estadio Azteca, CDMX', status:'upcoming' },
-                { id:'ge2', phase:'Grupos', group:'E', home:'🇫🇷 Francia', away:'🇨🇦 Canadá', homeOdd:1.40, drawOdd:4.50, awayOdd:7.50, date:'Jun 18', time:'18:00', venue:'BC Place, Vancouver', status:'upcoming' },
-                { id:'ge3', phase:'Grupos', group:'E', home:'🇨🇦 Canadá', away:'🇲🇦 Marruecos', homeOdd:2.50, drawOdd:3.20, awayOdd:2.80, date:'Jun 22', time:'20:00', venue:'BMO Field, Toronto', status:'upcoming' },
-                { id:'ge4', phase:'Grupos', group:'E', home:'🇫🇷 Francia', away:'🇧🇪 Bélgica', homeOdd:1.80, drawOdd:3.50, awayOdd:4.20, date:'Jun 18', time:'21:00', venue:'Levi\'s, SF', status:'upcoming' },
-                // GRUPO F
-                { id:'gf1', phase:'Grupos', group:'F', home:'🇧🇷 Brasil', away:'🇳🇬 Nigeria', homeOdd:1.30, drawOdd:5.20, awayOdd:9.50, date:'Jun 15', time:'17:00', venue:'Hard Rock, Miami', status:'upcoming' },
-                { id:'gf2', phase:'Grupos', group:'F', home:'🇧🇷 Brasil', away:'🇨🇷 Costa Rica', homeOdd:1.15, drawOdd:7.00, awayOdd:18.00, date:'Jun 19', time:'17:00', venue:'SoFi, Los Ángeles', status:'upcoming' },
-                { id:'gf3', phase:'Grupos', group:'F', home:'🇧🇷 Brasil', away:'🇨🇲 Camerún', homeOdd:1.20, drawOdd:6.50, awayOdd:14.00, date:'Jun 23', time:'20:00', venue:'NRG, Houston', status:'upcoming' },
-                { id:'gf4', phase:'Grupos', group:'F', home:'🇳🇬 Nigeria', away:'🇨🇷 Costa Rica', homeOdd:1.85, drawOdd:3.40, awayOdd:4.20, date:'Jun 15', time:'20:00', venue:'AT&T, Dallas', status:'upcoming' },
-            ],
+            // ── Cargar partidos desde Supabase ──────────────────
+            async loadMatches(showLoading = false) {
+                if (showLoading) {
+                    const list = document.getElementById('wc-matches-list');
+                    if (list && this.matches.length === 0) {
+                        list.innerHTML = `<div style="text-align:center;padding:40px 0;">
+                            <div style="width:32px;height:32px;border:3px solid rgba(16,185,129,0.3);border-top-color:#10b981;border-radius:50%;margin:0 auto 12px;animation:spin 0.8s linear infinite;"></div>
+                            <p style="font-size:10px;color:#555;font-weight:700;text-transform:uppercase;">Cargando partidos...</p>
+                        </div>`;
+                    }
+                }
+                const { data, error } = await sb
+                    .from('wc_matches')
+                    .select('*')
+                    .order('match_date', { ascending: true });
 
-            phaseColors: { 'Grupos':'phase-group' },
+                if (error) {
+                    const list = document.getElementById('wc-matches-list');
+                    if (list) list.innerHTML = `<div style="text-align:center;padding:40px;">
+                        <p style="font-size:11px;font-weight:900;color:#ef4444;text-transform:uppercase;">Error cargando partidos</p>
+                        <button onclick="WC.loadMatches(true)" style="margin-top:12px;padding:8px 16px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:#10b981;border-radius:8px;font-size:9px;font-weight:900;text-transform:uppercase;cursor:pointer;">Reintentar</button>
+                    </div>`;
+                    return;
+                }
 
+                this.matches = data || [];
+                this.renderFilters();
+                this.renderMatches();
+                this.checkBetResults();
+            },
+
+            // ── Subscripción Realtime (cambios del admin se ven al instante) ──
+            subscribeRealtime() {
+                sb.channel('wc_live')
+                    .on('postgres_changes', {
+                        event: '*',
+                        schema: 'public',
+                        table: 'wc_matches'
+                    }, (payload) => {
+                        // Actualizar el partido modificado en el array local
+                        const idx = this.matches.findIndex(m => m.id === payload.new?.id || m.id === payload.old?.id);
+                        if (payload.eventType === 'DELETE') {
+                            if (idx !== -1) this.matches.splice(idx, 1);
+                        } else if (payload.new) {
+                            if (idx !== -1) {
+                                this.matches[idx] = payload.new;
+                            } else {
+                                this.matches.push(payload.new);
+                            }
+                        }
+                        this.renderFilters();
+                        this.renderMatches();
+                        this.checkBetResults();
+                        // Notificar si un partido inicia en vivo
+                        if (payload.eventType === 'UPDATE' && payload.new.status === 'live' && payload.old?.status !== 'live') {
+                            playSfx('rocket');
+                            UI.notify(`⚽ ${payload.new.home} vs ${payload.new.away} — ¡EN VIVO!`, 'success');
+                        }
+                    })
+                    .subscribe();
+            },
+
+            // ── init ──
             init() {
                 if (!this.initialized) {
                     this.initialized = true;
                     this.loadLocalBets();
+                    this.loadMatches(true);
+                    this.subscribeRealtime();
                 }
                 this.setTab('partidos');
-                this.renderFilters();
-                this.renderMatches();
             },
 
             setTab(tab) {
@@ -1023,11 +540,14 @@
 
             renderFilters() {
                 const container = document.getElementById('wc-group-filters');
-                const groups = ['Todos','A','B','C','D','E','F'];
+                if (!container) return;
+                const groups = ['Todos', ...new Set(
+                    this.matches.map(m => m.group_name).filter(Boolean).sort()
+                )];
                 container.innerHTML = groups.map(g => {
                     const val = g === 'Todos' ? 'all' : g;
                     const active = this.currentFilter === val;
-                    return `<button onclick="WC.filterBy('${val}')" style="white-space:nowrap; padding:6px 14px; border-radius:99px; font-size:9px; font-weight:900; text-transform:uppercase; border:1px solid ${active ? 'var(--mx-green)' : 'rgba(255,255,255,0.1)'}; background:${active ? 'var(--mx-green)' : 'rgba(255,255,255,0.03)'}; color:${active ? 'black' : '#888'}; cursor:pointer;">${g === 'Todos' ? 'Todos' : 'Grupo ' + g}</button>`;
+                    return `<button onclick="WC.filterBy('${val}')" style="white-space:nowrap;padding:6px 14px;border-radius:99px;font-size:9px;font-weight:900;text-transform:uppercase;border:1px solid ${active?'var(--mx-green)':'rgba(255,255,255,0.1)'};background:${active?'var(--mx-green)':'rgba(255,255,255,0.03)'};color:${active?'black':'#888'};cursor:pointer;">${g === 'Todos' ? 'Todos' : 'Grupo ' + g}</button>`;
                 }).join('');
             },
 
@@ -1039,76 +559,109 @@
 
             renderMatches() {
                 const list = document.getElementById('wc-matches-list');
-                const filtered = this.currentFilter === 'all' ? this.matches : this.matches.filter(m => m.group === this.currentFilter);
+                if (!list) return;
+                // Ocultar los partidos FINISHED (ya resueltos)
+                const visible = (this.currentFilter === 'all'
+                    ? this.matches
+                    : this.matches.filter(m => m.group_name === this.currentFilter))
+                    .filter(m => m.status !== 'finished');
+
+                if (visible.length === 0 && this.matches.length > 0) {
+                    list.innerHTML = `<div style="text-align:center;padding:40px;"><div style="font-size:2.5rem;margin-bottom:10px;">⚽</div><p style="font-size:10px;font-weight:900;color:#555;text-transform:uppercase;">No hay partidos activos en este momento</p></div>`;
+                    return;
+                }
+                if (this.matches.length === 0) return;
+
+                // Agrupar por grupo
                 const byGroup = {};
-                filtered.forEach(m => { if(!byGroup[m.group]) byGroup[m.group] = []; byGroup[m.group].push(m); });
-                list.innerHTML = Object.entries(byGroup).map(([group, matches]) => `
-                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-                        <span class="phase-badge phase-group">Grupo ${group}</span>
-                        <div style="flex:1; height:1px; background:rgba(255,255,255,0.05);"></div>
+                visible.forEach(m => {
+                    const key = m.group_name || 'General';
+                    if (!byGroup[key]) byGroup[key] = [];
+                    byGroup[key].push(m);
+                });
+
+                // Live primero dentro de cada grupo
+                Object.keys(byGroup).forEach(k => {
+                    byGroup[k].sort((a, b) => {
+                        const ord = { live: 0, upcoming: 1 };
+                        return (ord[a.status] ?? 1) - (ord[b.status] ?? 1);
+                    });
+                });
+
+                const phaseMap = { 'Grupos':'phase-group','Octavos':'phase-oct','Cuartos':'phase-qtr','Semifinal':'phase-semi','Final':'phase-final' };
+                list.innerHTML = Object.entries(byGroup).map(([group, matches]) => {
+                    const phCls = phaseMap[matches[0]?.phase] || 'phase-group';
+                    return `
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                        <span class="phase-badge ${phCls}">Grupo ${group}</span>
+                        <div style="flex:1;height:1px;background:rgba(255,255,255,0.05);"></div>
                     </div>
-                    ${matches.map(m => this.matchCard(m)).join('')}
-                `).join('');
+                    ${matches.map(m => this.matchCard(m)).join('')}`;
+                }).join('');
             },
 
             matchCard(m) {
                 const slip = this.slip[m.id];
                 const hasBet = !!slip;
-                const h1Selected = hasBet && slip.pick === '1' ? 'selected' : '';
-                const xSelected  = hasBet && slip.pick === 'X' ? 'selected' : '';
-                const h2Selected = hasBet && slip.pick === '2' ? 'selected' : '';
-                const settledClass = m.settled ? (m.result === (slip && slip.pick) ? 'settled-win' : (slip ? 'settled-loss' : '')) : '';
+                const h1Sel = hasBet && slip.pick === '1' ? 'selected' : '';
+                const xSel  = hasBet && slip.pick === 'X' ? 'selected' : '';
+                const h2Sel = hasBet && slip.pick === '2' ? 'selected' : '';
+                const isLive = m.status === 'live';
+
+                const betInfo = hasBet
+                    ? `<div style="display:flex;align-items:center;gap:4px;margin-bottom:8px;"><span style="font-size:8px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#10b981;padding:3px 8px;border-radius:6px;font-weight:900;text-transform:uppercase;">✓ Tu pick: ${slip.label}</span></div>`
+                    : '';
+
                 return `
-                <div class="match-card ${hasBet ? 'has-bet' : ''} ${settledClass}" id="mc-${m.id}">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                        <span style="font-size:8px; color:#555; font-weight:700; text-transform:uppercase;">${m.date} · ${m.time} · ${m.venue}</span>
-                        ${m.status==='live' ? '<span style="font-size:8px; font-weight:900; color:#ef4444; display:flex; align-items:center; gap:4px;"><span class="live-pulse" style="width:6px;height:6px;background:#ef4444;border-radius:50%;display:inline-block;"></span>EN VIVO</span>' : ''}
-                        ${m.settled ? `<span style="font-size:9px; font-weight:900; color:#888;">FIN ${m.scoreHome}-${m.scoreAway}</span>` : ''}
+                <div class="match-card ${hasBet ? 'has-bet' : ''}" id="mc-${m.id}">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <span style="font-size:8px;color:#555;font-weight:700;text-transform:uppercase;">${m.match_date || ''} · ${m.match_time || ''}${m.venue ? ' · '+m.venue : ''}</span>
+                        ${isLive
+                            ? `<span style="font-size:8px;font-weight:900;color:#ef4444;display:flex;align-items:center;gap:4px;"><span class="live-pulse" style="width:6px;height:6px;background:#ef4444;border-radius:50%;display:inline-block;"></span>EN VIVO ${m.minute ? m.minute+"'" : ''}</span>`
+                            : ''}
                     </div>
-                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-                        <div style="flex:1; text-align:right;"><span style="font-size:11px; font-weight:900; color:white; display:block; line-height:1.3;">${m.home}</span></div>
-                        <div style="padding:4px 10px; background:rgba(255,255,255,0.04); border-radius:8px; border:1px solid rgba(255,255,255,0.06);"><span style="font-family:'Archivo Black',sans-serif; font-size:11px; color:#444;">VS</span></div>
-                        <div style="flex:1; text-align:left;"><span style="font-size:11px; font-weight:900; color:white; display:block; line-height:1.3;">${m.away}</span></div>
+                    ${betInfo}
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                        <div style="flex:1;text-align:right;"><span style="font-size:12px;font-weight:900;color:white;">${m.home}</span></div>
+                        ${isLive
+                            ? `<div style="padding:5px 14px;background:rgba(239,68,68,0.12);border-radius:8px;border:1px solid rgba(239,68,68,0.3);min-width:56px;text-align:center;"><span style="font-family:'Archivo Black',sans-serif;font-size:18px;color:white;letter-spacing:4px;">${m.score_home ?? 0} - ${m.score_away ?? 0}</span></div>`
+                            : `<div style="padding:4px 10px;background:rgba(255,255,255,0.04);border-radius:8px;border:1px solid rgba(255,255,255,0.06);"><span style="font-family:'Archivo Black',sans-serif;font-size:11px;color:#444;">VS</span></div>`}
+                        <div style="flex:1;text-align:left;"><span style="font-size:12px;font-weight:900;color:white;">${m.away}</span></div>
                     </div>
-                    ${m.settled ? `
-                    <div style="text-align:center; padding:8px; background:rgba(255,255,255,0.03); border-radius:0.8rem; font-size:10px; font-weight:900; color:${m.result===(slip&&slip.pick)?'#10b981':'#ef4444'};">
-                        ${m.result===(slip&&slip.pick) ? '✅ Acertaste esta predicción' : (slip ? '❌ No acertaste' : 'Partido finalizado')}
-                    </div>` : `
-                    <div style="display:flex; gap:8px;">
-                        <div class="odd-btn ${h1Selected}" onclick="WC.togglePick('${m.id}','1','${m.home}',${m.homeOdd})">
-                            <span class="odd-label">1 Local</span><span class="odd-value">${m.homeOdd.toFixed(2)}</span>
+                    <div style="display:flex;gap:8px;${isLive ? 'opacity:0.4;pointer-events:none;' : ''}">
+                        <div class="odd-btn ${h1Sel}" onclick="WC.togglePick('${m.id}','1','${m.home.replace(/'/g,"\\'")}',${m.home_odd})">
+                            <span class="odd-label">1 Local</span><span class="odd-value">${(m.home_odd||2).toFixed(2)}</span>
                         </div>
-                        <div class="odd-btn ${xSelected}" onclick="WC.togglePick('${m.id}','X','Empate',${m.drawOdd})">
-                            <span class="odd-label">X Empate</span><span class="odd-value">${m.drawOdd.toFixed(2)}</span>
+                        <div class="odd-btn ${xSel}" onclick="WC.togglePick('${m.id}','X','Empate',${m.draw_odd})">
+                            <span class="odd-label">X Empate</span><span class="odd-value">${(m.draw_odd||3.2).toFixed(2)}</span>
                         </div>
-                        <div class="odd-btn ${h2Selected}" onclick="WC.togglePick('${m.id}','2','${m.away}',${m.awayOdd})">
-                            <span class="odd-label">2 Visitante</span><span class="odd-value">${m.awayOdd.toFixed(2)}</span>
+                        <div class="odd-btn ${h2Sel}" onclick="WC.togglePick('${m.id}','2','${m.away.replace(/'/g,"\\'")}',${m.away_odd})">
+                            <span class="odd-label">2 Visitante</span><span class="odd-value">${(m.away_odd||3.5).toFixed(2)}</span>
                         </div>
-                    </div>`}
+                    </div>
+                    ${isLive ? `<div style="text-align:center;margin-top:8px;font-size:9px;color:#ef4444;font-weight:700;text-transform:uppercase;">⚽ Partido en curso — apuestas cerradas</div>` : ''}
                 </div>`;
             },
 
             togglePick(matchId, pick, label, odd) {
                 playSfx('click');
                 const m = this.matches.find(x => x.id === matchId);
-                if (!m || m.settled) return;
+                if (!m || m.status === 'live' || m.status === 'finished') return;
                 if (this.slip[matchId] && this.slip[matchId].pick === pick) {
                     delete this.slip[matchId];
                 } else {
-                    this.slip[matchId] = { pick, label, odd, matchHome: m.home, matchAway: m.away, date: m.date, time: m.time };
+                    this.slip[matchId] = { pick, label, odd, matchHome: m.home, matchAway: m.away, date: m.match_date, time: m.match_time };
                 }
                 this.updateTicketCount();
-                // Re-render solo el card del partido
                 const card = document.getElementById(`mc-${matchId}`);
                 if (card) { const d = document.createElement('div'); d.innerHTML = this.matchCard(m); card.replaceWith(d.firstElementChild); }
-                // Mostrar/ocultar ticket inline al fondo
                 this.renderInlineTicket();
             },
 
             updateTicketCount() {
                 const count = Object.keys(this.slip).length;
                 const el = document.getElementById('wc-ticket-count');
-                if (el) el.innerText = count;
+                if (el) el.innerText = count + (count === 1 ? ' selección' : ' selecciones');
             },
 
             getTotalOdd() {
@@ -1116,73 +669,68 @@
             },
 
             updatePotential() {
-                const amt = parseFloat(document.getElementById('wc-bet-amount').value) || 0;
+                const amt = parseFloat(document.getElementById('wc-bet-amount')?.value) || 0;
                 const totalOdd = this.getTotalOdd();
-                const totalOddEl = document.getElementById('wc-total-odd');
-                const potWinEl = document.getElementById('wc-potential-win');
-                if (totalOddEl) totalOddEl.innerText = totalOdd.toFixed(2) + 'x';
-                if (potWinEl) potWinEl.innerText = `$${(amt * totalOdd).toFixed(2)}`;
+                const el1 = document.getElementById('wc-total-odd');
+                const el2 = document.getElementById('wc-potential-win');
+                if (el1) el1.innerText = totalOdd.toFixed(2) + 'x';
+                if (el2) el2.innerText = `$${(amt * totalOdd).toFixed(2)}`;
             },
 
             renderInlineTicket() {
-                const ticketEl = document.getElementById('wc-inline-ticket');
-                if (!ticketEl) return;
                 const items = Object.entries(this.slip);
-                if (items.length === 0) {
-                    ticketEl.classList.add('hidden-view');
-                    return;
-                }
-                ticketEl.classList.remove('hidden-view');
-                // Render slip items
                 const slipItemsEl = document.getElementById('wc-slip-items');
                 if (slipItemsEl) {
                     slipItemsEl.innerHTML = items.map(([matchId, s]) => `
-                        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); border-radius:0.7rem; padding:8px 10px; margin-bottom:6px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.3);border-radius:0.7rem;padding:8px 10px;margin-bottom:6px;">
                             <div>
-                                <span style="font-size:8px; color:#555; font-weight:700; display:block;">${s.matchHome} vs ${s.matchAway}</span>
-                                <span style="font-size:10px; font-weight:900; color:white;">${s.label}</span>
+                                <span style="font-size:8px;color:#555;font-weight:700;display:block;">${s.matchHome} vs ${s.matchAway}</span>
+                                <span style="font-size:10px;font-weight:900;color:white;">${s.label}</span>
                             </div>
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <span style="font-family:'Archivo Black',sans-serif; color:#10b981; font-size:14px;">${s.odd.toFixed(2)}</span>
-                                <button onclick="WC.removePick('${matchId}')" style="color:#555; font-size:16px; background:none; border:none; cursor:pointer; line-height:1;">✕</button>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <span style="font-family:'Archivo Black',sans-serif;color:#10b981;font-size:14px;">${s.odd.toFixed(2)}</span>
+                                <button onclick="WC.removePick('${matchId}')" style="color:#555;font-size:16px;background:none;border:none;cursor:pointer;line-height:1;">✕</button>
                             </div>
-                        </div>
-                    `).join('');
+                        </div>`).join('');
                 }
                 this.updateTicketCount();
                 this.updatePotential();
-                // Scroll down to ticket
-                setTimeout(() => { ticketEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 100);
+                if (items.length > 0) {
+                    document.getElementById('wc-ticket-sheet').classList.add('sheet-open');
+                    document.getElementById('wc-ticket-overlay').classList.add('sheet-open');
+                }
             },
 
-            // renderSlip kept for compatibility (no longer used for tab)
+            closeTicketModal() {
+                document.getElementById('wc-ticket-sheet').classList.remove('sheet-open');
+                document.getElementById('wc-ticket-overlay').classList.remove('sheet-open');
+            },
+
             renderSlip() { this.renderInlineTicket(); },
 
             removePick(matchId) {
                 delete this.slip[matchId];
-                this.updateTicketCount();
-                // Re-render card to deselect
                 const m = this.matches.find(x => x.id === matchId);
                 if (m) {
                     const card = document.getElementById(`mc-${matchId}`);
                     if (card) { const d = document.createElement('div'); d.innerHTML = this.matchCard(m); card.replaceWith(d.firstElementChild); }
                 }
-                this.renderInlineTicket();
+                if (Object.keys(this.slip).length === 0) { this.closeTicketModal(); this.updateTicketCount(); }
+                else this.renderInlineTicket();
             },
 
             clearSlip() {
-                const prevSlip = {...this.slip};
+                const prev = {...this.slip};
                 this.slip = {};
+                this.closeTicketModal();
                 this.updateTicketCount();
-                // Re-render all affected cards
-                Object.keys(prevSlip).forEach(matchId => {
+                Object.keys(prev).forEach(matchId => {
                     const m = this.matches.find(x => x.id === matchId);
                     if (m) {
                         const card = document.getElementById(`mc-${matchId}`);
                         if (card) { const d = document.createElement('div'); d.innerHTML = this.matchCard(m); card.replaceWith(d.firstElementChild); }
                     }
                 });
-                this.renderInlineTicket();
             },
 
             async placeBet() {
@@ -1199,150 +747,120 @@
                         matchId: id, pick: s.pick, label: s.label, odd: s.odd,
                         matchHome: s.matchHome, matchAway: s.matchAway
                     }));
+                    // Descontar saldo
                     await Core.updateBalanceDB(-amt);
                     State.balance -= amt;
                     UI.updateBalance();
-                    const betObj = {
-                        id: `wc_${Date.now()}`, userId: State.user.id,
-                        amount: amt, totalOdd, potentialWin, picks,
-                        status: 'pending', created: new Date().toISOString()
-                    };
-                    let bets = JSON.parse(localStorage.getItem('wcBets') || '[]');
-                    bets.push(betObj);
-                    localStorage.setItem('wcBets', JSON.stringify(bets));
+                    // Guardar en Supabase (tabla wc_bets)
+                    const { error } = await sb.from('wc_bets').insert([{
+                        user_id: State.user.id,
+                        amount: amt,
+                        total_odd: totalOdd,
+                        potential_win: potentialWin,
+                        picks: picks,
+                        status: 'pending'
+                    }]);
+                    if (error) throw error;
+                    // Historial
                     await Core.recordHistory({
                         user_id: State.user.id, type: 'bets', amount: -amt,
-                        label: `⚽ MUNDIAL (${picks.length} PARTIDO${picks.length>1?'S':''}) @ ${totalOdd.toFixed(2)}x`,
+                        label: `⚽ MUNDIAL (${picks.length} PARTIDO${picks.length > 1 ? 'S' : ''}) @ ${totalOdd.toFixed(2)}x`,
                         status: 'pending'
                     });
                     playSfx('win');
-                    UI.notify(`✅ ¡Ticket apostado! Ganancia posible: $${potentialWin.toFixed(2)}`, "success");
+                    UI.notify(`✅ ¡Ticket apostado! Posible ganancia: $${potentialWin.toFixed(2)}`, "success");
                     document.getElementById('wc-bet-amount').value = '';
                     this.clearSlip();
                     this.setTab('mis');
                 } catch(e) {
-                    UI.notify("Error al procesar apuesta", "error");
-                } finally {
-                    State.isProcessing = false;
-                }
+                    UI.notify("Error al procesar apuesta: " + e.message, "error");
+                } finally { State.isProcessing = false; }
             },
 
-            loadLocalBets() {
-                let bets = JSON.parse(localStorage.getItem('wcBets') || '[]');
-                const now = Date.now();
-                let changed = false;
-                bets = bets.map(b => {
-                    if (b.userId !== State.user?.id) return b;
-                    if (b.status === 'pending') {
-                        const age = now - new Date(b.created).getTime();
-                        if (age > 300000) {
-                            const win = Math.random() < 0.38;
-                            b.status = win ? 'won' : 'lost';
-                            b.resolvedWin = win ? b.potentialWin : 0;
-                            changed = true;
-                            if (win) {
-                                Core.updateBalanceDB(b.potentialWin);
-                                State.balance += b.potentialWin;
-                                UI.updateBalance();
-                                setTimeout(() => { playSfx('win'); UI.notify(`🏆 ¡GANASTE $${b.potentialWin.toFixed(2)} del Mundial!`, "success"); }, 800);
-                            }
-                        }
-                    }
-                    return b;
-                });
-                if (changed) localStorage.setItem('wcBets', JSON.stringify(bets));
+            loadLocalBets() { /* compatibilidad — ahora las apuestas van a Supabase */ },
+
+            // ── Verificar resultados cuando el admin marca un partido ──
+            checkBetResults() {
+                // No necesario en el cliente: el admin panel paga directamente
+                // Esto es solo para refrescar la UI de "Mis Apuestas"
+                if (this.activeTab === 'mis') this.renderMyBets();
             },
 
-            renderMyBets() {
+            async renderMyBets() {
                 const list = document.getElementById('wc-my-bets-list');
-                let bets = JSON.parse(localStorage.getItem('wcBets') || '[]').filter(b => b.userId === State.user?.id).reverse();
-                
-                if (bets.length === 0) {
-                    list.innerHTML = `<div class="text-center py-12"><div class="text-4xl mb-3">📋</div><p class="text-zinc-600 text-xs font-bold uppercase">Sin apuestas aún</p></div>`;
+                if (!list || !State.user) return;
+                list.innerHTML = `<div style="text-align:center;padding:20px;"><div style="width:24px;height:24px;border:2px solid rgba(16,185,129,0.3);border-top-color:#10b981;border-radius:50%;margin:0 auto;animation:spin 0.8s linear infinite;"></div></div>`;
+                const { data: bets } = await sb
+                    .from('wc_bets')
+                    .select('*')
+                    .eq('user_id', State.user.id)
+                    .order('created_at', { ascending: false });
+                if (!bets || bets.length === 0) {
+                    list.innerHTML = `<div style="text-align:center;padding:48px 0;"><div style="font-size:3rem;margin-bottom:12px;">📋</div><p style="color:#555;font-size:10px;font-weight:700;text-transform:uppercase;">Sin apuestas aún</p></div>`;
                     return;
                 }
                 list.innerHTML = bets.map(b => {
-                    const statusColor = b.status === 'won' ? '#10b981' : b.status === 'lost' ? '#ef4444' : '#fbbf24';
-                    const statusText = b.status === 'won' ? '✅ GANADO' : b.status === 'lost' ? '❌ PERDIDO' : '⏳ PENDIENTE';
-                    const d = new Date(b.created);
+                    const sc = b.status === 'won' ? '#10b981' : b.status === 'lost' ? '#ef4444' : '#fbbf24';
+                    const st = b.status === 'won' ? '✅ GANADO' : b.status === 'lost' ? '❌ PERDIDO' : '⏳ PENDIENTE';
+                    const d  = new Date(b.created_at);
+                    const picks = b.picks || [];
                     return `
                     <div class="match-card ${b.status === 'won' ? 'settled-win' : b.status === 'lost' ? 'settled-loss' : 'has-bet'}" style="margin-bottom:12px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                            <span style="font-size:8px; color:#555; font-weight:700; text-transform:uppercase;">${d.toLocaleDateString('es-MX')} ${d.toTimeString().slice(0,5)}</span>
-                            <span style="font-size:9px; font-weight:900; color:${statusColor}; text-transform:uppercase;">${statusText}</span>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                            <span style="font-size:8px;color:#555;font-weight:700;text-transform:uppercase;">${d.toLocaleDateString('es-MX')} ${d.toTimeString().slice(0,5)}</span>
+                            <span style="font-size:9px;font-weight:900;color:${sc};text-transform:uppercase;">${st}</span>
                         </div>
-                        ${b.picks.map(p => `
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.04);">
+                        ${picks.map(p => `
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
                             <div>
-                                <span style="font-size:8px; color:#555; font-weight:700;">${p.matchHome} vs ${p.matchAway}</span>
-                                <div style="font-size:10px; font-weight:900; color:white;">${p.label}</div>
+                                <span style="font-size:8px;color:#555;font-weight:700;">${p.matchHome} vs ${p.matchAway}</span>
+                                <div style="font-size:10px;font-weight:900;color:white;">${p.label}</div>
                             </div>
-                            <span style="font-family:'Archivo Black',sans-serif; color:#10b981; font-size:12px;">${p.odd.toFixed(2)}</span>
+                            <span style="font-family:'Archivo Black',sans-serif;color:#10b981;font-size:12px;">${p.odd.toFixed(2)}</span>
                         </div>`).join('')}
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);">
                             <div>
-                                <span style="font-size:8px; color:#555; font-weight:700; text-transform:uppercase;">Apostado</span>
-                                <div style="font-family:'Archivo Black',sans-serif; color:white; font-size:14px;">$${b.amount.toFixed(2)}</div>
+                                <span style="font-size:8px;color:#555;font-weight:700;text-transform:uppercase;">Apostado</span>
+                                <div style="font-family:'Archivo Black',sans-serif;color:white;font-size:14px;">$${(b.amount||0).toFixed(2)}</div>
                             </div>
                             <div style="text-align:right;">
-                                <span style="font-size:8px; color:#555; font-weight:700; text-transform:uppercase;">Cuota · Potencial</span>
-                                <div style="font-family:'Archivo Black',sans-serif; color:${statusColor}; font-size:14px;">${b.totalOdd.toFixed(2)}x · $${b.potentialWin.toFixed(2)}</div>
+                                <span style="font-size:8px;color:#555;font-weight:700;text-transform:uppercase;">Cuota · Potencial</span>
+                                <div style="font-family:'Archivo Black',sans-serif;color:${sc};font-size:14px;">${(b.total_odd||1).toFixed(2)}x · $${(b.potential_win||0).toFixed(2)}</div>
                             </div>
                         </div>
-                        ${b.status === 'won' ? `<div style="margin-top:8px; text-align:center; font-size:11px; font-weight:900; color:#10b981; background:rgba(16,185,129,0.08); padding:8px; border-radius:0.8rem;">🏆 GANASTE $${b.potentialWin.toFixed(2)}</div>` : ''}
+                        ${b.status === 'won' ? `<div style="margin-top:8px;text-align:center;font-size:11px;font-weight:900;color:#10b981;background:rgba(16,185,129,0.08);padding:8px;border-radius:0.8rem;">🏆 GANASTE $${(b.potential_win||0).toFixed(2)}</div>` : ''}
                     </div>`;
                 }).join('');
             }
         };
 
         Core.init();
-
-        // ── Carrusel auto-scroll ──
-        (function() {
-            var cur = 0;
-            function goTo(i) {
-                cur = i;
-                var track = document.getElementById('hero-track');
-                if (track) track.style.transform = 'translateX(-' + (cur * 100) + '%)';
-                [0,1].forEach(function(j) {
-                    var d = document.getElementById('hero-dot-' + j);
-                    if (d) { d.style.width = j===cur?'20px':'6px'; d.style.background = j===cur?'#10b981':'rgba(255,255,255,0.2)'; }
-                });
-            }
-            setInterval(function(){ goTo((cur+1)%2); }, 3500);
-        })();
+        Core.init();
     </script>
 
     <div id="messenger-container" class="fixed bottom-24 right-6 z-[600] flex flex-col items-center gap-1">
-        <a id="messenger-btn" 
-           href="https://m.me/721633921035642" 
-           onclick="if(navigator.userAgent.match(/Android|iPhone|iPad|iPod/i)) { window.location.href='fb-messenger://user-thread/721633921035642'; return false; }"
-           target="_blank" 
-           class="bg-blue-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:scale-105 transition-transform">
+        <a id="messenger-btn" href="https://m.me/721633921035642" onclick="if(navigator.userAgent.match(/Android|iPhone|iPad|iPod/i)) { window.location.href='fb-messenger://user-thread/721633921035642'; return false; }" target="_blank" class="bg-blue-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:scale-105 transition-transform">
             <i class="fab fa-facebook-messenger text-2xl"></i>
         </a>
         <span class="text-white text-[10px] font-bold bg-black/50 px-2 py-0.5 rounded">SOPORTE</span>
     </div>
 
     <script>
-        // Lógica para ocultar el botón de Messenger y el texto de Soporte en vistas específicas
         setInterval(() => {
             const container = document.getElementById('messenger-container');
             if (!container) return;
-
             const authView = document.getElementById('auth-view');
             const modalDep = document.getElementById('modal-deposit');
             const viewGame = document.getElementById('view-game');
-
             const isVisible = (el) => el && !el.classList.contains('hidden-view');
-
-            if (isVisible(authView) || isVisible(modalDep) || isVisible(viewGame)) {
+            const ticketSheet = document.getElementById('wc-ticket-sheet');
+            const ticketOpen = ticketSheet && ticketSheet.classList.contains('sheet-open');
+            if (isVisible(authView) || isVisible(modalDep) || isVisible(viewGame) || ticketOpen) {
                 container.style.setProperty('display', 'none', 'important');
             } else {
                 container.style.setProperty('display', 'flex', 'important');
             }
         }, 300);
     </script>
-
 </body>
 </html>
