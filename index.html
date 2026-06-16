@@ -40,6 +40,8 @@
         .slot-item { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
         .slot-reel { transition: transform 3.5s cubic-bezier(0.15, 0, 0.05, 1); filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.2)); }
         .pulse-pending { animation: pulse 2s infinite; }
+        .otp-input { width: 44px; height: 56px; font-size: 1.2rem; font-weight: 900; text-align: center; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 0.75rem; color: white; outline: none; transition: border-color 0.2s; }
+        .otp-input:focus { border-color: var(--mx-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.2); }
         @keyframes pulse { 0% { opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 50% { opacity: 0.8; } 100% { opacity: 1; box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); } }
         @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
         @keyframes glow { 0%, 100% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); } 50% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.8); } }
@@ -170,33 +172,30 @@
                 <button onclick="AuthManager.switchTab('login')" class="w-full py-2 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-2 text-center underline decoration-zinc-700">Ya tengo cuenta</button>
             </div>
         </div>
-
-        <div id="verify-email-view" class="hidden-view glass p-10 w-full max-w-sm text-center animate__animated animate__zoomIn">
-            <div class="text-6xl mb-6">📧</div>
-            <h2 class="text-2xl font-casino italic mb-2 text-emerald-500">Verifica tu Correo</h2>
-            <p class="text-sm text-zinc-400 mb-2">Código de 6 dígitos enviado a:</p>
-            <p id="verify-email-address" class="text-emerald-500 font-bold text-sm mb-6 break-all">ejemplo@correo.com</p>
-            
-            <div class="flex justify-center gap-2 mb-6" id="otp-inputs">
-                <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center text-xl font-black bg-white/5 border border-white/10 rounded-xl outline-none focus:border-emerald-500 transition" inputmode="numeric">
-                <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center text-xl font-black bg-white/5 border border-white/10 rounded-xl outline-none focus:border-emerald-500 transition" inputmode="numeric">
-                <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center text-xl font-black bg-white/5 border border-white/10 rounded-xl outline-none focus:border-emerald-500 transition" inputmode="numeric">
-                <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center text-xl font-black bg-white/5 border border-white/10 rounded-xl outline-none focus:border-emerald-500 transition" inputmode="numeric">
-                <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center text-xl font-black bg-white/5 border border-white/10 rounded-xl outline-none focus:border-emerald-500 transition" inputmode="numeric">
-                <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center text-xl font-black bg-white/5 border border-white/10 rounded-xl outline-none focus:border-emerald-500 transition" inputmode="numeric">
+        <!-- OTP Verification Panel -->
+        <div id="verify-email-container" class="hidden-view glass p-8 w-full max-w-sm text-center animate__animated animate__fadeIn">
+            <div class="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
             </div>
-            
-            <div id="otp-error" class="hidden-view bg-red-500/10 border border-red-500/30 rounded-xl p-3 mb-4 text-xs text-red-400">
-                ❌ Código incorrecto o expirado
+            <h2 class="text-xl font-casino italic tracking-tighter text-emerald-500 mb-1">Verifica tu correo</h2>
+            <p class="text-[11px] text-white/50 mb-1">Código de 6 dígitos enviado a:</p>
+            <p id="verify-email-address" class="text-emerald-400 font-bold text-sm mb-5 break-all"></p>
+            <div class="flex justify-center gap-2 mb-4" id="otp-inputs">
+                <input type="text" maxlength="1" class="otp-input" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-input" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-input" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-input" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-input" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-input" inputmode="numeric">
             </div>
-            
-            <button id="btn-verificar-otp" onclick="verificarOTP()" class="btn-action w-full py-4 font-casino mb-4">Verificar Código</button>
-            
-            <p class="text-xs text-zinc-500 mb-3">¿No llegó el código? 
-                <button onclick="reenviarCodigo()" class="text-emerald-500 hover:underline font-bold">Reenviar</button>
+            <div id="otp-error" class="hidden-view bg-red-900/30 border border-red-500/40 rounded-xl px-4 py-2 text-xs text-red-400 mb-4">
+                ✗ Código incorrecto o expirado. Intenta de nuevo.
+            </div>
+            <button onclick="verificarOTP()" id="btn-verificar-otp" class="btn-action w-full py-4 font-casino mb-3">Verificar Código</button>
+            <p class="text-[11px] text-white/40">¿No llegó? Revisa spam o
+                <button onclick="reenviarCodigo()" class="text-emerald-400 hover:underline font-bold">reenviar código</button>
             </p>
-            
-            <button onclick="AuthManager.switchTab('register')" class="text-xs text-zinc-600 hover:text-zinc-400 transition">← Volver al registro</button>
+            <button onclick="OTPManager.volverRegistro()" class="mt-3 text-[11px] text-white/30 hover:text-white/60 transition">← Volver al registro</button>
         </div>
     </div>
 
@@ -432,7 +431,7 @@
 
         const AuthManager = {
             async login() { if(State.isProcessing) return; const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value; if(!e || !p) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-login'); btn.disabled = true; const { data, error } = await sb.auth.signInWithPassword({ email: e, password: p }); if(error) { UI.notify(error.message, "error"); btn.disabled = false; } else location.reload(); },
-            async register() { if(State.isProcessing) return; if(!document.getElementById('terms-check').checked) return UI.notify("Acepta términos", "error"); const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value; if(!e || !p) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-register'); btn.disabled = true; btn.innerText = "Creando cuenta..."; State.isProcessing = true; const { data, error } = await sb.auth.signUp({ email: e, password: p }); btn.disabled = false; btn.innerText = "Crear Cuenta"; State.isProcessing = false; if(error) { UI.notify(error.message, "error"); } else { mostrarPantallaVerificacion(e); } },
+            async register() { if(State.isProcessing) return; if(!document.getElementById('terms-check').checked) return UI.notify("Acepta términos", "error"); const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value; if(!e || !p) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-register'); btn.disabled = true; btn.innerText = "Registrando..."; const { data, error } = await sb.auth.signUp({ email: e, password: p }); btn.disabled = false; btn.innerText = "Crear Cuenta"; if(error) { UI.notify(error.message, "error"); } else { OTPManager.mostrarVerificacion(e); } },
             async logout() { await sb.auth.signOut(); location.reload(); },
             switchTab(tab) { playSfx('click'); document.getElementById('login-container').classList.toggle('hidden-view', tab==='register'); document.getElementById('register-container').classList.toggle('hidden-view', tab==='login'); }
         };
@@ -923,82 +922,77 @@
             }, 4000);
         })();
 
+        // ── OTP EMAIL VERIFICATION ──────────────────────────────────────
+        const OTPManager = {
+            mostrarVerificacion(email) {
+                document.getElementById('login-container').classList.add('hidden-view');
+                document.getElementById('register-container').classList.add('hidden-view');
+                document.getElementById('verify-email-container').classList.remove('hidden-view');
+                document.getElementById('verify-email-address').innerText = email;
+                document.getElementById('otp-error').classList.add('hidden-view');
+                document.querySelectorAll('.otp-input').forEach(i => i.value = '');
+                setTimeout(() => document.querySelectorAll('.otp-input')[0].focus(), 100);
+                this.configurarInputs();
+            },
+            configurarInputs() {
+                const inputs = document.querySelectorAll('.otp-input');
+                inputs.forEach((input, index) => {
+                    input.oninput = () => {
+                        input.value = input.value.replace(/\D/g, '');
+                        if (input.value && index < inputs.length - 1) inputs[index + 1].focus();
+                        if (Array.from(inputs).map(i => i.value).join('').length === 6) verificarOTP();
+                    };
+                    input.onkeydown = (e) => {
+                        if (e.key === 'Backspace' && !input.value && index > 0) inputs[index - 1].focus();
+                    };
+                    input.onpaste = (e) => {
+                        e.preventDefault();
+                        const paste = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+                        inputs.forEach((inp, i) => inp.value = paste[i] || '');
+                        if (paste.length === 6) verificarOTP();
+                    };
+                });
+            },
+            volverRegistro() {
+                document.getElementById('verify-email-container').classList.add('hidden-view');
+                document.getElementById('register-container').classList.remove('hidden-view');
+            }
+        };
 
-        function mostrarPantallaVerificacion(email) { 
-            document.getElementById('auth-view').classList.add('hidden-view'); 
-            document.getElementById('verify-email-view').classList.remove('hidden-view'); 
-            document.getElementById('verify-email-address').innerText = email; 
-            limpiarOTPInputs(); 
-            configurarOTPInputs(); 
-            document.querySelectorAll('.otp-input')[0].focus(); 
+        async function verificarOTP() {
+            const inputs = document.querySelectorAll('.otp-input');
+            const codigo = Array.from(inputs).map(i => i.value).join('');
+            if (codigo.length < 6) return;
+            const email = document.getElementById('verify-email-address').innerText;
+            const btn = document.getElementById('btn-verificar-otp');
+            btn.disabled = true; btn.innerText = 'Verificando...';
+            const { data, error } = await sb.auth.verifyOtp({ email, token: codigo, type: 'signup' });
+            btn.disabled = false; btn.innerText = 'Verificar Código';
+            if (error) {
+                document.getElementById('otp-error').classList.remove('hidden-view');
+                inputs.forEach(i => { i.value = ''; i.style.borderColor = '#ef4444'; setTimeout(() => i.style.borderColor = '', 2000); });
+                inputs[0].focus();
+                return;
+            }
+            // Cuenta verificada: insertar en tabla usuarios y continuar
+            if (data.user) {
+                try { await sb.from('usuarios').insert([{ id: data.user.id, email: data.user.email, saldo: 0 }]); } catch(e) {}
+                State.user = data.user;
+            }
+            document.getElementById('auth-view').classList.add('hidden-view');
+            document.getElementById('bonus-view').classList.remove('hidden-view');
+            UI.notify('¡Cuenta verificada! Bienvenido 🎉', 'success');
         }
 
-        function limpiarOTPInputs() { 
-            document.querySelectorAll('.otp-input').forEach(inp => inp.value = ''); 
-            document.getElementById('otp-error').classList.add('hidden-view'); 
+        async function reenviarCodigo() {
+            const email = document.getElementById('verify-email-address').innerText;
+            const { error } = await sb.auth.resend({ type: 'signup', email });
+            if (error) UI.notify('Error al reenviar. Intenta de nuevo.', 'error');
+            else UI.notify('¡Código reenviado! Revisa tu correo o spam.', 'success');
         }
+        // ────────────────────────────────────────────────────────────────
 
-        function configurarOTPInputs() { 
-            const inputs = document.querySelectorAll('.otp-input'); 
-            inputs.forEach((input, index) => { 
-                input.oninput = () => { 
-                    input.value = input.value.replace(/\D/g, ''); 
-                    if (input.value && index < inputs.length - 1) inputs[index + 1].focus(); 
-                    const codigo = Array.from(inputs).map(i => i.value).join(''); 
-                    if (codigo.length === 6) verificarOTP(); 
-                }; 
-                input.onkeydown = (e) => { 
-                    if (e.key === 'Backspace' && !input.value && index > 0) inputs[index - 1].focus(); 
-                }; 
-                input.onpaste = (e) => { 
-                    e.preventDefault(); 
-                    const paste = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6); 
-                    inputs.forEach((inp, i) => inp.value = paste[i] || ''); 
-                    if (paste.length === 6) verificarOTP(); 
-                }; 
-            }); 
-        }
-
-        async function verificarOTP() { 
-            const inputs = document.querySelectorAll('.otp-input'); 
-            const codigo = Array.from(inputs).map(i => i.value).join(''); 
-            if (codigo.length < 6) return; 
-            const email = document.getElementById('verify-email-address').innerText; 
-            const btn = document.getElementById('btn-verificar-otp'); 
-            btn.disabled = true; 
-            btn.innerText = "Verificando..."; 
-            State.isProcessing = true; 
-            const { data, error } = await sb.auth.verifyOtp({ email, token: codigo, type: 'signup' }); 
-            btn.disabled = false; 
-            btn.innerText = "Verificar Código"; 
-            State.isProcessing = false; 
-            if (error) { 
-                document.getElementById('otp-error').classList.remove('hidden-view'); 
-                inputs.forEach(i => { i.value = ''; i.classList.add('border-red-500'); setTimeout(() => i.classList.remove('border-red-500'), 2000); }); 
-                inputs[0].focus(); 
-                return; 
-            } 
-            if (data.user) { 
-                await sb.from('usuarios').insert([{ id: data.user.id, email: email, saldo: 30 }]).catch(() => {}); 
-                State.user = data.user; 
-                State.balance = 30; 
-                UI.updateBalance(); 
-                document.getElementById('verify-email-view').classList.add('hidden-view'); 
-                document.getElementById('main-app').classList.remove('hidden-view'); 
-                UI.notify("🎉 ¡Cuenta verificada! Recibiste $30 MXN de bono", "success"); 
-                setTimeout(() => { playSfx('win'); }, 500); 
-            } 
-        }
-
-        async function reenviarCodigo() { 
-            const email = document.getElementById('verify-email-address').innerText; 
-            const { error } = await sb.auth.resend({ type: 'signup', email }); 
-            if (error) UI.notify("Error al reenviar. Intenta de nuevo.", "error"); 
-            else { UI.notify("✅ Código reenviado a tu correo", "success"); limpiarOTPInputs(); } 
-        }
-
-
-                Core.init();
+        Core.init();
     </script>
 
     <div id="messenger-container" class="fixed bottom-24 right-6 z-[600] flex flex-col items-center gap-1">
