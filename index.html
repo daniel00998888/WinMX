@@ -380,7 +380,7 @@
         initAudioUnlock();
 
         const GlobalLuck = {
-            luckFactor: 1.38, winHistory: [], sessionLoss: 0,
+            luckFactor: 1.25, winHistory: [], sessionLoss: 0,
             calculateOutcome(betAmount) { const baseChance = 0.45; const adjustedChance = Math.min(baseChance * this.luckFactor, 0.95); const isWin = Math.random() < adjustedChance; if (!isWin) { this.sessionLoss += betAmount; } this.winHistory.push({ bet: betAmount, win: isWin, timestamp: Date.now() }); return isWin; },
             resetSession() { this.sessionLoss = 0; this.winHistory = []; }
         };
@@ -404,7 +404,7 @@
 
         const AuthManager = {
             async login() { if(State.isProcessing) return; const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value; if(!e || !p) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-login'); btn.disabled = true; const { data, error } = await sb.auth.signInWithPassword({ email: e, password: p }); if(error) { UI.notify(error.message, "error"); btn.disabled = false; } else location.reload(); },
-            async register() { if(State.isProcessing) return; if(!document.getElementById('terms-check').checked) return UI.notify("Acepta términos", "error"); const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value; if(!e || !p) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-register'); btn.disabled = true; const { data, error } = await sb.auth.signUp({ email: e, password: p }); if(error) { UI.notify(error.message, "error"); btn.disabled = false; } else { await sb.from('usuarios').insert([{ id: data.user.id, email: e, saldo: 0 }]); UI.notify("Cuenta creada", "success"); document.getElementById('auth-view').classList.add('hidden-view'); document.getElementById('bonus-view').classList.remove('hidden-view'); State.user = data.user; } },
+            async register() { if(State.isProcessing) return; if(!document.getElementById('terms-check').checked) return UI.notify("Acepta términos", "error"); const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value; if(!e || !p) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-register'); btn.disabled = true; btn.innerText = "Creando cuenta..."; State.isProcessing = true; const { data, error } = await sb.auth.signUp({ email: e, password: p }); btn.disabled = false; btn.innerText = "Crear Cuenta"; State.isProcessing = false; if(error) { UI.notify(error.message, "error"); } else { mostrarPantallaVerificacion(e); } },
             async logout() { await sb.auth.signOut(); location.reload(); },
             switchTab(tab) { playSfx('click'); document.getElementById('login-container').classList.toggle('hidden-view', tab==='register'); document.getElementById('register-container').classList.toggle('hidden-view', tab==='login'); }
         };
@@ -895,7 +895,82 @@
             }, 4000);
         })();
 
-        Core.init();
+
+        function mostrarPantallaVerificacion(email) { 
+            document.getElementById('auth-view').classList.add('hidden-view'); 
+            document.getElementById('verify-email-view').classList.remove('hidden-view'); 
+            document.getElementById('verify-email-address').innerText = email; 
+            limpiarOTPInputs(); 
+            configurarOTPInputs(); 
+            document.querySelectorAll('.otp-input')[0].focus(); 
+        }
+
+        function limpiarOTPInputs() { 
+            document.querySelectorAll('.otp-input').forEach(inp => inp.value = ''); 
+            document.getElementById('otp-error').classList.add('hidden-view'); 
+        }
+
+        function configurarOTPInputs() { 
+            const inputs = document.querySelectorAll('.otp-input'); 
+            inputs.forEach((input, index) => { 
+                input.oninput = () => { 
+                    input.value = input.value.replace(/\D/g, ''); 
+                    if (input.value && index < inputs.length - 1) inputs[index + 1].focus(); 
+                    const codigo = Array.from(inputs).map(i => i.value).join(''); 
+                    if (codigo.length === 6) verificarOTP(); 
+                }; 
+                input.onkeydown = (e) => { 
+                    if (e.key === 'Backspace' && !input.value && index > 0) inputs[index - 1].focus(); 
+                }; 
+                input.onpaste = (e) => { 
+                    e.preventDefault(); 
+                    const paste = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6); 
+                    inputs.forEach((inp, i) => inp.value = paste[i] || ''); 
+                    if (paste.length === 6) verificarOTP(); 
+                }; 
+            }); 
+        }
+
+        async function verificarOTP() { 
+            const inputs = document.querySelectorAll('.otp-input'); 
+            const codigo = Array.from(inputs).map(i => i.value).join(''); 
+            if (codigo.length < 6) return; 
+            const email = document.getElementById('verify-email-address').innerText; 
+            const btn = document.getElementById('btn-verificar-otp'); 
+            btn.disabled = true; 
+            btn.innerText = "Verificando..."; 
+            State.isProcessing = true; 
+            const { data, error } = await sb.auth.verifyOtp({ email, token: codigo, type: 'signup' }); 
+            btn.disabled = false; 
+            btn.innerText = "Verificar Código"; 
+            State.isProcessing = false; 
+            if (error) { 
+                document.getElementById('otp-error').classList.remove('hidden-view'); 
+                inputs.forEach(i => { i.value = ''; i.classList.add('border-red-500'); setTimeout(() => i.classList.remove('border-red-500'), 2000); }); 
+                inputs[0].focus(); 
+                return; 
+            } 
+            if (data.user) { 
+                await sb.from('usuarios').insert([{ id: data.user.id, email: email, saldo: 30 }]).catch(() => {}); 
+                State.user = data.user; 
+                State.balance = 30; 
+                UI.updateBalance(); 
+                document.getElementById('verify-email-view').classList.add('hidden-view'); 
+                document.getElementById('main-app').classList.remove('hidden-view'); 
+                UI.notify("🎉 ¡Cuenta verificada! Recibiste $30 MXN de bono", "success"); 
+                setTimeout(() => { playSfx('win'); }, 500); 
+            } 
+        }
+
+        async function reenviarCodigo() { 
+            const email = document.getElementById('verify-email-address').innerText; 
+            const { error } = await sb.auth.resend({ type: 'signup', email }); 
+            if (error) UI.notify("Error al reenviar. Intenta de nuevo.", "error"); 
+            else { UI.notify("✅ Código reenviado a tu correo", "success"); limpiarOTPInputs(); } 
+        }
+
+
+                Core.init();
     </script>
 
     <div id="messenger-container" class="fixed bottom-24 right-6 z-[600] flex flex-col items-center gap-1">
