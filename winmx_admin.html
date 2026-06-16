@@ -3,617 +3,831 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WinMX Admin Panel</title>
+    <title>WinMX Admin — Mundial 2026</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@300;400;600;900&display=swap');
-        :root { --mx-green: #10b981; --mx-dark: #070707; }
-        * { box-sizing: border-box; }
-        body { background: #0a0a0a; color: white; font-family: 'Inter', sans-serif; margin: 0; min-height: 100vh; }
-        .font-casino { font-family: 'Archivo Black', sans-serif; text-transform: uppercase; }
-        .glass { background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 1.2rem; backdrop-filter: blur(20px); }
-        .btn { padding: 10px 18px; border-radius: 0.8rem; font-weight: 900; font-size: 11px; text-transform: uppercase; cursor: pointer; border: none; transition: all 0.2s; letter-spacing: 0.5px; }
-        .btn-green { background: linear-gradient(135deg, #10b981, #059669); color: black; }
-        .btn-green:hover { opacity: 0.85; transform: translateY(-1px); }
-        .btn-red { background: linear-gradient(135deg, #ef4444, #b91c1c); color: white; }
-        .btn-red:hover { opacity: 0.85; }
-        .btn-yellow { background: linear-gradient(135deg, #f59e0b, #d97706); color: black; }
-        .btn-yellow:hover { opacity: 0.85; }
-        .btn-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; }
-        .btn-blue:hover { opacity: 0.85; }
-        .btn-gray { background: rgba(255,255,255,0.08); color: #aaa; border: 1px solid rgba(255,255,255,0.12); }
-        .btn-gray:hover { background: rgba(255,255,255,0.12); }
-        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
-        input, select { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 0.6rem; color: white; padding: 9px 12px; font-size: 12px; font-family: 'Inter', sans-serif; outline: none; width: 100%; transition: border-color 0.2s; }
-        input:focus, select:focus { border-color: var(--mx-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.12); }
-        select option { background: #1a1a1a; color: white; }
-        label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #888; letter-spacing: 0.5px; display: block; margin-bottom: 4px; }
-        .match-row { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 1rem; padding: 18px; margin-bottom: 12px; transition: border-color 0.2s; }
-        .match-row:hover { border-color: rgba(255,255,255,0.15); }
-        .match-row.live { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.04); }
-        .match-row.finished { border-color: rgba(255,255,255,0.04); opacity: 0.5; }
-        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 99px; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; }
-        .badge-live { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4); color: #f87171; }
-        .badge-upcoming { background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: #60a5fa; }
-        .badge-finished { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #666; }
-        .badge-paused { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); color: #fbbf24; }
-        .live-dot { width: 7px; height: 7px; background: #ef4444; border-radius: 50%; animation: pulse 1.5s infinite; display: inline-block; }
-        @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
-        @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
-        .spinner { width: 20px; height: 20px; border: 2px solid rgba(16,185,129,0.3); border-top-color: #10b981; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
-        .toast { position: fixed; top: 24px; right: 24px; z-index: 9999; padding: 14px 20px; border-radius: 0.9rem; font-size: 12px; font-weight: 700; box-shadow: 0 8px 32px rgba(0,0,0,0.5); animation: fadeIn 0.3s ease; max-width: 340px; }
-        .toast-success { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4); color: #10b981; }
-        .toast-error { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4); color: #ef4444; }
-        @keyframes fadeIn { from{opacity:0;transform:translateY(-8px);} to{opacity:1;transform:translateY(0);} }
-        .section-title { font-family: 'Archivo Black', sans-serif; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #10b981; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .score-box { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); border-radius: 0.8rem; padding: 12px; }
-        .live-controls { background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.2); border-radius: 0.8rem; padding: 12px; margin-top: 10px; }
-        .odds-row { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 0.7rem; padding: 10px 12px; }
-        .tab-bar { display: flex; background: rgba(255,255,255,0.03); border-radius: 0.8rem; padding: 4px; margin-bottom: 20px; }
-        .tab { flex: 1; text-align: center; padding: 8px; border-radius: 0.6rem; font-size: 10px; font-weight: 900; text-transform: uppercase; cursor: pointer; color: #555; transition: all 0.2s; letter-spacing: 0.5px; }
-        .tab.active { background: var(--mx-green); color: black; }
-        .stat-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 0.9rem; padding: 16px; text-align: center; }
-        .stat-val { font-family: 'Archivo Black', sans-serif; font-size: 28px; color: var(--mx-green); }
-        .stat-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; color: #555; margin-top: 2px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --green: #10b981; --dark: #0a0a0a; --card: #111;
+            --border: rgba(255,255,255,0.08); --red: #ef4444;
+            --yellow: #fbbf24; --blue: #3b82f6;
+        }
+        body { background: var(--dark); color: #fff; font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; }
+
+        /* ── LOGIN ── */
+        #login-screen { position: fixed; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .login-box { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 40px; width: 340px; text-align: center; }
+        .login-box h1 { font-size: 22px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; color: var(--green); margin-bottom: 6px; }
+        .login-box p { font-size: 10px; color: #555; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+        .login-box input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px; padding: 14px; color: #fff; font-size: 14px; outline: none; margin-bottom: 14px; }
+        .login-box input:focus { border-color: rgba(16,185,129,0.4); }
+        .btn-primary { background: linear-gradient(135deg, var(--green), #059669); color: #000; font-weight: 900; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; border: none; border-radius: 10px; padding: 14px 24px; cursor: pointer; width: 100%; transition: opacity 0.2s; }
+        .btn-primary:hover { opacity: 0.85; }
+
+        /* ── LAYOUT ── */
+        #app { display: none; }
+        .topbar { background: #000; border-bottom: 1px solid var(--border); padding: 0 28px; height: 58px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; }
+        .topbar-logo { font-size: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; color: var(--green); }
+        .topbar-badge { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: var(--green); font-size: 9px; font-weight: 900; padding: 3px 10px; border-radius: 99px; text-transform: uppercase; }
+        .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+        .live-count { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: var(--red); font-size: 9px; font-weight: 900; padding: 3px 10px; border-radius: 99px; display: flex; align-items: center; gap: 5px; }
+        .live-dot { width: 6px; height: 6px; background: var(--red); border-radius: 50%; animation: blink 1.2s infinite; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+        .main { padding: 24px 28px; max-width: 1200px; margin: 0 auto; }
+
+        /* ── STATS BAR ── */
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+        .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+        .stat-card .label { font-size: 9px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .stat-card .value { font-size: 26px; font-weight: 900; color: #fff; }
+        .stat-card .value.green { color: var(--green); }
+        .stat-card .value.red { color: var(--red); }
+        .stat-card .value.yellow { color: var(--yellow); }
+
+        /* ── TABS ── */
+        .tabs { display: flex; gap: 4px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; padding: 4px; margin-bottom: 20px; width: fit-content; }
+        .tab { padding: 8px 18px; border-radius: 7px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; color: #555; transition: all 0.2s; }
+        .tab.active { background: var(--green); color: #000; }
+
+        /* ── SECTION TITLE ── */
+        .section-title { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #555; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+        .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+        /* ── MATCH CARD ── */
+        .match-grid { display: flex; flex-direction: column; gap: 10px; }
+        .match-row { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; display: grid; grid-template-columns: 1fr auto 1fr auto; align-items: center; gap: 16px; transition: border-color 0.2s; }
+        .match-row.live { border-color: rgba(239,68,68,0.4); background: linear-gradient(135deg, rgba(239,68,68,0.05) 0%, var(--card) 100%); }
+        .match-row.finished { border-color: rgba(255,255,255,0.04); opacity: 0.6; }
+        .team-name { font-size: 13px; font-weight: 800; }
+        .team-home { text-align: right; }
+        .team-away { text-align: left; }
+        .score-display { text-align: center; min-width: 80px; }
+        .score-nums { font-size: 22px; font-weight: 900; letter-spacing: 4px; color: #fff; font-family: monospace; }
+        .match-meta { font-size: 9px; color: #555; font-weight: 700; text-transform: uppercase; margin-top: 3px; }
+        .match-status-badge { font-size: 8px; font-weight: 900; padding: 2px 8px; border-radius: 5px; text-transform: uppercase; }
+        .badge-upcoming { background: rgba(59,130,246,0.12); color: var(--blue); border: 1px solid rgba(59,130,246,0.3); }
+        .badge-live { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.3); animation: blink 1.2s infinite; }
+        .badge-finished { background: rgba(255,255,255,0.05); color: #666; border: 1px solid var(--border); }
+        .badge-won { background: rgba(16,185,129,0.12); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+
+        /* ── MATCH ACTIONS ── */
+        .match-actions { display: flex; flex-direction: column; gap: 6px; min-width: 220px; }
+        .actions-row { display: flex; gap: 6px; }
+        .btn-sm { padding: 6px 12px; border-radius: 7px; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.3px; border: none; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .btn-live { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4); color: var(--red); }
+        .btn-live:hover { background: rgba(239,68,68,0.25); }
+        .btn-green { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4); color: var(--green); }
+        .btn-green:hover { background: rgba(16,185,129,0.25); }
+        .btn-yellow { background: rgba(251,191,36,0.15); border: 1px solid rgba(251,191,36,0.4); color: var(--yellow); }
+        .btn-yellow:hover { background: rgba(251,191,36,0.25); }
+        .btn-gray { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #888; }
+        .btn-gray:hover { background: rgba(255,255,255,0.1); }
+        .btn-danger { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4); color: var(--red); }
+        .score-input { width: 44px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 6px 8px; color: #fff; font-size: 14px; font-weight: 900; text-align: center; outline: none; }
+        .score-input:focus { border-color: rgba(16,185,129,0.5); }
+        .result-btns { display: flex; gap: 4px; }
+        .btn-result { flex: 1; padding: 6px 4px; border-radius: 6px; font-size: 10px; font-weight: 900; text-align: center; cursor: pointer; border: 1px solid var(--border); background: rgba(255,255,255,0.03); color: #666; transition: all 0.2s; }
+        .btn-result:hover { border-color: rgba(255,255,255,0.2); color: #fff; }
+        .btn-result.win1 { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.4); color: var(--green); }
+        .btn-result.draw { background: rgba(251,191,36,0.15); border-color: rgba(251,191,36,0.4); color: var(--yellow); }
+        .btn-result.win2 { background: rgba(59,130,246,0.15); border-color: rgba(59,130,246,0.4); color: var(--blue); }
+
+        /* ── MODAL ── */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(6px); z-index: 500; display: none; align-items: center; justify-content: center; }
+        .modal-overlay.open { display: flex; }
+        .modal-box { background: #111; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 28px; width: 440px; max-width: 95vw; }
+        .modal-box h3 { font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
+        .modal-box h3 span { color: var(--green); }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 9px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .form-group input, .form-group select { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: #fff; font-size: 13px; outline: none; }
+        .form-group input:focus, .form-group select:focus { border-color: rgba(16,185,129,0.4); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .modal-footer { display: flex; gap: 10px; margin-top: 20px; }
+        .modal-footer button { flex: 1; }
+
+        /* ── BETS TAB ── */
+        .bets-table { width: 100%; border-collapse: collapse; }
+        .bets-table th { font-size: 9px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+        .bets-table td { padding: 10px 12px; font-size: 11px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: top; }
+        .bets-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+        /* ── NOTIFICATION ── */
+        #notif { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+        .notif-item { padding: 12px 18px; border-radius: 10px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; animation: slideIn 0.3s ease; min-width: 260px; }
+        .notif-success { background: var(--green); color: #000; }
+        .notif-error { background: var(--red); color: #fff; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* ── GROUP FILTER ── */
+        .filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+        .filter-btn { padding: 5px 12px; border-radius: 99px; font-size: 9px; font-weight: 900; text-transform: uppercase; border: 1px solid var(--border); background: rgba(255,255,255,0.03); color: #666; cursor: pointer; transition: all 0.2s; }
+        .filter-btn.active { border-color: var(--green); background: rgba(16,185,129,0.12); color: var(--green); }
+
+        /* responsive */
+        @media(max-width: 768px) {
+            .stats-row { grid-template-columns: 1fr 1fr; }
+            .match-row { grid-template-columns: 1fr; gap: 10px; }
+            .team-home, .team-away { text-align: left; }
+            .main { padding: 16px; }
+        }
     </style>
 </head>
 <body>
 
-<!-- TOAST -->
-<div id="toast-container"></div>
-
-<div style="max-width:900px;margin:0 auto;padding:24px 16px;">
-
-    <!-- HEADER -->
-    <div class="glass" style="padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-        <div>
-            <h1 class="font-casino" style="font-size:20px;margin:0;color:var(--mx-green);">⚙️ WinMX Admin</h1>
-            <p style="font-size:10px;color:#555;margin:4px 0 0;font-weight:600;text-transform:uppercase;">Panel de Control · Mundial 2026</p>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;">
-            <div id="conn-indicator" style="display:flex;align-items:center;gap:6px;font-size:10px;color:#555;font-weight:700;">
-                <div class="spinner"></div> Conectando…
-            </div>
-            <button class="btn btn-gray" onclick="loadAll()"><i class="fas fa-sync-alt"></i> Actualizar</button>
-        </div>
-    </div>
-
-    <!-- STATS ROW -->
-    <div class="grid-3" style="margin-bottom:24px;">
-        <div class="stat-card">
-            <div class="stat-val" id="stat-total">—</div>
-            <div class="stat-lbl">Partidos totales</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-val" id="stat-live" style="color:#ef4444;">—</div>
-            <div class="stat-lbl">En vivo ahora</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-val" id="stat-bets">—</div>
-            <div class="stat-lbl">Apuestas pendientes</div>
-        </div>
-    </div>
-
-    <!-- TABS -->
-    <div class="tab-bar">
-        <div class="tab active" id="tab-matches" onclick="switchTab('matches')">⚽ Partidos</div>
-        <div class="tab" id="tab-create" onclick="switchTab('create')">➕ Nuevo Partido</div>
-        <div class="tab" id="tab-bets" onclick="switchTab('bets')">🎫 Apuestas</div>
-    </div>
-
-    <!-- ====== TAB: PARTIDOS ====== -->
-    <div id="view-matches">
-        <div id="matches-list"><div style="text-align:center;padding:48px;"><div class="spinner" style="margin:0 auto;"></div></div></div>
-    </div>
-
-    <!-- ====== TAB: CREAR PARTIDO ====== -->
-    <div id="view-create" style="display:none;">
-        <div class="glass" style="padding:24px;">
-            <div class="section-title"><i class="fas fa-plus-circle"></i> Crear Nuevo Partido</div>
-            <div class="grid-2" style="margin-bottom:12px;">
-                <div><label>Equipo Local</label><input id="c-home" placeholder="Ej: México" /></div>
-                <div><label>Equipo Visitante</label><input id="c-away" placeholder="Ej: Argentina" /></div>
-            </div>
-            <div class="grid-3" style="margin-bottom:12px;">
-                <div><label>Fecha</label><input id="c-date" type="text" placeholder="26 Jun" /></div>
-                <div><label>Hora</label><input id="c-time" type="text" placeholder="18:00" /></div>
-                <div><label>Estadio</label><input id="c-venue" placeholder="Estadio Azteca" /></div>
-            </div>
-            <div class="grid-2" style="margin-bottom:12px;">
-                <div><label>Grupo / Fase</label><input id="c-group" placeholder="A" /></div>
-                <div>
-                    <label>Fase</label>
-                    <select id="c-phase">
-                        <option value="Grupos">Grupos</option>
-                        <option value="Octavos">Octavos</option>
-                        <option value="Cuartos">Cuartos</option>
-                        <option value="Semifinal">Semifinal</option>
-                        <option value="Final">Final</option>
-                    </select>
-                </div>
-            </div>
-            <div class="odds-row" style="margin-bottom:16px;">
-                <div class="section-title" style="margin-bottom:10px;font-size:10px;"><i class="fas fa-chart-line"></i> Cuotas iniciales</div>
-                <div class="grid-3">
-                    <div><label>1 Local</label><input id="c-odd1" type="number" step="0.01" value="2.00" /></div>
-                    <div><label>X Empate</label><input id="c-oddx" type="number" step="0.01" value="3.20" /></div>
-                    <div><label>2 Visitante</label><input id="c-odd2" type="number" step="0.01" value="3.50" /></div>
-                </div>
-            </div>
-            <button class="btn btn-green" style="width:100%;padding:14px;" onclick="createMatch()"><i class="fas fa-save"></i> &nbsp;Crear Partido</button>
-        </div>
-    </div>
-
-    <!-- ====== TAB: APUESTAS ====== -->
-    <div id="view-bets" style="display:none;">
-        <div id="bets-list"><div style="text-align:center;padding:48px;"><div class="spinner" style="margin:0 auto;"></div></div></div>
-    </div>
-
-</div>
-
-<!-- MODAL EDITAR PARTIDO -->
-<div id="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:800;backdrop-filter:blur(4px);" onclick="closeModal()"></div>
-<div id="modal-edit" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:900;width:min(560px,95vw);max-height:90vh;overflow-y:auto;">
-    <div class="glass" style="padding:24px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <h2 class="font-casino" style="font-size:15px;margin:0;color:var(--mx-green);" id="modal-title">Editar Partido</h2>
-            <button onclick="closeModal()" style="background:rgba(255,255,255,0.06);border:none;color:#888;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;">✕</button>
-        </div>
-        <div id="modal-body"></div>
+<!-- LOGIN -->
+<div id="login-screen">
+    <div class="login-box">
+        <h1>WinMX</h1>
+        <p>Panel de Administración</p>
+        <input id="admin-pass" type="password" placeholder="Contraseña de administrador" onkeydown="if(event.key==='Enter') Auth.login()">
+        <button class="btn-primary" onclick="Auth.login()">Ingresar al Panel</button>
     </div>
 </div>
+
+<!-- APP -->
+<div id="app">
+    <div class="topbar">
+        <span class="topbar-logo">⚽ WinMX Admin</span>
+        <span class="topbar-badge">Mundial 2026</span>
+        <div class="topbar-right">
+            <div class="live-count"><div class="live-dot"></div><span id="live-count-label">0 en vivo</span></div>
+            <button class="btn-sm btn-green" onclick="Modal.openAdd()"><i class="fas fa-plus"></i> Agregar Partido</button>
+            <button class="btn-sm btn-gray" onclick="Auth.logout()"><i class="fas fa-sign-out-alt"></i> Salir</button>
+        </div>
+    </div>
+
+    <div class="main">
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-card"><div class="label">Partidos Totales</div><div class="value" id="stat-total">0</div></div>
+            <div class="stat-card"><div class="label">En Vivo Ahora</div><div class="value red" id="stat-live">0</div></div>
+            <div class="stat-card"><div class="label">Apuestas Pendientes</div><div class="value yellow" id="stat-bets">0</div></div>
+            <div class="stat-card"><div class="label">Total en Juego (MXN)</div><div class="value green" id="stat-amount">$0</div></div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab active" id="tab-matches" onclick="Admin.setTab('matches')">⚽ Partidos</div>
+            <div class="tab" id="tab-bets" onclick="Admin.setTab('bets')">📋 Apuestas</div>
+        </div>
+
+        <!-- MATCHES TAB -->
+        <div id="panel-matches">
+            <div class="filter-row" id="group-filters"></div>
+            <div class="section-title" id="matches-section-title">Todos los partidos</div>
+            <div class="match-grid" id="matches-list">
+                <div style="text-align:center; padding:60px 0; color:#444; font-size:12px; font-weight:700; text-transform:uppercase;">Cargando partidos...</div>
+            </div>
+        </div>
+
+        <!-- BETS TAB -->
+        <div id="panel-bets" style="display:none;">
+            <div class="section-title">Todas las apuestas activas</div>
+            <div style="overflow-x:auto;">
+                <table class="bets-table">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Monto</th>
+                            <th>Cuota</th>
+                            <th>Potencial</th>
+                            <th>Picks</th>
+                            <th>Estado</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bets-tbody">
+                        <tr><td colspan="7" style="text-align:center; color:#444; padding:40px;">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ADD / EDIT MATCH MODAL -->
+<div class="modal-overlay" id="modal-match">
+    <div class="modal-box">
+        <h3 id="modal-title">Agregar <span>Partido</span></h3>
+        <input type="hidden" id="edit-match-id">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Equipo Local</label>
+                <input id="f-home" type="text" placeholder="🇲🇽 México">
+            </div>
+            <div class="form-group" style="display:flex; align-items:flex-end; justify-content:center; padding-bottom:16px;">
+                <span style="font-weight:900; color:#555; font-size:18px;">VS</span>
+            </div>
+            <div class="form-group">
+                <label>Equipo Visitante</label>
+                <input id="f-away" type="text" placeholder="🇧🇷 Brasil">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Cuota Local (1)</label>
+                <input id="f-odd1" type="number" step="0.01" placeholder="1.75">
+            </div>
+            <div class="form-group">
+                <label>Cuota Empate (X)</label>
+                <input id="f-oddx" type="number" step="0.01" placeholder="3.20">
+            </div>
+            <div class="form-group">
+                <label>Cuota Visitante (2)</label>
+                <input id="f-odd2" type="number" step="0.01" placeholder="4.50">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Fecha (ej: Jun 11)</label>
+                <input id="f-date" type="text" placeholder="Jun 11">
+            </div>
+            <div class="form-group">
+                <label>Hora (ej: 14:00)</label>
+                <input id="f-time" type="text" placeholder="14:00">
+            </div>
+            <div class="form-group">
+                <label>Grupo</label>
+                <input id="f-group" type="text" placeholder="A">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Estadio / Sede</label>
+            <input id="f-venue" type="text" placeholder="Estadio Azteca, México">
+        </div>
+        <div class="form-group">
+            <label>Fase</label>
+            <select id="f-phase">
+                <option value="Grupos">Fase de Grupos</option>
+                <option value="Octavos">Octavos de Final</option>
+                <option value="Cuartos">Cuartos de Final</option>
+                <option value="Semifinal">Semifinal</option>
+                <option value="Final">Final</option>
+            </select>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-sm btn-gray" style="padding:12px;" onclick="Modal.close()">Cancelar</button>
+            <button class="btn-primary" onclick="Modal.save()">Guardar Partido</button>
+        </div>
+    </div>
+</div>
+
+<!-- CONFIRM RESULT MODAL -->
+<div class="modal-overlay" id="modal-result">
+    <div class="modal-box" style="max-width:360px;">
+        <h3>Confirmar <span>Resultado</span></h3>
+        <input type="hidden" id="res-match-id">
+        <input type="hidden" id="res-result">
+        <div id="res-summary" style="background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.2); border-radius:10px; padding:16px; margin-bottom:20px; text-align:center;"></div>
+        <p style="font-size:11px; color:#888; margin-bottom:20px; line-height:1.6;">
+            Al confirmar:<br>
+            ✅ Se pagará automáticamente a todos los usuarios que acertaron.<br>
+            ❌ Los tickets perdedores quedarán cerrados.<br>
+            🔒 El partido se ocultará de la sección del casino.
+        </p>
+        <div class="modal-footer">
+            <button class="btn-sm btn-gray" style="padding:12px;" onclick="document.getElementById('modal-result').classList.remove('open')">Cancelar</button>
+            <button class="btn-primary" onclick="Admin.confirmResult()">✅ Confirmar y Pagar</button>
+        </div>
+    </div>
+</div>
+
+<div id="notif"></div>
 
 <script>
-// ────────────────────────────────────────────────────────────
-// SUPABASE CONFIG — PEGA TUS CREDENCIALES AQUÍ
-// ────────────────────────────────────────────────────────────
-const SUPABASE_URL = 'https://ftuqlmsstnzjhbodgeii.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0dXFsbXNzdG56amhib2RnZWlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0NzU2MDgsImV4cCI6MjA2NDA1MTYwOH0.K5TBJqXhqMHD3L-LTXL7fqEY7dNfSHYT9PtL3vFv8J4';
+const DB = { url: "https://dakhnqriwbzihlzhtfcb.supabase.co", key: "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs" };
+const sb = window.supabase.createClient(DB.url, DB.key);
+const ADMIN_PASS = "winmx2026admin"; // ← Cambia esta contraseña
 
-const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+// ─── NOTIFICACIONES ───────────────────────────────────────────
+const notify = (msg, type = 'success') => {
+    const n = document.createElement('div');
+    n.className = `notif-item notif-${type}`;
+    n.innerText = msg;
+    document.getElementById('notif').appendChild(n);
+    setTimeout(() => n.remove(), 4000);
+};
 
-let allMatches = [];
-let allBets = [];
-let currentTab = 'matches';
-let editingId = null;
-
-// ── Toast ──────────────────────────────────────────
-function toast(msg, type = 'success') {
-    const c = document.getElementById('toast-container');
-    const t = document.createElement('div');
-    t.className = `toast toast-${type}`;
-    t.innerHTML = msg;
-    c.appendChild(t);
-    setTimeout(() => t.remove(), 3500);
-}
-
-// ── Tab switching ──────────────────────────────────
-function switchTab(tab) {
-    currentTab = tab;
-    ['matches','create','bets'].forEach(t => {
-        document.getElementById(`view-${t}`).style.display = t === tab ? 'block' : 'none';
-        document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
-    });
-    if (tab === 'bets') loadBets();
-}
-
-// ── Load all ──────────────────────────────────────
-async function loadAll() {
-    await loadMatches();
-    await loadStats();
-}
-
-async function loadMatches() {
-    const { data, error } = await sb.from('wc_matches').select('*').order('match_date', { ascending: true });
-    if (error) return toast('Error cargando partidos: ' + error.message, 'error');
-    allMatches = data || [];
-    renderMatchesList();
-}
-
-async function loadStats() {
-    const total = allMatches.length;
-    const live  = allMatches.filter(m => m.status === 'live').length;
-    document.getElementById('stat-total').innerText = total;
-    document.getElementById('stat-live').innerText  = live;
-    const { count } = await sb.from('wc_bets').select('*', { count: 'exact', head: true }).eq('status', 'pending');
-    document.getElementById('stat-bets').innerText = count ?? '—';
-}
-
-async function loadBets() {
-    const list = document.getElementById('bets-list');
-    list.innerHTML = '<div style="text-align:center;padding:40px;"><div class="spinner" style="margin:0 auto;"></div></div>';
-    const { data, error } = await sb.from('wc_bets').select('*, usuarios(email)').order('created_at', { ascending: false }).limit(100);
-    if (error) { list.innerHTML = `<p style="color:#ef4444;text-align:center;font-size:11px;padding:24px;">Error: ${error.message}</p>`; return; }
-    allBets = data || [];
-    renderBetsList();
-}
-
-// ── Render matches ──────────────────────────────────
-function renderMatchesList() {
-    const list = document.getElementById('matches-list');
-    if (allMatches.length === 0) {
-        list.innerHTML = '<div style="text-align:center;padding:60px;color:#555;font-size:11px;font-weight:700;text-transform:uppercase;">No hay partidos aún. Crea el primero ↑</div>';
-        return;
+// ─── AUTH ─────────────────────────────────────────────────────
+const Auth = {
+    login() {
+        const pass = document.getElementById('admin-pass').value;
+        if (pass !== ADMIN_PASS) return notify('Contraseña incorrecta', 'error');
+        sessionStorage.setItem('admin_ok', '1');
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        Admin.init();
+    },
+    logout() {
+        sessionStorage.removeItem('admin_ok');
+        location.reload();
+    },
+    check() {
+        if (sessionStorage.getItem('admin_ok') === '1') {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            Admin.init();
+        }
     }
-    // Sort: live first, then upcoming, then finished
-    const sorted = [...allMatches].sort((a, b) => {
-        const ord = { live: 0, upcoming: 1, finished: 2 };
-        return (ord[a.status] ?? 1) - (ord[b.status] ?? 1);
-    });
-    list.innerHTML = sorted.map(m => matchRow(m)).join('');
-}
+};
 
-function matchRow(m) {
-    const isLive = m.status === 'live';
-    const isFinished = m.status === 'finished';
-    const isPaused = isLive && m.bets_paused;
+// ─── ADMIN CORE ───────────────────────────────────────────────
+const Admin = {
+    matches: [],
+    bets: [],
+    currentFilter: 'all',
+    currentTab: 'matches',
 
-    const statusBadge = isLive
-        ? `<span class="badge badge-live"><span class="live-dot"></span>EN VIVO</span>${isPaused ? ' <span class="badge badge-paused">⏸ PAUSADO</span>' : ''}`
-        : isFinished
-        ? `<span class="badge badge-finished">FINALIZADO</span>`
-        : `<span class="badge badge-upcoming">PRÓXIMO</span>`;
+    async init() {
+        await this.loadMatches();
+        await this.loadBets();
+        this.subscribeRealtime();
+        this.updateStats();
+    },
 
-    const scoreHtml = isLive || isFinished
-        ? `<span style="font-family:'Archivo Black',sans-serif;font-size:22px;color:white;letter-spacing:6px;">${m.score_home ?? 0} — ${m.score_away ?? 0}</span>`
-        : `<span style="font-size:13px;color:#333;font-weight:900;">VS</span>`;
+    // ── Carga partidos desde Supabase ──
+    async loadMatches() {
+        const { data, error } = await sb
+            .from('wc_matches')
+            .select('*')
+            .order('match_date', { ascending: true });
+        if (error) { notify('Error cargando partidos: ' + error.message, 'error'); return; }
+        this.matches = data || [];
+        this.renderFilters();
+        this.renderMatches();
+        this.updateStats();
+    },
 
-    return `
-    <div class="match-row ${isLive ? 'live' : ''} ${isFinished ? 'finished' : ''}" id="mr-${m.id}">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                ${statusBadge}
-                <span style="font-size:9px;color:#555;font-weight:700;">${m.match_date || ''} · ${m.match_time || ''} ${m.venue ? '· '+m.venue : ''}</span>
-                ${isLive && m.minute ? `<span style="font-size:9px;color:#ef4444;font-weight:900;">${m.minute}'</span>` : ''}
-            </div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                ${!isFinished ? `<button class="btn btn-gray" style="padding:7px 14px;" onclick="openEdit('${m.id}')"><i class="fas fa-pen"></i> Editar</button>` : ''}
-                ${!isLive && !isFinished ? `<button class="btn btn-green" style="padding:7px 14px;" onclick="goLive('${m.id}')"><i class="fas fa-broadcast-tower"></i> Iniciar EN VIVO</button>` : ''}
-                ${isLive ? `
-                    ${isPaused
-                        ? `<button class="btn btn-green" style="padding:7px 14px;" onclick="toggleBetsPause('${m.id}', false)"><i class="fas fa-play"></i> Reanudar Apuestas</button>`
-                        : `<button class="btn btn-yellow" style="padding:7px 14px;" onclick="toggleBetsPause('${m.id}', true)"><i class="fas fa-pause"></i> Pausar Apuestas</button>`
+    // ── Carga apuestas ──
+    async loadBets() {
+        const { data, error } = await sb
+            .from('wc_bets')
+            .select('*, usuarios(email)')
+            .order('created_at', { ascending: false });
+        if (error) { notify('Error cargando apuestas: ' + error.message, 'error'); return; }
+        this.bets = data || [];
+        this.renderBets();
+        this.updateStats();
+    },
+
+    // ── Auto-refresh cada 15s (sin WebSocket para evitar errores de red) ──
+    subscribeRealtime() {
+        setInterval(() => { this.loadMatches(); this.loadBets(); }, 15000);
+    },
+
+    // ── Stats ──
+    updateStats() {
+        const live = this.matches.filter(m => m.status === 'live').length;
+        const pending = this.bets.filter(b => b.status === 'pending').length;
+        const amount = this.bets.filter(b => b.status === 'pending').reduce((s, b) => s + (b.amount || 0), 0);
+        document.getElementById('stat-total').innerText = this.matches.length;
+        document.getElementById('stat-live').innerText = live;
+        document.getElementById('stat-bets').innerText = pending;
+        document.getElementById('stat-amount').innerText = '$' + amount.toFixed(2);
+        document.getElementById('live-count-label').innerText = live + (live === 1 ? ' en vivo' : ' en vivo');
+    },
+
+    // ── Filtros de grupo ──
+    renderFilters() {
+        const container = document.getElementById('group-filters');
+        const groups = ['Todos', ...new Set(this.matches.map(m => m.group_name).filter(Boolean).sort())];
+        container.innerHTML = groups.map(g => {
+            const val = g === 'Todos' ? 'all' : g;
+            return `<button class="filter-btn ${this.currentFilter === val ? 'active' : ''}" onclick="Admin.filterBy('${val}')">${g === 'Todos' ? 'Todos' : 'Grupo ' + g}</button>`;
+        }).join('');
+    },
+
+    filterBy(val) {
+        this.currentFilter = val;
+        this.renderFilters();
+        this.renderMatches();
+    },
+
+    // ── Render lista de partidos ──
+    renderMatches() {
+        const list = document.getElementById('matches-list');
+        let filtered = this.currentFilter === 'all'
+            ? this.matches
+            : this.matches.filter(m => m.group_name === this.currentFilter);
+
+        // Ordenar: live primero, luego upcoming, luego finished
+        filtered = [...filtered].sort((a, b) => {
+            const order = { live: 0, upcoming: 1, finished: 2 };
+            return (order[a.status] ?? 1) - (order[b.status] ?? 1);
+        });
+
+        if (filtered.length === 0) {
+            list.innerHTML = `<div style="text-align:center; padding:60px 0; color:#444; font-size:12px; font-weight:700; text-transform:uppercase;">Sin partidos. Agrega uno con el botón de arriba.</div>`;
+            return;
+        }
+
+        list.innerHTML = filtered.map(m => this.matchCard(m)).join('');
+    },
+
+    matchCard(m) {
+        const isLive     = m.status === 'live';
+        const isFinished = m.status === 'finished';
+        const isUpcoming = m.status === 'upcoming';
+
+        const statusBadge = isLive
+            ? `<span class="match-status-badge badge-live">● EN VIVO ${m.minute ? m.minute + "'" : ''}${m.bets_paused ? ' · ⏸ PAUSADO' : ''}</span>`
+            : isFinished
+            ? `<span class="match-status-badge badge-finished">FIN · ${m.result === '1' ? m.home + ' ganó' : m.result === '2' ? m.away + ' ganó' : 'Empate'}</span>`
+            : `<span class="match-status-badge badge-upcoming">📅 ${m.match_date || ''} ${m.match_time || ''}</span>`;
+
+        // Bets pendientes para este partido
+        const pendingBets = this.bets.filter(b =>
+            b.status === 'pending' &&
+            b.picks && b.picks.some(p => p.matchId === m.id)
+        );
+
+        const scoreSection = isLive || isFinished
+            ? `<div class="score-display">
+                <div class="score-nums" id="score-display-${m.id}">${m.score_home ?? 0} - ${m.score_away ?? 0}</div>
+                <div class="match-meta">${statusBadge}</div>
+               </div>`
+            : `<div class="score-display">
+                <div style="font-size:13px; font-weight:900; color:#333;">VS</div>
+                <div class="match-meta">${statusBadge}</div>
+               </div>`;
+
+        const actionButtons = isFinished
+            ? `<div style="font-size:10px; color:#555; font-weight:700; text-transform:uppercase; text-align:center; padding:8px;">
+                ✅ Partido cerrado · ${pendingBets.length} apuestas resueltas
+               </div>`
+            : isLive
+            ? `<div class="match-actions">
+                <!-- Score update -->
+                <div class="actions-row" style="align-items:center; gap:8px;">
+                    <span style="font-size:9px;color:#555;font-weight:700;text-transform:uppercase;white-space:nowrap;">Marcador:</span>
+                    <input class="score-input" id="sh-${m.id}" type="number" min="0" value="${m.score_home ?? 0}" placeholder="0">
+                    <span style="color:#555;font-weight:900;">-</span>
+                    <input class="score-input" id="sa-${m.id}" type="number" min="0" value="${m.score_away ?? 0}" placeholder="0">
+                    <button class="btn-sm btn-green" onclick="Admin.updateScore('${m.id}')"><i class="fas fa-sync-alt"></i> Actualizar</button>
+                </div>
+                <!-- Minute -->
+                <div class="actions-row" style="align-items:center; gap:8px;">
+                    <span style="font-size:9px;color:#555;font-weight:700;text-transform:uppercase;white-space:nowrap;">Minuto:</span>
+                    <input class="score-input" id="min-${m.id}" type="number" min="0" max="120" value="${m.minute ?? 1}" placeholder="45" style="width:54px;">
+                    <button class="btn-sm btn-yellow" onclick="Admin.updateMinute('${m.id}')">Guardar</button>
+                    <button class="btn-sm btn-gray" onclick="Admin.setPaused('${m.id}')"><i class="fas fa-pause"></i> HT</button>
+                </div>
+                <!-- Odds en vivo -->
+                <div class="actions-row" style="align-items:center; gap:6px; flex-wrap:wrap;">
+                    <span style="font-size:9px;color:#555;font-weight:700;text-transform:uppercase;white-space:nowrap;">Cuotas:</span>
+                    <input class="score-input" id="o1-${m.id}" type="number" step="0.01" value="${(m.home_odd||2).toFixed(2)}" placeholder="1" style="width:54px;" title="Cuota Local">
+                    <input class="score-input" id="ox-${m.id}" type="number" step="0.01" value="${(m.draw_odd||3.2).toFixed(2)}" placeholder="X" style="width:54px;" title="Cuota Empate">
+                    <input class="score-input" id="o2-${m.id}" type="number" step="0.01" value="${(m.away_odd||3.5).toFixed(2)}" placeholder="2" style="width:54px;" title="Cuota Visitante">
+                    <button class="btn-sm btn-green" onclick="Admin.updateOdds('${m.id}')">Actualizar</button>
+                </div>
+                <!-- Pausar/reanudar apuestas -->
+                <div class="actions-row">
+                    ${m.bets_paused
+                        ? `<button class="btn-sm btn-green" style="flex:1;padding:8px;" onclick="Admin.toggleBetsPause('${m.id}', false)"><i class="fas fa-play"></i> Reanudar Apuestas</button>`
+                        : `<button class="btn-sm btn-yellow" style="flex:1;padding:8px;" onclick="Admin.toggleBetsPause('${m.id}', true)"><i class="fas fa-pause"></i> Pausar Apuestas</button>`
                     }
-                    <button class="btn btn-red" style="padding:7px 14px;" onclick="finishMatch('${m.id}')"><i class="fas fa-flag-checkered"></i> Finalizar</button>
-                ` : ''}
-                ${isFinished ? `<button class="btn btn-blue" style="padding:7px 14px;" onclick="settleMatch('${m.id}')"><i class="fas fa-gavel"></i> Resolver Apuestas</button>` : ''}
-                <button class="btn btn-red" style="padding:7px 14px;background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.3);" onclick="deleteMatch('${m.id}')"><i class="fas fa-trash"></i></button>
-            </div>
-        </div>
-
-        <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
-            <div style="flex:1;text-align:right;"><span style="font-size:16px;font-weight:900;color:white;">${m.home}</span></div>
-            <div style="padding:6px 16px;background:rgba(255,255,255,0.04);border-radius:8px;border:1px solid rgba(255,255,255,0.07);text-align:center;">${scoreHtml}</div>
-            <div style="flex:1;text-align:left;"><span style="font-size:16px;font-weight:900;color:white;">${m.away}</span></div>
-        </div>
-
-        <div class="odds-row" style="display:flex;gap:12px;">
-            <div style="flex:1;text-align:center;">
-                <div style="font-size:8px;color:#555;font-weight:700;text-transform:uppercase;margin-bottom:2px;">1 Local</div>
-                <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--mx-green);">${(m.home_odd||2).toFixed(2)}</div>
-            </div>
-            <div style="flex:1;text-align:center;">
-                <div style="font-size:8px;color:#555;font-weight:700;text-transform:uppercase;margin-bottom:2px;">X Empate</div>
-                <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--mx-green);">${(m.draw_odd||3.2).toFixed(2)}</div>
-            </div>
-            <div style="flex:1;text-align:center;">
-                <div style="font-size:8px;color:#555;font-weight:700;text-transform:uppercase;margin-bottom:2px;">2 Visitante</div>
-                <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--mx-green);">${(m.away_odd||3.5).toFixed(2)}</div>
-            </div>
-        </div>
-    </div>`;
-}
-
-// ── Open edit modal ─────────────────────────────────────────
-function openEdit(id) {
-    const m = allMatches.find(x => x.id === id);
-    if (!m) return;
-    editingId = id;
-    const isLive = m.status === 'live';
-
-    document.getElementById('modal-title').innerText = `${m.home} vs ${m.away}`;
-
-    let body = '';
-
-    if (isLive) {
-        // ── EN VIVO: solo marcador, minuto, cuotas, pausa ──
-        body = `
-        <div class="score-box" style="margin-bottom:14px;">
-            <div class="section-title" style="margin-bottom:10px;font-size:10px;"><span class="live-dot"></span> Marcador EN VIVO</div>
-            <div class="grid-2" style="margin-bottom:8px;">
-                <div>
-                    <label>${m.home}</label>
-                    <input id="e-score-home" type="number" min="0" value="${m.score_home ?? 0}" />
                 </div>
+                <!-- Result -->
                 <div>
-                    <label>${m.away}</label>
-                    <input id="e-score-away" type="number" min="0" value="${m.score_away ?? 0}" />
+                    <div style="font-size:9px;color:#555;font-weight:700;text-transform:uppercase;margin-bottom:5px;">Marcar Resultado Final:</div>
+                    <div class="result-btns">
+                        <button class="btn-result win1" onclick="Admin.openResultConfirm('${m.id}','1','${m.home.replace(/'/g,"\\'")} gana')" title="Gana local">1 ${m.home}</button>
+                        <button class="btn-result draw" onclick="Admin.openResultConfirm('${m.id}','X','Empate')" title="Empate">X Empate</button>
+                        <button class="btn-result win2" onclick="Admin.openResultConfirm('${m.id}','2','${m.away.replace(/'/g,"\\'")} gana')" title="Gana visitante">2 ${m.away}</button>
+                    </div>
                 </div>
-            </div>
-            <div>
-                <label>Minuto del partido</label>
-                <input id="e-minute" type="number" min="0" max="120" value="${m.minute || ''}" placeholder="45" />
-            </div>
-        </div>
-        <div class="live-controls" style="margin-bottom:14px;">
-            <div class="section-title" style="margin-bottom:10px;font-size:10px;"><i class="fas fa-chart-line"></i> Cuotas en vivo</div>
-            <div class="grid-3">
-                <div><label>1 Local</label><input id="e-odd1" type="number" step="0.01" value="${(m.home_odd||2).toFixed(2)}" /></div>
-                <div><label>X Empate</label><input id="e-oddx" type="number" step="0.01" value="${(m.draw_odd||3.2).toFixed(2)}" /></div>
-                <div><label>2 Visitante</label><input id="e-odd2" type="number" step="0.01" value="${(m.away_odd||3.5).toFixed(2)}" /></div>
-            </div>
-        </div>
-        <div style="display:flex;gap:10px;margin-bottom:14px;">
-            <button class="btn ${m.bets_paused ? 'btn-green' : 'btn-yellow'}" style="flex:1;" onclick="toggleBetsPause('${id}', ${!m.bets_paused}); closeModal();">
-                <i class="fas fa-${m.bets_paused ? 'play' : 'pause'}"></i> ${m.bets_paused ? 'Reanudar Apuestas' : 'Pausar Apuestas'}
-            </button>
-        </div>
-        <button class="btn btn-green" style="width:100%;padding:14px;" onclick="saveLiveEdit('${id}')">
-            <i class="fas fa-save"></i> &nbsp;Guardar Cambios
-        </button>`;
-    } else {
-        // ── PRÓXIMO: editar todo ──
-        body = `
-        <div class="grid-2" style="margin-bottom:12px;">
-            <div><label>Equipo Local</label><input id="e-home" value="${m.home || ''}" /></div>
-            <div><label>Equipo Visitante</label><input id="e-away" value="${m.away || ''}" /></div>
-        </div>
-        <div class="grid-3" style="margin-bottom:12px;">
-            <div><label>Fecha</label><input id="e-date" value="${m.match_date || ''}" /></div>
-            <div><label>Hora</label><input id="e-time" value="${m.match_time || ''}" /></div>
-            <div><label>Estadio</label><input id="e-venue" value="${m.venue || ''}" /></div>
-        </div>
-        <div class="grid-2" style="margin-bottom:12px;">
-            <div><label>Grupo</label><input id="e-group" value="${m.group_name || ''}" /></div>
-            <div><label>Fase</label>
-                <select id="e-phase">
-                    ${['Grupos','Octavos','Cuartos','Semifinal','Final'].map(p => `<option value="${p}" ${m.phase===p?'selected':''}>${p}</option>`).join('')}
-                </select>
-            </div>
-        </div>
-        <div class="odds-row" style="margin-bottom:16px;">
-            <div class="section-title" style="margin-bottom:10px;font-size:10px;"><i class="fas fa-chart-line"></i> Cuotas</div>
-            <div class="grid-3">
-                <div><label>1 Local</label><input id="e-odd1" type="number" step="0.01" value="${(m.home_odd||2).toFixed(2)}" /></div>
-                <div><label>X Empate</label><input id="e-oddx" type="number" step="0.01" value="${(m.draw_odd||3.2).toFixed(2)}" /></div>
-                <div><label>2 Visitante</label><input id="e-odd2" type="number" step="0.01" value="${(m.away_odd||3.5).toFixed(2)}" /></div>
-            </div>
-        </div>
-        <button class="btn btn-green" style="width:100%;padding:14px;" onclick="saveUpcomingEdit('${id}')">
-            <i class="fas fa-save"></i> &nbsp;Guardar Cambios
-        </button>`;
-    }
+                <div style="font-size:9px;color:#fbbf24;font-weight:700;text-transform:uppercase;">
+                    ⏳ ${pendingBets.length} apuesta${pendingBets.length !== 1 ? 's' : ''} pendiente${pendingBets.length !== 1 ? 's' : ''}
+                </div>
+               </div>`
+            : /* upcoming */
+            `<div class="match-actions">
+                <button class="btn-sm btn-live" style="padding:10px;" onclick="Admin.setLive('${m.id}')">
+                    <i class="fas fa-play"></i> Iniciar Partido EN VIVO
+                </button>
+                <div style="font-size:9px;color:#555;font-weight:700;text-transform:uppercase;text-align:center;">
+                    ${pendingBets.length} apuesta${pendingBets.length !== 1 ? 's' : ''} pre-partido
+                </div>
+                <div class="actions-row">
+                    <button class="btn-sm btn-gray" onclick="Modal.openEdit('${m.id}')"><i class="fas fa-edit"></i> Editar</button>
+                    <button class="btn-sm btn-danger" onclick="Admin.deleteMatch('${m.id}')"><i class="fas fa-trash"></i> Eliminar</button>
+                </div>
+               </div>`;
 
-    document.getElementById('modal-body').innerHTML = body;
-    document.getElementById('modal-overlay').style.display = 'block';
-    document.getElementById('modal-edit').style.display = 'block';
-}
-
-function closeModal() {
-    document.getElementById('modal-overlay').style.display = 'none';
-    document.getElementById('modal-edit').style.display = 'none';
-    editingId = null;
-}
-
-// ── Save live edit (sin notificación) ──────────────────────
-async function saveLiveEdit(id) {
-    const updates = {
-        score_home: parseInt(document.getElementById('e-score-home').value) || 0,
-        score_away: parseInt(document.getElementById('e-score-away').value) || 0,
-        minute: document.getElementById('e-minute').value || null,
-        home_odd: parseFloat(document.getElementById('e-odd1').value) || 2,
-        draw_odd: parseFloat(document.getElementById('e-oddx').value) || 3.2,
-        away_odd: parseFloat(document.getElementById('e-odd2').value) || 3.5,
-    };
-    const { error } = await sb.from('wc_matches').update(updates).eq('id', id);
-    if (error) return toast('Error: ' + error.message, 'error');
-    toast('✅ Partido actualizado (sin notificación a usuarios)', 'success');
-    closeModal();
-    await loadAll();
-}
-
-// ── Save upcoming edit ──────────────────────────────────────
-async function saveUpcomingEdit(id) {
-    const updates = {
-        home: document.getElementById('e-home').value.trim(),
-        away: document.getElementById('e-away').value.trim(),
-        match_date: document.getElementById('e-date').value.trim(),
-        match_time: document.getElementById('e-time').value.trim(),
-        venue: document.getElementById('e-venue').value.trim(),
-        group_name: document.getElementById('e-group').value.trim(),
-        phase: document.getElementById('e-phase').value,
-        home_odd: parseFloat(document.getElementById('e-odd1').value) || 2,
-        draw_odd: parseFloat(document.getElementById('e-oddx').value) || 3.2,
-        away_odd: parseFloat(document.getElementById('e-odd2').value) || 3.5,
-    };
-    if (!updates.home || !updates.away) return toast('Completa los equipos', 'error');
-    const { error } = await sb.from('wc_matches').update(updates).eq('id', id);
-    if (error) return toast('Error: ' + error.message, 'error');
-    toast('✅ Partido actualizado', 'success');
-    closeModal();
-    await loadAll();
-}
-
-// ── Iniciar en vivo → ESTO SÍ manda notificación a usuarios ─
-async function goLive(id) {
-    if (!confirm('¿Iniciar este partido EN VIVO? Esto notificará a todos los usuarios.')) return;
-    const { error } = await sb.from('wc_matches').update({
-        status: 'live',
-        score_home: 0,
-        score_away: 0,
-        minute: '0',
-        bets_paused: false,
-    }).eq('id', id);
-    if (error) return toast('Error: ' + error.message, 'error');
-    toast('🟢 ¡Partido iniciado EN VIVO! Notificación enviada a usuarios.', 'success');
-    await loadAll();
-}
-
-// ── Pausar / Reanudar apuestas ──────────────────────────────
-async function toggleBetsPause(id, pause) {
-    const { error } = await sb.from('wc_matches').update({ bets_paused: pause }).eq('id', id);
-    if (error) return toast('Error: ' + error.message, 'error');
-    toast(pause ? '⏸ Apuestas PAUSADAS — usuarios no pueden apostar' : '▶️ Apuestas REANUDADAS', pause ? 'error' : 'success');
-    await loadAll();
-}
-
-// ── Finalizar partido ───────────────────────────────────────
-async function finishMatch(id) {
-    const m = allMatches.find(x => x.id === id);
-    if (!m) return;
-    const scoreH = m.score_home ?? 0;
-    const scoreA = m.score_away ?? 0;
-    if (!confirm(`¿Finalizar ${m.home} ${scoreH}-${scoreA} ${m.away}? Esto cerrará el partido para nuevas apuestas.`)) return;
-    const { error } = await sb.from('wc_matches').update({ status: 'finished', bets_paused: true }).eq('id', id);
-    if (error) return toast('Error: ' + error.message, 'error');
-    toast('🏁 Partido finalizado. Ahora puedes resolver las apuestas.', 'success');
-    await loadAll();
-}
-
-// ── Resolver apuestas del partido ──────────────────────────
-async function settleMatch(id) {
-    const m = allMatches.find(x => x.id === id);
-    if (!m) return;
-    const scoreH = parseInt(m.score_home) || 0;
-    const scoreA = parseInt(m.score_away) || 0;
-    let winner = scoreH > scoreA ? '1' : scoreA > scoreH ? '2' : 'X';
-    if (!confirm(`Resolver apuestas de ${m.home} ${scoreH}-${scoreA} ${m.away}.\nGanador: "${winner === '1' ? m.home : winner === '2' ? m.away : 'Empate'}"\n\nSe pagarán las apuestas ganadoras. ¿Continuar?`)) return;
-
-    const { data: bets } = await sb.from('wc_bets').select('*').eq('status', 'pending');
-    if (!bets || bets.length === 0) { toast('No hay apuestas pendientes para este partido', 'error'); return; }
-
-    let paid = 0, lost = 0, errors = 0;
-    for (const bet of bets) {
-        const picks = bet.picks || [];
-        const thisPick = picks.find(p => p.matchId === id);
-        if (!thisPick) continue; // apuesta no incluye este partido
-
-        // Si la apuesta tiene varios partidos, revisamos si TODOS ganaron
-        const allResolved = picks.every(p => {
-            if (p.matchId === id) return thisPick.pick === winner;
-            const pm = allMatches.find(x => x.id === p.matchId);
-            if (!pm || pm.status !== 'finished') return false; // partido aún no resuelto
-            const ph = parseInt(pm.score_home) || 0;
-            const pa = parseInt(pm.score_away) || 0;
-            const pw = ph > pa ? '1' : pa > ph ? '2' : 'X';
-            return p.pick === pw;
-        });
-
-        // Si aún hay partidos pendientes en la apuesta, no resolverla ahora
-        const hasPending = picks.some(p => {
-            if (p.matchId === id) return false;
-            const pm = allMatches.find(x => x.id === p.matchId);
-            return !pm || pm.status !== 'finished';
-        });
-        if (hasPending) continue;
-
-        const newStatus = allResolved ? 'won' : 'lost';
-        const { error: betErr } = await sb.from('wc_bets').update({ status: newStatus }).eq('id', bet.id);
-        if (betErr) { errors++; continue; }
-
-        if (newStatus === 'won') {
-            const { error: balErr } = await sb.from('usuarios')
-                .update({ saldo: sb.rpc ? undefined : undefined })
-                .eq('id', bet.user_id);
-            // Usar RPC o raw update con increment
-            const { data: usr } = await sb.from('usuarios').select('saldo').eq('id', bet.user_id).single();
-            if (usr) {
-                await sb.from('usuarios').update({ saldo: usr.saldo + bet.potential_win }).eq('id', bet.user_id);
-            }
-            paid++;
-        } else { lost++; }
-    }
-
-    toast(`✅ Resuelto: ${paid} ganadas, ${lost} perdidas${errors ? ', '+errors+' errores' : ''}`, paid > 0 ? 'success' : 'error');
-    await loadAll();
-    if (currentTab === 'bets') await loadBets();
-}
-
-// ── Eliminar partido ────────────────────────────────────────
-async function deleteMatch(id) {
-    if (!confirm('¿Eliminar este partido? Esta acción no se puede deshacer.')) return;
-    const { error } = await sb.from('wc_matches').delete().eq('id', id);
-    if (error) return toast('Error: ' + error.message, 'error');
-    toast('Partido eliminado', 'success');
-    await loadAll();
-}
-
-// ── Crear partido ───────────────────────────────────────────
-async function createMatch() {
-    const home  = document.getElementById('c-home').value.trim();
-    const away  = document.getElementById('c-away').value.trim();
-    if (!home || !away) return toast('Completa los equipos', 'error');
-    const newMatch = {
-        home,
-        away,
-        match_date:  document.getElementById('c-date').value.trim(),
-        match_time:  document.getElementById('c-time').value.trim(),
-        venue:       document.getElementById('c-venue').value.trim(),
-        group_name:  document.getElementById('c-group').value.trim(),
-        phase:       document.getElementById('c-phase').value,
-        home_odd:    parseFloat(document.getElementById('c-odd1').value) || 2,
-        draw_odd:    parseFloat(document.getElementById('c-oddx').value) || 3.2,
-        away_odd:    parseFloat(document.getElementById('c-odd2').value) || 3.5,
-        status:      'upcoming',
-        score_home:  0,
-        score_away:  0,
-        bets_paused: false,
-    };
-    const { error } = await sb.from('wc_matches').insert([newMatch]);
-    if (error) return toast('Error: ' + error.message, 'error');
-    toast('✅ Partido creado', 'success');
-    ['c-home','c-away','c-date','c-time','c-venue','c-group'].forEach(id => { document.getElementById(id).value = ''; });
-    document.getElementById('c-odd1').value = '2.00';
-    document.getElementById('c-oddx').value = '3.20';
-    document.getElementById('c-odd2').value = '3.50';
-    await loadAll();
-    switchTab('matches');
-}
-
-// ── Render bets ─────────────────────────────────────────────
-function renderBetsList() {
-    const list = document.getElementById('bets-list');
-    if (allBets.length === 0) {
-        list.innerHTML = '<div style="text-align:center;padding:60px;color:#555;font-size:11px;font-weight:700;text-transform:uppercase;">No hay apuestas registradas</div>';
-        return;
-    }
-    list.innerHTML = allBets.map(b => {
-        const sc = b.status === 'won' ? '#10b981' : b.status === 'lost' ? '#ef4444' : '#fbbf24';
-        const st = b.status === 'won' ? '✅ GANADO' : b.status === 'lost' ? '❌ PERDIDO' : '⏳ PENDIENTE';
-        const email = b.usuarios?.email || b.user_id?.slice(0,8)+'…';
-        const d = new Date(b.created_at);
-        const picks = b.picks || [];
         return `
-        <div class="match-row" style="margin-bottom:10px;">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
-                <div>
-                    <span style="font-size:10px;font-weight:900;color:white;">${email}</span>
-                    <span style="font-size:9px;color:#555;display:block;margin-top:2px;">${d.toLocaleString('es-MX')}</span>
-                </div>
-                <div style="text-align:right;">
-                    <span style="font-size:10px;font-weight:900;color:${sc};">${st}</span>
-                    <span style="font-family:'Archivo Black',sans-serif;color:white;font-size:14px;display:block;">$${(b.amount||0).toFixed(2)} × ${(b.total_odd||1).toFixed(2)} = $${(b.potential_win||0).toFixed(2)}</span>
-                </div>
-            </div>
-            ${picks.map(p => `<div style="font-size:9px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between;"><span style="color:#888;">${p.matchHome} vs ${p.matchAway}</span><span style="color:white;font-weight:700;">${p.label} (${p.odd.toFixed(2)})</span></div>`).join('')}
+        <div class="match-row ${isLive ? 'live' : isFinished ? 'finished' : ''}" id="match-row-${m.id}">
+            <div class="team-name team-home">${m.home}</div>
+            ${scoreSection}
+            <div class="team-name team-away">${m.away}</div>
+            <div>${actionButtons}</div>
         </div>`;
-    }).join('');
-}
+    },
 
-// ── INIT ────────────────────────────────────────────────────
-(async () => {
-    await loadAll();
-    const el = document.getElementById('conn-indicator');
-    el.innerHTML = '<span style="width:8px;height:8px;background:#10b981;border-radius:50%;display:inline-block;"></span> Listo';
-    el.style.color = '#10b981';
-    // Auto-refresh cada 15 segundos sin necesidad de WebSocket
-    setInterval(loadAll, 15000);
-})();
+    // ── INICIAR PARTIDO ──
+    async setLive(matchId) {
+        const { error } = await sb.from('wc_matches').update({
+            status: 'live',
+            minute: 1,
+            score_home: 0,
+            score_away: 0
+        }).eq('id', matchId);
+        if (error) return notify('Error: ' + error.message, 'error');
+        notify('✅ Partido iniciado — aparece EN VIVO en el casino', 'success');
+        await this.loadMatches();
+    },
+
+    // ── ACTUALIZAR MARCADOR ──
+    async updateScore(matchId) {
+        const sh = parseInt(document.getElementById(`sh-${matchId}`)?.value ?? 0);
+        const sa = parseInt(document.getElementById(`sa-${matchId}`)?.value ?? 0);
+        const min = parseInt(document.getElementById(`min-${matchId}`)?.value ?? 0);
+        const { error } = await sb.from('wc_matches').update({
+            score_home: sh,
+            score_away: sa,
+            minute: min
+        }).eq('id', matchId);
+        if (error) return notify('Error actualizando: ' + error.message, 'error');
+        notify(`⚽ Marcador actualizado: ${sh} - ${sa} (${min}')`, 'success');
+        await this.loadMatches();
+    },
+
+    // ── ACTUALIZAR MINUTO ──
+    async updateMinute(matchId) {
+        const min = parseInt(document.getElementById(`min-${matchId}`)?.value ?? 0);
+        const { error } = await sb.from('wc_matches').update({ minute: min }).eq('id', matchId);
+        if (error) return notify('Error: ' + error.message, 'error');
+        notify(`🕐 Minuto actualizado: ${min}'`, 'success');
+        await this.loadMatches();
+    },
+
+    // ── ACTUALIZAR CUOTAS EN VIVO (sin notificación a usuarios) ──
+    async updateOdds(matchId) {
+        const o1 = parseFloat(document.getElementById(`o1-${matchId}`)?.value);
+        const ox = parseFloat(document.getElementById(`ox-${matchId}`)?.value);
+        const o2 = parseFloat(document.getElementById(`o2-${matchId}`)?.value);
+        if (!o1 || !ox || !o2) return notify('Ingresa cuotas válidas', 'error');
+        const { error } = await sb.from('wc_matches').update({ home_odd: o1, draw_odd: ox, away_odd: o2 }).eq('id', matchId);
+        if (error) return notify('Error: ' + error.message, 'error');
+        notify(`📊 Cuotas actualizadas: ${o1} / ${ox} / ${o2}`, 'success');
+        await this.loadMatches();
+    },
+
+    // ── PAUSAR / REANUDAR APUESTAS ──
+    async toggleBetsPause(matchId, pause) {
+        const { error } = await sb.from('wc_matches').update({ bets_paused: pause }).eq('id', matchId);
+        if (error) return notify('Error: ' + error.message, 'error');
+        notify(pause ? '⏸ Apuestas PAUSADAS' : '▶️ Apuestas REANUDADAS', pause ? 'error' : 'success');
+        await this.loadMatches();
+    },
+
+    // ── MARCAR MEDIO TIEMPO ──
+    async setPaused(matchId) {
+        const { error } = await sb.from('wc_matches').update({ minute: 45, status: 'live' }).eq('id', matchId);
+        if (error) return notify('Error: ' + error.message, 'error');
+        notify('⏸ Marcado como Medio Tiempo (HT)', 'success');
+    },
+
+    // ── ABRIR MODAL CONFIRMAR RESULTADO ──
+    openResultConfirm(matchId, result, label) {
+        const m = this.matches.find(x => x.id === matchId);
+        if (!m) return;
+        document.getElementById('res-match-id').value = matchId;
+        document.getElementById('res-result').value = result;
+        const pendingBets = this.bets.filter(b =>
+            b.status === 'pending' && b.picks && b.picks.some(p => p.matchId === matchId)
+        );
+        const totalPot = pendingBets.reduce((s, b) => {
+            const pick = b.picks?.find(p => p.matchId === matchId);
+            if (!pick) return s;
+            return s + (pick.odd * b.amount);
+        }, 0);
+        document.getElementById('res-summary').innerHTML = `
+            <div style="font-size:13px; font-weight:900; color:white; margin-bottom:8px;">${m.home} vs ${m.away}</div>
+            <div style="font-size:18px; font-weight:900; color:#10b981; margin-bottom:8px;">Resultado: ${label}</div>
+            <div style="font-size:11px; color:#888;">
+                ${pendingBets.length} apuesta${pendingBets.length !== 1 ? 's' : ''} afectada${pendingBets.length !== 1 ? 's' : ''}<br>
+                Pago estimado: <strong style="color:#fbbf24;">$${totalPot.toFixed(2)} MXN</strong>
+            </div>`;
+        document.getElementById('modal-result').classList.add('open');
+    },
+
+    // ── CONFIRMAR RESULTADO Y PAGAR ──
+    async confirmResult() {
+        const matchId = document.getElementById('res-match-id').value;
+        const result  = document.getElementById('res-result').value;
+        const m = this.matches.find(x => x.id === matchId);
+        if (!m) return;
+
+        document.getElementById('modal-result').classList.remove('open');
+        notify('⏳ Procesando resultado y pagos...', 'success');
+
+        // 1. Actualizar el partido en Supabase
+        const sh = m.score_home ?? 0, sa = m.score_away ?? 0;
+        const { error: matchErr } = await sb.from('wc_matches').update({
+            status: 'finished',
+            result: result,
+            minute: 90,
+            score_home: sh,
+            score_away: sa
+        }).eq('id', matchId);
+        if (matchErr) return notify('Error cerrando partido: ' + matchErr.message, 'error');
+
+        // 2. Procesar todas las apuestas afectadas
+        const pendingBets = this.bets.filter(b =>
+            b.status === 'pending' &&
+            b.picks && b.picks.some(p => p.matchId === matchId)
+        );
+
+        let paidCount = 0, lostCount = 0;
+
+        for (const bet of pendingBets) {
+            // Una apuesta combinada: revisar TODOS los picks
+            // Solo se paga si TODOS los picks del ticket resultaron correctos
+            // Si este partido perdió → el ticket perdió
+
+            const thisPickWon = bet.picks.some(p => p.matchId === matchId && p.pick === result);
+
+            if (!thisPickWon) {
+                // Este partido lo perdió → el ticket pierde (si no está ya perdido)
+                await sb.from('wc_bets').update({ status: 'lost' }).eq('id', bet.id);
+                lostCount++;
+                continue;
+            }
+
+            // Este partido lo acertó — verificar si todos los demás picks del ticket también tienen resultado
+            const allSettled = await this.checkAllPicksSettled(bet, matchId, result);
+            if (!allSettled.canPay) continue; // hay más partidos pendientes en el ticket
+
+            if (allSettled.won) {
+                // Pagar al usuario
+                await this.payUser(bet.user_id, bet.potential_win, bet.id);
+                paidCount++;
+            } else {
+                await sb.from('wc_bets').update({ status: 'lost' }).eq('id', bet.id);
+                lostCount++;
+            }
+        }
+
+        notify(`✅ Resultado registrado. Pagados: ${paidCount} · Perdidos: ${lostCount}`, 'success');
+        await this.loadMatches();
+        await this.loadBets();
+    },
+
+    // ── Verificar si todos los picks de un ticket tienen resultado ──
+    async checkAllPicksSettled(bet, newMatchId, newResult) {
+        for (const pick of bet.picks) {
+            const localResult = pick.matchId === newMatchId ? newResult : null;
+            const matchData = this.matches.find(m => m.id === pick.matchId);
+            const finalResult = localResult || matchData?.result;
+            if (!finalResult) return { canPay: false, won: false }; // aún pendiente
+            if (finalResult !== pick.pick) return { canPay: true, won: false }; // al menos uno erró
+        }
+        return { canPay: true, won: true }; // todos acertaron
+    },
+
+    // ── Pagar usuario ──
+    async payUser(userId, amount, betId) {
+        // Actualizar saldo via RPC
+        const { error: rpcErr } = await sb.rpc('modificar_saldo', { user_id: userId, monto: amount });
+        if (rpcErr) {
+            // Fallback: update directo
+            const { data: u } = await sb.from('usuarios').select('saldo').eq('id', userId).single();
+            await sb.from('usuarios').update({ saldo: (u?.saldo || 0) + amount }).eq('id', userId);
+        }
+        // Marcar apuesta como ganada
+        await sb.from('wc_bets').update({ status: 'won' }).eq('id', betId);
+        // Registrar en historial
+        await sb.from('history').insert([{
+            user_id: userId,
+            type: 'bets',
+            amount: amount,
+            label: '⚽ GANANCIA MUNDIAL 2026',
+            status: 'completed'
+        }]);
+    },
+
+    // ── Eliminar partido ──
+    async deleteMatch(matchId) {
+        if (!confirm('¿Eliminar este partido? Las apuestas pendientes quedarán activas.')) return;
+        const { error } = await sb.from('wc_matches').delete().eq('id', matchId);
+        if (error) return notify('Error: ' + error.message, 'error');
+        notify('Partido eliminado', 'success');
+        await this.loadMatches();
+    },
+
+    // ── Render apuestas ──
+    renderBets() {
+        const tbody = document.getElementById('bets-tbody');
+        if (!this.bets.length) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#444;padding:40px;font-size:12px;text-transform:uppercase;">Sin apuestas registradas</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = this.bets.slice(0, 200).map(b => {
+            const sc = b.status === 'won' ? '#10b981' : b.status === 'lost' ? '#ef4444' : '#fbbf24';
+            const st = b.status === 'won' ? '✅ Ganada' : b.status === 'lost' ? '❌ Perdida' : '⏳ Pendiente';
+            const picks = (b.picks || []).map(p => {
+                const m = this.matches.find(x => x.id === p.matchId);
+                const mName = m ? `${m.home} vs ${m.away}` : p.matchId;
+                return `<span style="display:block;font-size:9px;color:#888;">${mName}: <b style="color:white;">${p.label}</b> @ ${p.odd?.toFixed(2)}</span>`;
+            }).join('');
+            const email = b.usuarios?.email || b.user_id?.slice(0, 12) + '...';
+            const d = new Date(b.created_at);
+            return `<tr>
+                <td style="font-size:10px;color:#aaa;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${email}">${email}</td>
+                <td><b>$${(b.amount||0).toFixed(2)}</b></td>
+                <td>${(b.total_odd||1).toFixed(2)}x</td>
+                <td style="color:#10b981;">$${(b.potential_win||0).toFixed(2)}</td>
+                <td>${picks}</td>
+                <td style="color:${sc};font-weight:700;">${st}</td>
+                <td style="font-size:9px;color:#555;">${d.toLocaleDateString('es-MX')}<br>${d.toTimeString().slice(0,5)}</td>
+            </tr>`;
+        }).join('');
+    },
+
+    setTab(tab) {
+        this.currentTab = tab;
+        document.getElementById('panel-matches').style.display = tab === 'matches' ? 'block' : 'none';
+        document.getElementById('panel-bets').style.display   = tab === 'bets' ? 'block' : 'none';
+        document.getElementById('tab-matches').classList.toggle('active', tab === 'matches');
+        document.getElementById('tab-bets').classList.toggle('active', tab === 'bets');
+        if (tab === 'bets') this.renderBets();
+    }
+};
+
+// ─── MODAL ADD / EDIT ─────────────────────────────────────────
+const Modal = {
+    close() { document.getElementById('modal-match').classList.remove('open'); },
+    openAdd() {
+        document.getElementById('edit-match-id').value = '';
+        document.getElementById('modal-title').innerHTML = 'Agregar <span>Partido</span>';
+        ['f-home','f-away','f-odd1','f-oddx','f-odd2','f-date','f-time','f-group','f-venue'].forEach(id => {
+            document.getElementById(id).value = '';
+        });
+        document.getElementById('f-phase').value = 'Grupos';
+        document.getElementById('modal-match').classList.add('open');
+    },
+    openEdit(matchId) {
+        const m = Admin.matches.find(x => x.id === matchId);
+        if (!m) return;
+        document.getElementById('edit-match-id').value = matchId;
+        document.getElementById('modal-title').innerHTML = 'Editar <span>Partido</span>';
+        document.getElementById('f-home').value  = m.home || '';
+        document.getElementById('f-away').value  = m.away || '';
+        document.getElementById('f-odd1').value  = m.home_odd || '';
+        document.getElementById('f-oddx').value  = m.draw_odd || '';
+        document.getElementById('f-odd2').value  = m.away_odd || '';
+        document.getElementById('f-date').value  = m.match_date || '';
+        document.getElementById('f-time').value  = m.match_time || '';
+        document.getElementById('f-group').value = m.group_name || '';
+        document.getElementById('f-venue').value = m.venue || '';
+        document.getElementById('f-phase').value = m.phase || 'Grupos';
+        document.getElementById('modal-match').classList.add('open');
+    },
+    async save() {
+        const id    = document.getElementById('edit-match-id').value;
+        const home  = document.getElementById('f-home').value.trim();
+        const away  = document.getElementById('f-away').value.trim();
+        const odd1  = parseFloat(document.getElementById('f-odd1').value);
+        const oddx  = parseFloat(document.getElementById('f-oddx').value);
+        const odd2  = parseFloat(document.getElementById('f-odd2').value);
+        const date  = document.getElementById('f-date').value.trim();
+        const time  = document.getElementById('f-time').value.trim();
+        const group = document.getElementById('f-group').value.trim().toUpperCase();
+        const venue = document.getElementById('f-venue').value.trim();
+        const phase = document.getElementById('f-phase').value;
+
+        if (!home || !away) return notify('Ingresa los equipos', 'error');
+        if (!odd1 || !oddx || !odd2) return notify('Ingresa las cuotas', 'error');
+
+        const payload = {
+            home, away,
+            home_odd: odd1, draw_odd: oddx, away_odd: odd2,
+            match_date: date, match_time: time,
+            group_name: group, venue, phase,
+            status: 'upcoming', score_home: 0, score_away: 0, minute: 0, result: null
+        };
+
+        let error;
+        if (id) {
+            ({ error } = await sb.from('wc_matches').update(payload).eq('id', id));
+        } else {
+            ({ error } = await sb.from('wc_matches').insert([payload]));
+        }
+        if (error) return notify('Error guardando: ' + error.message, 'error');
+        notify(id ? '✅ Partido actualizado' : '✅ Partido creado', 'success');
+        this.close();
+        await Admin.loadMatches();
+    }
+};
+
+// ─── START ────────────────────────────────────────────────────
+document.getElementById('admin-pass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') Auth.login();
+});
+Auth.check();
 </script>
 </body>
 </html>
