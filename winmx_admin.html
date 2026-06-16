@@ -142,9 +142,8 @@
     <div class="login-box">
         <h1>WinMX</h1>
         <p>Panel de Administración</p>
-        <input id="admin-email" type="email" placeholder="Correo de administrador" onkeydown="if(event.key==='Enter') document.getElementById('admin-pass').focus()" autocomplete="username">
-        <input id="admin-pass" type="password" placeholder="Contraseña" onkeydown="if(event.key==='Enter') Auth.login()" autocomplete="current-password">
-        <button class="btn-primary" id="btn-admin-login" onclick="Auth.login()">Ingresar al Panel</button>
+        <input id="admin-pass" type="password" placeholder="Contraseña de administrador" onkeydown="if(event.key==='Enter') Auth.login()">
+        <button class="btn-primary" onclick="Auth.login()">Ingresar al Panel</button>
     </div>
 </div>
 
@@ -301,10 +300,7 @@
 <script>
 const DB = { url: "https://dakhnqriwbzihlzhtfcb.supabase.co", key: "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs" };
 const sb = window.supabase.createClient(DB.url, DB.key);
-// La función "admin-login" corre en el servidor de Supabase y es la única
-// que sabe si un email+password corresponde a un admin real. Esta página
-// ya no contiene ninguna contraseña ni lógica de verificación.
-const ADMIN_LOGIN_URL = DB.url + "/functions/v1/admin-login";
+// Login via Supabase Auth + tabla admins
 
 // ─── NOTIFICACIONES ───────────────────────────────────────────
 const notify = (msg, type = 'success') => {
@@ -319,7 +315,7 @@ const notify = (msg, type = 'success') => {
 const Auth = {
     async login() {
         const email = document.getElementById('admin-email').value.trim();
-        const pass = document.getElementById('admin-pass').value;
+        const pass  = document.getElementById('admin-pass').value;
         if (!email || !pass) return notify('Ingresa correo y contraseña', 'error');
 
         const btn = document.getElementById('btn-admin-login');
@@ -327,45 +323,35 @@ const Auth = {
         btn.innerText = 'Verificando...';
 
         try {
-            const res = await fetch(ADMIN_LOGIN_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': DB.key,
-                    'Authorization': 'Bearer ' + DB.key
-                },
-                body: JSON.stringify({ email, password: pass })
-            });
-            const result = await res.json();
-
-            if (!res.ok) {
-                notify(result.error || 'No se pudo iniciar sesión', 'error');
-                btn.disabled = false;
-                btn.innerText = 'Ingresar al Panel';
+            // 1. Login con Supabase Auth
+            const { data, error: signInErr } = await sb.auth.signInWithPassword({ email, password: pass });
+            if (signInErr || !data.session) {
+                notify('Credenciales incorrectas', 'error');
+                btn.disabled = false; btn.innerText = 'Ingresar al Panel';
                 return;
             }
 
-            // Guardamos la sesión real de Supabase Auth (no un flag arbitrario).
-            // Esto hace que las peticiones a wc_matches / wc_bets vayan
-            // autenticadas como este usuario, y RLS pueda verificar is_admin().
-            const { error: setErr } = await sb.auth.setSession({
-                access_token: result.access_token,
-                refresh_token: result.refresh_token
-            });
-            if (setErr) {
-                notify('Error estableciendo sesión: ' + setErr.message, 'error');
-                btn.disabled = false;
-                btn.innerText = 'Ingresar al Panel';
+            // 2. Verificar que sea admin en la tabla admins
+            const { data: adminRow } = await sb
+                .from('admins')
+                .select('user_id')
+                .eq('user_id', data.user.id)
+                .maybeSingle();
+
+            if (!adminRow) {
+                await sb.auth.signOut();
+                notify('Este usuario no tiene permisos de administrador', 'error');
+                btn.disabled = false; btn.innerText = 'Ingresar al Panel';
                 return;
             }
 
+            // 3. Admin válido
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('app').style.display = 'block';
             Admin.init();
         } catch (e) {
             notify('Error de conexión: ' + e.message, 'error');
-            btn.disabled = false;
-            btn.innerText = 'Ingresar al Panel';
+            btn.disabled = false; btn.innerText = 'Ingresar al Panel';
         }
     },
     async logout() {
@@ -373,13 +359,14 @@ const Auth = {
         location.reload();
     },
     async check() {
-        // En vez de un flag en sessionStorage, revisamos si hay una
-        // sesión real y válida de Supabase Auth.
         const { data: { session } } = await sb.auth.getSession();
         if (session) {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
-            Admin.init();
+            const { data: adminRow } = await sb.from('admins').select('user_id').eq('user_id', session.user.id).maybeSingle();
+            if (adminRow) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app').style.display = 'block';
+                Admin.init();
+            }
         }
     }
 };
@@ -423,9 +410,12 @@ const Admin = {
         this.updateStats();
     },
 
-    // ── Auto-refresh cada 15s (sin WebSocket para evitar errores de red) ──
+    // ── Realtime subscription ──
     subscribeRealtime() {
-        setInterval(() => { this.loadMatches(); this.loadBets(); }, 15000);
+        sb.channel('admin_wc')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'wc_matches' }, () => this.loadMatches())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'wc_bets' }, () => this.loadBets())
+            .subscribe();
     },
 
     // ── Stats ──
@@ -483,7 +473,7 @@ const Admin = {
         const isUpcoming = m.status === 'upcoming';
 
         const statusBadge = isLive
-            ? `<span class="match-status-badge badge-live">● EN VIVO ${m.minute ? m.minute + "'" : ''}${m.bets_paused ? ' · ⏸ PAUSADO' : ''}</span>`
+            ? `<span class="match-status-badge badge-live">● EN VIVO ${m.minute ? m.minute + "'" : ''}</span>`
             : isFinished
             ? `<span class="match-status-badge badge-finished">FIN · ${m.result === '1' ? m.home + ' ganó' : m.result === '2' ? m.away + ' ganó' : 'Empate'}</span>`
             : `<span class="match-status-badge badge-upcoming">📅 ${m.match_date || ''} ${m.match_time || ''}</span>`;
@@ -524,21 +514,6 @@ const Admin = {
                     <input class="score-input" id="min-${m.id}" type="number" min="0" max="120" value="${m.minute ?? 1}" placeholder="45" style="width:54px;">
                     <button class="btn-sm btn-yellow" onclick="Admin.updateMinute('${m.id}')">Guardar</button>
                     <button class="btn-sm btn-gray" onclick="Admin.setPaused('${m.id}')"><i class="fas fa-pause"></i> HT</button>
-                </div>
-                <!-- Odds en vivo -->
-                <div class="actions-row" style="align-items:center; gap:6px; flex-wrap:wrap;">
-                    <span style="font-size:9px;color:#555;font-weight:700;text-transform:uppercase;white-space:nowrap;">Cuotas:</span>
-                    <input class="score-input" id="o1-${m.id}" type="number" step="0.01" value="${(m.home_odd||2).toFixed(2)}" placeholder="1" style="width:54px;" title="Cuota Local">
-                    <input class="score-input" id="ox-${m.id}" type="number" step="0.01" value="${(m.draw_odd||3.2).toFixed(2)}" placeholder="X" style="width:54px;" title="Cuota Empate">
-                    <input class="score-input" id="o2-${m.id}" type="number" step="0.01" value="${(m.away_odd||3.5).toFixed(2)}" placeholder="2" style="width:54px;" title="Cuota Visitante">
-                    <button class="btn-sm btn-green" onclick="Admin.updateOdds('${m.id}')">Actualizar</button>
-                </div>
-                <!-- Pausar/reanudar apuestas -->
-                <div class="actions-row">
-                    ${m.bets_paused
-                        ? `<button class="btn-sm btn-green" style="flex:1;padding:8px;" onclick="Admin.toggleBetsPause('${m.id}', false)"><i class="fas fa-play"></i> Reanudar Apuestas</button>`
-                        : `<button class="btn-sm btn-yellow" style="flex:1;padding:8px;" onclick="Admin.toggleBetsPause('${m.id}', true)"><i class="fas fa-pause"></i> Pausar Apuestas</button>`
-                    }
                 </div>
                 <!-- Result -->
                 <div>
@@ -582,15 +557,10 @@ const Admin = {
             status: 'live',
             minute: 1,
             score_home: 0,
-            score_away: 0,
-            notify_live: true   // ← activa la notificación en el casino
+            score_away: 0
         }).eq('id', matchId);
         if (error) return notify('Error: ' + error.message, 'error');
-        // Resetear notify_live tras 3s para que no vuelva a dispararse
-        setTimeout(async () => {
-            await sb.from('wc_matches').update({ notify_live: false }).eq('id', matchId);
-        }, 3000);
-        notify('✅ Partido iniciado — notificación enviada a todos los usuarios', 'success');
+        notify('✅ Partido iniciado — aparece EN VIVO en el casino', 'success');
         await this.loadMatches();
     },
 
@@ -615,26 +585,6 @@ const Admin = {
         const { error } = await sb.from('wc_matches').update({ minute: min }).eq('id', matchId);
         if (error) return notify('Error: ' + error.message, 'error');
         notify(`🕐 Minuto actualizado: ${min}'`, 'success');
-        await this.loadMatches();
-    },
-
-    // ── ACTUALIZAR CUOTAS EN VIVO (sin notificación a usuarios) ──
-    async updateOdds(matchId) {
-        const o1 = parseFloat(document.getElementById(`o1-${matchId}`)?.value);
-        const ox = parseFloat(document.getElementById(`ox-${matchId}`)?.value);
-        const o2 = parseFloat(document.getElementById(`o2-${matchId}`)?.value);
-        if (!o1 || !ox || !o2) return notify('Ingresa cuotas válidas', 'error');
-        const { error } = await sb.from('wc_matches').update({ home_odd: o1, draw_odd: ox, away_odd: o2 }).eq('id', matchId);
-        if (error) return notify('Error: ' + error.message, 'error');
-        notify(`📊 Cuotas actualizadas: ${o1} / ${ox} / ${o2}`, 'success');
-        await this.loadMatches();
-    },
-
-    // ── PAUSAR / REANUDAR APUESTAS ──
-    async toggleBetsPause(matchId, pause) {
-        const { error } = await sb.from('wc_matches').update({ bets_paused: pause }).eq('id', matchId);
-        if (error) return notify('Error: ' + error.message, 'error');
-        notify(pause ? '⏸ Apuestas PAUSADAS' : '▶️ Apuestas REANUDADAS', pause ? 'error' : 'success');
         await this.loadMatches();
     },
 
@@ -879,6 +829,9 @@ const Modal = {
 };
 
 // ─── START ────────────────────────────────────────────────────
+document.getElementById('admin-pass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') Auth.login();
+});
 Auth.check();
 </script>
 </body>
