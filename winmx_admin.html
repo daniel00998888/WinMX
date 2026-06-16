@@ -142,7 +142,8 @@
     <div class="login-box">
         <h1>WinMX</h1>
         <p>Panel de Administración</p>
-        <input id="admin-pass" type="password" placeholder="Contraseña de administrador" onkeydown="if(event.key==='Enter') Auth.login()">
+        <input id="admin-email" type="email" placeholder="Correo de administrador" onkeydown="if(event.key==='Enter') document.getElementById('admin-pass').focus()" autocomplete="username" style="margin-bottom:14px;">
+        <input id="admin-pass" type="password" placeholder="Contraseña" onkeydown="if(event.key==='Enter') Auth.login()" autocomplete="current-password">
         <button class="btn-primary" onclick="Auth.login()">Ingresar al Panel</button>
     </div>
 </div>
