@@ -441,6 +441,7 @@
             async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); this.subscribeBalance(); this.processPendingWins(); } else { document.getElementById('auth-view').classList.remove('hidden-view'); } },
             async loadBalance() { const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle(); State.balance = data ? data.saldo : 0; UI.updateBalance(); },
             subscribeBalance() {
+                // Canal único por usuario para evitar conflictos de realtime
                 const chName = 'bal_' + State.user.id.replace(/-/g,'').slice(0,12);
                 try {
                     const existing = sb.getChannels().find(c => c.topic === 'realtime:' + chName);
@@ -503,7 +504,10 @@
         });
 
         // ========================================================
+
+        // ========================================================
         // MUNDIAL 2026 — MOTOR SUPABASE (Admin-Controlled)
+        // Los partidos y marcadores los controla el admin en tiempo real
         // ========================================================
         const WC = {
             slip: {},
@@ -511,10 +515,8 @@
             currentFilter: 'all',
             initialized: false,
             matches: [],
-            // ── CAMBIO 1: Set para trackear partidos que ya notificamos como EN VIVO
-            // Esto evita que cualquier UPDATE (marcador, minuto, cuotas) dispare la notificación
-            _notifiedLiveIds: new Set(),
 
+            // ── Cargar partidos desde Supabase ──────────────────
             async loadMatches(showLoading = false) {
                 if (showLoading) {
                     const list = document.getElementById('wc-matches-list');
@@ -540,20 +542,12 @@
                 }
 
                 this.matches = data || [];
-
-                // Poblar el Set de notificados con los partidos que ya están live al cargar
-                // (para que si el partido ya estaba live cuando el usuario abrió la app, no notifique)
-                this.matches.forEach(m => {
-                    if (m.status === 'live') this._notifiedLiveIds.add(m.id);
-                });
-
                 this.renderFilters();
                 this.renderMatches();
                 this.checkBetResults();
             },
 
-            // ── CAMBIO 2: Realtime — notificación EN VIVO solo cuando el partido CAMBIA a live
-            // y no ha sido notificado antes en esta sesión
+            // ── Subscripción Realtime (cambios del admin se ven al instante) ──
             subscribeRealtime() {
                 sb.channel('wc_live')
                     .on('postgres_changes', {
@@ -561,6 +555,7 @@
                         schema: 'public',
                         table: 'wc_matches'
                     }, (payload) => {
+                        // Actualizar el partido modificado en el array local
                         const idx = this.matches.findIndex(m => m.id === payload.new?.id || m.id === payload.old?.id);
                         if (payload.eventType === 'DELETE') {
                             if (idx !== -1) this.matches.splice(idx, 1);
@@ -574,37 +569,16 @@
                         this.renderFilters();
                         this.renderMatches();
                         this.checkBetResults();
-
-                        // ── Notificar EN VIVO SOLO si:
-                        // 1. Es un UPDATE (no insert/delete)
-                        // 2. El nuevo status es 'live'
-                        // 3. El partido NO había sido notificado antes en esta sesión
-                        // Esto evita notificaciones por cambio de marcador, minuto o cuotas
-                        if (
-                            payload.eventType === 'UPDATE' &&
-                            payload.new &&
-                            payload.new.status === 'live' &&
-                            !this._notifiedLiveIds.has(payload.new.id)
-                        ) {
-                            this._notifiedLiveIds.add(payload.new.id);
+                        // Notificar si un partido inicia en vivo
+                        if (payload.eventType === 'UPDATE' && payload.new.status === 'live' && payload.old?.status !== 'live') {
                             playSfx('rocket');
                             UI.notify(`⚽ ${payload.new.home} vs ${payload.new.away} — ¡EN VIVO!`, 'success');
-                        }
-
-                        // Si el admin vuelve a poner upcoming/finished, limpiar del Set
-                        // para que si algún día lo reactivan, vuelva a notificar
-                        if (
-                            payload.eventType === 'UPDATE' &&
-                            payload.new &&
-                            payload.new.status !== 'live' &&
-                            this._notifiedLiveIds.has(payload.new.id)
-                        ) {
-                            this._notifiedLiveIds.delete(payload.new.id);
                         }
                     })
                     .subscribe();
             },
 
+            // ── init ──
             init() {
                 if (!this.initialized) {
                     this.initialized = true;
@@ -647,6 +621,7 @@
             renderMatches() {
                 const list = document.getElementById('wc-matches-list');
                 if (!list) return;
+                // Ocultar los partidos FINISHED (ya resueltos)
                 const visible = (this.currentFilter === 'all'
                     ? this.matches
                     : this.matches.filter(m => m.group_name === this.currentFilter))
@@ -658,6 +633,7 @@
                 }
                 if (this.matches.length === 0) return;
 
+                // Agrupar por grupo
                 const byGroup = {};
                 visible.forEach(m => {
                     const key = m.group_name || 'General';
@@ -665,6 +641,7 @@
                     byGroup[key].push(m);
                 });
 
+                // Live primero dentro de cada grupo
                 Object.keys(byGroup).forEach(k => {
                     byGroup[k].sort((a, b) => {
                         const ord = { live: 0, upcoming: 1 };
@@ -684,8 +661,6 @@
                 }).join('');
             },
 
-            // ── CAMBIO 3: matchCard — bloquear odds solo cuando bets_paused === true
-            // Si el partido está live pero bets_paused es false, SE PUEDE apostar con las cuotas live
             matchCard(m) {
                 const slip = this.slip[m.id];
                 const hasBet = !!slip;
@@ -693,8 +668,6 @@
                 const xSel  = hasBet && slip.pick === 'X' ? 'selected' : '';
                 const h2Sel = hasBet && slip.pick === '2' ? 'selected' : '';
                 const isLive = m.status === 'live';
-                // ── NUEVO: apuestas bloqueadas solo si el admin pausó las apuestas
-                const betsPaused = m.bets_paused === true;
 
                 const betInfo = hasBet
                     ? `<div style="display:flex;align-items:center;gap:4px;margin-bottom:8px;"><span style="font-size:8px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#10b981;padding:3px 8px;border-radius:6px;font-weight:900;text-transform:uppercase;">✓ Tu pick: ${slip.label}</span></div>`
@@ -716,7 +689,7 @@
                             : `<div style="padding:4px 10px;background:rgba(255,255,255,0.04);border-radius:8px;border:1px solid rgba(255,255,255,0.06);"><span style="font-family:'Archivo Black',sans-serif;font-size:11px;color:#444;">VS</span></div>`}
                         <div style="flex:1;text-align:left;"><span style="font-size:12px;font-weight:900;color:white;">${m.away}</span></div>
                     </div>
-                    <div style="display:flex;gap:8px;${betsPaused ? 'opacity:0.4;pointer-events:none;' : ''}">
+                    <div style="display:flex;gap:8px;${isLive ? 'opacity:0.4;pointer-events:none;' : ''}">
                         <div class="odd-btn ${h1Sel}" onclick="WC.togglePick('${m.id}','1','${m.home.replace(/'/g,"\\'")}',${m.home_odd})">
                             <span class="odd-label">1 Local</span><span class="odd-value">${(m.home_odd||2).toFixed(2)}</span>
                         </div>
@@ -727,21 +700,14 @@
                             <span class="odd-label">2 Visitante</span><span class="odd-value">${(m.away_odd||3.5).toFixed(2)}</span>
                         </div>
                     </div>
-                    ${betsPaused
-                        ? `<div style="text-align:center;margin-top:8px;font-size:9px;color:#ef4444;font-weight:700;text-transform:uppercase;">🔒 Apuestas pausadas por el administrador</div>`
-                        : isLive
-                            ? `<div style="text-align:center;margin-top:8px;font-size:9px;color:#10b981;font-weight:700;text-transform:uppercase;">⚽ En vivo — cuotas actualizadas en tiempo real</div>`
-                            : ''
-                    }
+                    ${isLive ? `<div style="text-align:center;margin-top:8px;font-size:9px;color:#ef4444;font-weight:700;text-transform:uppercase;">⚽ Partido en curso — apuestas cerradas</div>` : ''}
                 </div>`;
             },
 
-            // ── CAMBIO 4: togglePick — bloquear solo si bets_paused o finished (no si solo está live)
             togglePick(matchId, pick, label, odd) {
                 playSfx('click');
                 const m = this.matches.find(x => x.id === matchId);
-                // Permitir apostar en live; solo bloquear si bets_paused o finished
-                if (!m || m.bets_paused === true || m.status === 'finished') return;
+                if (!m || m.status === 'live' || m.status === 'finished') return;
                 if (this.slip[matchId] && this.slip[matchId].pick === pick) {
                     delete this.slip[matchId];
                 } else {
@@ -834,15 +800,6 @@
                 if (!amt || amt < 10) return UI.notify("Apuesta mínima $10 MXN", "error");
                 if (Object.keys(this.slip).length === 0) return UI.notify("Agrega al menos un partido", "error");
                 if (State.balance < amt) return UI.notify("Saldo insuficiente", "error");
-                // Verificar que ningún partido en el slip tenga bets_paused
-                const pausedMatch = Object.keys(this.slip).find(id => {
-                    const m = this.matches.find(x => x.id === id);
-                    return m && m.bets_paused === true;
-                });
-                if (pausedMatch) {
-                    const pm = this.matches.find(x => x.id === pausedMatch);
-                    return UI.notify(`Apuestas pausadas: ${pm.home} vs ${pm.away}`, "error");
-                }
                 State.isProcessing = true;
                 try {
                     const totalOdd = this.getTotalOdd();
@@ -851,9 +808,11 @@
                         matchId: id, pick: s.pick, label: s.label, odd: s.odd,
                         matchHome: s.matchHome, matchAway: s.matchAway
                     }));
+                    // Descontar saldo
                     await Core.updateBalanceDB(-amt);
                     State.balance -= amt;
                     UI.updateBalance();
+                    // Guardar en Supabase (tabla wc_bets)
                     const { error } = await sb.from('wc_bets').insert([{
                         user_id: State.user.id,
                         amount: amt,
@@ -863,6 +822,7 @@
                         status: 'pending'
                     }]);
                     if (error) throw error;
+                    // Historial
                     await Core.recordHistory({
                         user_id: State.user.id, type: 'bets', amount: -amt,
                         label: `⚽ MUNDIAL (${picks.length} PARTIDO${picks.length > 1 ? 'S' : ''}) @ ${totalOdd.toFixed(2)}x`,
@@ -878,9 +838,12 @@
                 } finally { State.isProcessing = false; }
             },
 
-            loadLocalBets() { /* compatibilidad — apuestas van a Supabase */ },
+            loadLocalBets() { /* compatibilidad — ahora las apuestas van a Supabase */ },
 
+            // ── Verificar resultados cuando el admin marca un partido ──
             checkBetResults() {
+                // No necesario en el cliente: el admin panel paga directamente
+                // Esto es solo para refrescar la UI de "Mis Apuestas"
                 if (this.activeTab === 'mis') this.renderMyBets();
             },
 
@@ -933,7 +896,7 @@
         };
 
 
-        // ── CARRUSEL HERO (auto-gira cada 4s) ──
+        // ── CARRUSEL HERO (auto-gira cada 4s hacia la izquierda) ──
         (function() {
             let _slide = 0;
             const _total = 2;
@@ -959,7 +922,7 @@
             }, 4000);
         })();
 
-        // ── OTP EMAIL VERIFICATION ──
+        // ── OTP EMAIL VERIFICATION ──────────────────────────────────────
         const OTPManager = {
             mostrarVerificacion(email) {
                 document.getElementById('login-container').classList.add('hidden-view');
@@ -1011,6 +974,7 @@
                 inputs[0].focus();
                 return;
             }
+            // Cuenta verificada: insertar en tabla usuarios y continuar
             if (data.user) {
                 try { await sb.from('usuarios').insert([{ id: data.user.id, email: data.user.email, saldo: 0 }]); } catch(e) {}
                 State.user = data.user;
@@ -1026,6 +990,7 @@
             if (error) UI.notify('Error al reenviar. Intenta de nuevo.', 'error');
             else UI.notify('¡Código reenviado! Revisa tu correo o spam.', 'success');
         }
+        // ────────────────────────────────────────────────────────────────
 
         Core.init();
     </script>
@@ -1038,7 +1003,7 @@
     </div>
 
     <script>
-        // ── CARRUSEL HERO AUTO-SCROLL (segunda instancia para robustez) ──
+        // ── CARRUSEL HERO AUTO-SCROLL ──
         (function() {
             let current = 0;
             const total = 2;
