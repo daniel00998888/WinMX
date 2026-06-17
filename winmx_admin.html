@@ -38,7 +38,7 @@
         .main { padding: 24px 28px; max-width: 1200px; margin: 0 auto; }
 
         /* ── STATS BAR ── */
-        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+        .stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 24px; }
         .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
         .stat-card .label { font-size: 9px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
         .stat-card .value { font-size: 26px; font-weight: 900; color: #fff; }
@@ -178,6 +178,7 @@
             <div class="stat-card"><div class="label">En Vivo Ahora</div><div class="value red" id="stat-live">0</div></div>
             <div class="stat-card"><div class="label">Apuestas Pendientes</div><div class="value yellow" id="stat-bets">0</div></div>
             <div class="stat-card"><div class="label">Total en Juego (MXN)</div><div class="value green" id="stat-amount">$0</div></div>
+            <div class="stat-card"><div class="label">Conectados Ahora</div><div class="value" id="stat-online" style="color:#3b82f6;"><span class="live-dot" style="background:#3b82f6; display:inline-block; margin-right:6px;"></span>0</div></div>
         </div>
 
         <!-- Tabs -->
@@ -704,6 +705,27 @@ const Admin = {
                 this.loadHistory();
             })
             .subscribe();
+
+        // ── Usuarios conectados en tiempo real ──
+        // Se suscribe al mismo canal "online_users" que usa casino10.html,
+        // pero solo para ESCUCHAR (no llama .track() porque el admin no es
+        // un jugador). presenceState() devuelve un objeto donde cada key es
+        // el user_id de alguien conectado — contar sus keys da el total.
+        sb.channel('online_users', { config: { presence: { key: 'admin_viewer' } } })
+            .on('presence', { event: 'sync' }, () => {
+                this.updateOnlineCount();
+            })
+            .subscribe();
+    },
+
+    onlineChannel: null,
+    updateOnlineCount() {
+        const ch = sb.getChannels().find(c => c.topic === 'realtime:online_users');
+        if (!ch) return;
+        const state = ch.presenceState();
+        const count = Object.keys(state).length;
+        const el = document.getElementById('stat-online');
+        if (el) el.innerHTML = `<span class="live-dot" style="background:#3b82f6; display:inline-block; margin-right:6px;"></span>${count}`;
     },
 
     // ── Stats ──
