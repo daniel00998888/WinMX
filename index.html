@@ -472,7 +472,7 @@
         const AuthManager = {
             async login() { if(State.isProcessing) return; const e = document.getElementById('login-email').value, p = document.getElementById('login-password').value; if(!e || !p) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-login'); btn.disabled = true; const { data, error } = await sb.auth.signInWithPassword({ email: e, password: p }); if(error) { UI.notify(error.message, "error"); btn.disabled = false; } else location.reload(); },
             async register() { if(State.isProcessing) return; if(!document.getElementById('terms-check').checked) return UI.notify("Acepta términos", "error"); const e = document.getElementById('reg-email').value, p = document.getElementById('reg-password').value; if(!e || !p) return UI.notify("Completa campos", "error"); const btn = document.getElementById('btn-register'); btn.disabled = true; btn.innerText = "Registrando..."; const { data, error } = await sb.auth.signUp({ email: e, password: p }); btn.disabled = false; btn.innerText = "Crear Cuenta"; if(error) { UI.notify(error.message, "error"); } else { OTPManager.mostrarVerificacion(e); } },
-            async logout() { await sb.auth.signOut(); location.reload(); },
+            async logout() { PresenceTracker.leave(); await sb.auth.signOut(); location.reload(); },
             switchTab(tab) { playSfx('click'); document.getElementById('login-container').classList.toggle('hidden-view', tab==='register'); document.getElementById('register-container').classList.toggle('hidden-view', tab==='login'); }
         };
 
@@ -562,9 +562,36 @@
             }
         };
 
+        // ── PresenceTracker ────────────────────────────────────────────
+        // Usa Supabase Realtime Presence para que el panel admin pueda ver
+        // cuántos usuarios están conectados en este momento. No escribe nada
+        // en ninguna tabla; es un canal efímero — si el usuario cierra la
+        // pestaña o pierde conexión, su presencia desaparece automáticamente
+        // sin que nadie tenga que limpiar registros viejos.
+        const PresenceTracker = {
+            channel: null,
+            join() {
+                if (!State.user || this.channel) return;
+                this.channel = sb.channel('online_users', {
+                    config: { presence: { key: State.user.id } }
+                });
+                this.channel.subscribe(async (status) => {
+                    if (status === 'SUBSCRIBED') {
+                        await this.channel.track({
+                            email: State.user.email,
+                            online_at: new Date().toISOString()
+                        });
+                    }
+                });
+            },
+            leave() {
+                if (this.channel) { sb.removeChannel(this.channel); this.channel = null; }
+            }
+        };
+
         const Core = {
             async init() { let p = 0; const i = setInterval(() => { p += 25; document.getElementById('boot-bar').style.width = `${p}%`; if(p >= 100) { clearInterval(i); this.check(); } }, 100); },
-            async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); this.subscribeBalance(); this.processPendingWins(); await BanGuard.checkExistingBan(); BanGuard.subscribeRealtime(); } else { document.getElementById('auth-view').classList.remove('hidden-view'); } },
+            async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); this.subscribeBalance(); this.processPendingWins(); await BanGuard.checkExistingBan(); BanGuard.subscribeRealtime(); PresenceTracker.join(); } else { document.getElementById('auth-view').classList.remove('hidden-view'); } },
             async loadBalance() { const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle(); State.balance = data ? data.saldo : 0; UI.updateBalance(); },
             subscribeBalance() {
                 // Canal único por usuario para evitar conflictos de realtime
