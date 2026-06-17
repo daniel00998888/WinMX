@@ -432,7 +432,12 @@
 <script>
 const DB = { url: "https://dakhnqriwbzihlzhtfcb.supabase.co", key: "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs" };
 const sb = window.supabase.createClient(DB.url, DB.key);
+// La función "admin-login" corre en el servidor de Supabase y es la única
+// que sabe si un email+password corresponde a un admin real. Esta página
+// ya no contiene ninguna contraseña ni lógica de verificación.
+const ADMIN_LOGIN_URL = DB.url + "/functions/v1/admin-login";
 
+// ─── NOTIFICACIONES ───────────────────────────────────────────
 const notify = (msg, type = 'success') => {
     const n = document.createElement('div');
     n.className = `notif-item notif-${type}`;
@@ -441,6 +446,7 @@ const notify = (msg, type = 'success') => {
     setTimeout(() => n.remove(), 4000);
 };
 
+// ─── AUTH ─────────────────────────────────────────────────────
 const Auth = {
     async login() {
         const email = document.getElementById('admin-email').value.trim();
@@ -452,19 +458,33 @@ const Auth = {
         btn.innerText = 'Verificando...';
 
         try {
-            const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-            
-            if (error) {
-                notify('Correo o contraseña incorrectos', 'error');
+            const res = await fetch(ADMIN_LOGIN_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': DB.key,
+                    'Authorization': 'Bearer ' + DB.key
+                },
+                body: JSON.stringify({ email, password: pass })
+            });
+            const result = await res.json();
+
+            if (!res.ok) {
+                notify(result.error || 'No se pudo iniciar sesión', 'error');
                 btn.disabled = false;
                 btn.innerText = 'Ingresar al Panel';
                 return;
             }
 
-            const { data: isAdmin } = await sb.from('admins').select('*').eq('user_id', data.user.id).single();
-            if (!isAdmin) {
-                await sb.auth.signOut();
-                notify('Acceso denegado - No eres administrador', 'error');
+            // Guardamos la sesión real de Supabase Auth (no un flag arbitrario).
+            // Esto hace que las peticiones a wc_matches / wc_bets / etc. vayan
+            // autenticadas como este usuario, y RLS pueda verificar is_admin().
+            const { error: setErr } = await sb.auth.setSession({
+                access_token: result.access_token,
+                refresh_token: result.refresh_token
+            });
+            if (setErr) {
+                notify('Error estableciendo sesión: ' + setErr.message, 'error');
                 btn.disabled = false;
                 btn.innerText = 'Ingresar al Panel';
                 return;
@@ -473,9 +493,8 @@ const Auth = {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('app').style.display = 'block';
             Admin.init();
-            notify('✅ Bienvenido al panel de admin', 'success');
         } catch (e) {
-            notify('Error: ' + e.message, 'error');
+            notify('Error de conexión: ' + e.message, 'error');
             btn.disabled = false;
             btn.innerText = 'Ingresar al Panel';
         }
@@ -485,18 +504,18 @@ const Auth = {
         location.reload();
     },
     async check() {
+        // Revisamos si hay una sesión real y válida de Supabase Auth,
+        // en vez de comparar contra una lista de correos en el cliente.
         const { data: { session } } = await sb.auth.getSession();
         if (session) {
-            const { data: isAdmin } = await sb.from('admins').select('*').eq('user_id', session.user.id).single();
-            if (isAdmin) {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('app').style.display = 'block';
-                Admin.init();
-            }
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            Admin.init();
         }
     }
 };
 
+// ─── ADMIN CORE ───────────────────────────────────────────────
 const Admin = {
     matches: [],
     bets: [],
@@ -512,8 +531,12 @@ const Admin = {
         this.updateStats();
     },
 
+    // ── Carga partidos desde Supabase ──
     async loadMatches() {
-        const { data, error } = await sb.from('wc_matches').select('*').order('match_date', { ascending: true });
+        const { data, error } = await sb
+            .from('wc_matches')
+            .select('*')
+            .order('match_date', { ascending: true });
         if (error) { notify('Error cargando partidos: ' + error.message, 'error'); return; }
         this.matches = data || [];
         this.renderFilters();
@@ -521,18 +544,26 @@ const Admin = {
         this.updateStats();
     },
 
+    // ── Carga apuestas ──
     async loadBets() {
-        const { data, error } = await sb.from('wc_bets').select('*, usuarios(email)').order('created_at', { ascending: false });
+        const { data, error } = await sb
+            .from('wc_bets')
+            .select('*, usuarios(email)')
+            .order('created_at', { ascending: false });
         if (error) { notify('Error cargando apuestas: ' + error.message, 'error'); return; }
         this.bets = data || [];
         this.renderBets();
-        this.renderMatches();
+        this.renderMatches(); // las tarjetas de partidos muestran conteo de apuestas; deben refrescarse aquí también
         this.updateStats();
     },
 
+    // ── Carga usuarios ──
     users: [],
     async loadUsers() {
-        const { data, error } = await sb.from('usuarios').select('id, email, saldo, created_at').order('created_at', { ascending: false });
+        const { data, error } = await sb
+            .from('usuarios')
+            .select('id, email, saldo, created_at')
+            .order('created_at', { ascending: false });
         if (error) { notify('Error cargando usuarios: ' + error.message, 'error'); return; }
         this.users = data || [];
         this.renderUsers();
@@ -545,23 +576,33 @@ const Admin = {
     renderUsers() {
         const tbody = document.getElementById('users-tbody');
         const term = (document.getElementById('users-search')?.value || '').trim().toLowerCase();
-        const filtered = term ? this.users.filter(u => (u.email || '').toLowerCase().includes(term)) : this.users;
+        const filtered = term
+            ? this.users.filter(u => (u.email || '').toLowerCase().includes(term))
+            : this.users;
 
         if (!filtered.length) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#444;padding:40px;">Sin usuarios${term ? ' que coincidan' : ''}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#444;padding:40px;font-size:12px;text-transform:uppercase;">Sin usuarios${term ? ' que coincidan' : ''}</td></tr>`;
             return;
         }
 
         tbody.innerHTML = filtered.map(u => {
             const d = u.created_at ? new Date(u.created_at) : null;
             const fecha = d ? `${d.toLocaleDateString('es-MX')} ${d.toTimeString().slice(0,5)}` : '—';
-            return `<tr><td style="font-weight:700;">${u.email || '(sin correo)'}</td><td style="color:#10b981;font-weight:700;">$${(u.saldo || 0).toFixed(2)}</td><td style="font-size:9px;color:#666;">${fecha}</td><td><button class="btn-sm btn-danger" onclick="Admin.openDeleteModal('${u.id}','${(u.email||'').replace(/'/g,"\\'")}', ${u.saldo || 0})"><i class="fas fa-trash"></i> Eliminar</button></td></tr>`;
+            return `<tr>
+                <td style="font-weight:700;">${u.email || '(sin correo)'}</td>
+                <td style="color:#10b981;font-weight:700;">$${(u.saldo || 0).toFixed(2)}</td>
+                <td style="font-size:9px;color:#666;">${fecha}</td>
+                <td><button class="btn-sm btn-danger" onclick="Admin.openDeleteModal('${u.id}','${(u.email||'').replace(/'/g,"\\'")}', ${u.saldo || 0})"><i class="fas fa-trash"></i> Eliminar</button></td>
+            </tr>`;
         }).join('');
     },
 
+    // ── Abrir modal de eliminación ──
     openDeleteModal(userId, email, saldo) {
         document.getElementById('del-user-id').value = userId;
-        document.getElementById('del-user-summary').innerHTML = `<div style="font-weight:900;color:white;font-size:13px;margin-bottom:4px;">${email}</div><div style="color:#888;">Saldo actual: <strong style="color:#fbbf24;">$${saldo.toFixed(2)} MXN</strong></div>`;
+        document.getElementById('del-user-summary').innerHTML = `
+            <div style="font-weight:900;color:white;font-size:13px;margin-bottom:4px;">${email}</div>
+            <div style="color:#888;">Saldo actual: <strong style="color:#fbbf24;">$${saldo.toFixed(2)} MXN</strong></div>`;
         document.getElementById('modal-delete-user').classList.add('open');
     },
 
@@ -569,6 +610,7 @@ const Admin = {
         document.getElementById('modal-delete-user').classList.remove('open');
     },
 
+    // ── Ejecutar eliminación: avisar al usuario vía pending_bans ──
     async executeDeleteUser() {
         const userId = document.getElementById('del-user-id').value;
         const message = document.getElementById('del-user-message').value.trim();
@@ -583,12 +625,24 @@ const Admin = {
             const { data: { session } } = await sb.auth.getSession();
             if (!session) throw new Error('Sesión de admin no válida');
 
-            const { error: banErr } = await sb.from('pending_bans').upsert({ user_id: userId, message: message, created_by: session.user.id });
+            // 1. Insertar el aviso — el cliente del usuario lo detecta en tiempo real
+            //    y muestra la pantalla de bloqueo ANTES de que se borre nada.
+            const { error: banErr } = await sb.from('pending_bans').upsert({
+                user_id: userId,
+                message: message,
+                created_by: session.user.id
+            });
             if (banErr) throw banErr;
 
             notify('⏳ Aviso enviado al usuario. Esperando que cierre sesión...', 'success');
             this.closeDeleteModal();
+
+            // 2. La eliminación REAL (Auth + tablas) la dispara el propio cliente del
+            //    usuario cuando pulsa "Cerrar sesión" en su pantalla de bloqueo, llamando
+            //    a la Edge Function admin-delete-user. Como respaldo, si el usuario no
+            //    vuelve a conectarse, puedes usar "Forzar eliminación ahora".
             await this.loadUsers();
+
         } catch (e) {
             notify('Error: ' + e.message, 'error');
         } finally {
@@ -597,9 +651,38 @@ const Admin = {
         }
     },
 
+    // ── Forzar eliminación inmediata (respaldo si el usuario no se reconecta) ──
+    async forceDeleteNow(userId) {
+        if (!confirm('¿Forzar la eliminación ahora mismo sin esperar a que el usuario cierre sesión? Esto lo desconectará de inmediato.')) return;
+        try {
+            const { data: { session } } = await sb.auth.getSession();
+            const ADMIN_DELETE_URL = DB.url + '/functions/v1/admin-delete-user';
+            const res = await fetch(ADMIN_DELETE_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': DB.key,
+                    'Authorization': 'Bearer ' + session.access_token
+                },
+                body: JSON.stringify({ target_user_id: userId })
+            });
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.error || 'Error desconocido');
+            notify('✅ Usuario eliminado completamente', 'success');
+            await this.loadUsers();
+        } catch (e) {
+            notify('Error al forzar eliminación: ' + e.message, 'error');
+        }
+    },
+
+    // ── Carga historial (con correo, vía vista history_con_email) ──
     historyItems: [],
     async loadHistory() {
-        const { data, error } = await sb.from('history').select('*, usuarios(email)').order('created_at', { ascending: false }).limit(500);
+        const { data, error } = await sb
+            .from('history_con_email')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(500);
         if (error) { notify('Error cargando historial: ' + error.message, 'error'); return; }
         this.historyItems = data || [];
         this.renderHistory();
@@ -616,29 +699,78 @@ const Admin = {
 
         let filtered = this.historyItems;
         if (typeFilter !== 'all') filtered = filtered.filter(h => h.type === typeFilter);
-        if (term) filtered = filtered.filter(h => (h.usuarios?.email || '').toLowerCase().includes(term));
+        if (term) filtered = filtered.filter(h => (h.email || '').toLowerCase().includes(term));
 
         if (!filtered.length) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#444;padding:40px;">Sin movimientos${term ? ' que coincidan' : ''}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#444;padding:40px;font-size:12px;text-transform:uppercase;">Sin movimientos${term ? ' que coincidan' : ''}</td></tr>`;
             return;
         }
 
         tbody.innerHTML = filtered.map(h => {
             const sc = h.amount >= 0 ? '#10b981' : '#ef4444';
-            const stColor = h.status === 'completed' ? '#10b981' : h.status === 'pending' ? '#fbbf24' : '#888';
+            const stColor = h.status === 'completed' ? '#10b981' : h.status === 'pending' ? '#fbbf24' : h.status === 'rejected' ? '#ef4444' : '#888';
             const d = h.created_at ? new Date(h.created_at) : null;
             const fecha = d ? `${d.toLocaleDateString('es-MX')}<br>${d.toTimeString().slice(0,5)}` : '—';
-            return `<tr><td style="font-weight:700;">${h.usuarios?.email || '(sin correo)'}</td><td style="font-size:9px;color:#888;">${h.type}</td><td style="font-size:10px;">${h.label || '—'}</td><td style="color:${sc};font-weight:700;">$${Math.abs(h.amount || 0).toFixed(2)}</td><td style="color:${stColor};font-size:9px;font-weight:700;">${h.status || '—'}</td><td style="font-size:9px;color:#666;">${fecha}</td></tr>`;
+            return `<tr>
+                <td style="font-weight:700; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${h.email || ''}">${h.email || '(sin correo)'}</td>
+                <td style="font-size:9px; color:#888; text-transform:uppercase;">${h.type === 'bets' ? 'Apuesta' : h.type === 'deposits' ? 'Depósito' : h.type}</td>
+                <td style="font-size:10px;">${h.label || '—'}</td>
+                <td style="color:${sc}; font-weight:700;">$${Math.abs(h.amount || 0).toFixed(2)}</td>
+                <td style="color:${stColor}; font-size:9px; font-weight:700; text-transform:uppercase;">${h.status || '—'}</td>
+                <td style="font-size:9px; color:#666;">${fecha}</td>
+            </tr>`;
         }).join('');
     },
 
+    // ── Realtime: actualiza cada sección al instante cuando hay cambios ──
     subscribeRealtime() {
-        sb.channel('admin_wc_matches').on('postgres_changes', { event: '*', schema: 'public', table: 'wc_matches' }, () => { this.loadMatches(); }).subscribe();
-        sb.channel('admin_wc_bets').on('postgres_changes', { event: '*', schema: 'public', table: 'wc_bets' }, () => { this.loadBets(); }).subscribe();
-        sb.channel('admin_usuarios').on('postgres_changes', { event: '*', schema: 'public', table: 'usuarios' }, () => { this.loadUsers(); }).subscribe();
-        sb.channel('admin_history').on('postgres_changes', { event: '*', schema: 'public', table: 'history' }, () => { this.loadHistory(); }).subscribe();
+        sb.channel('admin_wc_matches')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'wc_matches' }, () => {
+                this.loadMatches();
+            })
+            .subscribe();
+
+        sb.channel('admin_wc_bets')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'wc_bets' }, () => {
+                this.loadBets();
+            })
+            .subscribe();
+
+        sb.channel('admin_usuarios')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'usuarios' }, () => {
+                this.loadUsers();
+            })
+            .subscribe();
+
+        sb.channel('admin_history')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'history' }, () => {
+                this.loadHistory();
+            })
+            .subscribe();
+
+        // ── Usuarios conectados en tiempo real ──
+        // Se suscribe al mismo canal "online_users" que usa casino10.html,
+        // pero solo para ESCUCHAR (no llama .track() porque el admin no es
+        // un jugador). presenceState() devuelve un objeto donde cada key es
+        // el user_id de alguien conectado — contar sus keys da el total.
+        sb.channel('online_users', { config: { presence: { key: 'admin_viewer' } } })
+            .on('presence', { event: 'sync' }, () => {
+                this.updateOnlineCount();
+            })
+            .subscribe();
     },
 
+    onlineChannel: null,
+    updateOnlineCount() {
+        const ch = sb.getChannels().find(c => c.topic === 'realtime:online_users');
+        if (!ch) return;
+        const state = ch.presenceState();
+        const count = Object.keys(state).length;
+        const el = document.getElementById('stat-online');
+        if (el) el.innerHTML = `<span class="live-dot" style="background:#3b82f6; display:inline-block; margin-right:6px;"></span>${count}`;
+    },
+
+    // ── Stats ──
     updateStats() {
         const live = this.matches.filter(m => m.status === 'live').length;
         const pending = this.bets.filter(b => b.status === 'pending').length;
@@ -650,6 +782,7 @@ const Admin = {
         document.getElementById('live-count-label').innerText = live + (live === 1 ? ' en vivo' : ' en vivo');
     },
 
+    // ── Filtros de grupo ──
     renderFilters() {
         const container = document.getElementById('group-filters');
         const groups = ['Todos', ...new Set(this.matches.map(m => m.group_name).filter(Boolean).sort())];
@@ -665,16 +798,20 @@ const Admin = {
         this.renderMatches();
     },
 
+    // ── Render lista de partidos ──
     renderMatches() {
         const list = document.getElementById('matches-list');
-        let filtered = this.currentFilter === 'all' ? this.matches : this.matches.filter(m => m.group_name === this.currentFilter);
+        let filtered = this.currentFilter === 'all'
+            ? this.matches
+            : this.matches.filter(m => m.group_name === this.currentFilter);
+
         filtered = [...filtered].sort((a, b) => {
             const order = { live: 0, upcoming: 1, finished: 2 };
             return (order[a.status] ?? 1) - (order[b.status] ?? 1);
         });
 
         if (filtered.length === 0) {
-            list.innerHTML = `<div style="text-align:center; padding:60px 0; color:#444;">Sin partidos. Agrega uno con el botón de arriba.</div>`;
+            list.innerHTML = `<div style="text-align:center; padding:60px 0; color:#444; font-size:12px; font-weight:700; text-transform:uppercase;">Sin partidos. Agrega uno con el botón de arriba.</div>`;
             return;
         }
 
@@ -682,101 +819,382 @@ const Admin = {
     },
 
     matchCard(m) {
-        const isLive = m.status === 'live';
+        const isLive     = m.status === 'live';
         const isFinished = m.status === 'finished';
         const isUpcoming = m.status === 'upcoming';
 
-        const statusBadge = isLive ? `<span class="match-status-badge badge-live">● EN VIVO ${m.minute ? m.minute + "'" : ''}</span>` : isFinished ? `<span class="match-status-badge badge-finished">FIN</span>` : `<span class="match-status-badge badge-upcoming">📅 ${m.match_date || ''}</span>`;
+        const statusBadge = isLive
+            ? `<span class="match-status-badge badge-live">● EN VIVO ${m.minute ? m.minute + "'" : ''}${m.bets_paused ? ' · ⏸ PAUSADO' : ''}</span>`
+            : isFinished
+            ? `<span class="match-status-badge badge-finished">FIN · ${m.result === '1' ? m.home + ' ganó' : m.result === '2' ? m.away + ' ganó' : 'Empate'}</span>`
+            : `<span class="match-status-badge badge-upcoming">📅 ${m.match_date || ''} ${m.match_time || ''}</span>`;
 
-        const pendingBets = this.bets.filter(b => b.status === 'pending' && b.picks && b.picks.some(p => p.matchId === m.id));
+        const pendingBets = this.bets.filter(b =>
+            b.status === 'pending' &&
+            b.picks && b.picks.some(p => p.matchId === m.id)
+        );
 
-        const scoreSection = isLive || isFinished ? `<div class="score-display"><div class="score-nums">${m.score_home ?? 0} - ${m.score_away ?? 0}</div><div class="match-meta">${statusBadge}</div></div>` : `<div class="score-display"><div style="font-size:13px; font-weight:900; color:#333;">VS</div><div class="match-meta">${statusBadge}</div></div>`;
+        const scoreSection = isLive || isFinished
+            ? `<div class="score-display">
+                <div class="score-nums" id="score-display-${m.id}">${m.score_home ?? 0} - ${m.score_away ?? 0}</div>
+                <div class="match-meta">${statusBadge}</div>
+               </div>`
+            : `<div class="score-display">
+                <div style="font-size:13px; font-weight:900; color:#333;">VS</div>
+                <div class="match-meta">${statusBadge}</div>
+               </div>`;
 
-        const actionButtons = isFinished ? `<div style="font-size:10px; color:#555; padding:8px;">✅ Cerrado</div>` : isLive ? `<div class="match-actions"><div class="actions-row" style="align-items:center; gap:8px;"><input class="score-input" id="sh-${m.id}" type="number" min="0" value="${m.score_home ?? 0}"><span>-</span><input class="score-input" id="sa-${m.id}" type="number" min="0" value="${m.score_away ?? 0}"><button class="btn-sm btn-green" onclick="Admin.updateScore('${m.id}')">Actualizar</button></div><div class="actions-row"><button class="btn-sm btn-live" onclick="Admin.finishMatch('${m.id}')">Finalizar</button></div></div>` : `<div class="match-actions"><button class="btn-sm btn-live" style="padding:10px;" onclick="Admin.setLive('${m.id}')">▶️ EN VIVO</button><div style="font-size:9px;color:#555;text-align:center;margin-top:8px;">${pendingBets.length} apuestas</div></div>`;
+        const actionButtons = isFinished
+            ? `<div style="font-size:10px; color:#555; font-weight:700; text-transform:uppercase; text-align:center; padding:8px;">
+                ✅ Partido cerrado · ${pendingBets.length} apuestas resueltas
+               </div>`
+            : isLive
+            ? `<div class="match-actions">
+                <!-- Score update -->
+                <div class="actions-row" style="align-items:center; gap:8px;">
+                    <span style="font-size:9px;color:#555;font-weight:700;text-transform:uppercase;white-space:nowrap;">Marcador:</span>
+                    <input class="score-input" id="sh-${m.id}" type="number" min="0" value="${m.score_home ?? 0}" placeholder="0">
+                    <span style="color:#555;font-weight:900;">-</span>
+                    <input class="score-input" id="sa-${m.id}" type="number" min="0" value="${m.score_away ?? 0}" placeholder="0">
+                    <button class="btn-sm btn-green" onclick="Admin.updateScore('${m.id}')"><i class="fas fa-sync-alt"></i> Actualizar</button>
+                </div>
+                <!-- Minute -->
+                <div class="actions-row" style="align-items:center; gap:8px;">
+                    <span style="font-size:9px;color:#555;font-weight:700;text-transform:uppercase;white-space:nowrap;">Minuto:</span>
+                    <input class="score-input" id="min-${m.id}" type="number" min="0" max="120" value="${m.minute ?? 1}" placeholder="45" style="width:54px;">
+                    <button class="btn-sm btn-yellow" onclick="Admin.updateMinute('${m.id}')">Guardar</button>
+                    <button class="btn-sm btn-gray" onclick="Admin.setPaused('${m.id}')"><i class="fas fa-pause"></i> HT</button>
+                </div>
+                <!-- Odds en vivo -->
+                <div class="actions-row" style="align-items:center; gap:6px; flex-wrap:wrap;">
+                    <span style="font-size:9px;color:#555;font-weight:700;text-transform:uppercase;white-space:nowrap;">Cuotas:</span>
+                    <input class="score-input" id="o1-${m.id}" type="number" step="0.01" value="${(m.home_odd||2).toFixed(2)}" placeholder="1" style="width:54px;" title="Cuota Local">
+                    <input class="score-input" id="ox-${m.id}" type="number" step="0.01" value="${(m.draw_odd||3.2).toFixed(2)}" placeholder="X" style="width:54px;" title="Cuota Empate">
+                    <input class="score-input" id="o2-${m.id}" type="number" step="0.01" value="${(m.away_odd||3.5).toFixed(2)}" placeholder="2" style="width:54px;" title="Cuota Visitante">
+                    <button class="btn-sm btn-green" onclick="Admin.updateOdds('${m.id}')">Actualizar</button>
+                </div>
+                <!-- Pausar/reanudar apuestas -->
+                <div class="actions-row">
+                    ${m.bets_paused
+                        ? `<button class="btn-sm btn-green" style="flex:1;padding:8px;" onclick="Admin.toggleBetsPause('${m.id}', false)"><i class="fas fa-play"></i> Reanudar Apuestas</button>`
+                        : `<button class="btn-sm btn-yellow" style="flex:1;padding:8px;" onclick="Admin.toggleBetsPause('${m.id}', true)"><i class="fas fa-pause"></i> Pausar Apuestas</button>`
+                    }
+                </div>
+                <!-- Result -->
+                <div>
+                    <div style="font-size:9px;color:#555;font-weight:700;text-transform:uppercase;margin-bottom:5px;">Marcar Resultado Final:</div>
+                    <div class="result-btns">
+                        <button class="btn-result win1" onclick="Admin.openResultConfirm('${m.id}','1','${m.home.replace(/'/g,"\\'")} gana')" title="Gana local">1 ${m.home}</button>
+                        <button class="btn-result draw" onclick="Admin.openResultConfirm('${m.id}','X','Empate')" title="Empate">X Empate</button>
+                        <button class="btn-result win2" onclick="Admin.openResultConfirm('${m.id}','2','${m.away.replace(/'/g,"\\'")} gana')" title="Gana visitante">2 ${m.away}</button>
+                    </div>
+                </div>
+                <div style="font-size:9px;color:#fbbf24;font-weight:700;text-transform:uppercase;">
+                    ⏳ ${pendingBets.length} apuesta${pendingBets.length !== 1 ? 's' : ''} pendiente${pendingBets.length !== 1 ? 's' : ''}
+                </div>
+               </div>`
+            : /* upcoming */
+            `<div class="match-actions">
+                <button class="btn-sm btn-live" style="padding:10px;" onclick="Admin.setLive('${m.id}')">
+                    <i class="fas fa-play"></i> Iniciar Partido EN VIVO
+                </button>
+                <div style="font-size:9px;color:#555;font-weight:700;text-transform:uppercase;text-align:center;">
+                    ${pendingBets.length} apuesta${pendingBets.length !== 1 ? 's' : ''} pre-partido
+                </div>
+                <div class="actions-row">
+                    <button class="btn-sm btn-gray" onclick="Modal.openEdit('${m.id}')"><i class="fas fa-edit"></i> Editar</button>
+                    <button class="btn-sm btn-danger" onclick="Admin.deleteMatch('${m.id}')"><i class="fas fa-trash"></i> Eliminar</button>
+                </div>
+               </div>`;
 
-        return `<div class="match-row ${isLive ? 'live' : isFinished ? 'finished' : ''}"><div class="team-name team-home">${m.home}</div>${scoreSection}<div class="team-name team-away">${m.away}</div><div>${actionButtons}</div></div>`;
+        return `
+        <div class="match-row ${isLive ? 'live' : isFinished ? 'finished' : ''}" id="match-row-${m.id}">
+            <div class="team-name team-home">${m.home}</div>
+            ${scoreSection}
+            <div class="team-name team-away">${m.away}</div>
+            <div>${actionButtons}</div>
+        </div>`;
     },
 
+    // ── INICIAR PARTIDO ──
     async setLive(matchId) {
-        const { error } = await sb.from('wc_matches').update({ status: 'live', minute: 1, score_home: 0, score_away: 0 }).eq('id', matchId);
+        const { error } = await sb.from('wc_matches').update({
+            status: 'live',
+            minute: 1,
+            score_home: 0,
+            score_away: 0,
+            notify_live: true   // ← activa la notificación en el casino
+        }).eq('id', matchId);
         if (error) return notify('Error: ' + error.message, 'error');
-        notify('✅ Partido iniciado EN VIVO', 'success');
+        setTimeout(async () => {
+            await sb.from('wc_matches').update({ notify_live: false }).eq('id', matchId);
+        }, 3000);
+        notify('✅ Partido iniciado — notificación enviada a todos los usuarios', 'success');
         await this.loadMatches();
     },
 
+    // ── ACTUALIZAR MARCADOR ──
     async updateScore(matchId) {
-        const sh = parseInt(document.getElementById(`sh-${matchId}`).value);
-        const sa = parseInt(document.getElementById(`sa-${matchId}`).value);
-        const { error } = await sb.from('wc_matches').update({ score_home: sh, score_away: sa }).eq('id', matchId);
-        if (error) return notify('Error: ' + error.message, 'error');
-        notify('⚽ Marcador actualizado', 'success');
+        const sh = parseInt(document.getElementById(`sh-${matchId}`)?.value ?? 0);
+        const sa = parseInt(document.getElementById(`sa-${matchId}`)?.value ?? 0);
+        const min = parseInt(document.getElementById(`min-${matchId}`)?.value ?? 0);
+        const { error } = await sb.from('wc_matches').update({
+            score_home: sh,
+            score_away: sa,
+            minute: min
+        }).eq('id', matchId);
+        if (error) return notify('Error actualizando: ' + error.message, 'error');
+        notify(`⚽ Marcador actualizado: ${sh} - ${sa} (${min}')`, 'success');
         await this.loadMatches();
     },
 
-    async finishMatch(matchId) {
-        const result = prompt('¿Resultado? (1/X/2)');
-        if (!['1', 'X', '2'].includes(result)) return;
-        const { error } = await sb.from('wc_matches').update({ status: 'finished', result }).eq('id', matchId);
+    // ── ACTUALIZAR MINUTO ──
+    async updateMinute(matchId) {
+        const min = parseInt(document.getElementById(`min-${matchId}`)?.value ?? 0);
+        const { error } = await sb.from('wc_matches').update({ minute: min }).eq('id', matchId);
         if (error) return notify('Error: ' + error.message, 'error');
-        notify('✅ Partido finalizado', 'success');
+        notify(`🕐 Minuto actualizado: ${min}'`, 'success');
         await this.loadMatches();
     },
 
+    // ── ACTUALIZAR CUOTAS EN VIVO (sin notificación a usuarios) ──
+    async updateOdds(matchId) {
+        const o1 = parseFloat(document.getElementById(`o1-${matchId}`)?.value);
+        const ox = parseFloat(document.getElementById(`ox-${matchId}`)?.value);
+        const o2 = parseFloat(document.getElementById(`o2-${matchId}`)?.value);
+        if (!o1 || !ox || !o2) return notify('Ingresa cuotas válidas', 'error');
+        const { error } = await sb.from('wc_matches').update({ home_odd: o1, draw_odd: ox, away_odd: o2 }).eq('id', matchId);
+        if (error) return notify('Error: ' + error.message, 'error');
+        notify(`📊 Cuotas actualizadas: ${o1} / ${ox} / ${o2}`, 'success');
+        await this.loadMatches();
+    },
+
+    // ── PAUSAR / REANUDAR APUESTAS ──
+    async toggleBetsPause(matchId, pause) {
+        const { error } = await sb.from('wc_matches').update({ bets_paused: pause }).eq('id', matchId);
+        if (error) return notify('Error: ' + error.message, 'error');
+        notify(pause ? '⏸ Apuestas PAUSADAS' : '▶️ Apuestas REANUDADAS', pause ? 'error' : 'success');
+        await this.loadMatches();
+    },
+
+    // ── MARCAR MEDIO TIEMPO ──
+    async setPaused(matchId) {
+        const { error } = await sb.from('wc_matches').update({ minute: 45, status: 'live' }).eq('id', matchId);
+        if (error) return notify('Error: ' + error.message, 'error');
+        notify('⏸ Marcado como Medio Tiempo (HT)', 'success');
+    },
+
+    // ── ABRIR MODAL CONFIRMAR RESULTADO ──
+    openResultConfirm(matchId, result, label) {
+        const m = this.matches.find(x => x.id === matchId);
+        if (!m) return;
+        document.getElementById('res-match-id').value = matchId;
+        document.getElementById('res-result').value = result;
+        const pendingBets = this.bets.filter(b =>
+            b.status === 'pending' && b.picks && b.picks.some(p => p.matchId === matchId)
+        );
+        const totalPot = pendingBets.reduce((s, b) => {
+            const pick = b.picks?.find(p => p.matchId === matchId);
+            if (!pick) return s;
+            return s + (pick.odd * b.amount);
+        }, 0);
+        document.getElementById('res-summary').innerHTML = `
+            <div style="font-size:13px; font-weight:900; color:white; margin-bottom:8px;">${m.home} vs ${m.away}</div>
+            <div style="font-size:18px; font-weight:900; color:#10b981; margin-bottom:8px;">Resultado: ${label}</div>
+            <div style="font-size:11px; color:#888;">
+                ${pendingBets.length} apuesta${pendingBets.length !== 1 ? 's' : ''} afectada${pendingBets.length !== 1 ? 's' : ''}<br>
+                Pago estimado: <strong style="color:#fbbf24;">$${totalPot.toFixed(2)} MXN</strong>
+            </div>`;
+        document.getElementById('modal-result').classList.add('open');
+    },
+
+    // ── CONFIRMAR RESULTADO Y PAGAR ──
+    async confirmResult() {
+        const matchId = document.getElementById('res-match-id').value;
+        const result  = document.getElementById('res-result').value;
+        const m = this.matches.find(x => x.id === matchId);
+        if (!m) return;
+
+        document.getElementById('modal-result').classList.remove('open');
+        notify('⏳ Procesando resultado y pagos...', 'success');
+
+        const sh = m.score_home ?? 0, sa = m.score_away ?? 0;
+        const { error: matchErr } = await sb.from('wc_matches').update({
+            status: 'finished',
+            result: result,
+            minute: 90,
+            score_home: sh,
+            score_away: sa
+        }).eq('id', matchId);
+        if (matchErr) return notify('Error cerrando partido: ' + matchErr.message, 'error');
+
+        const pendingBets = this.bets.filter(b =>
+            b.status === 'pending' &&
+            b.picks && b.picks.some(p => p.matchId === matchId)
+        );
+
+        let paidCount = 0, lostCount = 0;
+
+        for (const bet of pendingBets) {
+            const thisPickWon = bet.picks.some(p => p.matchId === matchId && p.pick === result);
+
+            if (!thisPickWon) {
+                await sb.from('wc_bets').update({ status: 'lost' }).eq('id', bet.id);
+                lostCount++;
+                continue;
+            }
+
+            const allSettled = await this.checkAllPicksSettled(bet, matchId, result);
+            if (!allSettled.canPay) continue;
+
+            if (allSettled.won) {
+                await this.payUser(bet.user_id, bet.potential_win, bet.id);
+                paidCount++;
+            } else {
+                await sb.from('wc_bets').update({ status: 'lost' }).eq('id', bet.id);
+                lostCount++;
+            }
+        }
+
+        notify(`✅ Resultado registrado. Pagados: ${paidCount} · Perdidos: ${lostCount}`, 'success');
+        await this.loadMatches();
+        await this.loadBets();
+    },
+
+    // ── Verificar si todos los picks de un ticket tienen resultado ──
+    async checkAllPicksSettled(bet, newMatchId, newResult) {
+        for (const pick of bet.picks) {
+            const localResult = pick.matchId === newMatchId ? newResult : null;
+            const matchData = this.matches.find(m => m.id === pick.matchId);
+            const finalResult = localResult || matchData?.result;
+            if (!finalResult) return { canPay: false, won: false };
+            if (finalResult !== pick.pick) return { canPay: true, won: false };
+        }
+        return { canPay: true, won: true };
+    },
+
+    // ── Pagar usuario ──
+    async payUser(userId, amount, betId) {
+        const { error: rpcErr } = await sb.rpc('modificar_saldo', { user_id: userId, monto: amount });
+        if (rpcErr) {
+            const { data: u } = await sb.from('usuarios').select('saldo').eq('id', userId).single();
+            await sb.from('usuarios').update({ saldo: (u?.saldo || 0) + amount }).eq('id', userId);
+        }
+        await sb.from('wc_bets').update({ status: 'won' }).eq('id', betId);
+        await sb.from('history').insert([{
+            user_id: userId,
+            type: 'bets',
+            amount: amount,
+            label: '⚽ GANANCIA MUNDIAL 2026',
+            status: 'completed'
+        }]);
+    },
+
+    // ── Eliminar partido ──
+    async deleteMatch(matchId) {
+        if (!confirm('¿Eliminar este partido? Las apuestas pendientes quedarán activas.')) return;
+        const { error } = await sb.from('wc_matches').delete().eq('id', matchId);
+        if (error) return notify('Error: ' + error.message, 'error');
+        notify('Partido eliminado', 'success');
+        await this.loadMatches();
+    },
+
+    // ── Render apuestas ──
     renderBets() {
         const tbody = document.getElementById('bets-tbody');
         if (!this.bets.length) {
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#444;padding:40px;">Sin apuestas</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#444;padding:40px;font-size:12px;text-transform:uppercase;">Sin apuestas registradas</td></tr>`;
             return;
         }
-        tbody.innerHTML = this.bets.slice(0, 100).map(b => {
+        tbody.innerHTML = this.bets.slice(0, 200).map(b => {
             const sc = b.status === 'won' ? '#10b981' : b.status === 'lost' ? '#ef4444' : '#fbbf24';
             const st = b.status === 'won' ? '✅ Ganada' : b.status === 'lost' ? '❌ Perdida' : '⏳ Pendiente';
-            const email = b.usuarios?.email || 'N/A';
+            const picks = (b.picks || []).map(p => {
+                const m = this.matches.find(x => x.id === p.matchId);
+                const mName = m ? `${m.home} vs ${m.away}` : p.matchId;
+                return `<span style="display:block;font-size:9px;color:#888;">${mName}: <b style="color:white;">${p.label}</b> @ ${p.odd?.toFixed(2)}</span>`;
+            }).join('');
+            const email = b.usuarios?.email || b.user_id?.slice(0, 12) + '...';
             const d = new Date(b.created_at);
-            return `<tr><td>${email}</td><td>$${(b.amount||0).toFixed(2)}</td><td>${(b.total_odd||1).toFixed(2)}x</td><td style="color:#10b981;">$${(b.potential_win||0).toFixed(2)}</td><td style="font-size:9px;">Apuesta</td><td style="color:${sc};font-weight:700;">${st}</td><td>${d.toLocaleDateString('es-MX')}</td></tr>`;
+            return `<tr>
+                <td style="font-size:10px;color:#aaa;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${email}">${email}</td>
+                <td><b>$${(b.amount||0).toFixed(2)}</b></td>
+                <td>${(b.total_odd||1).toFixed(2)}x</td>
+                <td style="color:#10b981;">$${(b.potential_win||0).toFixed(2)}</td>
+                <td>${picks}</td>
+                <td style="color:${sc};font-weight:700;">${st}</td>
+                <td style="font-size:9px;color:#555;">${d.toLocaleDateString('es-MX')}<br>${d.toTimeString().slice(0,5)}</td>
+            </tr>`;
         }).join('');
     },
 
     setTab(tab) {
         this.currentTab = tab;
         document.getElementById('panel-matches').style.display = tab === 'matches' ? 'block' : 'none';
-        document.getElementById('panel-bets').style.display = tab === 'bets' ? 'block' : 'none';
-        document.getElementById('panel-users').style.display = tab === 'users' ? 'block' : 'none';
+        document.getElementById('panel-bets').style.display   = tab === 'bets' ? 'block' : 'none';
+        document.getElementById('panel-users').style.display  = tab === 'users' ? 'block' : 'none';
         document.getElementById('panel-history').style.display = tab === 'history' ? 'block' : 'none';
         document.getElementById('tab-matches').classList.toggle('active', tab === 'matches');
         document.getElementById('tab-bets').classList.toggle('active', tab === 'bets');
         document.getElementById('tab-users').classList.toggle('active', tab === 'users');
         document.getElementById('tab-history').classList.toggle('active', tab === 'history');
+        if (tab === 'bets') this.renderBets();
+        if (tab === 'users') this.loadUsers();
+        if (tab === 'history') this.loadHistory();
     }
 };
 
+// ─── MODAL ADD / EDIT ─────────────────────────────────────────
 const Modal = {
     close() { document.getElementById('modal-match').classList.remove('open'); },
     openAdd() {
         document.getElementById('edit-match-id').value = '';
-        ['f-home','f-away','f-odd1','f-oddx','f-odd2','f-date','f-time','f-group','f-venue'].forEach(id => { document.getElementById(id).value = ''; });
+        document.getElementById('modal-title').innerHTML = 'Agregar <span>Partido</span>';
+        ['f-home','f-away','f-odd1','f-oddx','f-odd2','f-date','f-time','f-group','f-venue'].forEach(id => {
+            document.getElementById(id).value = '';
+        });
         document.getElementById('f-phase').value = 'Grupos';
         document.getElementById('modal-match').classList.add('open');
     },
+    openEdit(matchId) {
+        const m = Admin.matches.find(x => x.id === matchId);
+        if (!m) return;
+        document.getElementById('edit-match-id').value = matchId;
+        document.getElementById('modal-title').innerHTML = 'Editar <span>Partido</span>';
+        document.getElementById('f-home').value  = m.home || '';
+        document.getElementById('f-away').value  = m.away || '';
+        document.getElementById('f-odd1').value  = m.home_odd || '';
+        document.getElementById('f-oddx').value  = m.draw_odd || '';
+        document.getElementById('f-odd2').value  = m.away_odd || '';
+        document.getElementById('f-date').value  = m.match_date || '';
+        document.getElementById('f-time').value  = m.match_time || '';
+        document.getElementById('f-group').value = m.group_name || '';
+        document.getElementById('f-venue').value = m.venue || '';
+        document.getElementById('f-phase').value = m.phase || 'Grupos';
+        document.getElementById('modal-match').classList.add('open');
+    },
     async save() {
-        const id = document.getElementById('edit-match-id').value;
-        const home = document.getElementById('f-home').value.trim();
-        const away = document.getElementById('f-away').value.trim();
-        const odd1 = parseFloat(document.getElementById('f-odd1').value);
-        const oddx = parseFloat(document.getElementById('f-oddx').value);
-        const odd2 = parseFloat(document.getElementById('f-odd2').value);
+        const id    = document.getElementById('edit-match-id').value;
+        const home  = document.getElementById('f-home').value.trim();
+        const away  = document.getElementById('f-away').value.trim();
+        const odd1  = parseFloat(document.getElementById('f-odd1').value);
+        const oddx  = parseFloat(document.getElementById('f-oddx').value);
+        const odd2  = parseFloat(document.getElementById('f-odd2').value);
+        const date  = document.getElementById('f-date').value.trim();
+        const time  = document.getElementById('f-time').value.trim();
+        const group = document.getElementById('f-group').value.trim().toUpperCase();
+        const venue = document.getElementById('f-venue').value.trim();
+        const phase = document.getElementById('f-phase').value;
 
         if (!home || !away) return notify('Ingresa los equipos', 'error');
         if (!odd1 || !oddx || !odd2) return notify('Ingresa las cuotas', 'error');
 
         const payload = {
-            home, away, home_odd: odd1, draw_odd: oddx, away_odd: odd2,
-            match_date: document.getElementById('f-date').value,
-            match_time: document.getElementById('f-time').value,
-            group_name: document.getElementById('f-group').value,
-            venue: document.getElementById('f-venue').value,
-            phase: document.getElementById('f-phase').value,
-            status: 'upcoming', score_home: 0, score_away: 0
+            home, away,
+            home_odd: odd1, draw_odd: oddx, away_odd: odd2,
+            match_date: date, match_time: time,
+            group_name: group, venue, phase,
+            status: 'upcoming', score_home: 0, score_away: 0, minute: 0, result: null
         };
 
         let error;
@@ -785,13 +1203,14 @@ const Modal = {
         } else {
             ({ error } = await sb.from('wc_matches').insert([payload]));
         }
-        if (error) return notify('Error: ' + error.message, 'error');
-        notify(id ? '✅ Actualizado' : '✅ Creado', 'success');
+        if (error) return notify('Error guardando: ' + error.message, 'error');
+        notify(id ? '✅ Partido actualizado' : '✅ Partido creado', 'success');
         this.close();
         await Admin.loadMatches();
     }
 };
 
+// ─── START ────────────────────────────────────────────────────
 Auth.check();
 </script>
 </body>
