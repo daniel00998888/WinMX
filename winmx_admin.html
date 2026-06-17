@@ -553,6 +553,7 @@ const Admin = {
         if (error) { notify('Error cargando apuestas: ' + error.message, 'error'); return; }
         this.bets = data || [];
         this.renderBets();
+        this.renderMatches(); // las tarjetas de partidos muestran conteo de apuestas; deben refrescarse aquí también
         this.updateStats();
     },
 
