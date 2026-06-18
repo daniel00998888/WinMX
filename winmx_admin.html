@@ -435,7 +435,7 @@ const sb = window.supabase.createClient(DB.url, DB.key);
 // La función "admin-login" corre en el servidor de Supabase y es la única
 // que sabe si un email+password corresponde a un admin real. Esta página
 // ya no contiene ninguna contraseña ni lógica de verificación.
-const ADMIN_LOGIN_URL = DB.url + "/functions/v1/admin-login";
+const ADMIN_LOGIN_URL = DB.url + "/functions/v1/Index";
 
 // ─── NOTIFICACIONES ───────────────────────────────────────────
 const notify = (msg, type = 'success') => {
