@@ -683,10 +683,18 @@
                 if (error) console.log('Last login update note:', error);
             } catch(e) { console.log('Last login error:', e); }
         }
+
+        // ── HEARTBEAT: Actualizar last_seen cada minuto ──
+        function startHeartbeat() {
+            if (!State.user) return;
+            setInterval(() => {
+                if (State.user) updateLastLogin();
+            }, 20000); // Cada minuto (60000ms)
+        }
         // ──────────────────────────────────────────────────────────────
         const Core = {
             async init() { let p = 0; const i = setInterval(() => { p += 25; document.getElementById('boot-bar').style.width = `${p}%`; if(p >= 100) { clearInterval(i); this.check(); } }, 100); },
-            async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; updateLastLogin(); document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); this.subscribeBalance(); this.processPendingWins(); await BanGuard.checkExistingBan(); BanGuard.subscribeRealtime(); PresenceTracker.join(); // Procesar referido si el usuario llegó con ?ref= en la URL
+            async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; updateLastLogin(); startHeartbeat(); document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); this.subscribeBalance(); this.processPendingWins(); await BanGuard.checkExistingBan(); BanGuard.subscribeRealtime(); PresenceTracker.join(); // Procesar referido si el usuario llegó con ?ref= en la URL
                 setTimeout(() => Referidos.procesarReferidoSiExiste(), 1500);
             } else { document.getElementById('auth-view').classList.remove('hidden-view'); } },
             async loadBalance() { const { data } = await sb.from('usuarios').select('saldo').eq('id', State.user.id).maybeSingle(); State.balance = data ? data.saldo : 0; UI.updateBalance(); },
@@ -1231,6 +1239,7 @@
                 try { await sb.from('usuarios').upsert([{ id: data.user.id, email: data.user.email, saldo: 0 }]); } catch(e) {}
                 State.user = data.user;
                 updateLastLogin();
+                startHeartbeat();
             }
             document.getElementById('auth-view').classList.add('hidden-view');
             document.getElementById('bonus-view').classList.remove('hidden-view');
