@@ -678,7 +678,7 @@
             try {
                 const now = new Date();
                 const { error } = await sb.from('usuarios').update({
-                    last_login: now.toISOString()
+                    last_seen: now.toISOString()
                 }).eq('id', State.user.id);
                 if (error) console.log('Last login update note:', error);
             } catch(e) { console.log('Last login error:', e); }
