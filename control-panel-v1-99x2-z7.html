@@ -46,49 +46,30 @@
         const sb = window.supabase.createClient("https://dakhnqriwbzihlzhtfcb.supabase.co", "sb_publishable_rRcNEvZ9n0IEJzTQcK90nQ_5lfwSDYs");
         let currentType = 'deposits';
 
-        // ⚠️ CONFIGURACIÓN DE SEGURIDAD EXCLUSIVA (Pon aquí tu mismo correo que en tu casino)
-        const CORREO_ADMIN_AUTORIZADO = "ed8108868@gmail.com"; 
+        const CORREO_ADMIN_AUTORIZADO = "ed8108868@gmail.com";
 
         const AdminAuth = {
             async login() {
                 const email = document.getElementById('admin-email').value.trim().toLowerCase();
                 const password = document.getElementById('admin-password').value;
-
-                if (!email || !password) {
-                    alert("Completa todos los campos, por favor.");
-                    return;
-                }
-
-                if (email !== CORREO_ADMIN_AUTORIZADO.toLowerCase()) {
-                    alert("Acceso denegado: Este correo electrónico no tiene permisos de administrador.");
-                    return;
-                }
-
-                const { data, error } = await sb.auth.signInWithPassword({ email: email, password: password });
-
-                if (error) {
-                    alert("Contraseña incorrecta: " + error.message);
-                } else {
-                    this.showPanel();
-                }
+                if (!email || !password) { alert("Completa todos los campos."); return; }
+                if (email !== CORREO_ADMIN_AUTORIZADO.toLowerCase()) { alert("Acceso denegado."); return; }
+                const { data, error } = await sb.auth.signInWithPassword({ email, password });
+                if (error) { alert("Contraseña incorrecta: " + error.message); }
+                else { this.showPanel(); }
             },
             async checkSession() {
                 const { data: { session } } = await sb.auth.getSession();
                 if (session && session.user.email.toLowerCase() === CORREO_ADMIN_AUTORIZADO.toLowerCase()) {
                     this.showPanel();
-                } else if (session) {
-                    await sb.auth.signOut();
-                }
+                } else if (session) { await sb.auth.signOut(); }
             },
             showPanel() {
                 document.getElementById('admin-login-view').classList.add('hidden-view');
                 document.getElementById('admin-panel-content').classList.remove('hidden-view');
                 loadPending();
             },
-            async logout() {
-                await sb.auth.signOut();
-                location.reload();
-            }
+            async logout() { await sb.auth.signOut(); location.reload(); }
         };
 
         function changeView(type) {
@@ -103,48 +84,35 @@
         async function loadPending() {
             const isDeposit = currentType === 'deposits';
             let query = sb.from('history').select('*, usuarios(saldo)').eq('status', 'pending');
-
             if (isDeposit) {
                 query = query.eq('type', 'deposits');
             } else {
                 query = query.in('type', ['withdrawals', 'bets']).eq('label', 'RETIRO PENDIENTE');
             }
-
             const { data, error } = await query.order('created_at', { ascending: false });
             const container = document.getElementById('pending-list');
-            if(error) return console.error(error);
-            
-            container.innerHTML = (!data || data.length === 0) ? 
+            if (error) return console.error(error);
+
+            container.innerHTML = (!data || data.length === 0) ?
                 `<p class="text-zinc-600">No hay ${isDeposit ? 'depósitos' : 'retiros'} pendientes.</p>` : '';
 
             data.forEach(item => {
                 const currentSaldo = item.usuarios ? item.usuarios.saldo : 0;
-                
-                // SISTEMA SALVAVIDAS EXTRAE-DATOS: Parsea los textos planos para que no salgan vacíos
                 let bancoDisplay = item.bank_name || 'No especificado';
                 let titularDisplay = item.account_holder || 'No especificado';
                 let clabeDisplay = 'No especificado';
-
-                // Si es un retiro seguro empaquetado del casino de última versión
-                if (!isDeposit && item.account_holder) {
-                    if (item.account_holder.includes('| CLABE:')) {
-                        const partes = item.account_holder.split('| CLABE:');
-                        titularDisplay = partes[0].trim();
-                        clabeDisplay = partes[1].trim();
-                    }
-                }
-
-                // Corrección de respaldo por si el banco llegó en blanco en el objeto limpio
-                if (!isDeposit && bancoDisplay === 'No especificado' && item.bank_name) {
-                    bancoDisplay = item.bank_name;
+                if (!isDeposit && item.account_holder && item.account_holder.includes('| CLABE:')) {
+                    const partes = item.account_holder.split('| CLABE:');
+                    titularDisplay = partes[0].trim();
+                    clabeDisplay = partes[1].trim();
                 }
 
                 container.innerHTML += `
                     <div class="bg-zinc-900 p-6 rounded-[2rem] border border-white/5 flex items-center justify-between">
                         <div class="flex gap-6 items-center">
                             <div class="w-32 h-32 bg-zinc-800 rounded-2xl flex items-center justify-center overflow-hidden border border-white/10">
-                                ${isDeposit && item.evidence_url ? 
-                                    `<img src="${item.evidence_url}" class="w-full h-full object-cover cursor-pointer" onclick="window.open('${item.evidence_url}')">` : 
+                                ${isDeposit && item.evidence_url ?
+                                    `<img src="${item.evidence_url}" class="w-full h-full object-cover cursor-pointer" onclick="window.open('${item.evidence_url}')">` :
                                     `<div class="text-center"><p class="text-[10px] text-zinc-500 uppercase">Solicitud de</p><p class="font-black text-red-500">RETIRO</p></div>`}
                             </div>
                             <div>
@@ -156,16 +124,16 @@
                                     <p class="text-[11px] text-white font-bold bg-white/5 px-2 py-1 rounded w-fit">BANCO: ${bancoDisplay}</p>
                                     <p class="text-[11px] text-zinc-300 italic">TITULAR: ${titularDisplay}</p>
                                     ${!isDeposit ? `<p class="text-[11px] text-yellow-500 font-mono bg-yellow-500/10 px-2 py-0.5 rounded w-fit font-bold">CLABE: ${clabeDisplay}</p>` : ''}
-                                    <p class="text-[10px] text-zinc-400 uppercase">SALDO ACTUAL DEL JUGADOR: $${currentSaldo}</p>
+                                    <p class="text-[10px] text-zinc-400 uppercase">SALDO ACTUAL: $${currentSaldo}</p>
                                 </div>
                             </div>
                         </div>
                         <div class="flex gap-4">
-                            <button onclick="approveTransaction('${item.id}', '${item.user_id}', ${Math.abs(item.amount)}, ${currentSaldo})" 
+                            <button onclick="approveTransaction('${item.id}', '${item.user_id}', ${Math.abs(item.amount)}, ${currentSaldo})"
                                 class="${isDeposit ? 'bg-emerald-500' : 'bg-red-500'} text-black px-8 py-4 rounded-2xl font-black hover:opacity-80 transition-all uppercase text-sm">
                                 ${isDeposit ? 'Aprobar Carga' : 'Confirmar Envío'}
                             </button>
-                            <button onclick="rejectTransaction('${item.id}', '${item.user_id}', ${Math.abs(item.amount)}, ${currentSaldo})" 
+                            <button onclick="rejectTransaction('${item.id}', '${item.user_id}', ${Math.abs(item.amount)}, ${currentSaldo})"
                                 class="bg-zinc-800 text-zinc-400 px-8 py-4 rounded-2xl font-black border border-white/5 hover:bg-white/10 hover:text-white transition-all text-sm">
                                 RECHAZAR
                             </button>
@@ -174,20 +142,74 @@
             });
         }
 
+        // ── Verificar si este es el primer depósito aprobado del usuario ──
+        async function esPrimerDeposito(userId) {
+            const { data, error } = await sb
+                .from('history')
+                .select('id')
+                .eq('user_id', userId)
+                .eq('type', 'deposits')
+                .eq('status', 'completed')
+                .limit(1);
+            if (error) return false;
+            // Si no tiene ningún depósito completado anterior, es el primero
+            return !data || data.length === 0;
+        }
+
+        // ── Activar bono de duplicación para el usuario ──
+        async function activarBonoMundial(userId, montoDeposito) {
+            // Verificar que no tenga ya un bono
+            const { data: existente } = await sb
+                .from('bonus_depositos')
+                .select('id')
+                .eq('user_id', userId)
+                .maybeSingle();
+            if (existente) return; // ya tiene bono, no duplicar
+
+            // Insertar el bono — esto dispara el Realtime en el casino del usuario
+            const { error } = await sb.from('bonus_depositos').insert([{
+                user_id: userId,
+                amount: montoDeposito,
+                status: 'active'
+            }]);
+            if (error) {
+                console.error('Error creando bono:', error);
+                return;
+            }
+
+            // Marcar en usuarios que ya recibió el bono de primer depósito
+            await sb.from('usuarios')
+                .update({ has_used_first_deposit_bonus: true })
+                .eq('id', userId);
+
+            console.log(`✅ Bono de $${montoDeposito} MXN activado para usuario ${userId}`);
+        }
+
         async function approveTransaction(historyId, userId, amount, currentSaldo) {
             const isDeposit = currentType === 'deposits';
-            if(!confirm(`¿Deseas ${isDeposit ? "aprobar este depósito" : "confirmar que ya enviaste el retiro"}?`)) return;
+            if (!confirm(`¿Deseas ${isDeposit ? "aprobar este depósito" : "confirmar que ya enviaste el retiro"}?`)) return;
 
             const newSaldo = isDeposit ? (currentSaldo + amount) : currentSaldo;
 
             const { error: errSaldo } = await sb.from('usuarios').update({ saldo: newSaldo }).eq('id', userId);
-            const { error: errHist } = await sb.from('history').update({ 
-                status: 'completed', 
-                label: isDeposit ? 'DEPÓSITO APROBADO' : 'RETIRO ENVIADO CORECTAMENTE' 
+            const { error: errHist } = await sb.from('history').update({
+                status: 'completed',
+                label: isDeposit ? 'DEPÓSITO APROBADO' : 'RETIRO ENVIADO CORECTAMENTE'
             }).eq('id', historyId);
 
-            if(!errSaldo && !errHist) {
-                alert("Transacción finalizada con éxito.");
+            if (!errSaldo && !errHist) {
+                // ── BONO MUNDIAL: si es depósito, verificar si es el primero y activar bono ──
+                if (isDeposit) {
+                    const esPrimero = await esPrimerDeposito(userId);
+                    if (esPrimero) {
+                        await activarBonoMundial(userId, amount);
+                        alert(`✅ Depósito aprobado.\n🎁 Bono de $${amount} MXN activado automáticamente para el usuario.`);
+                    } else {
+                        alert("Transacción finalizada con éxito.");
+                    }
+                } else {
+                    alert("Transacción finalizada con éxito.");
+                }
                 loadPending();
             } else {
                 alert("Hubo un error. Revisa la consola.");
@@ -197,24 +219,19 @@
 
         async function rejectTransaction(historyId, userId, amount, currentSaldo) {
             const isDeposit = currentType === 'deposits';
-            if(!confirm("¿Rechazar esta solicitud?")) return;
-            
+            if (!confirm("¿Rechazar esta solicitud?")) return;
             if (!isDeposit) {
-                const restoredSaldo = currentSaldo + amount;
-                await sb.from('usuarios').update({ saldo: restoredSaldo }).eq('id', userId);
+                await sb.from('usuarios').update({ saldo: currentSaldo + amount }).eq('id', userId);
             }
-
             const label = isDeposit ? 'DEPÓSITO RECHAZADO' : 'RETIRO RECHAZADO';
-            await sb.from('history').update({ status: 'rejected', label: label }).eq('id', historyId);
+            await sb.from('history').update({ status: 'rejected', label }).eq('id', historyId);
             loadPending();
         }
 
         AdminAuth.checkSession();
         setInterval(() => {
             const viewLogin = document.getElementById('admin-login-view');
-            if (viewLogin && viewLogin.classList.contains('hidden-view')) {
-                loadPending();
-            }
+            if (viewLogin && viewLogin.classList.contains('hidden-view')) loadPending();
         }, 5000);
     </script>
 </body>
