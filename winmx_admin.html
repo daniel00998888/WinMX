@@ -432,7 +432,7 @@ const Admin = {
             .select('id, email, saldo, created_at, last_seen')
             .order('created_at', { ascending: false });
         if (error) { notify('Error cargando usuarios: ' + error.message, 'error'); return; }
-        this.users = data || []; this.renderUsers();
+        this.users = data || []; this.renderUsers(); this.updateStats();
     },
 
     filterUsers() { this.renderUsers(); },
