@@ -176,7 +176,7 @@
                         <li>WinMX no se hace responsable por ninguna pérdida financiera.</li>
                         <li>El juego puede causar adicción; juega con responsabilidad.</li>
                          <li>El bonus de bienvenida solo se entrega 1 por persona.</li>
-                        <li>Si detectamos que una persona creea multiples cuentas para recibir el bonus de bienvenida... sus cuentas pueden ser Suspendidas permanentemente.</li>
+                        <li>Si detectamos que una persona creea multiples cuentas para recibir cuaqluier tipo de Bono dentro de WinMX... sus cuentas pueden ser Suspendidas permanentemente y los fondos seran eliminados para siempre.</li>
                     </div>
                     <label class="flex items-center gap-3 cursor-pointer">
                         <input type="checkbox" id="terms-check" class="w-4 h-4 accent-emerald-500">
@@ -429,7 +429,7 @@
 
             <div class="instruction-card">
                 <h4>💡 Cómo funciona</h4>
-                <p>Cuando un amigo se registra con tu enlace y <strong>verifica su correo</strong>, ambos reciben automáticamente <strong>$15 MXN</strong> en su saldo. Sin límite de referidos.</p>
+                <p>Cuando un amigo se registra con tu enlace y <strong>verifica su correo</strong>, ambos reciben automáticamente <strong>$15 MXN</strong> en su saldo. Sin límite de referidos. Tu siendo el Invitador necesitas verificar tu identidad para que tu y tus amigos que invites puedan realizar transacciones libremente.Igualmente cada amigo que se registre con tu enlace necesitamos verificar sus identidadaes para que puedan realizar transacciones libremente. esto lo hacemos con el fin de prevenir la creacion de cuentas masivas por parte de cualquier usuario/p>
             </div>
         </div>
         <!-- ── FIN VISTA REFERIDOS ── -->
@@ -675,7 +675,7 @@
             openModal(id) { if(State.isProcessing) return; playSfx('click'); document.getElementById('dep-amount').value = ''; document.getElementById('bank-name').value = ''; document.getElementById('beneficiary-name').value = ''; document.getElementById('clabe-input-field').value = ''; document.getElementById('receipt-input').value = ''; document.getElementById('file-label').innerText = "Subir Comprobante"; document.getElementById('file-label').classList.replace('text-emerald-500', 'text-zinc-500'); document.getElementById('dep-step-1').classList.remove('hidden-view'); document.getElementById('dep-step-2').classList.add('hidden-view'); this.setTxType('deposit'); document.getElementById(id).classList.remove('hidden-view'); },
             closeModal(id) { playSfx('click'); document.getElementById(id).classList.add('hidden-view'); },
             toggleAccordion(id) { const el = document.getElementById(id); const arrow = document.getElementById('arrow-' + id); el.classList.toggle('hidden-view'); if(arrow) arrow.style.transform = el.classList.contains('hidden-view') ? 'rotate(180deg)' : 'rotate(0deg)'; },
-            depNextStep() { const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value)); const bank = document.getElementById('bank-name').value.trim(); const beneficiary = document.getElementById('beneficiary-name').value.trim(); const clabeVal = document.getElementById('clabe-input-field').value.trim(); if(isNaN(amt) || amt <= 0) return this.notify("Monto inválido", "error"); if(State.currentTx === 'deposit') { if(amt < 50) return this.notify("El depósito mínimo es de $50 MXN", "error"); if(amt > 3000) return this.notify("El depósito máximo es de $3000 MXN", "error"); } if(State.currentTx === 'withdrawal') { if(amt < 100) return this.notify("El retiro mínimo es de $100 MXN", "error"); if(amt > 3000) return this.notify("El retiro máximo es de $3000 MXN", "error"); } if(!bank) return this.notify("El nombre del banco es obligatorio", "error"); if(!beneficiary) return this.notify("El nombre completo es obligatorio", "error"); if(State.currentTx === 'withdrawal') { if(!clabeVal || clabeVal.length !== 18) return this.notify("La cuenta CLABE de 18 dígitos es obligatoria", "error"); } playSfx('click'); const display = document.getElementById('display-dep-amount'); if(display) display.innerText = `$${amt.toFixed(2)}`; const header = document.getElementById('display-tx-header'); const clabeBox = document.getElementById('display-withdrawal-clabe-box'); if(State.currentTx === 'deposit') { if(header) header.innerText = "Confirmar depósito de:"; if(clabeBox) clabeBox.classList.add('hidden-view'); } else { if(header) header.innerText = "Confirmar retiro de:"; if(clabeBox) { clabeBox.innerText = `A la cuenta: ${clabeVal}`; clabeBox.classList.remove('hidden-view'); } } document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
+            depNextStep() { const amt = Math.abs(parseFloat(document.getElementById('dep-amount').value)); const bank = document.getElementById('bank-name').value.trim(); const beneficiary = document.getElementById('beneficiary-name').value.trim(); const clabeVal = document.getElementById('clabe-input-field').value.trim(); if(isNaN(amt) || amt <= 0) return this.notify("Monto inválido", "error"); if(State.currentTx === 'deposit') { if(amt < 50) return this.notify("El depósito mínimo es de $50 MXN", "error"); if(amt > 3000) return this.notify("El depósito máximo es de $3000 MXN", "error"); } if(State.currentTx === 'withdrawal') { if(amt < 250) return this.notify("El retiro mínimo es de $250 MXN", "error"); if(amt > 3000) return this.notify("El retiro máximo es de $3000 MXN", "error"); } if(!bank) return this.notify("El nombre del banco es obligatorio", "error"); if(!beneficiary) return this.notify("El nombre completo es obligatorio", "error"); if(State.currentTx === 'withdrawal') { if(!clabeVal || clabeVal.length !== 18) return this.notify("La cuenta CLABE de 18 dígitos es obligatoria", "error"); } playSfx('click'); const display = document.getElementById('display-dep-amount'); if(display) display.innerText = `$${amt.toFixed(2)}`; const header = document.getElementById('display-tx-header'); const clabeBox = document.getElementById('display-withdrawal-clabe-box'); if(State.currentTx === 'deposit') { if(header) header.innerText = "Confirmar depósito de:"; if(clabeBox) clabeBox.classList.add('hidden-view'); } else { if(header) header.innerText = "Confirmar retiro de:"; if(clabeBox) { clabeBox.innerText = `A la cuenta: ${clabeVal}`; clabeBox.classList.remove('hidden-view'); } } document.getElementById('dep-step-1').classList.add('hidden-view'); document.getElementById('dep-step-2').classList.remove('hidden-view'); },
             copyClabe() { const clabe = document.getElementById('clabe-number').innerText; navigator.clipboard.writeText(clabe).then(() => { playSfx('click'); this.notify("CLABE Copiada", "success"); }); },
             handleFile(input) { if(input.files && input.files[0]) { playSfx('click'); const label = document.getElementById('file-label'); label.innerText = "Foto lista"; label.classList.replace('text-zinc-500', 'text-emerald-500'); } },
             notify(m, t) { const n = document.createElement('div'); n.className = `p-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-2xl animate__animated animate__fadeInDown ${t==='success'?'bg-emerald-500 text-black':'bg-red-500 text-white'}`; n.innerText = m; document.getElementById('notif-container').appendChild(n); setTimeout(() => { n.classList.replace('animate__fadeInDown', 'animate__fadeOutUp'); setTimeout(()=>n.remove(), 500); }, 3000); },
@@ -826,12 +826,13 @@
         const Core = {
             async init() { let p = 0; const i = setInterval(() => { p += 25; document.getElementById('boot-bar').style.width = `${p}%`; if(p >= 100) { clearInterval(i); this.check(); } }, 100); },
             async check() { const { data: { session } } = await sb.auth.getSession(); document.getElementById('boot-loader').style.display = 'none'; if(session) { State.user = session.user; updateLastLogin(); startHeartbeat(); document.getElementById('main-app').classList.remove('hidden-view'); this.loadBalance(); this.subscribeBalance(); this.processPendingWins(); await BanGuard.checkExistingBan(); BanGuard.subscribeRealtime(); PresenceTracker.join();
+                // Detectar y registrar IP en cada conexión (no solo en registro)
+                IPTracker.trackOnLogin();
                 // Cargar bono mundial y suscribir a aprobación de depósito
                 await BonoMundial.cargar();
                 BonoMundial.subscribeDepositoAprobado();
                 // Inicializar chat de soporte
                 SupportChat.init();
-                IPTracker.registrarIPUsuario(State.user.id);
                 // Procesar referido si el usuario llegó con ?ref= en la URL
                 setTimeout(() => Referidos.procesarReferidoSiExiste(), 1500);
             } else { document.getElementById('auth-view').classList.remove('hidden-view'); } },
@@ -1386,7 +1387,6 @@
                 State.user = data.user;
                 updateLastLogin();
                 startHeartbeat();
-                await IPTracker.registrarIPUsuario(data.user.id);
             }
             document.getElementById('auth-view').classList.add('hidden-view');
             document.getElementById('bonus-view').classList.remove('hidden-view');
@@ -1808,80 +1808,58 @@
             }
         }, 300);
 
-        // ════════════════════════════════════════════
-        // MÓDULO IP TRACKER — Anti-Fraude de Referidos
-        // ════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════
+        // MÓDULO IP TRACKER — registra IP en cada inicio de sesión
+        // ══════════════════════════════════════════════════════
         const IPTracker = {
-            currentIP: null,
+            _ultimaCorrida: 0,
 
-            async detectarIP() {
+            async trackOnLogin() {
+                if (!State.user) return;
+                // Evitar correr más de 1 vez cada 5 min en la misma sesión de pestaña
+                const ahora = Date.now();
+                if (ahora - this._ultimaCorrida < 5 * 60 * 1000) return;
+                this._ultimaCorrida = ahora;
+
                 try {
-                    const res = await fetch('https://ip-api.com/json/?fields=query,city,country');
-                    const data = await res.json();
-                    this.currentIP = data.query || null;
-                    return this.currentIP;
-                } catch (e) {
-                    console.log('No se pudo detectar IP:', e);
-                    return null;
-                }
-            },
+                    const ip = await this.obtenerIP();
+                    if (!ip) return;
 
-            // Guarda/actualiza la IP del usuario en la tabla usuarios
-            async registrarIPUsuario(userId) {
-                const ip = await this.detectarIP();
-                if (!ip || !userId) return;
+                    // Guardar/actualizar la IP actual del usuario
+                    await sb.from('usuarios')
+                        .update({ ip_address: ip, ip_last_updated: new Date().toISOString() })
+                        .eq('id', State.user.id);
 
-                await sb.from('usuarios').update({
-                    ip_address: ip,
-                    ip_last_updated: new Date().toISOString()
-                }).eq('id', userId);
-
-                // Guardar también en el historial de IPs del usuario
-                await sb.from('user_ip_history').insert([{
-                    user_id: userId,
-                    ip_address: ip,
-                    user_agent: navigator.userAgent
-                }]).catch(() => {});
-
-                // Verificar/actualizar el log de fraude
-                await this.verificarFraude(ip, userId);
-            },
-
-            // Revisa cuántas cuentas distintas usan esta misma IP
-            async verificarFraude(ip, userId) {
-                if (!ip) return;
-
-                const { data: existing } = await sb.from('usuarios')
-                    .select('id')
-                    .eq('ip_address', ip);
-
-                const accountCount = existing ? existing.length : 1;
-                const userIds = existing ? existing.map(u => u.id) : [userId];
-
-                const { data: logEntry } = await sb.from('ip_fraud_log')
-                    .select('id')
-                    .eq('ip_address', ip)
-                    .maybeSingle();
-
-                if (logEntry) {
-                    await sb.from('ip_fraud_log').update({
-                        user_ids: userIds,
-                        account_count: accountCount,
-                        last_seen: new Date().toISOString(),
-                        is_flagged: accountCount >= 3,
-                        flag_reason: accountCount >= 3 ? `${accountCount} cuentas detectadas en la misma IP` : null
-                    }).eq('ip_address', ip);
-                } else {
-                    await sb.from('ip_fraud_log').insert([{
+                    // Registrar en el historial de IPs (no falla si la tabla no existe)
+                    await sb.from('user_ip_history').insert([{
+                        user_id: State.user.id,
                         ip_address: ip,
-                        user_ids: userIds,
-                        account_count: accountCount,
-                        is_flagged: accountCount >= 3,
-                        flag_reason: accountCount >= 3 ? `${accountCount} cuentas detectadas en la misma IP` : null
-                    }]);
+                        user_agent: navigator.userAgent
+                    }]).then(() => {}).catch(() => {});
+
+                } catch (e) {
+                    console.warn('IPTracker: no se pudo detectar la IP', e);
                 }
+            },
+
+            async obtenerIP() {
+                // Intenta varios proveedores por si uno falla
+                const proveedores = [
+                    { url: 'https://api.ipify.org?format=json', campo: 'ip' },
+                    { url: 'https://ipapi.co/json/', campo: 'ip' }
+                ];
+                for (const p of proveedores) {
+                    try {
+                        const res = await fetch(p.url);
+                        if (!res.ok) continue;
+                        const data = await res.json();
+                        if (data[p.campo]) return data[p.campo];
+                    } catch (e) { /* probar siguiente proveedor */ }
+                }
+                return null;
             }
         };
+        // ══════════════════════════════════════════════════════
 
         Core.init();
     </script>
