@@ -78,6 +78,160 @@
 
         const CORREO_ADMIN_AUTORIZADO = "ed8108868@gmail.com";
 
+        // ════════════════════════════════════════════
+// MÓDULO ADMIN: BANDEJA DE SOPORTE
+// ════════════════════════════════════════════
+const AdminSupport = {
+    conversations: {},
+    activeUserId: null,
+    realtimeStarted: false,
+
+    async loadConversations() {
+        const { data, error } = await sb.from('support_messages')
+            .select('*, usuarios(email)')
+            .order('created_at', { ascending: true });
+        if (error) { console.error(error); return; }
+
+        const grouped = {};
+        (data || []).forEach(m => {
+            if (!grouped[m.user_id]) grouped[m.user_id] = { messages: [], email: m.usuarios?.email || 'Sin correo' };
+            grouped[m.user_id].messages.push(m);
+        });
+        this.conversations = grouped;
+        this.renderList();
+        this.updateGlobalBadge();
+        if (!this.realtimeStarted) { this.subscribeRealtime(); this.realtimeStarted = true; }
+    },
+
+    renderList() {
+        const container = document.getElementById('support-conversations-list');
+        if (!container) return;
+        const entries = Object.entries(this.conversations).sort((a, b) => {
+            const lastA = a[1].messages[a[1].messages.length - 1]?.created_at || '';
+            const lastB = b[1].messages[b[1].messages.length - 1]?.created_at || '';
+            return new Date(lastB) - new Date(lastA);
+        });
+
+        if (entries.length === 0) {
+            container.innerHTML = `<p class="text-zinc-600 text-xs text-center p-6">Sin conversaciones aún.</p>`;
+            return;
+        }
+
+        container.innerHTML = entries.map(([userId, conv]) => {
+            const last = conv.messages[conv.messages.length - 1];
+            const unread = conv.messages.filter(m => m.sender === 'user' && !m.read_by_admin).length;
+            const isActive = this.activeUserId === userId;
+            const time = last ? new Date(last.created_at).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '';
+            return `<div onclick="AdminSupport.openConversation('${userId}')" style="padding:14px 16px; border-bottom:1px solid rgba(255,255,255,0.04); cursor:pointer; background:${isActive ? 'rgba(16,185,129,0.08)' : 'transparent'}; border-left:3px solid ${isActive ? '#10b981' : 'transparent'};">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <span style="font-size:11px; font-weight:800; color:white; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;">${conv.email}</span>
+                    ${unread > 0 ? `<span style="background:#ef4444; color:white; font-size:9px; font-weight:900; padding:2px 7px; border-radius:99px;">${unread}</span>` : ''}
+                </div>
+                <p style="font-size:10px; color:#777; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${last?.sender === 'admin' ? '↳ ' : ''}${last?.message || ''}</p>
+                <p style="font-size:8px; color:#444; margin-top:2px;">${time}</p>
+            </div>`;
+        }).join('');
+    },
+
+    async openConversation(userId) {
+        this.activeUserId = userId;
+        document.getElementById('support-chat-empty').classList.add('hidden-view');
+        document.getElementById('support-chat-active').classList.remove('hidden-view');
+
+        const conv = this.conversations[userId];
+        document.getElementById('support-active-header').innerHTML = `
+            <div>
+                <p class="font-black text-white text-sm">${conv.email}</p>
+                <p class="text-[9px] text-zinc-500 font-mono">${userId}</p>
+            </div>`;
+
+        this.renderMessages();
+        this.renderList();
+
+        // Marcar como leídos por admin
+        await sb.from('support_messages')
+            .update({ read_by_admin: true })
+            .eq('user_id', userId)
+            .eq('sender', 'user')
+            .eq('read_by_admin', false);
+        conv.messages.forEach(m => { if (m.sender === 'user') m.read_by_admin = true; });
+        this.renderList();
+        this.updateGlobalBadge();
+    },
+
+    renderMessages() {
+        const box = document.getElementById('support-active-messages');
+        if (!box || !this.activeUserId) return;
+        const conv = this.conversations[this.activeUserId];
+        box.innerHTML = conv.messages.map(m => {
+            const isAdmin = m.sender === 'admin';
+            const time = new Date(m.created_at).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+            return `<div style="display:flex; justify-content:${isAdmin ? 'flex-end' : 'flex-start'};">
+                <div style="max-width:65%; background:${isAdmin ? 'linear-gradient(135deg,#10b981,#059669)' : 'rgba(255,255,255,0.06)'}; color:${isAdmin ? 'black' : 'white'}; padding:10px 14px; border-radius:${isAdmin ? '14px 14px 2px 14px' : '14px 14px 14px 2px'}; font-size:12px; font-weight:600;">
+                    ${m.message}
+                    <div style="font-size:8px; opacity:0.6; margin-top:3px; text-align:right;">${time}</div>
+                </div>
+            </div>`;
+        }).join('');
+        box.scrollTop = box.scrollHeight;
+    },
+
+    async send() {
+        const input = document.getElementById('support-admin-input');
+        const text = input.value.trim();
+        if (!text || !this.activeUserId) return;
+        input.value = '';
+        const { error } = await sb.from('support_messages').insert([{
+            user_id: this.activeUserId,
+            sender: 'admin',
+            message: text
+        }]);
+        if (error) { alert("Error al enviar: " + error.message); }
+    },
+
+    updateGlobalBadge() {
+        let totalUnread = 0;
+        Object.values(this.conversations).forEach(c => {
+            totalUnread += c.messages.filter(m => m.sender === 'user' && !m.read_by_admin).length;
+        });
+        const badge = document.getElementById('support-tab-badge');
+        if (badge) {
+            if (totalUnread > 0) { badge.innerText = totalUnread; badge.classList.remove('hidden-view'); }
+            else badge.classList.add('hidden-view');
+        }
+    },
+
+    subscribeRealtime() {
+        sb.channel('admin_support_live')
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'support_messages'
+            }, async (payload) => {
+                const userId = payload.new.user_id;
+                if (!this.conversations[userId]) {
+                    const { data } = await sb.from('usuarios').select('email').eq('id', userId).maybeSingle();
+                    this.conversations[userId] = { messages: [], email: data?.email || 'Sin correo' };
+                }
+                this.conversations[userId].messages.push(payload.new);
+                this.renderList();
+                this.updateGlobalBadge();
+                if (this.activeUserId === userId) {
+                    this.renderMessages();
+                    if (payload.new.sender === 'user') {
+                        sb.from('support_messages').update({ read_by_admin: true }).eq('id', payload.new.id).then(() => {});
+                    }
+                }
+                if (payload.new.sender === 'user') {
+                    // pequeño aviso sonoro/visual opcional
+                    document.title = "🔔 Nuevo mensaje | WinMX Admin";
+                    setTimeout(() => { document.title = "Panel de Control | WinMX Admin"; }, 3000);
+                }
+            })
+            .subscribe();
+    }
+};
+
         const AdminAuth = {
             async login() {
                 const email = document.getElementById('admin-email').value.trim().toLowerCase();
