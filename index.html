@@ -660,7 +660,7 @@
         initAudioUnlock();
 
         const GlobalLuck = {
-            luckFactor: 1.25, winHistory: [], sessionLoss: 0,
+            luckFactor: 1.00, winHistory: [], sessionLoss: 0,
             calculateOutcome(betAmount) { const baseChance = 0.45; const adjustedChance = Math.min(baseChance * this.luckFactor, 0.95); const isWin = Math.random() < adjustedChance; if (!isWin) { this.sessionLoss += betAmount; } this.winHistory.push({ bet: betAmount, win: isWin, timestamp: Date.now() }); return isWin; },
             resetSession() { this.sessionLoss = 0; this.winHistory = []; }
         };
