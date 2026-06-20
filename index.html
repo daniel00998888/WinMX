@@ -1068,7 +1068,7 @@ const NETCOINS_CONFIG = {
      ------------------------------------------------------------- */
   function goToSuccessScreen(data) {
     els.successUsername.textContent = `@${data.username || state.username}`;
-    els.successAmount.textContent = `${formatNumber(state.paquete.amount)} Netcoins entregadas · saldo total: ${formatNumber(data.saldo)}`;
+    els.successAmount.textContent = `${formatNumber(state.paquete.amount)} Robux entregados · saldo total: ${formatNumber(data.saldo)}`;
     showScreen("success");
   }
 
