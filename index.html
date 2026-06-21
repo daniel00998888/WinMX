@@ -3,1290 +3,759 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SIGNAL — Videollamadas en vivo, al azar</title>
-<meta name="description" content="Conecta cara a cara con alguien nuevo en cualquier parte del mundo. Sin registro. Sin algoritmos. Solo presiona conectar.">
-
+<title>Frecuencia — Sala de DJ compartida</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-/* ===================================================================
-   SIGNAL — Design tokens
-=================================================================== */
-:root {
-  --bg:            #0A0B0D;
-  --panel:         #15171B;
-  --panel-raised:  #1C1F24;
-  --border:        #2A2D33;
-  --border-soft:   #1F2227;
-  --text:          #E8E9EB;
-  --text-dim:      #8B8F98;
-  --text-faint:    #565A62;
-  --live:          #FF3B3B;
-  --live-dim:      #6E1F1F;
-  --ok:            #3BFF8F;
-  --ok-dim:        #1C5A39;
-
-  --font-display: 'JetBrains Mono', monospace;
-  --font-body:    'Inter', -apple-system, sans-serif;
-
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --container: 760px;
-
-  --ease: cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  /* ============================================================
+     FRECUENCIA — design tokens
+     bg-void:#0B0710  bg-panel:#15101F  bg-raised:#1D1629
+     neon-magenta:#FF2E88  neon-amber:#FFB627  line:#2A2138
+     text-primary:#F4EFFB  text-dim:#8A7FA0
+     display: 'Anton'  body: 'Space Grotesk'  mono: 'JetBrains Mono'
+     ============================================================ */
+  :root{
+    --bg-void:#0B0710; --bg-panel:#15101F; --bg-raised:#1D1629;
+    --magenta:#FF2E88; --amber:#FFB627; --line:#2A2138;
+    --text:#F4EFFB; --dim:#8A7FA0; --dim2:#564A6E;
+    --radius:14px;
   }
-}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(255,46,136,.18), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 110% 10%, rgba(255,182,39,.10), transparent 55%),
+      var(--bg-void);
+    color:var(--text);
+    font-family:'Space Grotesk', sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--magenta); color:#fff;}
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--line); border-radius:8px;}
+  a{color:inherit;}
+  button{font-family:inherit; cursor:pointer; border:none;}
+  input{font-family:inherit;}
+  :focus-visible{outline:2px solid var(--amber); outline-offset:2px;}
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+  .display{font-family:'Anton', sans-serif; letter-spacing:.5px; text-transform:uppercase;}
+  .mono{font-family:'JetBrains Mono', monospace;}
 
-html, body {
-  height: 100%;
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-body);
-  -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
-}
+  /* ---------- background texture: drifting frequency lines ---------- */
+  .freq-bg{position:fixed; inset:0; z-index:0; opacity:.5; pointer-events:none;}
+  .freq-bg svg{width:100%; height:100%;}
 
-button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
-a { color: inherit; }
+  /* ---------- shared layout shell ---------- */
+  #app{position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column;}
 
-::selection { background: var(--live); color: #fff; }
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 28px; border-bottom:1px solid var(--line);
+    background:rgba(11,7,16,.6); backdrop-filter:blur(10px);
+    position:sticky; top:0; z-index:20;
+  }
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand .mark{
+    width:30px; height:30px; border-radius:50%;
+    background:conic-gradient(from 90deg, var(--magenta), var(--amber), var(--magenta));
+    position:relative; flex-shrink:0;
+    animation:spin 4s linear infinite paused;
+  }
+  .brand .mark::after{content:''; position:absolute; inset:38%; background:var(--bg-void); border-radius:50%;}
+  .brand .mark.live{animation-play-state:running;}
+  .brand h1{font-size:20px; letter-spacing:1px;}
+  .brand .tag{font-size:11px; color:var(--dim); letter-spacing:2px; text-transform:uppercase;}
+  @keyframes spin{to{transform:rotate(360deg);}}
 
-.scanlines {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  background: repeating-linear-gradient(
-    180deg,
-    rgba(255,255,255,0.012) 0px,
-    rgba(255,255,255,0.012) 1px,
-    transparent 1px,
-    transparent 3px
-  );
-  opacity: 0.5;
-}
+  .room-pill{
+    display:flex; align-items:center; gap:10px;
+    background:var(--bg-panel); border:1px solid var(--line);
+    padding:6px 14px; border-radius:999px; font-size:13px; color:var(--dim);
+  }
+  .room-pill b{color:var(--text); font-family:'JetBrains Mono', monospace; letter-spacing:1px;}
+  .room-pill .dot{width:7px; height:7px; border-radius:50%; background:var(--amber); box-shadow:0 0 8px var(--amber);}
+  .leave-btn{background:transparent; color:var(--dim); border:1px solid var(--line); padding:6px 14px; border-radius:999px; font-size:13px; transition:.15s;}
+  .leave-btn:hover{border-color:var(--magenta); color:var(--text);}
 
-.screen { min-height: 100vh; min-height: 100dvh; position: relative; }
+  /* ===================== LOBBY ===================== */
+  .lobby{
+    flex:1; display:flex; align-items:center; justify-content:center;
+    padding:40px 20px;
+  }
+  .lobby-card{
+    width:100%; max-width:440px;
+    background:linear-gradient(180deg, var(--bg-panel), var(--bg-raised));
+    border:1px solid var(--line); border-radius:20px;
+    padding:38px 34px; position:relative; overflow:hidden;
+  }
+  .lobby-card::before{
+    content:''; position:absolute; top:-60px; right:-60px; width:180px; height:180px;
+    background:radial-gradient(circle, rgba(255,46,136,.25), transparent 70%);
+  }
+  .lobby-eyebrow{font-size:12px; letter-spacing:3px; color:var(--amber); text-transform:uppercase; margin-bottom:10px;}
+  .lobby-card h2{font-size:32px; line-height:1.05; margin-bottom:10px;}
+  .lobby-card p.sub{color:var(--dim); font-size:14px; margin-bottom:26px; line-height:1.5;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--dim); margin-bottom:7px;}
+  .field input{
+    width:100%; background:var(--bg-void); border:1px solid var(--line); color:var(--text);
+    padding:13px 14px; border-radius:10px; font-size:15px; transition:.15s;
+  }
+  .field input:focus{border-color:var(--magenta);}
+  .row-btns{display:flex; gap:10px; margin-top:22px;}
+  .btn{
+    flex:1; padding:13px 16px; border-radius:10px; font-weight:600; font-size:14px;
+    letter-spacing:.3px; transition:.15s; text-align:center;
+  }
+  .btn-primary{background:var(--magenta); color:#fff;}
+  .btn-primary:hover{background:#ff4d9b; transform:translateY(-1px);}
+  .btn-ghost{background:transparent; border:1px solid var(--line); color:var(--text);}
+  .btn-ghost:hover{border-color:var(--amber);}
+  .lobby-foot{margin-top:22px; font-size:12px; color:var(--dim2); text-align:center;}
 
-/* ENTRY SCREEN */
-.screen--entry {
-  display: flex;
-  flex-direction: column;
-  background:
-    radial-gradient(ellipse 900px 500px at 50% 0%, rgba(255,59,59,0.08), transparent 60%),
-    var(--bg);
-}
-.screen--entry[hidden] { display: none; }
+  .setup-warning{
+    background:rgba(255,182,39,.08); border:1px solid rgba(255,182,39,.35);
+    border-radius:12px; padding:16px 18px; font-size:13px; color:var(--amber);
+    line-height:1.6; max-width:520px; margin:0 auto;
+  }
+  .setup-warning code{background:rgba(0,0,0,.3); padding:1px 6px; border-radius:5px; font-family:'JetBrains Mono',monospace;}
 
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 28px clamp(20px, 5vw, 64px) 0;
-  position: relative;
-  z-index: 2;
-}
+  /* ===================== ROOM ===================== */
+  .room-wrap{
+    flex:1; display:grid; grid-template-columns:340px 1fr 320px;
+    gap:1px; background:var(--line);
+  }
+  .panel{background:var(--bg-void); padding:24px; overflow-y:auto;}
+  .panel-title{
+    font-size:12px; letter-spacing:2.5px; text-transform:uppercase; color:var(--dim);
+    margin-bottom:18px; display:flex; align-items:center; gap:8px;
+  }
+  .panel-title::before{content:''; width:14px; height:1px; background:var(--magenta);}
 
-.brand { display: flex; align-items: center; gap: 10px; }
-.brand__dot {
-  width: 9px; height: 9px;
-  border-radius: 50%;
-  background: var(--live);
-  box-shadow: 0 0 0 0 rgba(255,59,59,0.6);
-  animation: pulse-dot 2s var(--ease) infinite;
-}
-@keyframes pulse-dot {
-  0%   { box-shadow: 0 0 0 0 rgba(255,59,59,0.5); }
-  70%  { box-shadow: 0 0 0 8px rgba(255,59,59,0); }
-  100% { box-shadow: 0 0 0 0 rgba(255,59,59,0); }
-}
-.brand__name {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 15px;
-  letter-spacing: 0.18em;
-}
+  /* now playing */
+  .vinyl-stage{
+    background:radial-gradient(circle at 50% 30%, rgba(255,46,136,.12), transparent 65%);
+    border:1px solid var(--line); border-radius:18px; padding:26px; text-align:center;
+    position:relative;
+  }
+  .vinyl{
+    width:170px; height:170px; margin:0 auto 18px; border-radius:50%; position:relative;
+    background:repeating-radial-gradient(circle, #1a1424 0 3px, #120d1a 3px 6px);
+    border:3px solid #261c33;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .vinyl.spin{animation:spin 3.2s linear infinite;}
+  .vinyl-label{
+    width:62px; height:62px; border-radius:50%; overflow:hidden;
+    background:linear-gradient(135deg, var(--magenta), var(--amber));
+    display:flex; align-items:center; justify-content:center; border:2px solid var(--bg-void);
+  }
+  .vinyl-label img{width:100%; height:100%; object-fit:cover;}
+  .np-title{font-size:16px; font-weight:700; margin-bottom:4px; line-height:1.3;}
+  .np-meta{font-size:12.5px; color:var(--dim);}
+  .np-empty{color:var(--dim2); font-size:13px; padding:30px 0;}
+  .progress-track{height:4px; background:var(--line); border-radius:4px; margin-top:18px; overflow:hidden;}
+  .progress-fill{height:100%; background:linear-gradient(90deg, var(--magenta), var(--amber)); width:0%; transition:width .3s linear;}
+  .yt-mount{position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;}
 
-.topbar__meta { display: flex; gap: 10px; }
-.meta-chip {
-  display: flex; align-items: center; gap: 7px;
-  font-family: var(--font-display);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  color: var(--text-dim);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 6px 12px;
-}
-.meta-chip__dot { width: 6px; height: 6px; border-radius: 50%; }
-.meta-chip__dot--idle { background: var(--text-faint); }
+  .stage-actions{display:flex; gap:8px; margin-top:18px;}
+  .icon-btn{
+    flex:1; background:var(--bg-panel); border:1px solid var(--line); color:var(--text);
+    padding:10px; border-radius:10px; font-size:13px; transition:.15s;
+  }
+  .icon-btn:hover{border-color:var(--amber); color:var(--amber);}
 
-.hero {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 40px clamp(20px, 6vw, 64px);
-  position: relative;
-  z-index: 2;
-  max-width: var(--container);
-  margin: 0 auto;
-}
+  .listeners{margin-top:24px;}
+  .listener-chip{
+    display:inline-flex; align-items:center; gap:6px; background:var(--bg-panel);
+    border:1px solid var(--line); padding:5px 11px; border-radius:999px; font-size:12px;
+    margin:0 6px 6px 0; color:var(--dim);
+  }
+  .listener-chip .pip{width:6px; height:6px; border-radius:50%; background:var(--amber);}
 
-.hero__eyebrow {
-  font-family: var(--font-display);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  color: var(--live);
-  margin-bottom: 22px;
-}
+  /* search + queue */
+  .search-box{display:flex; gap:8px; margin-bottom:18px;}
+  .search-box input{
+    flex:1; background:var(--bg-panel); border:1px solid var(--line); color:var(--text);
+    padding:12px 14px; border-radius:10px; font-size:14px;
+  }
+  .search-box input:focus{border-color:var(--magenta);}
+  .search-box button{background:var(--amber); color:#1a1208; padding:0 18px; border-radius:10px; font-weight:700; font-size:13px;}
 
-.hero__title {
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: clamp(32px, 6vw, 52px);
-  line-height: 1.12;
-  letter-spacing: -0.02em;
-  margin-bottom: 22px;
-}
-.hero__title-accent { color: var(--text-dim); }
+  .result-list, .queue-list{display:flex; flex-direction:column; gap:8px;}
+  .song-row{
+    display:flex; align-items:center; gap:12px; background:var(--bg-panel);
+    border:1px solid var(--line); border-radius:12px; padding:9px 12px; transition:.15s;
+  }
+  .song-row:hover{border-color:var(--dim2);}
+  .song-row img{width:46px; height:46px; border-radius:7px; object-fit:cover; flex-shrink:0; background:var(--bg-raised);}
+  .song-row .info{flex:1; min-width:0;}
+  .song-row .info .t{font-size:13.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .song-row .info .c{font-size:11.5px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .add-btn{
+    background:transparent; border:1px solid var(--magenta); color:var(--magenta);
+    width:30px; height:30px; border-radius:8px; font-size:16px; flex-shrink:0; transition:.15s;
+  }
+  .add-btn:hover{background:var(--magenta); color:#fff;}
+  .queue-pos{
+    font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--dim2);
+    width:20px; text-align:center; flex-shrink:0;
+  }
+  .empty-note{color:var(--dim2); font-size:13px; padding:14px 0;}
+  .section-gap{margin-top:28px;}
 
-.hero__sub {
-  font-size: clamp(15px, 2vw, 17px);
-  line-height: 1.6;
-  color: var(--text-dim);
-  max-width: 520px;
-  margin-bottom: 36px;
-}
+  /* chat */
+  .chat-panel{display:flex; flex-direction:column; height:100%;}
+  .chat-log{flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:10px; padding-bottom:14px;}
+  .msg{font-size:13.5px; line-height:1.45;}
+  .msg .who{font-weight:700; font-size:12px; margin-right:6px;}
+  .msg .who.me{color:var(--amber);}
+  .msg .who.them{color:var(--magenta);}
+  .msg .sys{color:var(--dim2); font-style:italic; font-size:12.5px;}
+  .chat-input{display:flex; gap:8px; border-top:1px solid var(--line); padding-top:14px;}
+  .chat-input input{
+    flex:1; background:var(--bg-panel); border:1px solid var(--line); color:var(--text);
+    padding:11px 13px; border-radius:10px; font-size:13.5px;
+  }
+  .chat-input input:focus{border-color:var(--magenta);}
+  .chat-input button{background:var(--magenta); color:#fff; padding:0 16px; border-radius:10px; font-weight:700;}
 
-.consent-block { margin-bottom: 28px; }
-.checkbox {
-  display: inline-flex;
-  align-items: flex-start;
-  gap: 10px;
-  cursor: pointer;
-  text-align: left;
-  max-width: 440px;
-}
-.checkbox input { position: absolute; opacity: 0; width: 0; height: 0; }
-.checkbox__box {
-  flex-shrink: 0;
-  width: 18px; height: 18px;
-  margin-top: 2px;
-  border: 1.5px solid var(--border);
-  border-radius: 4px;
-  background: var(--panel);
-  position: relative;
-  transition: all 0.15s var(--ease);
-}
-.checkbox input:checked + .checkbox__box {
-  background: var(--live);
-  border-color: var(--live);
-}
-.checkbox input:checked + .checkbox__box::after {
-  content: '';
-  position: absolute;
-  left: 5px; top: 1px;
-  width: 5px; height: 9px;
-  border: solid #fff;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
-.checkbox input:focus-visible + .checkbox__box {
-  outline: 2px solid var(--ok);
-  outline-offset: 2px;
-}
-.checkbox__label {
-  font-size: 13.5px;
-  color: var(--text-dim);
-  line-height: 1.5;
-}
-.checkbox__label a { color: var(--text); text-decoration: underline; text-underline-offset: 2px; }
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--bg-raised); border:1px solid var(--line); padding:12px 20px; border-radius:10px;
+    font-size:13px; opacity:0; transition:.25s; z-index:100; pointer-events:none;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
 
-.btn-connect {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  background: var(--live);
-  color: #fff;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: 0.08em;
-  padding: 18px 36px;
-  border-radius: var(--radius-md);
-  transition: transform 0.15s var(--ease), box-shadow 0.15s var(--ease), background 0.15s var(--ease);
-  box-shadow: 0 0 0 0 rgba(255,59,59,0.4);
-}
-.btn-connect:not(:disabled):hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px -4px rgba(255,59,59,0.45);
-}
-.btn-connect:not(:disabled):active { transform: translateY(0); }
-.btn-connect:disabled {
-  background: var(--panel-raised);
-  color: var(--text-faint);
-  cursor: not-allowed;
-}
-.btn-connect:focus-visible {
-  outline: 2px solid var(--ok);
-  outline-offset: 3px;
-}
-.btn-connect__icon {
-  width: 9px; height: 9px;
-  border-radius: 50%;
-  background: currentColor;
-  flex-shrink: 0;
-}
-.btn-connect--inline { padding: 14px 28px; font-size: 13px; }
-
-.permission-hint {
-  margin-top: 16px;
-  font-size: 12.5px;
-  color: var(--text-faint);
-}
-
-.entry-footer {
-  padding: 28px clamp(20px, 5vw, 64px) 36px;
-  position: relative;
-  z-index: 2;
-}
-.stat-strip {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(20px, 4vw, 40px);
-  flex-wrap: wrap;
-}
-.stat { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.stat__num {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 20px;
-  color: var(--text);
-}
-.stat__label {
-  font-family: var(--font-display);
-  font-size: 9.5px;
-  letter-spacing: 0.1em;
-  color: var(--text-faint);
-}
-.stat-divider { width: 1px; height: 24px; background: var(--border); }
-
-/* CALL SCREEN */
-.screen--call { background: #000; overflow: hidden; }
-.call-stage { position: relative; width: 100%; height: 100vh; height: 100dvh; }
-
-.video-split {
-  position: absolute; inset: 0;
-  display: flex;
-  flex-direction: column;
-}
-.video-pane {
-  position: relative;
-  flex: 1 1 50%;
-  min-height: 0;
-  overflow: hidden;
-  background: #000;
-  border-top: 1px solid rgba(255,255,255,0.08);
-}
-.video-pane:first-child { border-top: none; }
-.video-pane__video {
-  width: 100%; height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.video-pane__video--mirror { transform: scaleX(-1); }
-.video-pane__label {
-  position: absolute;
-  bottom: 10px; left: 12px;
-  font-family: var(--font-display);
-  font-size: 9.5px;
-  letter-spacing: 0.1em;
-  color: rgba(255,255,255,0.85);
-  background: rgba(0,0,0,0.5);
-  padding: 3px 8px;
-  border-radius: 4px;
-  z-index: 2;
-}
-
-.overlay-searching {
-  position: absolute; inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 28px;
-  background:
-    radial-gradient(ellipse 700px 500px at 50% 50%, rgba(255,59,59,0.06), transparent 65%),
-    #0A0B0D;
-  z-index: 5;
-}
-.overlay-searching[hidden] { display: none; }
-
-.radar { position: relative; width: 140px; height: 140px; }
-.radar__ring {
-  position: absolute; inset: 0;
-  border: 1px solid rgba(255,59,59,0.35);
-  border-radius: 50%;
-}
-.radar__ring--1 { animation: radar-ping 2.4s var(--ease) infinite; }
-.radar__ring--2 { animation: radar-ping 2.4s var(--ease) infinite 0.8s; }
-.radar__ring--3 { animation: radar-ping 2.4s var(--ease) infinite 1.6s; }
-@keyframes radar-ping {
-  0%   { transform: scale(0.3); opacity: 0; }
-  15%  { opacity: 1; }
-  100% { transform: scale(1); opacity: 0; }
-}
-.radar__sweep {
-  position: absolute; inset: 0;
-  border-radius: 50%;
-  background: conic-gradient(from 0deg, rgba(255,59,59,0.5), transparent 35%);
-  animation: radar-spin 1.8s linear infinite;
-  mask: radial-gradient(circle, transparent 0%, transparent 30%, black 31%, black 100%);
-  -webkit-mask: radial-gradient(circle, transparent 0%, transparent 30%, black 31%, black 100%);
-}
-@keyframes radar-spin { to { transform: rotate(360deg); } }
-.radar__core {
-  position: absolute; left: 50%; top: 50%;
-  width: 10px; height: 10px;
-  background: var(--live);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 16px 4px rgba(255,59,59,0.6);
-}
-
-.overlay-searching__text {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 15px;
-  letter-spacing: 0.14em;
-  color: var(--text);
-}
-.dots span { animation: dot-fade 1.4s infinite; opacity: 0; }
-.dots span:nth-child(1) { animation-delay: 0s; }
-.dots span:nth-child(2) { animation-delay: 0.2s; }
-.dots span:nth-child(3) { animation-delay: 0.4s; }
-@keyframes dot-fade { 0%,100% { opacity: 0; } 50% { opacity: 1; } }
-
-.overlay-searching__sub {
-  font-size: 13px;
-  color: var(--text-faint);
-  margin-top: -16px;
-}
-
-.overlay-ended {
-  position: absolute; inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 22px;
-  background: rgba(10,11,13,0.97);
-  z-index: 6;
-  text-align: center;
-  padding: 20px;
-}
-.overlay-ended[hidden] { display: none; }
-.overlay-ended__title {
-  font-family: var(--font-display);
-  font-size: 14px;
-  letter-spacing: 0.1em;
-  color: var(--text-dim);
-}
-
-.hud-top {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px clamp(16px, 3vw, 32px);
-  z-index: 10;
-  background: linear-gradient(180deg, rgba(0,0,0,0.55), transparent);
-}
-
-.hud-status {
-  display: flex; align-items: center; gap: 8px;
-  font-family: var(--font-display);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  background: rgba(0,0,0,0.5);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 999px;
-  padding: 7px 14px;
-  backdrop-filter: blur(8px);
-}
-.hud-status__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-faint); }
-.hud-status[data-state="connecting"] .hud-status__dot { background: var(--live); animation: pulse-dot 1.5s infinite; }
-.hud-status[data-state="connected"] .hud-status__dot { background: var(--ok); box-shadow: 0 0 8px 1px rgba(59,255,143,0.6); }
-
-.hud-timer {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 13px;
-  letter-spacing: 0.05em;
-  background: rgba(0,0,0,0.5);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 999px;
-  padding: 7px 14px;
-  backdrop-filter: blur(8px);
-  font-variant-numeric: tabular-nums;
-}
-
-.hud-id {
-  font-family: var(--font-display);
-  font-size: 10.5px;
-  letter-spacing: 0.06em;
-  color: var(--text-faint);
-  display: none;
-}
-@media (min-width: 640px) { .hud-id { display: block; } }
-
-.self-preview__label {
-  position: absolute;
-  bottom: 6px; left: 8px;
-  font-family: var(--font-display);
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  color: rgba(255,255,255,0.85);
-  background: rgba(0,0,0,0.5);
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.hud-controls {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  padding: 24px clamp(16px, 3vw, 32px) 28px;
-  z-index: 10;
-  background: linear-gradient(0deg, rgba(0,0,0,0.6), transparent);
-}
-
-.ctrl-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 52px; height: 52px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
-  backdrop-filter: blur(8px);
-  transition: all 0.15s var(--ease);
-}
-.ctrl-btn:hover { background: rgba(255,255,255,0.16); transform: translateY(-2px); }
-.ctrl-btn:focus-visible { outline: 2px solid var(--ok); outline-offset: 2px; }
-.ctrl-btn__icon { width: 22px; height: 22px; fill: none; stroke: var(--text); stroke-width: 1.8; }
-.ctrl-btn.is-off { background: rgba(255,255,255,0.18); }
-.ctrl-btn.is-off .ctrl-btn__icon { stroke: var(--live); }
-
-.ctrl-btn--skip {
-  width: auto;
-  height: 52px;
-  border-radius: 999px;
-  padding: 0 24px;
-  background: var(--live);
-  border-color: var(--live);
-}
-.ctrl-btn--skip:hover { background: #ff5252; }
-.ctrl-btn--skip .ctrl-btn__icon { stroke: #fff; width: 18px; height: 18px; }
-.ctrl-btn--skip .ctrl-btn__text {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 12.5px;
-  letter-spacing: 0.06em;
-  color: #fff;
-}
-
-.ctrl-btn--danger { background: rgba(255,59,59,0.15); border-color: rgba(255,59,59,0.3); }
-.ctrl-btn--danger:hover { background: rgba(255,59,59,0.28); }
-.ctrl-btn--danger .ctrl-btn__icon { stroke: var(--live); }
-
-/* Toast */
-.toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--panel-raised);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-size: 13.5px;
-  padding: 13px 22px;
-  border-radius: var(--radius-md);
-  z-index: 100;
-  box-shadow: 0 12px 32px -8px rgba(0,0,0,0.5);
-  max-width: 90vw;
-}
-.toast[data-type="error"] { border-color: var(--live-dim); }
-
-/* Responsive */
-@media (max-width: 480px) {
-  .ctrl-btn { width: 46px; height: 46px; }
-  .ctrl-btn--skip { padding: 0 18px; }
-  .hud-controls { gap: 10px; }
-}
+  @media (max-width:980px){
+    .room-wrap{grid-template-columns:1fr; grid-template-rows:auto auto auto;}
+    .panel{max-height:none;}
+  }
 </style>
 </head>
 <body>
 
-<!-- ============ ENTRY SCREEN ============ -->
-<section id="screen-entry" class="screen screen--entry">
+<div class="freq-bg"><svg id="freqSvg" preserveAspectRatio="none" viewBox="0 0 1200 300"></svg></div>
 
-  <div class="scanlines" aria-hidden="true"></div>
+<div id="app">
 
-  <header class="topbar">
-    <div class="brand">
-      <span class="brand__dot" aria-hidden="true"></span>
-      <span class="brand__name">SIGNAL</span>
-    </div>
-    <div class="topbar__meta">
-      <span class="meta-chip"><span class="meta-chip__dot meta-chip__dot--idle" aria-hidden="true"></span>RED: INACTIVA</span>
-    </div>
-  </header>
+  <!-- ============= LOBBY (room entry) ============= -->
+  <div id="lobbyView" class="lobby">
+    <div class="lobby-card">
+      <div class="lobby-eyebrow">Frecuencia · sala de DJ</div>
+      <h2 class="display">Una cola.<br>Un mismo beat.</h2>
+      <p class="sub">Entra a una sala, agrega canciones por nombre y escúchalas en vivo con quien más esté conectado — todos al mismo segundo.</p>
 
-  <main class="hero">
-    <div class="hero__eyebrow">TRANSMISIÓN P2P · CIFRADO DE EXTREMO A EXTREMO</div>
-    <h1 class="hero__title">
-      Una cámara se enciende.<br>
-      <span class="hero__title-accent">Del otro lado, un desconocido.</span>
-    </h1>
-    <p class="hero__sub">
-      Sin perfiles. Sin algoritmos de recomendación. Sin historial.
-      Presiona conectar y el sistema te empareja con la siguiente persona en la cola, en cualquier parte del mundo.
-    </p>
-
-    <div class="consent-block">
-      <label class="checkbox">
-        <input type="checkbox" id="consent-age">
-        <span class="checkbox__box" aria-hidden="true"></span>
-        <span class="checkbox__label">Confirmo que soy mayor de 18 años y acepto las <a href="#" id="link-rules">normas de la comunidad</a>.</span>
-      </label>
-    </div>
-
-    <button id="btn-start" class="btn-connect" disabled>
-      <span class="btn-connect__icon" aria-hidden="true"></span>
-      <span class="btn-connect__label">CONECTAR AHORA</span>
-    </button>
-
-    <p id="permission-hint" class="permission-hint">Te pediremos acceso a tu cámara y micrófono al conectar.</p>
-  </main>
-
-  <footer class="entry-footer">
-    <div class="stat-strip">
-      <div class="stat"><span class="stat__num" id="stat-online">—</span><span class="stat__label">EN LÍNEA AHORA</span></div>
-      <div class="stat-divider" aria-hidden="true"></div>
-      <div class="stat"><span class="stat__num">100%</span><span class="stat__label">CONEXIÓN DIRECTA</span></div>
-      <div class="stat-divider" aria-hidden="true"></div>
-      <div class="stat"><span class="stat__num">0</span><span class="stat__label">DATOS GUARDADOS</span></div>
-    </div>
-  </footer>
-</section>
-
-<!-- ============ CALL SCREEN ============ -->
-<section id="screen-call" class="screen screen--call" hidden>
-
-  <div class="call-stage">
-    <div class="video-split">
-      <div class="video-pane video-pane--remote">
-        <video id="video-remote" class="video-pane__video" autoplay playsinline></video>
-        <span class="video-pane__label">DESCONOCIDO</span>
+      <div id="configWarning" style="display:none;" class="setup-warning">
+        ⚠️ Falta configuración. Abre <code>index.html</code> y rellena el objeto <code>CONFIG</code> al inicio del <code>&lt;script&gt;</code> con tu <code>SUPABASE_URL</code>, <code>SUPABASE_ANON_KEY</code> y <code>YOUTUBE_API_KEY</code>. Instrucciones completas debajo del código.
       </div>
-      <div class="video-pane video-pane--self">
-        <video id="video-self" class="video-pane__video video-pane__video--mirror" autoplay playsinline muted></video>
-        <span class="video-pane__label">TÚ</span>
+
+      <div id="lobbyForm">
+        <div class="field">
+          <label>Tu nombre</label>
+          <input id="nameInput" type="text" maxlength="20" placeholder="Cómo te van a ver en el chat">
+        </div>
+        <div class="field">
+          <label>Código de sala</label>
+          <input id="roomInput" type="text" maxlength="12" placeholder="ej. viernes-noche" autocomplete="off">
+        </div>
+        <div class="row-btns">
+          <button class="btn btn-ghost" id="newRoomBtn">Crear sala nueva</button>
+          <button class="btn btn-primary" id="joinRoomBtn">Entrar a la sala</button>
+        </div>
+        <div class="lobby-foot">Comparte el código con quien quieras invitar a la fiesta.</div>
       </div>
-    </div>
-
-    <div id="overlay-searching" class="overlay-searching">
-      <div class="radar" aria-hidden="true">
-        <div class="radar__ring radar__ring--1"></div>
-        <div class="radar__ring radar__ring--2"></div>
-        <div class="radar__ring radar__ring--3"></div>
-        <div class="radar__sweep"></div>
-        <div class="radar__core"></div>
-      </div>
-      <p class="overlay-searching__text">BUSCANDO SEÑAL<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
-      <p class="overlay-searching__sub" id="searching-sub">Escaneando usuarios disponibles</p>
-    </div>
-
-    <div id="overlay-ended" class="overlay-ended" hidden>
-      <p class="overlay-ended__title">EL OTRO USUARIO SE DESCONECTÓ</p>
-      <button id="btn-find-again" class="btn-connect btn-connect--inline">
-        <span class="btn-connect__icon" aria-hidden="true"></span>
-        <span class="btn-connect__label">BUSCAR DE NUEVO</span>
-      </button>
-    </div>
-
-    <div class="hud-top">
-      <div class="hud-status" id="hud-status">
-        <span class="hud-status__dot" aria-hidden="true"></span>
-        <span id="hud-status-text">CONECTANDO</span>
-      </div>
-      <div class="hud-timer" id="hud-timer">00:00</div>
-      <div class="hud-id" id="hud-peer-id">PEER #------</div>
-    </div>
-
-    <div class="hud-controls">
-      <button id="btn-mic" class="ctrl-btn" aria-label="Silenciar micrófono" title="Silenciar micrófono">
-        <svg viewBox="0 0 24 24" class="ctrl-btn__icon"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3z"/><path d="M19 11a7 7 0 01-14 0M12 18v3" stroke-linecap="round"/></svg>
-      </button>
-
-      <button id="btn-skip" class="ctrl-btn ctrl-btn--skip" aria-label="Saltar al siguiente" title="Saltar al siguiente">
-        <svg viewBox="0 0 24 24" class="ctrl-btn__icon"><path d="M5 4l9 8-9 8V4zM18 4v16" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span class="ctrl-btn__text">SIGUIENTE</span>
-      </button>
-
-      <button id="btn-leave" class="ctrl-btn ctrl-btn--danger" aria-label="Salir" title="Salir">
-        <svg viewBox="0 0 24 24" class="ctrl-btn__icon"><path d="M5 5l14 14M19 5L5 19" stroke-linecap="round"/></svg>
-      </button>
     </div>
   </div>
-</section>
 
-<!-- ============ ERROR TOAST ============ -->
-<div id="toast" class="toast" role="alert" hidden></div>
+  <!-- ============= ROOM (live) ============= -->
+  <div id="roomView" style="display:none; flex:1; flex-direction:column;">
+    <div class="topbar">
+      <div class="brand">
+        <div class="mark" id="brandMark"></div>
+        <div>
+          <h1 class="display">Frecuencia</h1>
+          <div class="tag">sala de dj compartida</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="room-pill"><span class="dot"></span> sala <b id="roomCodeLabel"></b></div>
+        <button class="leave-btn" id="leaveBtn">Salir</button>
+      </div>
+    </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <div class="room-wrap">
+
+      <!-- now playing -->
+      <div class="panel">
+        <div class="panel-title">Sonando ahora</div>
+        <div class="vinyl-stage">
+          <div class="vinyl" id="vinyl">
+            <div class="vinyl-label" id="vinylLabel"></div>
+          </div>
+          <div id="npInfo">
+            <div class="np-empty">Nada en el aire todavía.<br>Agrega la primera canción →</div>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="stage-actions">
+            <button class="icon-btn" id="skipBtn">⏭ Saltar</button>
+            <button class="icon-btn" id="muteBtn">🔇 Activar audio</button>
+          </div>
+        </div>
+
+        <div class="listeners">
+          <div class="panel-title" style="margin-top:24px;">En la sala</div>
+          <div id="listenerChips"></div>
+        </div>
+      </div>
+
+      <!-- search + queue -->
+      <div class="panel">
+        <div class="panel-title">Buscar canción</div>
+        <div class="search-box">
+          <input id="searchInput" type="text" placeholder="Nombre de la canción o artista…">
+          <button id="searchBtn">Buscar</button>
+        </div>
+        <div id="searchResults" class="result-list"></div>
+
+        <div class="section-gap">
+          <div class="panel-title">Siguiente en la cola</div>
+          <div id="queueList" class="queue-list"></div>
+        </div>
+      </div>
+
+      <!-- chat -->
+      <div class="panel chat-panel">
+        <div class="panel-title">Chat en vivo</div>
+        <div class="chat-log" id="chatLog"></div>
+        <div class="chat-input">
+          <input id="chatInput" type="text" maxlength="280" placeholder="Escribe algo…">
+          <button id="chatSendBtn">Enviar</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
 <script>
-(function () {
-"use strict";
+/* ================================================================
+   CONFIG — rellena esto antes de publicar el sitio
+   ================================================================
+   SUPABASE_URL / SUPABASE_ANON_KEY:
+     Project Settings → API, en tu proyecto de supabase.com (gratis).
+     Corre el SQL de configuración (al final de este archivo, en
+     comentarios) en el SQL Editor de Supabase antes de usar la app.
 
-// ===================================================================
-// SIGNAL — Configuración
-// ===================================================================
-// La "anon key" está diseñada para ser pública (vive en el navegador
-// de cada visitante). Lo que la protege de abuso son las políticas
-// de RLS / Realtime Authorization en el panel de Supabase, no el
-// secreto de esta clave.
-// ===================================================================
-const SUPABASE_URL = "https://meiwuluwrdjszxeyoqtt.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1laXd1bHV3cmRqc3p4ZXlvcXR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MDk4NzksImV4cCI6MjA5MzA4NTg3OX0.EZmyzacTi4L6_-pGJzwLGPCWF5aplmKY9SXBVl-2C8s";
+   YOUTUBE_API_KEY:
+     console.cloud.google.com → crea un proyecto → habilita
+     "YouTube Data API v3" → Credentials → Create API key (gratis,
+     10,000 unidades/día). Esta key viaja en el navegador del
+     usuario: cualquiera que inspeccione el código puede verla y
+     usarla en otra app. Para una sala chica/personal el riesgo es
+     bajo, pero si esto crece, mueve la búsqueda a un backend propio.
+   ================================================================ */
+const CONFIG = {
+  SUPABASE_URL: "",        // ej: "https://abcxyz.supabase.co"
+  SUPABASE_ANON_KEY: "",   // tu anon/public key
+  YOUTUBE_API_KEY: ""      // tu API key de YouTube Data API v3
+};
 
-// Servidores STUN públicos de Google para descubrir la IP pública.
-// Además se incluye un servidor TURN (Open Relay, gratuito) como
-// respaldo: STUN por sí solo falla en muchas combinaciones de redes
-// reales (NAT simétrico, redes corporativas, datos móviles vs wifi),
-// y sin TURN la señalización WebRTC se completa con éxito pero el
-// video/audio nunca llega a pasar — exactamente el síntoma de "se
-// conecta pero no se ve la cámara del otro". Para producción real se
-// recomienda un TURN propio (coturn, Twilio, etc.) con más capacidad.
-const ICE_SERVERS = [
-  { urls: "stun:stun.l.google.com:19302" },
-  { urls: "stun:stun1.l.google.com:19302" },
-  {
-    urls: "turn:openrelay.metered.ca:80",
-    username: "openrelayproject",
-    credential: "openrelayproject",
-  },
-  {
-    urls: "turn:openrelay.metered.ca:443",
-    username: "openrelayproject",
-    credential: "openrelayproject",
-  },
-  {
-    urls: "turn:openrelay.metered.ca:443?transport=tcp",
-    username: "openrelayproject",
-    credential: "openrelayproject",
-  },
-];
+// ---------------------------------------------------------------
+// estado global
+// ---------------------------------------------------------------
+let supa = null;
+let myId = crypto.randomUUID();
+let myName = "";
+let roomId = "";
+let presenceChannel = null;
+let presentIds = [];
+let ytPlayer = null;
+let ytReady = false;
+let progressTimer = null;
+let currentNowPlaying = null; // {video_id,title,thumbnail,started_at}
+let muted = true;
 
-const LOBBY_CHANNEL = "signal-lobby";
-
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-function uid() {
-  return crypto.randomUUID();
+// ---------------------------------------------------------------
+// arranque
+// ---------------------------------------------------------------
+function showConfigWarningIfNeeded(){
+  const missing = !CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY || !CONFIG.YOUTUBE_API_KEY;
+  document.getElementById('configWarning').style.display = missing ? 'block' : 'none';
+  return missing;
 }
 
-// ===================================================================
-// Matchmaking — emparejamiento vía Supabase Realtime
-// ===================================================================
-// Protocolo:
-// 1. Cada usuario libre hace "presence track" en el canal LOBBY con
-//    su userId y un timestamp.
-// 2. Cuando hay 2+ personas libres, cada cliente calcula de forma
-//    determinista (mismo algoritmo en todos los clientes) quién es
-//    el "iniciador" de cada pareja, ordenando los IDs alfabéticamente.
-//    Esto evita que ambos lados intenten ofertar a la vez (glare).
-// 3. El iniciador crea una "room" (un roomId derivado de ambos IDs)
-//    y envía una invitación broadcast dirigida al otro usuario.
-// 4. El receptor, al ver su ID en una invitación, deja el lobby y
-//    se une a esa room para hacer el intercambio WebRTC.
-// 5. Ambos abandonan el lobby mientras dura la llamada. Al hacer
-//    "skip" o colgar, vuelven a anunciarse en el lobby.
-// ===================================================================
-class Matchmaker {
-  constructor() {
-    this.userId = uid();
-    this.lobbyChannel = null;
-    this.roomChannel = null;
-    this.state = "idle"; // idle | searching | matched
-    this.onMatched = null; // callback(roomId, isInitiator, peerId)
-    this.onPresenceCount = null; // callback(count)
-    this._matchLock = false;
-    this._subscribed = null; // Promise que resuelve cuando lobbyChannel está SUBSCRIBED
-  }
-
-  /** Crea y suscribe el canal de lobby de esta instancia. La clave de
-   *  presencia se fija a this.userId porque el resto de la lógica
-   *  compara las claves de presencia con this.userId para encontrar
-   *  candidatos. Se crea aquí (y no en el constructor) para poder
-   *  esperar a que esté SUBSCRIBED antes de hacer track/send, evitando
-   *  el error de "Cannot read properties of undefined" que ocurría al
-   *  usar un canal que nunca se había creado. */
-  _ensureLobbyChannel() {
-    if (this._subscribed) return this._subscribed;
-
-    this.lobbyChannel = supabase.channel(LOBBY_CHANNEL, {
-      config: { presence: { key: this.userId } },
-    });
-
-    this.lobbyChannel
-      .on("presence", { event: "sync" }, () => this._handlePresenceSync())
-      .on("broadcast", { event: "invite" }, ({ payload }) => this._handleInvite(payload));
-
-    this._subscribed = new Promise((resolve) => {
-      this.lobbyChannel.subscribe((status) => {
-        if (status === "SUBSCRIBED") resolve(this.lobbyChannel);
-      });
-    });
-
-    return this._subscribed;
-  }
-
-  async enterLobby() {
-    if (this.state !== "idle") return;
-    this.state = "searching";
-    this._matchLock = false;
-    await this._ensureLobbyChannel();
-    await this.lobbyChannel.track({ userId: this.userId, joinedAt: Date.now() });
-    this._handlePresenceSync();
-  }
-
-  _handlePresenceSync() {
-    const presenceState = this.lobbyChannel.presenceState();
-    const allIds = Object.keys(presenceState);
-    if (this.onPresenceCount) this.onPresenceCount(allIds.length);
-
-    if (this.state !== "searching") return;
-
-    const peerIds = allIds.filter((id) => id !== this.userId);
-
-    if (peerIds.length === 0 || this._matchLock) return;
-
-    // Elegimos determinísticamente al mismo candidato en todos los
-    // clientes: el peer libre con el ID "menor" alfabéticamente.
-    const candidate = peerIds.sort()[0];
-    const amInitiator = this.userId < candidate;
-
-    if (amInitiator) {
-      this._matchLock = true;
-      const roomId = [this.userId, candidate].sort().join("__");
-      this.lobbyChannel.send({
-        type: "broadcast",
-        event: "invite",
-        payload: { to: candidate, from: this.userId, roomId },
-      });
-      this._finalizeMatch(roomId, true, candidate);
-    }
-    // Si no soy el iniciador, espero pasivamente a recibir un "invite".
-  }
-
-  _handleInvite(payload) {
-    if (this.state !== "searching" || this._matchLock) return;
-    if (payload.to !== this.userId) return;
-
-    this._matchLock = true;
-    this._finalizeMatch(payload.roomId, false, payload.from);
-  }
-
-  async _finalizeMatch(roomId, isInitiator, peerId) {
-    this.state = "matched";
-    try {
-      await this.lobbyChannel.untrack();
-    } catch (_) {}
-    if (this.onMatched) this.onMatched(roomId, isInitiator, peerId);
-  }
-
-  /** Canal dedicado de la pareja, para intercambiar SDP/ICE.
-   *  Devuelve una Promise que resuelve cuando el canal ya está
-   *  SUBSCRIBED, para evitar enviar señales (oferta SDP, ICE) antes
-   *  de que el canal esté listo — esos mensajes se perderían en
-   *  silencio si se envían demasiado pronto. */
-  joinRoom(roomId, handlers) {
-    return new Promise((resolve) => {
-      this.roomChannel = supabase.channel(`room-${roomId}`, {
-        config: { broadcast: { self: false } },
-      });
-
-      this.roomChannel
-        .on("broadcast", { event: "signal" }, ({ payload }) => {
-          if (payload.from !== this.userId) handlers.onSignal(payload.data);
-        })
-        .on("broadcast", { event: "leave" }, ({ payload }) => {
-          if (payload.from !== this.userId) handlers.onPeerLeft();
-        })
-        .subscribe((status) => {
-          if (status === "SUBSCRIBED") resolve(this.roomChannel);
-        });
-    });
-  }
-
-  sendSignal(data) {
-    if (!this.roomChannel) return;
-    this.roomChannel.send({
-      type: "broadcast",
-      event: "signal",
-      payload: { from: this.userId, data },
-    });
-  }
-
-  notifyLeave() {
-    if (!this.roomChannel) return;
-    this.roomChannel.send({
-      type: "broadcast",
-      event: "leave",
-      payload: { from: this.userId },
-    });
-  }
-
-  async leaveRoom() {
-    if (this.roomChannel) {
-      await supabase.removeChannel(this.roomChannel);
-      this.roomChannel = null;
-    }
-    this.state = "idle";
-  }
-
-  async leaveLobby() {
-    if (this.lobbyChannel) {
-      try {
-        await this.lobbyChannel.untrack();
-      } catch (_) {}
-      try {
-        await supabase.removeChannel(this.lobbyChannel);
-      } catch (_) {}
-      this.lobbyChannel = null;
-      this._subscribed = null;
-    }
-    this.state = "idle";
-  }
-
-  async reset() {
-    await this.leaveRoom();
-    await this.leaveLobby();
-    this._matchLock = false;
-    this.state = "idle";
-  }
+function initSupabase(){
+  if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY) return;
+  supa = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 }
 
-// ===================================================================
-// WebRTC — gestión de la conexión peer-to-peer
-// ===================================================================
-class CallConnection {
-  constructor({ localStream, sendSignal, onRemoteStream, onConnected, onDisconnected, onFailed }) {
-    this.localStream = localStream;
-    this.sendSignal = sendSignal;
-    this.onRemoteStream = onRemoteStream;
-    this.onConnected = onConnected;
-    this.onDisconnected = onDisconnected;
-    this.onFailed = onFailed;
-
-    this.pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-    this._setupListeners();
-
-    localStream.getTracks().forEach((track) => {
-      this.pc.addTrack(track, localStream);
-    });
-  }
-
-  _setupListeners() {
-    this.pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        this.sendSignal({ type: "ice-candidate", candidate: event.candidate });
-      }
-    };
-
-    this.pc.ontrack = (event) => {
-      if (this.onRemoteStream) this.onRemoteStream(event.streams[0]);
-    };
-
-    this.pc.onconnectionstatechange = () => {
-      const state = this.pc.connectionState;
-      if (state === "connected" && this.onConnected) this.onConnected();
-      if ((state === "disconnected" || state === "closed") && this.onDisconnected) this.onDisconnected();
-      if (state === "failed" && this.onFailed) this.onFailed();
-    };
-  }
-
-  async createOffer() {
-    const offer = await this.pc.createOffer();
-    await this.pc.setLocalDescription(offer);
-    this.sendSignal({ type: "offer", sdp: offer });
-  }
-
-  async handleSignal(data) {
-    if (data.type === "offer") {
-      await this.pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-      const answer = await this.pc.createAnswer();
-      await this.pc.setLocalDescription(answer);
-      this.sendSignal({ type: "answer", sdp: answer });
-    } else if (data.type === "answer") {
-      await this.pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-    } else if (data.type === "ice-candidate") {
-      try {
-        await this.pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-      } catch (err) {
-        console.warn("No se pudo añadir ICE candidate:", err);
-      }
-    }
-  }
-
-  close() {
-    this.pc.onicecandidate = null;
-    this.pc.ontrack = null;
-    this.pc.onconnectionstatechange = null;
-    this.pc.getSenders().forEach((sender) => {
-      try { this.pc.removeTrack(sender); } catch (_) {}
-    });
-    this.pc.close();
-  }
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2400);
 }
 
-// ===================================================================
-// App orchestrator
-// ===================================================================
-const supabasePreview = supabase;
-
-// ---------- DOM refs ----------
-const screenEntry = document.getElementById("screen-entry");
-const screenCall = document.getElementById("screen-call");
-
-const consentCheckbox = document.getElementById("consent-age");
-const btnStart = document.getElementById("btn-start");
-const statOnline = document.getElementById("stat-online");
-
-const videoRemote = document.getElementById("video-remote");
-const videoSelf = document.getElementById("video-self");
-
-const overlaySearching = document.getElementById("overlay-searching");
-const overlayEnded = document.getElementById("overlay-ended");
-const searchingSub = document.getElementById("searching-sub");
-const btnFindAgain = document.getElementById("btn-find-again");
-
-const hudStatus = document.getElementById("hud-status");
-const hudStatusText = document.getElementById("hud-status-text");
-const hudTimer = document.getElementById("hud-timer");
-const hudPeerId = document.getElementById("hud-peer-id");
-
-const btnMic = document.getElementById("btn-mic");
-const btnSkip = document.getElementById("btn-skip");
-const btnLeave = document.getElementById("btn-leave");
-
-const toast = document.getElementById("toast");
-
-// ---------- State ----------
-let localStream = null;
-let matchmaker = null;
-let connection = null;
-let timerInterval = null;
-let timerSeconds = 0;
-let micOn = true;
-
-// ===================================================================
-// Live "online now" preview on the entry screen (read-only, no match)
-// ===================================================================
-let previewChannel = null;
-
-function startOnlinePreview() {
-  previewChannel = supabasePreview.channel(LOBBY_CHANNEL, {
-    config: { presence: { key: `preview-${crypto.randomUUID()}` } },
-  });
-  previewChannel
-    .on("presence", { event: "sync" }, () => {
-      const count = Object.keys(previewChannel.presenceState()).length;
-      statOnline.textContent = count > 0 ? count : "1";
-    })
-    .subscribe(async (status) => {
-      if (status === "SUBSCRIBED") {
-        await previewChannel.track({ preview: true, joinedAt: Date.now() });
-      }
-    });
+function randomRoomCode(){
+  const words = ["neon","beat","vinilo","eco","loop","onda","disco","bajo","sintetico","ritmo"];
+  return words[Math.floor(Math.random()*words.length)] + "-" + Math.floor(1000+Math.random()*9000);
 }
 
-async function stopOnlinePreview() {
-  if (previewChannel) {
-    await previewChannel.untrack();
-    await supabasePreview.removeChannel(previewChannel);
-    previewChannel = null;
-  }
-}
-
-startOnlinePreview();
-
-// ===================================================================
-// Helpers
-// ===================================================================
-function showToast(message, type, duration) {
-  type = type || "info";
-  duration = duration || 3500;
-  toast.textContent = message;
-  toast.dataset.type = type;
-  toast.hidden = false;
-  clearTimeout(showToast._t);
-  showToast._t = setTimeout(() => { toast.hidden = true; }, duration);
-}
-
-function setHudStatus(state, label) {
-  hudStatus.dataset.state = state;
-  hudStatusText.textContent = label;
-}
-
-function startTimer() {
-  timerSeconds = 0;
-  hudTimer.textContent = "00:00";
-  timerInterval = setInterval(() => {
-    timerSeconds++;
-    const m = String(Math.floor(timerSeconds / 60)).padStart(2, "0");
-    const s = String(timerSeconds % 60).padStart(2, "0");
-    hudTimer.textContent = `${m}:${s}`;
-  }, 1000);
-}
-
-function stopTimer() {
-  clearInterval(timerInterval);
-  timerInterval = null;
-}
-
-function resetCallUI() {
-  overlaySearching.hidden = false;
-  overlayEnded.hidden = true;
-  videoRemote.srcObject = null;
-  setHudStatus("connecting", "CONECTANDO");
-  hudPeerId.textContent = "PEER #------";
-  stopTimer();
-  hudTimer.textContent = "00:00";
-}
-
-// ===================================================================
-// Media setup
-// ===================================================================
-async function getLocalStream() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
-      audio: { echoCancellation: true, noiseSuppression: true },
-    });
-    return stream;
-  } catch (err) {
-    if (err.name === "NotAllowedError") {
-      throw new Error("Necesitamos acceso a tu cámara y micrófono para conectarte. Revisa los permisos del navegador.");
-    } else if (err.name === "NotFoundError") {
-      throw new Error("No se detectó cámara o micrófono en este dispositivo.");
-    }
-    throw new Error("No se pudo acceder a la cámara o el micrófono.");
-  }
-}
-
-// ===================================================================
-// Matchmaking flow
-// ===================================================================
-async function startSearching() {
-  resetCallUI();
-  searchingSub.textContent = "Escaneando usuarios disponibles";
-
-  // Si ya había un matchmaker previo (p.ej. al pulsar "siguiente"),
-  // hay que destruir por completo su canal de lobby antes de crear
-  // uno nuevo: ambos comparten el mismo topic ("signal-lobby"), y
-  // Supabase Realtime devuelve el canal existente si ya está
-  // SUBSCRIBED en vez de crear uno nuevo, lo que provocaba el error
-  // "cannot add presence callbacks after subscribe()".
-  if (matchmaker) {
-    await matchmaker.reset();
-  }
-
-  matchmaker = new Matchmaker();
-
-  matchmaker.onPresenceCount = (count) => {
-    statOnline.textContent = count;
-  };
-
-  matchmaker.onMatched = (roomId, isInitiator, peerId) => {
-    hudPeerId.textContent = `PEER #${peerId.slice(0, 6).toUpperCase()}`;
-    searchingSub.textContent = "Estableciendo conexión directa";
-    beginCall(roomId, isInitiator);
-  };
-
-  await matchmaker.enterLobby();
-}
-
-async function beginCall(roomId, isInitiator) {
-  connection = new CallConnection({
-    localStream,
-    sendSignal: (data) => matchmaker.sendSignal(data),
-    onRemoteStream: (stream) => {
-      videoRemote.srcObject = stream;
-      overlaySearching.hidden = true;
-    },
-    onConnected: () => {
-      clearTimeout(connectTimeout);
-      setHudStatus("connected", "CONECTADO");
-      startTimer();
-    },
-    onDisconnected: () => handlePeerGone(),
-    onFailed: () => {
-      showToast("La conexión falló. Buscando a alguien más…", "error");
-      handlePeerGone();
-    },
-  });
-
-  await matchmaker.joinRoom(roomId, {
-    onSignal: (data) => connection.handleSignal(data),
-    onPeerLeft: () => handlePeerGone(),
-  });
-
-  // Salvaguarda: si tras un tiempo razonable la conexión P2P no se
-  // estableció (oferta/respuesta/ICE perdidos, NAT muy restrictivo,
-  // etc.), reintentamos la búsqueda automáticamente en vez de dejar
-  // al usuario esperando indefinidamente frente a "buscando".
-  const connectTimeout = setTimeout(() => {
-    if (connection && connection.pc.connectionState !== "connected") {
-      showToast("No se pudo establecer la conexión. Buscando de nuevo…", "error");
-      findNext();
-    }
-  }, 15000);
-
-  if (isInitiator) {
-    // Pequeño margen para que el otro extremo también termine de
-    // suscribirse a la sala antes de que llegue la oferta SDP.
-    // Los broadcasts enviados antes de que el receptor esté
-    // SUBSCRIBED se pierden en silencio (comportamiento de Supabase
-    // Realtime), así que este margen evita esa condición de carrera.
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    await connection.createOffer();
-  }
-}
-
-function handlePeerGone() {
-  if (overlayEnded.hidden === false) return; // ya manejado
-  stopTimer();
-  setHudStatus("idle", "DESCONECTADO");
-  overlayEnded.hidden = false;
-  overlaySearching.hidden = true;
-  teardownConnection();
-}
-
-function teardownConnection() {
-  if (connection) {
-    connection.close();
-    connection = null;
-  }
-}
-
-async function findNext() {
-  teardownConnection();
-  if (matchmaker) {
-    matchmaker.notifyLeave();
-    await matchmaker.leaveRoom();
-  }
-  await startSearching();
-}
-
-// ===================================================================
-// UI wiring — Entry screen
-// ===================================================================
-consentCheckbox.addEventListener("change", () => {
-  btnStart.disabled = !consentCheckbox.checked;
+document.getElementById('newRoomBtn').addEventListener('click', ()=>{
+  document.getElementById('roomInput').value = randomRoomCode();
 });
 
-btnStart.addEventListener("click", async () => {
-  btnStart.disabled = true;
-  btnStart.querySelector(".btn-connect__label").textContent = "SOLICITANDO CÁMARA…";
+document.getElementById('joinRoomBtn').addEventListener('click', enterRoom);
+document.getElementById('roomInput').addEventListener('keydown', e=>{ if(e.key==='Enter') enterRoom(); });
 
-  try {
-    localStream = await getLocalStream();
-  } catch (err) {
-    showToast(err.message, "error", 5000);
-    btnStart.disabled = false;
-    btnStart.querySelector(".btn-connect__label").textContent = "CONECTAR AHORA";
+async function enterRoom(){
+  if (showConfigWarningIfNeeded()){
+    toast("Falta configurar Supabase / YouTube en el archivo");
     return;
   }
+  const name = document.getElementById('nameInput').value.trim();
+  const code = document.getElementById('roomInput').value.trim().toLowerCase().replace(/\s+/g,'-');
+  if (!name) { toast("Escribe tu nombre"); return; }
+  if (!code) { toast("Escribe o genera un código de sala"); return; }
 
-  videoSelf.srcObject = localStream;
-  screenEntry.hidden = true;
-  screenCall.hidden = false;
+  myName = name;
+  roomId = code;
 
-  await stopOnlinePreview();
-  await startSearching();
-});
+  // crea la sala si no existe (idempotente)
+  await supa.from('rooms').upsert({ id: roomId, name: roomId }, { onConflict: 'id' });
 
-// ===================================================================
-// UI wiring — Call screen
-// ===================================================================
-btnSkip.addEventListener("click", () => {
-  findNext();
-});
+  document.getElementById('lobbyView').style.display = 'none';
+  document.getElementById('roomView').style.display = 'flex';
+  document.getElementById('roomCodeLabel').textContent = roomId;
 
-btnFindAgain.addEventListener("click", () => {
-  findNext();
-});
-
-btnLeave.addEventListener("click", () => {
-  endCallCompletely();
-});
-
-btnMic.addEventListener("click", () => {
-  if (!localStream) return;
-  micOn = !micOn;
-  localStream.getAudioTracks().forEach((t) => (t.enabled = micOn));
-  btnMic.classList.toggle("is-off", !micOn);
-});
-
-async function endCallCompletely() {
-  teardownConnection();
-  if (matchmaker) {
-    matchmaker.notifyLeave();
-    await matchmaker.reset();
-    matchmaker = null;
-  }
-  if (localStream) {
-    localStream.getTracks().forEach((t) => t.stop());
-    localStream = null;
-  }
-  stopTimer();
-  screenCall.hidden = true;
-  screenEntry.hidden = false;
-  btnStart.disabled = !consentCheckbox.checked;
-  btnStart.querySelector(".btn-connect__label").textContent = "CONECTAR AHORA";
-  startOnlinePreview();
+  await loadQueue();
+  await loadNowPlaying();
+  await loadChat();
+  subscribeRealtime();
+  joinPresence();
 }
 
-// Limpieza si el usuario cierra/recarga la pestaña a mitad de llamada.
-window.addEventListener("beforeunload", () => {
-  if (matchmaker) matchmaker.notifyLeave();
+document.getElementById('leaveBtn').addEventListener('click', ()=> location.reload());
+
+// ---------------------------------------------------------------
+// YouTube: búsqueda por nombre
+// ---------------------------------------------------------------
+document.getElementById('searchBtn').addEventListener('click', runSearch);
+document.getElementById('searchInput').addEventListener('keydown', e=>{ if(e.key==='Enter') runSearch(); });
+
+async function runSearch(){
+  const q = document.getElementById('searchInput').value.trim();
+  if (!q) return;
+  const box = document.getElementById('searchResults');
+  box.innerHTML = `<div class="empty-note">Buscando…</div>`;
+  try{
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=6&q=${encodeURIComponent(q)}&key=${CONFIG.YOUTUBE_API_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.items || !data.items.length){
+      box.innerHTML = `<div class="empty-note">Sin resultados. Intenta con otro término.</div>`;
+      return;
+    }
+    box.innerHTML = '';
+    data.items.forEach(item=>{
+      const vid = item.id.videoId;
+      const sn = item.snippet;
+      const row = document.createElement('div');
+      row.className = 'song-row';
+      row.innerHTML = `
+        <img src="${sn.thumbnails.default.url}" alt="">
+        <div class="info">
+          <div class="t">${escapeHtml(sn.title)}</div>
+          <div class="c">${escapeHtml(sn.channelTitle)}</div>
+        </div>
+        <button class="add-btn" title="Agregar a la cola">+</button>`;
+      row.querySelector('.add-btn').addEventListener('click', ()=> addToQueue({
+        video_id: vid, title: sn.title, thumbnail: sn.thumbnails.medium.url, channel: sn.channelTitle
+      }));
+      box.appendChild(row);
+    });
+  }catch(err){
+    console.error(err);
+    box.innerHTML = `<div class="empty-note">Error buscando. Revisa tu YOUTUBE_API_KEY.</div>`;
+  }
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ---------------------------------------------------------------
+// cola (queue)
+// ---------------------------------------------------------------
+async function addToQueue(song){
+  const { data: existing } = await supa.from('queue').select('position').eq('room_id', roomId).order('position', { ascending:false }).limit(1);
+  const nextPos = existing && existing.length ? existing[0].position + 1 : 1;
+  const { error } = await supa.from('queue').insert({
+    room_id: roomId, video_id: song.video_id, title: song.title,
+    thumbnail: song.thumbnail, channel: song.channel, added_by: myName, position: nextPos
+  });
+  if (error){ console.error(error); toast("No se pudo agregar (revisa la consola)"); return; }
+  toast(`Agregada: ${song.title}`);
+}
+
+async function loadQueue(){
+  const { data } = await supa.from('queue').select('*').eq('room_id', roomId).order('position', { ascending:true });
+  renderQueue(data || []);
+}
+
+function renderQueue(items){
+  const box = document.getElementById('queueList');
+  if (!items.length){ box.innerHTML = `<div class="empty-note">La cola está vacía. ¡Busca algo arriba!</div>`; return; }
+  box.innerHTML = '';
+  items.forEach((it, i)=>{
+    const row = document.createElement('div');
+    row.className = 'song-row';
+    row.innerHTML = `
+      <div class="queue-pos">${i+1}</div>
+      <img src="${it.thumbnail}" alt="">
+      <div class="info">
+        <div class="t">${escapeHtml(it.title)}</div>
+        <div class="c">agregó ${escapeHtml(it.added_by||'alguien')}</div>
+      </div>`;
+    box.appendChild(row);
+  });
+}
+
+// ---------------------------------------------------------------
+// now playing + reproducción sincronizada
+// ---------------------------------------------------------------
+async function loadNowPlaying(){
+  const { data } = await supa.from('now_playing').select('*').eq('room_id', roomId).maybeSingle();
+  if (data) applyNowPlaying(data);
+}
+
+function applyNowPlaying(row){
+  currentNowPlaying = row;
+  renderNowPlayingInfo(row);
+  if (ytReady) syncPlayerTo(row);
+}
+
+function renderNowPlayingInfo(row){
+  const info = document.getElementById('npInfo');
+  const vinyl = document.getElementById('vinyl');
+  const label = document.getElementById('vinylLabel');
+  if (!row){
+    info.innerHTML = `<div class="np-empty">Nada en el aire todavía.<br>Agrega la primera canción →</div>`;
+    vinyl.classList.remove('spin');
+    label.innerHTML = '';
+    document.getElementById('brandMark').classList.remove('live');
+    return;
+  }
+  info.innerHTML = `
+    <div class="np-title">${escapeHtml(row.title)}</div>
+    <div class="np-meta">${escapeHtml(row.channel||'')}</div>`;
+  label.innerHTML = `<img src="${row.thumbnail}" alt="">`;
+  vinyl.classList.add('spin');
+  document.getElementById('brandMark').classList.add('live');
+}
+
+function syncPlayerTo(row){
+  if (!row){ ytPlayer.stopVideo(); return; }
+  const elapsed = (Date.now() - new Date(row.started_at).getTime()) / 1000;
+  ytPlayer.loadVideoById(row.video_id, Math.max(0, elapsed));
+  if (!muted) ytPlayer.unMute();
+}
+
+// elección determinista del líder: el id más bajo presente
+function isLeader(){
+  if (!presentIds.length) return true;
+  const sorted = [...presentIds].sort();
+  return sorted[0] === myId;
+}
+
+async function advanceQueue(){
+  const { data: next } = await supa.from('queue').select('*').eq('room_id', roomId).order('position', { ascending:true }).limit(1);
+  if (!next || !next.length){
+    await supa.from('now_playing').delete().eq('room_id', roomId);
+    return;
+  }
+  const song = next[0];
+  await supa.from('now_playing').upsert({
+    room_id: roomId, video_id: song.video_id, title: song.title,
+    thumbnail: song.thumbnail, channel: song.channel, started_at: new Date().toISOString()
+  }, { onConflict: 'room_id' });
+  await supa.from('queue').delete().eq('id', song.id);
+}
+
+document.getElementById('skipBtn').addEventListener('click', async ()=>{
+  await advanceQueue();
+  toast("Canción saltada");
 });
 
+document.getElementById('muteBtn').addEventListener('click', ()=>{
+  muted = !muted;
+  const btn = document.getElementById('muteBtn');
+  if (!ytPlayer){ btn.textContent = muted ? '🔇 Activar audio' : '🔊 Audio activo'; return; }
+  if (muted){ ytPlayer.mute(); btn.textContent = '🔇 Activar audio'; }
+  else { ytPlayer.unMute(); ytPlayer.playVideo(); btn.textContent = '🔊 Audio activo'; }
+});
+
+// líder: revisa periódicamente si hay que arrancar/avanzar la cola
+setInterval(async ()=>{
+  if (!roomId || !supa) return;
+  if (!isLeader()) return;
+  if (!currentNowPlaying){
+    const { data } = await supa.from('queue').select('*').eq('room_id', roomId).order('position', { ascending:true }).limit(1);
+    if (data && data.length) await advanceQueue();
+  }
+}, 4000);
+
+// ---------------------------------------------------------------
+// YouTube IFrame Player
+// ---------------------------------------------------------------
+function onYouTubeIframeAPIReady(){
+  const mount = document.createElement('div');
+  mount.id = 'ytmount';
+  mount.className = 'yt-mount';
+  document.body.appendChild(mount);
+  ytPlayer = new YT.Player('ytmount', {
+    height: '1', width: '1',
+    playerVars: { autoplay: 1, controls: 0, disablekb: 1, modestbranding: 1, rel: 0, playsinline: 1 },
+    events: {
+      onReady: ()=>{
+        ytReady = true;
+        ytPlayer.mute();
+        if (currentNowPlaying) syncPlayerTo(currentNowPlaying);
+      },
+      onStateChange: (e)=>{
+        if (e.data === YT.PlayerState.ENDED && isLeader()) advanceQueue();
+      }
+    }
+  });
+}
+
+setInterval(()=>{
+  if (!ytReady || !currentNowPlaying) return;
+  const dur = ytPlayer.getDuration();
+  const cur = ytPlayer.getCurrentTime();
+  if (dur > 0){
+    document.getElementById('progressFill').style.width = Math.min(100, (cur/dur)*100) + '%';
+  }
+}, 700);
+
+// ---------------------------------------------------------------
+// presencia (quién está en la sala) + elección de líder
+// ---------------------------------------------------------------
+function joinPresence(){
+  presenceChannel = supa.channel(`presence-${roomId}`, { config: { presence: { key: myId } } });
+  presenceChannel
+    .on('presence', { event: 'sync' }, ()=>{
+      const state = presenceChannel.presenceState();
+      presentIds = Object.keys(state);
+      renderListeners(state);
+    })
+    .subscribe(async (status)=>{
+      if (status === 'SUBSCRIBED'){
+        await presenceChannel.track({ name: myName, online_at: new Date().toISOString() });
+      }
+    });
+}
+
+function renderListeners(state){
+  const box = document.getElementById('listenerChips');
+  box.innerHTML = '';
+  Object.values(state).forEach(arr=>{
+    const p = arr[0];
+    const chip = document.createElement('span');
+    chip.className = 'listener-chip';
+    chip.innerHTML = `<span class="pip"></span>${escapeHtml(p.name||'alguien')}`;
+    box.appendChild(chip);
+  });
+}
+
+// ---------------------------------------------------------------
+// chat
+// ---------------------------------------------------------------
+async function loadChat(){
+  const { data } = await supa.from('messages').select('*').eq('room_id', roomId).order('created_at', { ascending:true }).limit(100);
+  const log = document.getElementById('chatLog');
+  log.innerHTML = '';
+  (data||[]).forEach(renderMessage);
+  log.scrollTop = log.scrollHeight;
+}
+
+function renderMessage(m){
+  const log = document.getElementById('chatLog');
+  const div = document.createElement('div');
+  div.className = 'msg';
+  if (m.system){
+    div.innerHTML = `<span class="sys">${escapeHtml(m.content)}</span>`;
+  } else {
+    const mine = m.username === myName;
+    div.innerHTML = `<span class="who ${mine?'me':'them'}">${escapeHtml(m.username)}</span>${escapeHtml(m.content)}`;
+  }
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+document.getElementById('chatSendBtn').addEventListener('click', sendChat);
+document.getElementById('chatInput').addEventListener('keydown', e=>{ if(e.key==='Enter') sendChat(); });
+
+async function sendChat(){
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  await supa.from('messages').insert({ room_id: roomId, username: myName, content: text });
+}
+
+// ---------------------------------------------------------------
+// realtime: queue, now_playing, messages
+// ---------------------------------------------------------------
+function subscribeRealtime(){
+  supa.channel(`room-data-${roomId}`)
+    .on('postgres_changes', { event:'*', schema:'public', table:'queue', filter:`room_id=eq.${roomId}` }, loadQueue)
+    .on('postgres_changes', { event:'*', schema:'public', table:'now_playing', filter:`room_id=eq.${roomId}` }, (payload)=>{
+      if (payload.eventType === 'DELETE') applyNowPlaying(null);
+      else applyNowPlaying(payload.new);
+    })
+    .on('postgres_changes', { event:'INSERT', schema:'public', table:'messages', filter:`room_id=eq.${roomId}` }, (payload)=> renderMessage(payload.new))
+    .subscribe();
+}
+
+// ---------------------------------------------------------------
+// fondo decorativo: líneas de frecuencia
+// ---------------------------------------------------------------
+(function drawFreqBg(){
+  const svg = document.getElementById('freqSvg');
+  const ns = 'http://www.w3.org/2000/svg';
+  for (let i=0;i<3;i++){
+    const path = document.createElementNS(ns,'path');
+    let d = `M0 ${150+i*20}`;
+    for (let x=0;x<=1200;x+=40){
+      const y = 150 + i*20 + Math.sin((x/80)+i)* (18+i*6);
+      d += ` L${x} ${y}`;
+    }
+    path.setAttribute('d', d);
+    path.setAttribute('fill','none');
+    path.setAttribute('stroke', i===1 ? '#FF2E88' : '#FFB627');
+    path.setAttribute('stroke-width','1');
+    path.setAttribute('opacity', 0.12 - i*0.02);
+    svg.appendChild(path);
+  }
 })();
+
+initSupabase();
+showConfigWarningIfNeeded();
 </script>
+
+
 </body>
 </html>
