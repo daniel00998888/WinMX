@@ -706,43 +706,38 @@ function uid() {
 //    "skip" o colgar, vuelven a anunciarse en el lobby.
 // ===================================================================
 class Matchmaker {
-  constructor() {
-    this.userId = uid();
-    this.lobbyChannel = null;
+  constructor(lobbyChannel) {
+    this.lobbyChannel = lobbyChannel; // canal persistente, creado y suscrito una sola vez para toda la sesión
+    this.userId = null;
     this.roomChannel = null;
     this.state = "idle"; // idle | searching | matched
     this.onMatched = null; // callback(roomId, isInitiator, peerId)
-    this.onPresenceCount = null; // callback(count)
     this._matchLock = false;
+
+    // Los listeners se registran UNA sola vez en toda la vida de la
+    // página, sobre el único canal de lobby compartido. Cada búsqueda
+    // nueva solo cambia this.userId / this.state — nunca se vuelven a
+    // registrar listeners, así que no se acumulan entre "skips" ni se
+    // intenta tocar el canal después de que ya esté SUBSCRIBED (que es
+    // justamente lo que causaba el error original).
+    this.lobbyChannel.on("presence", { event: "sync" }, () => this._handlePresenceSync());
+    this.lobbyChannel.on("broadcast", { event: "invite" }, ({ payload }) => this._handleInvite(payload));
   }
 
   async enterLobby() {
     if (this.state !== "idle") return;
+    this.userId = uid();
     this.state = "searching";
     this._matchLock = false;
-
-    this.lobbyChannel = supabase.channel(LOBBY_CHANNEL, {
-      config: { presence: { key: this.userId } },
-    });
-
-    this.lobbyChannel
-      .on("presence", { event: "sync" }, () => this._handlePresenceSync())
-      .on("broadcast", { event: "invite" }, ({ payload }) => this._handleInvite(payload))
-      .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-          await this.lobbyChannel.track({ joinedAt: Date.now() });
-          this._handlePresenceSync();
-        }
-      });
+    await this.lobbyChannel.track({ userId: this.userId, joinedAt: Date.now() });
+    this._handlePresenceSync();
   }
 
   _handlePresenceSync() {
-    if (!this.lobbyChannel || this.state !== "searching") return;
+    if (this.state !== "searching") return;
 
     const presenceState = this.lobbyChannel.presenceState();
     const peerIds = Object.keys(presenceState).filter((id) => id !== this.userId);
-
-    if (this.onPresenceCount) this.onPresenceCount(peerIds.length + 1);
 
     if (peerIds.length === 0 || this._matchLock) return;
 
@@ -774,11 +769,9 @@ class Matchmaker {
 
   async _finalizeMatch(roomId, isInitiator, peerId) {
     this.state = "matched";
-    if (this.lobbyChannel) {
+    try {
       await this.lobbyChannel.untrack();
-      await supabase.removeChannel(this.lobbyChannel);
-      this.lobbyChannel = null;
-    }
+    } catch (_) {}
     if (this.onMatched) this.onMatched(roomId, isInitiator, peerId);
   }
 
@@ -833,11 +826,9 @@ class Matchmaker {
   }
 
   async leaveLobby() {
-    if (this.lobbyChannel) {
+    try {
       await this.lobbyChannel.untrack();
-      await supabase.removeChannel(this.lobbyChannel);
-      this.lobbyChannel = null;
-    }
+    } catch (_) {}
     this.state = "idle";
   }
 
